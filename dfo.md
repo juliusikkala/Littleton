@@ -81,8 +81,8 @@ lower indices than their child objects.
 The 'type' field selects between textures and constants for material values:
 
 ```
-MATERIAL\_CONSTANT = 0
-MATERIAL\_TEXTURE  = 1
+MATERIAL_CONSTANT = 0
+MATERIAL_TEXTURE  = 1
 ```
 
 | Bit |         Affected field |
@@ -158,14 +158,14 @@ The 'transform' matrix is laid out in memory as column-major. If 'parent' is
 
 #### 2.4.1 Structure
 
-|                       Type |      Name     |                              Value |
-|---------------------------:|---------------|-----------------------------------:|
-|                        U32 | material\_id  | Index of the material of the group |
-|                        U32 | vertex\_type  | Type of the vertices               |
-|                        U32 | vertex\_count | Number of vertices                 |
-| F32((3|5) * vertex\_count) | vertex\_data  | Vertex data (x, y, z and u, v)     |
-|                        U32 | index\_count  | Number of indices                  |
-|          U32(index\_count) | index\_data   | Indices into vertex\_data          |
+|                          Type |      Name     |                              Value |
+|------------------------------:|---------------|-----------------------------------:|
+|                           U32 | material\_id  | Index of the material of the group |
+|                           U32 | vertex\_type  | Type of the vertices               |
+|                           U32 | vertex\_count | Number of vertices                 |
+| F32((3 or 5) * vertex\_count) | vertex\_data  | Vertex data (x, y, z and u, v)     |
+|                           U32 | index\_count  | Number of indices                  |
+|             U32(index\_count) | index\_data   | Indices into vertex\_data          |
 
 #### 2.4.2 Description
 
