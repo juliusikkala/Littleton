@@ -1,8 +1,10 @@
 #include "window.hh"
+#include "resources.hh"
 
 int main()
 { 
     window w(640, 480, "dflowers", false);
+    resource_manager resources;
 
     bool running = true;
     while(running)
