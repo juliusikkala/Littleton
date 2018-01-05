@@ -1,0 +1,3 @@
+[submodule "subprojects/DFOUtils"]
+	path = subprojects/DFOUtils
+	url = git@github.com:juliusikkala/DFOUtils.git
