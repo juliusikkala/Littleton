@@ -47,7 +47,7 @@ resource_container<T>& resource_manager::get_container(const std::string& name)
         throw std::runtime_error("Unable to find resource " + name);
     }
     resource_container<T>* container =
-        dynamic_cast<resource_container<T>>(it->second.get());
+        dynamic_cast<resource_container<T>*>(it->second.get());
 
     if(container == nullptr)
     {

@@ -1,5 +1,6 @@
 #include "resources.hh"
 #include <stdexcept>
+#include "dfo.h"
 
 basic_resource_container::basic_resource_container(): references(0) { }
 basic_resource_container::~basic_resource_container()

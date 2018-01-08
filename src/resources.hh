@@ -46,6 +46,8 @@ template<typename T>
 class resource
 {
 public:
+    using data_type = T;
+
     resource(
         resource_manager& manager,
         const std::string& resource_name

@@ -11,7 +11,7 @@ public:
         const char* title = "dflowers",
         bool fullscreen = false,
         bool vsync = true,
-        unsigned samples = 1
+        unsigned samples = 0
     );
     ~window();
 

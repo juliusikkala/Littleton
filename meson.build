@@ -3,7 +3,8 @@ project('DarkFlowers', 'cpp', default_options : ['cpp_std=c++14'])
 src = [
   'src/main.cc',
   'src/window.cc',
-  'src/resources.cc'
+  'src/resources.cc',
+  'src/buffer.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils')
