@@ -1,8 +1,10 @@
 #ifndef RESOURCES_HH
 #define RESOURCES_HH
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
+#include <typeinfo>
+#include <typeindex>
 
 class basic_resource_container
 {
@@ -48,6 +50,7 @@ public:
         resource_manager& manager,
         const std::string& resource_name
     );
+    resource(const resource& res);
     virtual ~resource();
 
 protected:
@@ -72,14 +75,35 @@ public:
 
     void add_dfo(const std::string& dfo_path);
 
+    template<typename T>
     void pin(const std::string& name);
+
+    template<typename T>
     void unpin(const std::string& name);
 
 private:
     template<typename T>
     resource_container<T>& get_container(const std::string& name);
 
-    std::map<std::string, std::unique_ptr<basic_resource_container>> resources;
+    struct name_type
+    {
+        std::type_index type;
+        std::string name;
+
+        bool operator==(const name_type& other) const;
+    };
+
+    class name_type_hash
+    {
+    public:
+        size_t operator()(const name_type& nt) const;
+    };
+
+    std::unordered_map<
+        name_type,
+        std::unique_ptr<basic_resource_container>,
+        name_type_hash
+    > resources;
 };
 
 #include "resources.tcc"

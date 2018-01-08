@@ -26,13 +26,14 @@ void resource_container<T>::unload() const
 template<typename T, typename... Args>
 void resource_manager::create(const std::string& name, Args&&... args)
 {
-    auto it = resources.find(name);
+    name_type key = {typeid(T), name};
+    auto it = resources.find(key);
     if(it != resources.end())
     {
         throw std::runtime_error("Resource " + name + " already exists!");
     }
 
-    resources[name] = new resource_container<typename T::data_type>(
+    resources[key] = new resource_container<typename T::data_type>(
         std::forward<Args>(args)...
     );
 }
@@ -40,7 +41,7 @@ void resource_manager::create(const std::string& name, Args&&... args)
 template<typename T>
 resource_container<T>& resource_manager::get_container(const std::string& name)
 {
-    auto it = resources.find(name);
+    auto it = resources.find({typeid(T), name});
     if(it == resources.end())
     {
         throw std::runtime_error("Unable to find resource " + name);
@@ -56,10 +57,38 @@ resource_container<T>& resource_manager::get_container(const std::string& name)
 }
 
 template<typename T>
+void resource_manager::pin(const std::string& name)
+{
+    auto it = resources.find({typeid(T), name});
+    if(it == resources.end())
+    {
+        throw std::runtime_error("Unable to find resource " + name);
+    }
+    it->second->pin();
+}
+
+template<typename T>
+void resource_manager::unpin(const std::string& name)
+{
+    auto it = resources.find({typeid(T), name});
+    if(it == resources.end())
+    {
+        throw std::runtime_error("Unable to find resource " + name);
+    }
+    it->second->unpin();
+}
+
+template<typename T>
 resource<T>::resource(
     resource_manager& manager,
     const std::string& resource_name
 ): data_container(manager.get_container<T>(resource_name))
+{
+    data_container.pin();
+}
+
+template<typename T>
+resource<T>::resource(const resource& res): data_container(res.data_container)
 {
     data_container.pin();
 }

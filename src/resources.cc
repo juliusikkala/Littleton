@@ -36,23 +36,12 @@ void resource_manager::add_dfo(const std::string& dfo_path)
     // TODO: Implement
 }
 
-void resource_manager::pin(const std::string& name)
+bool resource_manager::name_type::operator==(const name_type& other) const
 {
-    auto it = resources.find(name);
-    if(it == resources.end())
-    {
-        throw std::runtime_error("Unable to find resource " + name);
-    }
-    it->second->pin();
+    return other.type == type && other.name == name;
 }
 
-void resource_manager::unpin(const std::string& name)
+size_t resource_manager::name_type_hash::operator()(const name_type& nt) const
 {
-    auto it = resources.find(name);
-    if(it == resources.end())
-    {
-        throw std::runtime_error("Unable to find resource " + name);
-    }
-    it->second->unpin();
+    return nt.type.hash_code() + std::hash<std::string>()(nt.name);
 }
-
