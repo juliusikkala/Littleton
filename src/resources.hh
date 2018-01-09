@@ -45,6 +45,7 @@ class resource_manager;
 template<typename T>
 class resource
 {
+friend class resource_manager;
 public:
     using data_type = T;
 
@@ -52,14 +53,19 @@ public:
         resource_manager& manager,
         const std::string& resource_name
     );
+    resource(std::shared_ptr<resource_container<T>> data_container);
     resource(const resource& res);
     virtual ~resource();
+
+    void pin() const;
+    void unpin() const;
 
 protected:
     const T& data() const;
 
 private:
-    const resource_container<T>& data_container;
+    mutable unsigned pins;
+    std::shared_ptr<resource_container<T>> data_container;
 };
 
 class resource_manager
@@ -73,7 +79,7 @@ public:
     ~resource_manager();
 
     template<typename T, typename... Args>
-    void create(const std::string& name, Args&&... args);
+    T create(const std::string& name, Args&&... args);
 
     void add_dfo(const std::string& dfo_path);
 
@@ -83,9 +89,11 @@ public:
     template<typename T>
     void unpin(const std::string& name);
 
-private:
     template<typename T>
-    resource_container<T>& get_container(const std::string& name);
+    std::shared_ptr<resource_container<T>>
+    get_container(const std::string& name);
+
+private:
 
     struct name_type
     {
@@ -103,7 +111,7 @@ private:
 
     std::unordered_map<
         name_type,
-        std::unique_ptr<basic_resource_container>,
+        std::shared_ptr<basic_resource_container>,
         name_type_hash
     > resources;
 };
