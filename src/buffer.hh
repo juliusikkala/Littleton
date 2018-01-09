@@ -31,6 +31,7 @@ public:
 
     buffer_data(buffer_type type, const void* buf, size_t size);
     buffer_data(buffer_type type, std::unique_ptr<buffer_data_reader>&& reader);
+    buffer_data(const buffer_data& other) = delete;
     ~buffer_data();
 
     void load();

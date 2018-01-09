@@ -5,6 +5,7 @@ src = [
   'src/window.cc',
   'src/resources.cc',
   'src/buffer.cc',
+  'src/shader.cc'
 ]
 
 dfoutils_sp = subproject('DFOUtils')
