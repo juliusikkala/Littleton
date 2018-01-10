@@ -35,14 +35,14 @@ private:
 };
 
 buffer_data::buffer_data(buffer_type type, const void* buf, size_t size)
-: buffer(-1), type(type), reader(new memory_reader(buf, size))
+: buffer(0), type(type), reader(new memory_reader(buf, size))
 {
 }
 
 buffer_data::buffer_data(
     buffer_type type,
     std::unique_ptr<buffer_data_reader>&& reader
-): buffer(-1), type(type), reader(std::move(reader))
+): buffer(0), type(type), reader(std::move(reader))
 {
 }
 
@@ -53,9 +53,9 @@ buffer_data::~buffer_data()
 
 void buffer_data::load()
 {
-    if(buffer == -1)
+    if(buffer == 0)
     {
-        glGenBuffers(1, (GLuint*)&buffer);
+        glGenBuffers(1, &buffer);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
         void* data = reader->loan_data();
         glBufferData(GL_ARRAY_BUFFER, reader->size(), data, GL_STATIC_DRAW);
@@ -65,14 +65,9 @@ void buffer_data::load()
 
 void buffer_data::unload()
 {
-    if(buffer != -1)
+    if(buffer != 0)
     {
-        glDeleteBuffers(1, (GLuint*)&buffer);
-        buffer = -1;
+        glDeleteBuffers(1, &buffer);
+        buffer = 0;
     }
 }
-
-buffer::buffer(
-    resource_manager& manager,
-    const std::string& resource_name
-): resource<buffer_data>(manager, resource_name) {}

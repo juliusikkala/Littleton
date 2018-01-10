@@ -3,6 +3,8 @@
 #include <memory>
 #include "dfo.h"
 #include "buffer.hh"
+#include "texture.hh"
+#include <map>
 
 basic_resource_container::basic_resource_container(): references(0) { }
 basic_resource_container::~basic_resource_container()
@@ -125,9 +127,30 @@ void resource_manager::add_dfo(const std::string& dfo_path)
     const dfo_file* file = res.get_file();
 
     // Add all buffers
+    std::map<
+        dfo_buffer*,
+        std::shared_ptr<resource_container<buffer_data>>
+    > buffers;
+
     for(uint32_t i = 0; i < file->buffer_count; ++i)
     {
-        struct dfo_buffer* buf = file->buffer_table[i];
+        dfo_buffer* buf = file->buffer_table[i];
+        buffers[buf].reset(new resource_container<buffer_data>(
+            (buffer_data::buffer_type)buf->type,
+            std::make_unique<dfo_buffer_reader>(res, buf)
+        ));
+    }
+
+    // Add all textures
+    std::map<
+        dfo_texture*,
+        std::shared_ptr<resource_container<texture_data>>
+    > textures;
+
+    for(uint32_t i = 0; i < file->texture_count; ++i)
+    {
+        dfo_texture* tex = file->texture_table[i];
+        textures[tex] = create_container<texture_data>(tex->path, tex->path);
     }
 }
 

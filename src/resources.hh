@@ -93,6 +93,10 @@ public:
     std::shared_ptr<resource_container<T>>
     get_container(const std::string& name);
 
+    template<typename T, typename... Args>
+    std::shared_ptr<resource_container<T>>
+    create_container(const std::string& name, Args&&... args);
+
 private:
 
     struct name_type

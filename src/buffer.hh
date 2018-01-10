@@ -37,7 +37,7 @@ public:
     void load();
     void unload();
 
-    GLint buffer;
+    GLuint buffer;
     buffer_type type;
 
 private:
@@ -47,10 +47,7 @@ private:
 class buffer: public resource<buffer_data>
 {
 public:
-    buffer(
-        resource_manager& manager,
-        const std::string& resource_name
-    );
+    using resource<buffer_data>::resource;
 
 private:
 };

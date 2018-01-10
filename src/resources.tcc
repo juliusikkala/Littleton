@@ -26,23 +26,15 @@ void resource_container<T>::unload() const
 template<typename T, typename... Args>
 T resource_manager::create(const std::string& name, Args&&... args)
 {
-    name_type key = {typeid(T), name};
-    auto it = resources.find(key);
-    if(it != resources.end())
-    {
-        throw std::runtime_error("Resource " + name + " already exists!");
-    }
-
-    resources[key].reset(new resource_container<typename T::data_type>(
+    return T(create_container<typename T::data_type>(
+        name,
         std::forward<Args>(args)...
     ));
-    return T(std::dynamic_pointer_cast<
-        resource_container<typename T::data_type>
-    >(resources[key]));
 }
 
 template<typename T>
-std::shared_ptr<resource_container<T>> resource_manager::get_container(const std::string& name)
+std::shared_ptr<resource_container<T>>
+resource_manager::get_container(const std::string& name)
 {
     auto it = resources.find({typeid(T), name});
     if(it == resources.end())
@@ -59,10 +51,30 @@ std::shared_ptr<resource_container<T>> resource_manager::get_container(const std
     return container;
 }
 
+template<typename T, typename... Args>
+std::shared_ptr<resource_container<T>>
+resource_manager::create_container(
+    const std::string& name, Args&&... args
+){
+    name_type key = {typeid(T), name};
+    auto it = resources.find(key);
+    if(it != resources.end())
+    {
+        throw std::runtime_error("Resource " + name + " already exists!");
+    }
+
+    std::shared_ptr<resource_container<T>> container(
+        new resource_container<T>(std::forward<Args>(args)...)
+    );
+
+    resources[key] = container;
+    return container;
+}
+
 template<typename T>
 void resource_manager::pin(const std::string& name)
 {
-    auto it = resources.find({typeid(T), name});
+    auto it = resources.find({typeid(T::data_type), name});
     if(it == resources.end())
     {
         throw std::runtime_error("Unable to find resource " + name);
@@ -73,7 +85,7 @@ void resource_manager::pin(const std::string& name)
 template<typename T>
 void resource_manager::unpin(const std::string& name)
 {
-    auto it = resources.find({typeid(T), name});
+    auto it = resources.find({typeid(T::data_type), name});
     if(it == resources.end())
     {
         throw std::runtime_error("Unable to find resource " + name);
