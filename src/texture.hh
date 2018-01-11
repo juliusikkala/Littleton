@@ -14,6 +14,8 @@ public:
     void unload();
 
     GLuint texture;
+    GLint internal_format;
+    GLenum format, target, type;
 
 private:
     std::string path;
