@@ -125,6 +125,13 @@ public:
     void pin_all();
     void unpin_all();
 
+    // These pins will stay, unlike if you pinned the resource_ptr yourself
+    template<typename T>
+    void pin(const std::string& name);
+
+    template<typename T>
+    void unpin(const std::string& name);
+
 private:
 
     struct name_type

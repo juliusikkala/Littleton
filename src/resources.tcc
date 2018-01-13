@@ -180,3 +180,24 @@ resource_ptr<T> resource_store::get(const std::string& name) const
     return resource_ptr<T>(it->second);
 }
 
+template<typename T>
+void resource_store::pin(const std::string& name)
+{
+    auto it = resources.find({typeid(T), name});
+    if(it == resources.end())
+    {
+        throw std::runtime_error("Unable to find resource " + name);
+    }
+    it->second.pin();
+}
+
+template<typename T>
+void resource_store::unpin(const std::string& name)
+{
+    auto it = resources.find({typeid(T), name});
+    if(it == resources.end())
+    {
+        throw std::runtime_error("Unable to find resource " + name);
+    }
+    it->second.unpin();
+}

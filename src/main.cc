@@ -1,10 +1,13 @@
 #include "window.hh"
 #include "resources.hh"
+#include "texture.hh"
 
 int main()
 { 
     window w(640, 480, "dflowers", false);
     resource_store resources;
+    resources.add_dfo("data/test.dfo");
+    texture_ptr wood = resources.get<texture>("wood.png");
 
     bool running = true;
     while(running)

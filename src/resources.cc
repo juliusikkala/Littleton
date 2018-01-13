@@ -98,8 +98,30 @@ void basic_resource_ptr::reset(shared* other_s)
 
 basic_resource_ptr& basic_resource_ptr::operator=(basic_resource_ptr&& other)
 {
-    reset(other.s);
-    other.reset(nullptr);
+    if(s)
+    {
+        s->global_pins -= local_pins;
+        if(s->global_pins == 0 && s->resource)
+        {
+            s->delete_resource(s->resource);
+            s->resource = nullptr;
+        }
+
+        s->references--;
+        if(s->references == 0)
+        {
+            if(s->resource)
+            {
+                s->delete_resource(s->resource);
+            }
+            delete s;
+        }
+    }
+    s = other.s;
+    local_pins = other.local_pins;
+
+    other.local_pins = 0;
+    other.s = nullptr;
     return *this;
 }
 
@@ -148,6 +170,16 @@ public:
     : res(res), buf(buf)
     {
         this->res.pin();
+    }
+
+    dfo_buffer_reader(const dfo_buffer_reader& other)
+    : res(other.res), buf(other.buf)
+    {
+        this->res.pin();
+    }
+
+    ~dfo_buffer_reader()
+    {
     }
 
     void* operator()()
@@ -205,7 +237,7 @@ void resource_store::add_dfo(const std::string& dfo_path)
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
-        textures[tex] = create<texture>(tex->path, tex->path);
+        textures[tex] = create<texture>(tex->path, std::string(tex->path));
     }
 }
 
