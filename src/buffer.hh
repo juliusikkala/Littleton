@@ -4,22 +4,7 @@
 #include "glheaders.hh"
 #include "resources.hh"
 
-class buffer_data_reader
-{
-public: 
-    virtual ~buffer_data_reader();
-
-    virtual size_t size() = 0;
-
-    // Must return a buffer of size 'size'. Once the data has been copied to
-    // the OpenGL buffer, it will be returned to return_data which can the
-    // free it if necessary.
-    virtual void* loan_data() = 0;
-    virtual void return_data(void* data) = 0;
-};
-
-
-class buffer_data
+class buffer
 {
 public:
     enum buffer_type
@@ -29,27 +14,18 @@ public:
         INDEX32 = 2 // 32-bit indices
     };
 
-    buffer_data(buffer_type type, const void* buf, size_t size);
-    buffer_data(buffer_type type, std::unique_ptr<buffer_data_reader>&& reader);
-    buffer_data(const buffer_data& other) = delete;
-    ~buffer_data();
+    buffer(buffer_type type, const void* buf, size_t size);
+    buffer(const buffer& other) = delete;
+    buffer(buffer&& other);
+    ~buffer();
 
-    void load();
-    void unload();
-
-    GLuint buffer;
+    GLuint get_buffer() const;
+    buffer_type get_type() const;
+private:
+    GLuint buf;
     buffer_type type;
-
-private:
-    std::unique_ptr<buffer_data_reader> reader;
 };
 
-class buffer: public resource<buffer_data>
-{
-public:
-    using resource<buffer_data>::resource;
-
-private:
-};
+using buffer_ptr = resource_ptr<buffer>;
 
 #endif

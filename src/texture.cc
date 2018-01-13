@@ -2,15 +2,6 @@
 #include <gli/gli.hpp>
 #include <glm/glm.hpp>
 
-texture_data::texture_data(const char* path)
-: texture(0), path(path)
-{}
-
-texture_data::~texture_data()
-{
-    unload();
-}
-
 static GLuint load_texture(
     const std::string& path,
     GLint& internal_format,
@@ -170,29 +161,63 @@ static GLuint load_texture(
     return gl_tex;
 }
 
-void texture_data::load()
+texture::texture(const std::string& path)
+: tex(0)
 {
-    if(texture == 0)
+    tex = load_texture(
+        path,
+        internal_format,
+        format,
+        target,
+        type
+    );
+    if(tex == 0)
     {
-        texture = load_texture(
-            path,
-            internal_format,
-            format,
-            target,
-            type
-        );
-        if(texture == 0)
-        {
-            throw std::runtime_error("Unable to read texture " + path);
-        }
+        throw std::runtime_error("Unable to read texture " + path);
     }
 }
 
-void texture_data::unload()
+texture::texture(
+    unsigned w,
+    unsigned h,
+    GLint external_format,
+    GLint internal_format,
+    GLenum type
+): tex(0), internal_format(internal_format), format(external_format),
+   target(GL_TEXTURE_2D), type(type)
 {
-    if(texture != 0)
-    {
-        glDeleteTextures(1, &texture);
-        texture = 0;
-    }
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexStorage2D(GL_TEXTURE_2D, 1, internal_format, w, h);
+}
+
+texture::~texture()
+{
+    if(tex != 0) glDeleteTextures(1, &tex);
+}
+
+
+GLuint texture::get_texture() const
+{
+    return tex;
+}
+
+GLint texture::get_internal_format() const
+{
+    return internal_format;
+}
+
+GLenum texture::get_external_format() const
+{
+    return format;
+}
+
+GLenum texture::get_target() const
+{
+    return target;
+}
+
+GLenum texture::get_type() const
+{
+    return type;
 }

@@ -2,29 +2,34 @@
 #define TEXTURE_HH
 #include "glheaders.hh"
 #include "resources.hh"
+#include "buffer.hh"
 #include <string>
 
-class texture_data
+class texture
 {
 public:
-    texture_data(const char* path);
-    ~texture_data();
+    texture(const std::string& path);
+    texture(
+        unsigned w,
+        unsigned h,
+        GLint external_format,
+        GLint internal_format,
+        GLenum type
+    );
+    ~texture();
 
-    void load();
-    void unload();
-
-    GLuint texture;
-    GLint internal_format;
-    GLenum format, target, type;
+    GLuint get_texture() const;
+    GLint get_internal_format() const;
+    GLenum get_external_format() const;
+    GLenum get_target() const;
+    GLenum get_type() const;
 
 private:
-    std::string path;
+    GLuint tex;
+    GLint internal_format;
+    GLenum format, target, type;
 };
 
-class texture: resource<texture_data>
-{
-public:
-    using resource<texture_data>::resource;
-};
+using texture_ptr = resource_ptr<texture>;
 
 #endif

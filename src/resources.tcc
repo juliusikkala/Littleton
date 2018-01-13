@@ -1,60 +1,153 @@
 template<typename T>
+resource_ptr<T>::resource_ptr() {}
+
+template<typename T>
+resource_ptr<T>::resource_ptr(
+    std::function<void*()> create_resource,
+    std::function<void(void*)> delete_resource
+): basic_resource_ptr(
+    new shared {
+        0, 0,
+        create_resource, delete_resource,
+        nullptr
+    }
+) { }
+
+template<typename T>
+resource_ptr<T>::resource_ptr(const resource_ptr<T>& other)
+: basic_resource_ptr(other) { }
+
+template<typename T>
+resource_ptr<T>::resource_ptr(resource_ptr<T>&& other)
+: basic_resource_ptr(std::move(other)) {}
+
+template<typename T>
+resource_ptr<T>::resource_ptr(T* reference)
+: basic_resource_ptr(
+    new shared {
+        0, 1,
+        [=](){ return reference; },
+        [](void *ptr){},
+        reference
+    }
+) { }
+
+// Takes ownership of the pointer. Note that lazy loading will not
+// work in this case, the data will be released only when the last
+// resource_ptr referring to it is being destructed.
+template<typename T>
+resource_ptr<T>::resource_ptr(T*&& ptr)
+: basic_resource_ptr(
+    new shared {
+        0, 1,
+        [=]() { return nullptr; },
+        [](void* ptr){ delete ((T*)ptr); },
+        ptr
+    }
+) { }
+
+template<typename T>
 template<typename... Args>
-resource_container<T>::resource_container(Args&&... args)
-: t(std::forward<Args>(args)...)
+resource_ptr<T> resource_ptr<T>::create(Args&&... args)
 {
+    return resource_ptr<T>(
+        [=](){ return new T(args...); },
+        [](void* ptr){ delete ((T*)ptr); }
+    );
+}
+
+
+template<typename T>
+T& resource_ptr<T>::operator*()
+{
+    if(local_pins == 0) pin();
+    return *((T*)s->resource);
 }
 
 template<typename T>
-const T& resource_container<T>::data() const
+const T& resource_ptr<T>::operator*() const
 {
-    return t;
+    if(local_pins == 0) pin();
+    return *((T*)s->resource);
 }
 
 template<typename T>
-void resource_container<T>::load() const
+T* resource_ptr<T>::operator->()
 {
-    t.load();
+    if(local_pins == 0) pin();
+    return (T*)s->resource;
 }
 
 template<typename T>
-void resource_container<T>::unload() const
+const T* resource_ptr<T>::operator->() const
 {
-    t.unload();
+    if(local_pins == 0) pin();
+    return (T*)s->resource;
 }
+
+template<typename T>
+T* resource_ptr<T>::get()
+{
+    if(local_pins == 0) pin();
+    return (T*)s->resource;
+}
+
+template<typename T>
+const T* resource_ptr<T>::get() const
+{
+    if(local_pins == 0) pin();
+    return (T*)s->resource;
+}
+
+template<typename T>
+resource_ptr<T>& resource_ptr<T>::operator=(T* reference)
+{
+    reset(
+        new shared {
+            0, 1,
+            [=](){ return reference; },
+            [](void *ptr){},
+            reference
+        }
+    );
+}
+
+template<typename T>
+resource_ptr<T>& resource_ptr<T>::operator=(T*&& ptr)
+{
+    reset(
+        new shared {
+            0, 1,
+            [=]() { return nullptr; },
+            [](void* ptr){ delete ((T*)ptr); },
+            ptr
+        }
+    );
+}
+
+template<typename T>
+resource_ptr<T>& resource_ptr<T>::operator=(resource_ptr<T>&& other)
+{
+    reset(other.s);
+    other.reset(nullptr);
+    return *this;
+}
+
+template<typename T>
+resource_ptr<T>& resource_ptr<T>::operator=(const resource_ptr<T>& other)
+{
+    reset(other.s);
+    return *this;
+}
+
+template<typename T>
+resource_ptr<T>::resource_ptr(const basic_resource_ptr& other)
+: basic_resource_ptr(other) {}
 
 template<typename T, typename... Args>
-T resource_manager::create(const std::string& name, Args&&... args)
-{
-    return T(create_container<typename T::data_type>(
-        name,
-        std::forward<Args>(args)...
-    ));
-}
-
-template<typename T>
-std::shared_ptr<resource_container<T>>
-resource_manager::get_container(const std::string& name)
-{
-    auto it = resources.find({typeid(T), name});
-    if(it == resources.end())
-    {
-        throw std::runtime_error("Unable to find resource " + name);
-    }
-    std::shared_ptr<resource_container<T>> container =
-        std::dynamic_pointer_cast<resource_container<T>>(it->second);
-
-    if(!container)
-    {
-        throw std::runtime_error("Invalid type for resource " + name);
-    }
-    return container;
-}
-
-template<typename T, typename... Args>
-std::shared_ptr<resource_container<T>>
-resource_manager::create_container(
-    const std::string& name, Args&&... args
+resource_ptr<T> resource_store::create(
+    const std::string& name,
+    Args&&... args
 ){
     name_type key = {typeid(T), name};
     auto it = resources.find(key);
@@ -63,78 +156,27 @@ resource_manager::create_container(
         throw std::runtime_error("Resource " + name + " already exists!");
     }
 
-    std::shared_ptr<resource_container<T>> container(
-        new resource_container<T>(std::forward<Args>(args)...)
+    return (resources[key] = resource_ptr<T>::create(
+        std::forward<Args>(args)...)
     );
-
-    resources[key] = container;
-    return container;
 }
 
 template<typename T>
-void resource_manager::pin(const std::string& name)
+void resource_store::remove(const std::string& name)
 {
-    auto it = resources.find({typeid(T::data_type), name});
+    name_type key = {typeid(T), name};
+    resources.erase(key);
+}
+
+template<typename T>
+resource_ptr<T> resource_store::get(const std::string& name) const
+{
+    auto it = resources.find({typeid(T), name});
     if(it == resources.end())
     {
         throw std::runtime_error("Unable to find resource " + name);
     }
-    it->second->pin();
+
+    return resource_ptr<T>(it->second);
 }
 
-template<typename T>
-void resource_manager::unpin(const std::string& name)
-{
-    auto it = resources.find({typeid(T::data_type), name});
-    if(it == resources.end())
-    {
-        throw std::runtime_error("Unable to find resource " + name);
-    }
-    it->second->unpin();
-}
-
-template<typename T>
-resource<T>::resource(
-    resource_manager& manager,
-    const std::string& resource_name
-): pins(0), data_container(manager.get_container<T>(resource_name)) {}
-
-template<typename T>
-resource<T>::resource(
-    std::shared_ptr<resource_container<T>> data_container
-): pins(0), data_container(data_container) {}
-
-template<typename T>
-resource<T>::resource(
-    const resource& res
-): pins(0), data_container(res.data_container) {}
-
-template<typename T>
-resource<T>::~resource()
-{
-    while(pins--) data_container->unpin();
-}
-
-template<typename T>
-void resource<T>::pin() const
-{
-    pins++;
-    data_container->pin();
-}
-
-template<typename T>
-void resource<T>::unpin() const
-{
-    if(pins != 0)
-    {
-        pins--;
-        data_container->unpin();
-    }
-}
-
-template<typename T>
-const T& resource<T>::data() const
-{
-    if(pins == 0) pin();
-    return data_container->data();
-}

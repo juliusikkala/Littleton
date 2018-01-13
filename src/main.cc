@@ -4,7 +4,7 @@
 int main()
 { 
     window w(640, 480, "dflowers", false);
-    resource_manager resources;
+    resource_store resources;
 
     bool running = true;
     while(running)

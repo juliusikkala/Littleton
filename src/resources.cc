@@ -6,160 +6,232 @@
 #include "texture.hh"
 #include <map>
 
-basic_resource_container::basic_resource_container(): references(0) { }
-basic_resource_container::~basic_resource_container()
-{ }
-
-void basic_resource_container::pin() const
+basic_resource_ptr::~basic_resource_ptr()
 {
-    references++;
-    if(references == 1)
+    reset(nullptr);
+}
+
+void basic_resource_ptr::pin() const
+{
+    if(s)
     {
-        load();
+        local_pins++;
+        s->global_pins++;
+        if(s->global_pins == 1)
+        {
+            s->resource = s->create_resource();
+        }
     }
 }
 
-void basic_resource_container::unpin() const
+void basic_resource_ptr::unpin() const
 {
-    if(references == 1)
+    if(s && local_pins != 0)
     {
-        unload();
+        local_pins--;
+        s->global_pins--;
+        if(s->global_pins == 0)
+        {
+            s->delete_resource(s->resource);
+            s->resource = nullptr;
+        }
     }
-    else if (references != 0)
-    {
-        references--;
-    }
-    else throw std::runtime_error("Too many unpins!");
 }
 
-resource_manager::resource_manager() {}
-
-resource_manager::~resource_manager() {}
-
-class dfo_resource_data
+bool basic_resource_ptr::operator==(const basic_resource_ptr& other) const
 {
-public:
-    dfo_resource_data(std::unique_ptr<dfo_file>&& file)
-    : file(std::move(file)) {}
+    return s && other.s == s;
+}
 
-    ~dfo_resource_data()
+bool basic_resource_ptr::operator!=(const basic_resource_ptr& other) const
+{
+    return !s || other.s != s;
+}
+
+basic_resource_ptr::operator bool() const
+{
+    return s;
+}
+
+basic_resource_ptr::basic_resource_ptr()
+: local_pins(0), s(nullptr) { }
+
+basic_resource_ptr::basic_resource_ptr(shared* other_s)
+: local_pins(0), s(other_s) { s->references++; }
+
+basic_resource_ptr::basic_resource_ptr(const basic_resource_ptr& other)
+: local_pins(0), s(other.s) { s->references++; }
+
+basic_resource_ptr::basic_resource_ptr(basic_resource_ptr&& other)
+: local_pins(other.local_pins), s(other.s)
+{
+    other.local_pins = 0;
+    other.s = nullptr;
+}
+
+void basic_resource_ptr::reset(shared* other_s)
+{
+    if(s)
     {
-        dfo_close(file.get());
+        s->global_pins -= local_pins;
+        if(s->global_pins == 0 && s->resource)
+        {
+            s->delete_resource(s->resource);
+            s->resource = nullptr;
+        }
+
+        s->references--;
+        if(s->references == 0)
+        {
+            if(s->resource)
+            {
+                s->delete_resource(s->resource);
+            }
+            delete s;
+        }
     }
 
-    void load() {}
-    void unload() {}
+    local_pins = 0;
+    s = other_s;
+    if(s) s->references++;
+}
 
-    std::unique_ptr<dfo_file> file;
-private:
-};
+basic_resource_ptr& basic_resource_ptr::operator=(basic_resource_ptr&& other)
+{
+    reset(other.s);
+    other.reset(nullptr);
+    return *this;
+}
 
-class dfo_resource: public resource<dfo_resource_data>
+basic_resource_ptr& basic_resource_ptr::operator=(
+    const basic_resource_ptr& other
+){
+    reset(other.s);
+    return *this;
+}
+
+
+resource_store::resource_store() { }
+
+resource_store::~resource_store() { }
+
+class dfo_file_resource
 {
 public:
-    using resource<dfo_resource_data>::resource;
+    dfo_file_resource(const std::string& path)
+    {
+        if(!dfo_open_file(&file, path.c_str(), 0))
+        {
+            throw std::runtime_error("Failed to open " + path);
+        }
+    }
+
+    ~dfo_file_resource()
+    {
+        dfo_close(&file);
+    }
 
     const dfo_file* get_file() const
     {
-        return data().file.get();
+        return &file;
     }
+private:
+    dfo_file file;
 };
 
-class dfo_buffer_reader: public buffer_data_reader
+using dfo_ptr = resource_ptr<dfo_file_resource>;
+
+class dfo_buffer_reader
 {
 public:
-    dfo_buffer_reader(dfo_resource res, struct dfo_buffer* buf)
+    dfo_buffer_reader(dfo_ptr res, dfo_buffer* buf)
     : res(res), buf(buf)
     {
+        this->res.pin();
     }
 
-    size_t size() override
+    void* operator()()
     {
-        return buf->size;
-    }
-
-    void* loan_data() override
-    {
+        buffer* new_buf;
         if(buf->present)
         {
-            void* data = buf->data.data;
-            buf->data.data = nullptr;
-            return data;
+            new_buf = new buffer(
+                (buffer::buffer_type)buf->type,
+                buf->data.data,
+                buf->size
+            );
         }
         else
         {
             char* data = new char[buf->size];
-            if(!dfo_read_buffer(res.get_file(), buf, data))
+            if(!dfo_read_buffer(res->get_file(), buf, data))
             {
                 delete [] data;
                 throw std::runtime_error("Failed to read DFO buffer");
             }
-            return data;
+            new_buf = new buffer(
+                (buffer::buffer_type)buf->type,
+                data,
+                buf->size
+            );
+            delete [] data;
         }
-    }
-
-    void return_data(void* data) override
-    {
-        if(buf->present)
-        {
-            buf->data.data = data;
-        }
-        else
-        {
-            delete [] ((char*)data);
-        }
+        return new_buf;
     }
 
 private:
-    dfo_resource res;
-    struct dfo_buffer* buf;
+    dfo_ptr res;
+    dfo_buffer* buf;
 };
 
-void resource_manager::add_dfo(const std::string& dfo_path)
+void resource_store::add_dfo(const std::string& dfo_path)
 {
-    std::unique_ptr<dfo_file> fileptr(new dfo_file);
-    if(!dfo_open_file(fileptr.get(), dfo_path.c_str(), 0))
-    {
-        throw std::runtime_error("Failed to open " + dfo_path);
-    }
-    dfo_resource res = create<dfo_resource>(dfo_path, std::move(fileptr));
+    dfo_ptr res = create<dfo_file_resource>(dfo_path, dfo_path);
 
-    const dfo_file* file = res.get_file();
+    const dfo_file* file = res->get_file();
 
     // Add all buffers
-    std::map<
-        dfo_buffer*,
-        std::shared_ptr<resource_container<buffer_data>>
-    > buffers;
+    std::map<dfo_buffer*, buffer_ptr> buffers;
 
     for(uint32_t i = 0; i < file->buffer_count; ++i)
     {
         dfo_buffer* buf = file->buffer_table[i];
-        buffers[buf].reset(new resource_container<buffer_data>(
-            (buffer_data::buffer_type)buf->type,
-            std::make_unique<dfo_buffer_reader>(res, buf)
-        ));
+        buffers[buf] = buffer_ptr(dfo_buffer_reader(res, buf));
     }
 
     // Add all textures
-    std::map<
-        dfo_texture*,
-        std::shared_ptr<resource_container<texture_data>>
-    > textures;
+    std::map<dfo_texture*, texture_ptr> textures;
 
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
-        textures[tex] = create_container<texture_data>(tex->path, tex->path);
+        textures[tex] = create<texture>(tex->path, tex->path);
     }
 }
 
-bool resource_manager::name_type::operator==(const name_type& other) const
+void resource_store::pin_all()
+{
+    for(auto& pair: resources)
+    {
+        pair.second.pin();
+    }
+}
+
+void resource_store::unpin_all()
+{
+    for(auto& pair: resources)
+    {
+        pair.second.unpin();
+    }
+}
+
+bool resource_store::name_type::operator==(const name_type& other) const
 {
     return other.type == type && other.name == name;
 }
 
-size_t resource_manager::name_type_hash::operator()(const name_type& nt) const
+size_t resource_store::name_type_hash::operator()(const name_type& nt) const
 {
     return nt.type.hash_code() + std::hash<std::string>()(nt.name);
 }
+

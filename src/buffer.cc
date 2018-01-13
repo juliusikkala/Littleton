@@ -1,73 +1,31 @@
 #include "buffer.hh"
 #include <cstring>
 
-buffer_data_reader::~buffer_data_reader() {}
-
-class memory_reader: public buffer_data_reader
+buffer::buffer(buffer_type type, const void* data, size_t size)
+: buf(0), type(type)
 {
-public:
-    memory_reader(const void* buf, size_t sz)
-    : buf(new char[sz]), sz(sz)
-    {
-        memcpy(this->buf, buf, sz);
-    }
-
-    ~memory_reader()
-    {
-        delete [] buf;
-    }
-
-    size_t size() override
-    {
-        return sz;
-    }
-
-    void* loan_data() override
-    {
-        return buf;
-    }
-
-    void return_data(void* data) override { (void)data; }
-
-private:
-    char* buf;
-    size_t sz;
-};
-
-buffer_data::buffer_data(buffer_type type, const void* buf, size_t size)
-: buffer(0), type(type), reader(new memory_reader(buf, size))
-{
+    glGenBuffers(1, &buf);
+    glBindBuffer(GL_ARRAY_BUFFER, buf);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 }
 
-buffer_data::buffer_data(
-    buffer_type type,
-    std::unique_ptr<buffer_data_reader>&& reader
-): buffer(0), type(type), reader(std::move(reader))
+buffer::buffer(buffer&& other)
+: buf(other.buf), type(other.type)
 {
+    other.buf = 0;
 }
 
-buffer_data::~buffer_data()
+buffer::~buffer()
 {
-    unload();
+    if(buf != 0) glDeleteBuffers(1, &buf);
 }
 
-void buffer_data::load()
+GLuint buffer::get_buffer() const
 {
-    if(buffer == 0)
-    {
-        glGenBuffers(1, &buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        void* data = reader->loan_data();
-        glBufferData(GL_ARRAY_BUFFER, reader->size(), data, GL_STATIC_DRAW);
-        reader->return_data(data);
-    }
+    return buf;
 }
 
-void buffer_data::unload()
+buffer::buffer_type buffer::get_type() const
 {
-    if(buffer != 0)
-    {
-        glDeleteBuffers(1, &buffer);
-        buffer = 0;
-    }
+    return type;
 }
