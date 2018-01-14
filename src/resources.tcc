@@ -34,6 +34,10 @@ resource_ptr<T>::resource_ptr(T* ptr)
 ) { }
 
 template<typename T>
+resource_ptr<T>::resource_ptr(shared* s)
+: basic_resource_ptr(s) {}
+
+template<typename T>
 template<typename... Args>
 resource_ptr<T> resource_ptr<T>::create(Args&&... args)
 {
@@ -44,55 +48,32 @@ resource_ptr<T> resource_ptr<T>::create(Args&&... args)
 }
 
 template<typename T>
-resource_ptr<T> resource_ptr<T>::ref(T* reference)
+resource_ptr<T> resource_ptr<T>::ref(T& reference)
 {
-    return resource_ptr<T>(
-        reference ?  new shared {
-            0, 1,
-            [=](){ return reference; },
-            [](void *ptr){},
-            reference
-        } : nullptr
-    );
+    return resource_ptr<T>(new shared {
+        0, 1,
+        [refptr = &reference](){ return refptr; },
+        [](void *ptr){},
+        &reference
+    });
 }
 
 template<typename T>
-T& resource_ptr<T>::operator*()
+T& resource_ptr<T>::operator*() const
 {
     if(local_pins == 0) pin();
     return *((T*)s->resource);
 }
 
 template<typename T>
-const T& resource_ptr<T>::operator*() const
-{
-    if(local_pins == 0) pin();
-    return *((T*)s->resource);
-}
-
-template<typename T>
-T* resource_ptr<T>::operator->()
+T* resource_ptr<T>::operator->() const
 {
     if(local_pins == 0) pin();
     return (T*)s->resource;
 }
 
 template<typename T>
-const T* resource_ptr<T>::operator->() const
-{
-    if(local_pins == 0) pin();
-    return (T*)s->resource;
-}
-
-template<typename T>
-T* resource_ptr<T>::get()
-{
-    if(local_pins == 0) pin();
-    return (T*)s->resource;
-}
-
-template<typename T>
-const T* resource_ptr<T>::get() const
+T* resource_ptr<T>::get() const
 {
     if(local_pins == 0) pin();
     return (T*)s->resource;
@@ -102,13 +83,14 @@ template<typename T>
 resource_ptr<T>& resource_ptr<T>::operator=(T* ptr)
 {
     reset(
-        new shared {
+        ptr ? new shared {
             0, 1,
             [=]() { return nullptr; },
             [](void* ptr){ delete ((T*)ptr); },
             ptr
-        }
+        } : nullptr
     );
+    return *this;
 }
 
 template<typename T>
@@ -131,7 +113,7 @@ resource_ptr<T>::resource_ptr(const basic_resource_ptr& other)
 : basic_resource_ptr(other) {}
 
 template<typename T, typename... Args>
-resource_ptr<T> resource_store::create(
+const resource_ptr<T>& resource_store::create(
     const std::string& name,
     Args&&... args
 ){
@@ -142,13 +124,15 @@ resource_ptr<T> resource_store::create(
         throw std::runtime_error("Resource " + name + " already exists!");
     }
 
-    return (resources[key] = resource_ptr<T>::create(
+    basic_resource_ptr& ptr = (resources[key] = resource_ptr<T>::create(
         std::forward<Args>(args)...)
     );
+
+    return *static_cast<resource_ptr<T>*>(&ptr);
 }
 
 template<typename T>
-resource_ptr<T> resource_store::add(
+const resource_ptr<T>& resource_store::add(
     const std::string& name,
     resource_ptr<T> res
 ){
@@ -159,7 +143,9 @@ resource_ptr<T> resource_store::add(
         throw std::runtime_error("Resource " + name + " already exists!");
     }
 
-    return (resources[key] = res);
+    basic_resource_ptr& ptr = (resources[key] = res);
+
+    return *static_cast<resource_ptr<T>*>(&ptr);
 }
 
 template<typename T>
@@ -170,7 +156,7 @@ void resource_store::remove(const std::string& name)
 }
 
 template<typename T>
-resource_ptr<T> resource_store::get(const std::string& name) const
+const resource_ptr<T>& resource_store::get(const std::string& name) const
 {
     auto it = resources.find({typeid(T), name});
     if(it == resources.end())
@@ -178,7 +164,7 @@ resource_ptr<T> resource_store::get(const std::string& name) const
         throw std::runtime_error("Unable to find resource " + name);
     }
 
-    return resource_ptr<T>(it->second);
+    return *static_cast<const resource_ptr<T>*>(&(it->second));
 }
 
 template<typename T>

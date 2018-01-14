@@ -9,6 +9,7 @@ src = [
   'src/texture.cc',
   'src/material.cc',
   'src/model.cc',
+  'src/object.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils')

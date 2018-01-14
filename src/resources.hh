@@ -77,16 +77,13 @@ public:
     /* Doesn't take ownership! Make sure the pointer outlives this resource_ptr
      * and all its copies!
      */
-    static resource_ptr<T> ref(T* reference);
+    static resource_ptr<T> ref(T& reference);
 
-    T& operator*();
-    const T& operator*() const;
+    T& operator*() const;
 
-    T* operator->();
-    const T* operator->() const;
+    T* operator->() const;
 
-    T* get();
-    const T* get() const;
+    T* get() const;
 
     resource_ptr<T>& operator=(T* other);
     resource_ptr<T>& operator=(resource_ptr<T>&& other);
@@ -107,10 +104,10 @@ public:
     ~resource_store();
 
     template<typename T, typename... Args>
-    resource_ptr<T> create(const std::string& name, Args&&... args);
+    const resource_ptr<T>& create(const std::string& name, Args&&... args);
 
     template<typename T>
-    resource_ptr<T> add(const std::string& name, resource_ptr<T> res);
+    const resource_ptr<T>& add(const std::string& name, resource_ptr<T> res);
 
     /* Note that while the resource is removed from this store, it may have
      * references elsewhere and not be freed because of that.
@@ -119,7 +116,7 @@ public:
     void remove(const std::string& name);
 
     template<typename T>
-    resource_ptr<T> get(const std::string& name) const;
+    const resource_ptr<T>& get(const std::string& name) const;
 
     void add_dfo(const std::string& dfo_path);
 

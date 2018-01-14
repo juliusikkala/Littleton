@@ -16,9 +16,9 @@ public:
 
     size_t group_count() const;
     void add_vertex_group(
-        material_ptr mat,
-        buffer_ptr vertex,
-        buffer_ptr index
+        const material_ptr& mat,
+        const buffer_ptr& vertex,
+        const buffer_ptr& index
     );
     void remove_vertex_group(size_t i);
     const vertex_group& operator[](size_t i) const;

@@ -6,15 +6,11 @@ size_t model::group_count() const
 }
 
 void model::add_vertex_group(
-    material_ptr mat,
-    buffer_ptr vertex,
-    buffer_ptr index
+    const material_ptr& mat,
+    const buffer_ptr& vertex,
+    const buffer_ptr& index
 ){
-    groups.emplace_back(vertex_group{
-        std::move(mat),
-        std::move(vertex),
-        std::move(index)
-    });
+    groups.emplace_back(vertex_group{mat, vertex, index});
 }
 
 void model::remove_vertex_group(size_t i)
