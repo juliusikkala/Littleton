@@ -57,10 +57,10 @@ basic_resource_ptr::basic_resource_ptr()
 : local_pins(0), s(nullptr) { }
 
 basic_resource_ptr::basic_resource_ptr(shared* other_s)
-: local_pins(0), s(other_s) { s->references++; }
+: local_pins(0), s(other_s) { if(s) s->references++; }
 
 basic_resource_ptr::basic_resource_ptr(const basic_resource_ptr& other)
-: local_pins(0), s(other.s) { s->references++; }
+: local_pins(0), s(other.s) { if(s) s->references++; }
 
 basic_resource_ptr::basic_resource_ptr(basic_resource_ptr&& other)
 : local_pins(other.local_pins), s(other.s)
@@ -131,7 +131,6 @@ basic_resource_ptr& basic_resource_ptr::operator=(
     reset(other.s);
     return *this;
 }
-
 
 resource_store::resource_store() { }
 

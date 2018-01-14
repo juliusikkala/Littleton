@@ -24,26 +24,25 @@ resource_ptr<T>::resource_ptr(resource_ptr<T>&& other)
 template<typename T>
 resource_ptr<T>::resource_ptr(T* reference)
 : basic_resource_ptr(
-    new shared {
-        0, 1,
-        [=](){ return reference; },
-        [](void *ptr){},
-        reference
-    }
+    reference ?
+        new shared {
+            0, 1,
+            [=](){ return reference; },
+            [](void *ptr){},
+            reference
+        } : nullptr
 ) { }
 
-// Takes ownership of the pointer. Note that lazy loading will not
-// work in this case, the data will be released only when the last
-// resource_ptr referring to it is being destructed.
 template<typename T>
 resource_ptr<T>::resource_ptr(T*&& ptr)
 : basic_resource_ptr(
-    new shared {
-        0, 1,
-        [=]() { return nullptr; },
-        [](void* ptr){ delete ((T*)ptr); },
-        ptr
-    }
+    ptr ?
+        new shared {
+            0, 1,
+            [=]() { return nullptr; },
+            [](void* ptr){ delete ((T*)ptr); },
+            ptr
+        } : nullptr
 ) { }
 
 template<typename T>
