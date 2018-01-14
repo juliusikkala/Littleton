@@ -60,16 +60,11 @@ public:
             [](void* res){ delete ((T*)res);}
     );
 
-    /* Doesn't take ownership! Make sure the pointer outlives this resource_ptr
-     * and all its copies!
-     */
-    explicit resource_ptr(T* reference);
-
     /* Takes ownership of the pointer. Note that lazy loading will not
      * work in this case, the data will be released only when the last
      * resource_ptr referring to it is being destructed.
      */
-    explicit resource_ptr(T*&& ptr);
+    explicit resource_ptr(T* reference);
 
     /* Make sure that the arguments can be safely copied and will be usable
      * during the lifetime of the resource. Be extra careful with pointers,
@@ -78,6 +73,11 @@ public:
      */
     template<typename... Args>
     static resource_ptr<T> create(Args&&... args);
+
+    /* Doesn't take ownership! Make sure the pointer outlives this resource_ptr
+     * and all its copies!
+     */
+    static resource_ptr<T> ref(T* reference);
 
     T& operator*();
     const T& operator*() const;
@@ -88,15 +88,14 @@ public:
     T* get();
     const T* get() const;
 
-    resource_ptr<T>& operator=(T* reference);
-    resource_ptr<T>& operator=(T*&& ptr);
-
+    resource_ptr<T>& operator=(T* other);
     resource_ptr<T>& operator=(resource_ptr<T>&& other);
     resource_ptr<T>& operator=(const resource_ptr<T>& other);
 
 private:
     // Note that this is not type safe!
     resource_ptr(const basic_resource_ptr& other);
+    resource_ptr(shared* s);
 };
 
 class resource_store
@@ -109,6 +108,9 @@ public:
 
     template<typename T, typename... Args>
     resource_ptr<T> create(const std::string& name, Args&&... args);
+
+    template<typename T>
+    resource_ptr<T> add(const std::string& name, resource_ptr<T> res);
 
     /* Note that while the resource is removed from this store, it may have
      * references elsewhere and not be freed because of that.

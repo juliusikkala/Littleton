@@ -7,7 +7,8 @@ src = [
   'src/buffer.cc',
   'src/shader.cc',
   'src/texture.cc',
-  'src/material.cc'
+  'src/material.cc',
+  'src/model.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils')

@@ -22,19 +22,7 @@ resource_ptr<T>::resource_ptr(resource_ptr<T>&& other)
 : basic_resource_ptr(std::move(other)) {}
 
 template<typename T>
-resource_ptr<T>::resource_ptr(T* reference)
-: basic_resource_ptr(
-    reference ?
-        new shared {
-            0, 1,
-            [=](){ return reference; },
-            [](void *ptr){},
-            reference
-        } : nullptr
-) { }
-
-template<typename T>
-resource_ptr<T>::resource_ptr(T*&& ptr)
+resource_ptr<T>::resource_ptr(T* ptr)
 : basic_resource_ptr(
     ptr ?
         new shared {
@@ -55,6 +43,18 @@ resource_ptr<T> resource_ptr<T>::create(Args&&... args)
     );
 }
 
+template<typename T>
+resource_ptr<T> resource_ptr<T>::ref(T* reference)
+{
+    return resource_ptr<T>(
+        reference ?  new shared {
+            0, 1,
+            [=](){ return reference; },
+            [](void *ptr){},
+            reference
+        } : nullptr
+    );
+}
 
 template<typename T>
 T& resource_ptr<T>::operator*()
@@ -99,20 +99,7 @@ const T* resource_ptr<T>::get() const
 }
 
 template<typename T>
-resource_ptr<T>& resource_ptr<T>::operator=(T* reference)
-{
-    reset(
-        new shared {
-            0, 1,
-            [=](){ return reference; },
-            [](void *ptr){},
-            reference
-        }
-    );
-}
-
-template<typename T>
-resource_ptr<T>& resource_ptr<T>::operator=(T*&& ptr)
+resource_ptr<T>& resource_ptr<T>::operator=(T* ptr)
 {
     reset(
         new shared {
@@ -158,6 +145,21 @@ resource_ptr<T> resource_store::create(
     return (resources[key] = resource_ptr<T>::create(
         std::forward<Args>(args)...)
     );
+}
+
+template<typename T>
+resource_ptr<T> resource_store::add(
+    const std::string& name,
+    resource_ptr<T> res
+){
+    name_type key = {typeid(T), name};
+    auto it = resources.find(key);
+    if(it != resources.end())
+    {
+        throw std::runtime_error("Resource " + name + " already exists!");
+    }
+
+    return (resources[key] = res);
 }
 
 template<typename T>

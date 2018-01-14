@@ -4,6 +4,8 @@
 #include "dfo.h"
 #include "buffer.hh"
 #include "texture.hh"
+#include "material.hh"
+#include "model.hh"
 #include <map>
 
 basic_resource_ptr::~basic_resource_ptr()
@@ -215,6 +217,11 @@ private:
     dfo_buffer* buf;
 };
 
+static color4 dfo_rgba_to_color4(dfo_rgba rgba)
+{
+    return color4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
+}
+
 void resource_store::add_dfo(const std::string& dfo_path)
 {
     dfo_ptr res = create<dfo_file_resource>(dfo_path, dfo_path);
@@ -237,6 +244,71 @@ void resource_store::add_dfo(const std::string& dfo_path)
     {
         dfo_texture* tex = file->texture_table[i];
         textures[tex] = create<texture>(tex->path, std::string(tex->path));
+    }
+
+    // Add all materials
+    std::map<dfo_material*, material_ptr> materials;
+
+    for(uint32_t i = 0; i < file->material_count; ++i)
+    {
+        dfo_material* mat = file->material_table[i];
+        material* m = new material;
+
+        if(mat->metallic_type == DFO_COMPONENT_CONSTANT)
+            m->metallic = mat->metallic.value;
+        else if(mat->metallic.tex)
+            m->metallic = textures[mat->metallic.tex];
+
+        if(mat->color_type == DFO_COMPONENT_CONSTANT)
+            m->color = dfo_rgba_to_color4(mat->color.value);
+        else if(mat->color.tex)
+            m->color = textures[mat->color.tex];
+
+        if(mat->roughness_type == DFO_COMPONENT_CONSTANT)
+            m->roughness = mat->roughness.value;
+        else if(mat->roughness.tex)
+            m->roughness = textures[mat->roughness.tex];
+
+        m->ior = mat->ior;
+        m->normal = textures[mat->normal];
+
+        if(mat->emission_type == DFO_COMPONENT_CONSTANT)
+            m->emission = mat->emission.value;
+        else if(mat->emission.tex)
+            m->emission = textures[mat->emission.tex];
+
+        if(mat->subsurface_scattering_type == DFO_COMPONENT_CONSTANT)
+            m->subsurface_scattering =
+                dfo_rgba_to_color4(mat->subsurface_scattering.value);
+        else if(mat->subsurface_scattering.tex)
+            m->subsurface_scattering = textures[mat->subsurface_scattering.tex];
+
+        if(mat->subsurface_depth_type == DFO_COMPONENT_CONSTANT)
+            m->subsurface_depth = mat->subsurface_depth.value;
+        else if(mat->subsurface_depth.tex)
+            m->subsurface_depth = textures[mat->subsurface_depth.tex];
+
+        materials[mat] = add(mat->name, material_ptr(m));
+    }
+
+    // Add all models.
+    std::map<dfo_model*, model_ptr> models;
+
+    for(uint32_t i = 0; i < file->model_count; ++i)
+    {
+        dfo_model* mod = file->model_table[i];
+        model* m = new model;
+        for(uint32_t j = 0; j < mod->group_count; ++j)
+        {
+            dfo_vertex_group* group = mod->group_table + j;
+            m->add_vertex_group(
+                materials[group->material],
+                buffers[group->vertex_buffer],
+                buffers[group->index_buffer]
+            );
+        }
+
+        models[mod] = add(mod->name, model_ptr(m));
     }
 }
 
