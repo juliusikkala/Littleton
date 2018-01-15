@@ -6,6 +6,8 @@
 #include "texture.hh"
 #include "material.hh"
 #include "model.hh"
+#include "object.hh"
+#include <glm/gtc/type_ptr.hpp>
 #include <map>
 
 basic_resource_ptr::~basic_resource_ptr()
@@ -257,17 +259,17 @@ void resource_store::add_dfo(const std::string& dfo_path)
         if(mat->metallic_type == DFO_COMPONENT_CONSTANT)
             m->metallic = mat->metallic.value;
         else if(mat->metallic.tex)
-            m->metallic = textures[mat->metallic.tex];
+            m->metallic = textures.at(mat->metallic.tex);
 
         if(mat->color_type == DFO_COMPONENT_CONSTANT)
             m->color = dfo_rgba_to_color4(mat->color.value);
         else if(mat->color.tex)
-            m->color = textures[mat->color.tex];
+            m->color = textures.at(mat->color.tex);
 
         if(mat->roughness_type == DFO_COMPONENT_CONSTANT)
             m->roughness = mat->roughness.value;
         else if(mat->roughness.tex)
-            m->roughness = textures[mat->roughness.tex];
+            m->roughness = textures.at(mat->roughness.tex);
 
         m->ior = mat->ior;
         m->normal = textures[mat->normal];
@@ -275,18 +277,19 @@ void resource_store::add_dfo(const std::string& dfo_path)
         if(mat->emission_type == DFO_COMPONENT_CONSTANT)
             m->emission = mat->emission.value;
         else if(mat->emission.tex)
-            m->emission = textures[mat->emission.tex];
+            m->emission = textures.at(mat->emission.tex);
 
         if(mat->subsurface_scattering_type == DFO_COMPONENT_CONSTANT)
             m->subsurface_scattering =
                 dfo_rgba_to_color4(mat->subsurface_scattering.value);
         else if(mat->subsurface_scattering.tex)
-            m->subsurface_scattering = textures[mat->subsurface_scattering.tex];
+            m->subsurface_scattering =
+                textures.at(mat->subsurface_scattering.tex);
 
         if(mat->subsurface_depth_type == DFO_COMPONENT_CONSTANT)
             m->subsurface_depth = mat->subsurface_depth.value;
         else if(mat->subsurface_depth.tex)
-            m->subsurface_depth = textures[mat->subsurface_depth.tex];
+            m->subsurface_depth = textures.at(mat->subsurface_depth.tex);
 
         materials[mat] = add(mat->name, material_ptr(m));
     }
@@ -302,13 +305,25 @@ void resource_store::add_dfo(const std::string& dfo_path)
         {
             dfo_vertex_group* group = mod->group_table + j;
             m->add_vertex_group(
-                materials[group->material],
-                buffers[group->vertex_buffer],
-                buffers[group->index_buffer]
+                materials.at(group->material),
+                buffers.at(group->vertex_buffer),
+                buffers.at(group->index_buffer)
             );
         }
 
         models[mod] = add(mod->name, model_ptr(m));
+    }
+
+    // Add objects.
+    std::map<dfo_object*, object_ptr> objects;
+    for(uint32_t i = 0; i < file->object_count; ++i)
+    {
+        dfo_object* obj = file->object_table[i];
+        object* o = new object;
+        if(obj->parent) o->set_parent(objects.at(obj->parent));
+        if(obj->model) o->set_model(models.at(obj->model));
+        o->set_transform(glm::make_mat4(obj->transform));
+        objects[obj] = add(obj->name, object_ptr(o));
     }
 }
 
