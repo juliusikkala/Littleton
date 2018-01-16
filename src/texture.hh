@@ -2,7 +2,6 @@
 #define TEXTURE_HH
 #include "glheaders.hh"
 #include "resources.hh"
-#include "buffer.hh"
 #include <string>
 
 class texture

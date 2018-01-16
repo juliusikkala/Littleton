@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <memory>
 #include "dfo.h"
-#include "buffer.hh"
+#include "vertex_buffer.hh"
 #include "texture.hh"
 #include "material.hh"
 #include "model.hh"
@@ -187,30 +187,54 @@ public:
 
     void* operator()()
     {
-        buffer* new_buf;
-        if(buf->present)
+        vertex_buffer* new_buf = nullptr;
+        float* vertices = nullptr;
+        uint32_t* indices = new uint32_t[buf->index_count];
+
+        if(buf->type == DFO_VERTEX_PN)
         {
-            new_buf = new buffer(
-                (buffer::buffer_type)buf->type,
-                buf->data.data,
-                buf->size
-            );
+            float* vertices = new float[6 * buf->vertex_count];
+
+            if(!dfo_read_buffer(res->get_file(), buf, vertices, indices))
+            {
+                delete [] vertices;
+                delete [] indices;
+                throw std::runtime_error("Failed to read DFO buffer");
+            }
+        }
+        else if(buf->type == DFO_VERTEX_PNT)
+        {
+            float* vertices = new float[12 * buf->vertex_count];
+
+            if(!dfo_read_buffer_tangent(
+                res->get_file(),
+                buf,
+                12,
+                vertices, vertices+3, vertices+6, vertices+10,
+                indices
+            )){
+                delete [] vertices;
+                delete [] indices;
+                throw std::runtime_error("Failed to read DFO buffer");
+            }
         }
         else
         {
-            char* data = new char[buf->size];
-            if(!dfo_read_buffer(res->get_file(), buf, data))
-            {
-                delete [] data;
-                throw std::runtime_error("Failed to read DFO buffer");
-            }
-            new_buf = new buffer(
-                (buffer::buffer_type)buf->type,
-                data,
-                buf->size
+            throw std::runtime_error(
+                "Unknown DFO buffer type " + std::to_string((int)buf->type)
             );
-            delete [] data;
         }
+
+        new_buf = new vertex_buffer(
+            (vertex_buffer::vertex_type)buf->type,
+            buf->vertex_count,
+            vertices,
+            buf->index_count,
+            indices
+        );
+
+        delete [] vertices;
+        delete [] indices;
         return new_buf;
     }
 
@@ -230,13 +254,13 @@ void resource_store::add_dfo(const std::string& dfo_path)
 
     const dfo_file* file = res->get_file();
 
-    // Add all buffers
-    std::map<dfo_buffer*, buffer_ptr> buffers;
+    // Add all vertex buffers
+    std::map<dfo_buffer*, vertex_buffer_ptr> vertex_buffers;
 
     for(uint32_t i = 0; i < file->buffer_count; ++i)
     {
         dfo_buffer* buf = file->buffer_table[i];
-        buffers[buf] = buffer_ptr(dfo_buffer_reader(res, buf));
+        vertex_buffers[buf] = vertex_buffer_ptr(dfo_buffer_reader(res, buf));
     }
 
     // Add all textures
@@ -306,8 +330,7 @@ void resource_store::add_dfo(const std::string& dfo_path)
             dfo_vertex_group* group = mod->group_table + j;
             m->add_vertex_group(
                 materials.at(group->material),
-                buffers.at(group->vertex_buffer),
-                buffers.at(group->index_buffer)
+                vertex_buffers.at(group->buffer)
             );
         }
 

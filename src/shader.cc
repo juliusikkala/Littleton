@@ -60,6 +60,11 @@ shader::shader(
     glDeleteShader(vshader);
     glDeleteShader(fshader);
 
+    glBindAttribLocation(program, 0, "position");
+    glBindAttribLocation(program, 1, "normal");
+    glBindAttribLocation(program, 2, "tangent");
+    glBindAttribLocation(program, 3, "uv");
+
     glLinkProgram(program);
     throw_program_error(program);
 }

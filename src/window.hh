@@ -13,6 +13,7 @@ public:
         bool vsync = true,
         unsigned samples = 0
     );
+    window(const window& other) = delete;
     ~window();
 
     int poll(SDL_Event& event);
@@ -22,5 +23,6 @@ private:
     static bool initialized;
 
     SDL_Window* win;
+    SDL_GLContext ctx;
 };
 #endif

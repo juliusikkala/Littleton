@@ -2,7 +2,7 @@
 #define MODEL_HH
 #include "resources.hh"
 #include "material.hh"
-#include "buffer.hh"
+#include "vertex_buffer.hh"
 
 struct model
 {
@@ -10,15 +10,13 @@ public:
     struct vertex_group
     {
         material_ptr mat;
-        buffer_ptr vertex;
-        buffer_ptr index;
+        vertex_buffer_ptr vertex;
     };
 
     size_t group_count() const;
     void add_vertex_group(
         const material_ptr& mat,
-        const buffer_ptr& vertex,
-        const buffer_ptr& index
+        const vertex_buffer_ptr& vertex
     );
     void remove_vertex_group(size_t i);
     const vertex_group& operator[](size_t i) const;

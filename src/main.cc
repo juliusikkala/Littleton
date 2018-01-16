@@ -1,13 +1,16 @@
 #include "window.hh"
 #include "resources.hh"
-#include "texture.hh"
+#include "object.hh"
+#include <iostream>
 
 int main()
 { 
     window w(640, 480, "dflowers", false);
     resource_store resources;
     resources.add_dfo("data/test.dfo");
-    texture_ptr wood = resources.get<texture>("wood.png");
+    object_ptr cube = resources.get<object>("cube");
+    model_ptr cube_model = cube->get_model();
+    vertex_buffer_ptr cube_vb = (*cube_model)[0].vertex;
 
     bool running = true;
     while(running)

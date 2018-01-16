@@ -63,10 +63,30 @@ window::window(
         throw std::runtime_error(SDL_GetError());
     }
 
+    ctx = SDL_GL_CreateContext(win);
+    if(!ctx)
+    {
+        SDL_Quit();
+        throw std::runtime_error(SDL_GetError());
+    }
+    SDL_GL_MakeCurrent(win, ctx);
+
     glewExperimental = GL_TRUE;
-    glewInit();
+    GLenum err = glewInit();
+    if(err != GLEW_OK)
+    {
+        throw std::runtime_error((const char*)glewGetErrorString(err));
+    }
 
     initialized = true;
+}
+
+window::~window()
+{
+    SDL_GL_DeleteContext(ctx);
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+    initialized = false;    
 }
 
 int window::poll(SDL_Event& event)
@@ -77,10 +97,4 @@ int window::poll(SDL_Event& event)
 void window::swap()
 {
     SDL_GL_SwapWindow(win);
-}
-
-window::~window()
-{
-    SDL_Quit();
-    initialized = false;    
 }
