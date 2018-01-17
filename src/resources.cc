@@ -42,14 +42,34 @@ void basic_resource_ptr::unpin() const
     }
 }
 
+bool basic_resource_ptr::operator<(const basic_resource_ptr& other) const
+{
+    return s < other.s;
+}
+
+bool basic_resource_ptr::operator<=(const basic_resource_ptr& other) const
+{
+    return s <= other.s;
+}
+
+bool basic_resource_ptr::operator>(const basic_resource_ptr& other) const
+{
+    return s > other.s;
+}
+
+bool basic_resource_ptr::operator>=(const basic_resource_ptr& other) const
+{
+    return s >= other.s;
+}
+
 bool basic_resource_ptr::operator==(const basic_resource_ptr& other) const
 {
-    return s && other.s == s;
+    return s == other.s;
 }
 
 bool basic_resource_ptr::operator!=(const basic_resource_ptr& other) const
 {
-    return !s || other.s != s;
+    return s != other.s;
 }
 
 basic_resource_ptr::operator bool() const
@@ -243,9 +263,9 @@ private:
     dfo_buffer* buf;
 };
 
-static color4 dfo_rgba_to_color4(dfo_rgba rgba)
+static glm::vec4 dfo_rgba_to_vec4(dfo_rgba rgba)
 {
-    return color4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
+    return glm::vec4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
 }
 
 void resource_store::add_dfo(const std::string& dfo_path)
@@ -286,7 +306,7 @@ void resource_store::add_dfo(const std::string& dfo_path)
             m->metallic = textures.at(mat->metallic.tex);
 
         if(mat->color_type == DFO_COMPONENT_CONSTANT)
-            m->color = dfo_rgba_to_color4(mat->color.value);
+            m->color = dfo_rgba_to_vec4(mat->color.value);
         else if(mat->color.tex)
             m->color = textures.at(mat->color.tex);
 
@@ -305,7 +325,7 @@ void resource_store::add_dfo(const std::string& dfo_path)
 
         if(mat->subsurface_scattering_type == DFO_COMPONENT_CONSTANT)
             m->subsurface_scattering =
-                dfo_rgba_to_color4(mat->subsurface_scattering.value);
+                dfo_rgba_to_vec4(mat->subsurface_scattering.value);
         else if(mat->subsurface_scattering.tex)
             m->subsurface_scattering =
                 textures.at(mat->subsurface_scattering.tex);

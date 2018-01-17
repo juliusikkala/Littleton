@@ -10,7 +10,12 @@ void object::set_transform(const glm::mat4& transform)
     this->transform = transform;
 }
 
-glm::mat4 object::get_transform() { return transform; }
+glm::mat4 object::get_transform() const { return transform; }
+
+glm::mat4 object::get_global_transform() const
+{
+    return parent ? transform * parent->get_global_transform() : transform;
+}
 
 void object::set_parent(const resource_ptr<object>& parent)
 {

@@ -24,7 +24,7 @@ private:
     void append_method();
     
     template<typename T, typename... Args>
-    void append_method(T& method, Args&&... rest);
+    void append_method(T&& method, Args&&... rest);
 
     std::vector<std::unique_ptr<pipeline_method>> methods;
 };

@@ -11,7 +11,8 @@ public:
     ~object();
 
     void set_transform(const glm::mat4& transform);
-    glm::mat4 get_transform();
+    glm::mat4 get_transform() const;
+    glm::mat4 get_global_transform() const;
 
     void set_parent(const resource_ptr<object>& parent);
 

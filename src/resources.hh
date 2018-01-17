@@ -17,6 +17,10 @@ public:
     void unpin() const;
 
 
+    bool operator<(const basic_resource_ptr& other) const;
+    bool operator<=(const basic_resource_ptr& other) const;
+    bool operator>(const basic_resource_ptr& other) const;
+    bool operator>=(const basic_resource_ptr& other) const;
     bool operator==(const basic_resource_ptr& other) const;
     bool operator!=(const basic_resource_ptr& other) const;
 

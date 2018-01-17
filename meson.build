@@ -10,7 +10,10 @@ src = [
   'src/material.cc',
   'src/model.cc',
   'src/object.cc',
-  'src/pipeline.cc'
+  'src/pipeline.cc',
+  'src/method/clear.cc',
+  'src/scene.cc',
+  'src/camera.cc'
 ]
 
 dfoutils_sp = subproject('DFOUtils')
@@ -25,6 +28,7 @@ sdl2_dep = dependency('sdl2')
 glew_dep = dependency('glew')
 glm_dep = dependency('glm', version: '>=0.9.8')
 thread_dep = dependency('threads')
+srcdir = include_directories('src')
 
 executable(
   'dflowers',
@@ -37,6 +41,7 @@ executable(
     glm_dep,
     thread_dep
   ],
+  include_directories: srcdir,
   install: true,
   gui_app: true,
 )
