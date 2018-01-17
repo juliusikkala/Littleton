@@ -10,6 +10,7 @@ src = [
   'src/material.cc',
   'src/model.cc',
   'src/object.cc',
+  'src/pipeline.cc'
 ]
 
 dfoutils_sp = subproject('DFOUtils')

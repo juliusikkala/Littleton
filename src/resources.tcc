@@ -34,6 +34,18 @@ resource_ptr<T>::resource_ptr(T* ptr)
 ) { }
 
 template<typename T>
+resource_ptr<T>::resource_ptr(T& reference)
+: basic_resource_ptr(
+    new shared {
+        0, 1,
+        [refptr = &reference](){ return refptr; },
+        [](void *ptr){},
+        &reference
+    }
+) { }
+
+
+template<typename T>
 resource_ptr<T>::resource_ptr(shared* s)
 : basic_resource_ptr(s) {}
 
@@ -45,17 +57,6 @@ resource_ptr<T> resource_ptr<T>::create(Args&&... args)
         [=](){ return new T(args...); },
         [](void* ptr){ delete ((T*)ptr); }
     );
-}
-
-template<typename T>
-resource_ptr<T> resource_ptr<T>::ref(T& reference)
-{
-    return resource_ptr<T>(new shared {
-        0, 1,
-        [refptr = &reference](){ return refptr; },
-        [](void *ptr){},
-        &reference
-    });
 }
 
 template<typename T>
@@ -90,6 +91,19 @@ resource_ptr<T>& resource_ptr<T>::operator=(T* ptr)
             ptr
         } : nullptr
     );
+    return *this;
+}
+
+template<typename T>
+resource_ptr<T>& resource_ptr<T>::operator=(T& reference)
+{
+    reset(new shared {
+        0, 1,
+        [refptr = &reference](){ return refptr; },
+        [](void *ptr){},
+        &reference
+    });
+
     return *this;
 }
 

@@ -19,7 +19,7 @@ void object::set_parent(const resource_ptr<object>& parent)
 
 void object::set_parent(object& parent)
 {
-    this->parent = object_ptr::ref(parent);
+    this->parent = parent;
 }
 
 void object::set_parent() { this->parent = nullptr; }
@@ -28,7 +28,7 @@ const resource_ptr<object>& object::get_parent() const { return parent; }
 
 void object::set_model(const model_ptr& mod) { this->mod = mod; }
 
-void object::set_model(model& mod) { this->mod = model_ptr::ref(mod); }
+void object::set_model(model& mod) { this->mod = mod; }
 
 void object::set_model() { mod = nullptr; }
 

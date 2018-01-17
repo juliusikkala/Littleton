@@ -64,7 +64,12 @@ public:
      * work in this case, the data will be released only when the last
      * resource_ptr referring to it is being destructed.
      */
-    explicit resource_ptr(T* reference);
+    explicit resource_ptr(T* ptr);
+
+    /* Doesn't take ownership! Make sure the reference outlives this
+     * resource_ptr and all its copies!
+     */
+    explicit resource_ptr(T& reference);
 
     /* Make sure that the arguments can be safely copied and will be usable
      * during the lifetime of the resource. Be extra careful with pointers,
@@ -74,11 +79,6 @@ public:
     template<typename... Args>
     static resource_ptr<T> create(Args&&... args);
 
-    /* Doesn't take ownership! Make sure the pointer outlives this resource_ptr
-     * and all its copies!
-     */
-    static resource_ptr<T> ref(T& reference);
-
     T& operator*() const;
 
     T* operator->() const;
@@ -86,6 +86,7 @@ public:
     T* get() const;
 
     resource_ptr<T>& operator=(T* other);
+    resource_ptr<T>& operator=(T& other);
     resource_ptr<T>& operator=(resource_ptr<T>&& other);
     resource_ptr<T>& operator=(const resource_ptr<T>& other);
 
