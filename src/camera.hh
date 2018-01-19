@@ -9,10 +9,14 @@ public:
     camera();
     ~camera();
 
-    glm::mat4 get_perspective() const;
+    void perspective(float fov, float aspect, float near);
+    void perspective(float fov, float aspect, float near, float far);
+    void orthographic(float w, float h);
+    void orthographic(float w, float h, float near, float far);
+    glm::mat4 get_projection() const;
 
 private:
-    glm::mat4 perspective;
+    glm::mat4 projection;
 };
 
 #endif
