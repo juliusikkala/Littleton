@@ -14,11 +14,19 @@ resource_ptr<T>::resource_ptr(
 ) { }
 
 template<typename T>
-resource_ptr<T>::resource_ptr(const resource_ptr<T>& other)
-: basic_resource_ptr(other) { }
+template<
+    typename U,
+    typename
+>
+resource_ptr<T>::resource_ptr(const resource_ptr<U>& other)
+: basic_resource_ptr(other) {}
 
 template<typename T>
-resource_ptr<T>::resource_ptr(resource_ptr<T>&& other)
+template<
+    typename U,
+    typename
+>
+resource_ptr<T>::resource_ptr(resource_ptr<U>&& other)
 : basic_resource_ptr(std::move(other)) {}
 
 template<typename T>
@@ -108,7 +116,8 @@ resource_ptr<T>& resource_ptr<T>::operator=(T& reference)
 }
 
 template<typename T>
-resource_ptr<T>& resource_ptr<T>::operator=(resource_ptr<T>&& other)
+template<typename U, typename>
+resource_ptr<T>& resource_ptr<T>::operator=(resource_ptr<U>&& other)
 {
     reset(other.s);
     other.reset(nullptr);
@@ -116,7 +125,8 @@ resource_ptr<T>& resource_ptr<T>::operator=(resource_ptr<T>&& other)
 }
 
 template<typename T>
-resource_ptr<T>& resource_ptr<T>::operator=(const resource_ptr<T>& other)
+template<typename U, typename>
+resource_ptr<T>& resource_ptr<T>::operator=(const resource_ptr<U>& other)
 {
     reset(other.s);
     return *this;

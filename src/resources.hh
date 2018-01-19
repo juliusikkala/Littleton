@@ -4,6 +4,7 @@
 #include <string>
 #include <typeinfo>
 #include <typeindex>
+#include <type_traits>
 #include <functional>
 
 class basic_resource_ptr
@@ -55,8 +56,18 @@ class resource_ptr: public basic_resource_ptr
 friend class resource_store;
 public:
     resource_ptr();
-    resource_ptr(const resource_ptr<T>& other);
-    resource_ptr(resource_ptr<T>&& other);
+
+    template<
+        typename U,
+        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
+    >
+    resource_ptr(const resource_ptr<U>& other);
+
+    template<
+        typename U,
+        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
+    >
+    resource_ptr(resource_ptr<U>&& other);
 
     explicit resource_ptr(
         std::function<void*()> create_resource,
@@ -91,8 +102,17 @@ public:
 
     resource_ptr<T>& operator=(T* other);
     resource_ptr<T>& operator=(T& other);
-    resource_ptr<T>& operator=(resource_ptr<T>&& other);
-    resource_ptr<T>& operator=(const resource_ptr<T>& other);
+    template<
+        typename U,
+        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
+    >
+    resource_ptr<T>& operator=(resource_ptr<U>&& other);
+
+    template<
+        typename U,
+        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
+    >
+    resource_ptr<T>& operator=(const resource_ptr<U>& other);
 
 private:
     // Note that this is not type safe!
