@@ -1,19 +1,18 @@
 #ifndef CAMERA_HH
 #define CAMERA_HH
+#include "transformable.hh"
 #include <glm/glm.hpp>
 
-class camera
+class camera: public transformable
 {
 public:
     camera();
     ~camera();
 
-    glm::mat4 get_view() const;
     glm::mat4 get_perspective() const;
 
 private:
-    glm::mat4 view, perspective;
-    float fov;
+    glm::mat4 perspective;
 };
 
 #endif

@@ -1,20 +1,14 @@
 #include "object.hh"
 
-object::object()
-: transform(1) {}
+object::object() {}
 
 object::~object() {}
 
-void object::set_transform(const glm::mat4& transform)
-{
-    this->transform = transform;
-}
-
-glm::mat4 object::get_transform() const { return transform; }
-
 glm::mat4 object::get_global_transform() const
 {
-    return parent ? transform * parent->get_global_transform() : transform;
+    return parent ?
+        get_transform() * parent->get_global_transform() :
+        get_transform();
 }
 
 void object::set_parent(const resource_ptr<object>& parent)

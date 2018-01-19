@@ -48,7 +48,8 @@ window::window(
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
     }
 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, vsync);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
     win = SDL_CreateWindow(
         title,
         SDL_WINDOWPOS_UNDEFINED,
@@ -79,6 +80,8 @@ window::window(
     }
 
     initialized = true;
+
+    SDL_GL_SetSwapInterval(vsync);
 }
 
 window::~window()

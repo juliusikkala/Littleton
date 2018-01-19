@@ -2,16 +2,15 @@
 #define OBJECT_HH
 #include "resources.hh"
 #include "model.hh"
+#include "transformable.hh"
 #include <glm/glm.hpp>
 
-class object
+class object: public transformable
 {
 public:
     object();
     ~object();
 
-    void set_transform(const glm::mat4& transform);
-    glm::mat4 get_transform() const;
     glm::mat4 get_global_transform() const;
 
     void set_parent(const resource_ptr<object>& parent);
@@ -37,7 +36,6 @@ public:
     const model_ptr& get_model() const;
 
 private:
-    glm::mat4 transform;
     resource_ptr<object> parent;
     model_ptr mod;
 };
