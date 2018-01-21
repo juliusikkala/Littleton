@@ -161,13 +161,16 @@ static GLuint load_texture(
     return gl_tex;
 }
 
+texture::texture()
+: tex(0) {}
+
 texture::texture(const std::string& path)
 : tex(0)
 {
     tex = load_texture(
         path,
         internal_format,
-        format,
+        external_format,
         target,
         type
     );
@@ -180,10 +183,10 @@ texture::texture(const std::string& path)
 texture::texture(
     unsigned w,
     unsigned h,
-    GLint external_format,
+    GLenum external_format,
     GLint internal_format,
     GLenum type
-): tex(0), internal_format(internal_format), format(external_format),
+): tex(0), internal_format(internal_format), external_format(external_format),
    target(GL_TEXTURE_2D), type(type)
 {
     glGenTextures(1, &tex);
@@ -191,33 +194,156 @@ texture::texture(
     glTexStorage2D(GL_TEXTURE_2D, 1, internal_format, w, h);
 }
 
-texture::~texture()
+texture::texture(texture&& other)
 {
-    if(tex != 0) glDeleteTextures(1, &tex);
+    other.load();
+
+    tex = other.tex;
+    internal_format = other.internal_format;
+    external_format = other.external_format;
+    target = other.target;
+    type = other.type;
+
+    other.tex = 0;
 }
 
+texture::~texture()
+{
+    basic_unload();
+}
 
 GLuint texture::get_texture() const
 {
+    load();
     return tex;
 }
 
 GLint texture::get_internal_format() const
 {
+    load();
     return internal_format;
 }
 
 GLenum texture::get_external_format() const
 {
-    return format;
+    load();
+    return external_format;
 }
 
 GLenum texture::get_target() const
 {
+    load();
     return target;
 }
 
 GLenum texture::get_type() const
 {
+    load();
     return type;
+}
+
+class file_texture: public texture
+{
+public:
+    file_texture(const std::string& path)
+    : path(path) { }
+
+    void load() const override
+    {
+        basic_load(path);
+    }
+
+    void unload() const override
+    {
+        basic_unload();
+    }
+private:
+    std::string path;
+};
+
+texture* texture::create(const std::string& path)
+{
+    return new file_texture(path);
+}
+
+class empty_texture: public texture
+{
+public:
+    empty_texture(
+        unsigned w,
+        unsigned h,
+        GLenum external_format,
+        GLint internal_format,
+        GLenum type
+    ): w(w), h(h)
+    {
+        this->external_format = external_format;
+        this->internal_format = internal_format;
+        this->type = type;
+        this->target = GL_TEXTURE_2D;
+    }
+
+    void load() const override
+    {
+        basic_load(w, h, external_format, internal_format, type);
+    }
+
+    void unload() const override
+    {
+        basic_unload();
+    }
+
+private:
+    unsigned w, h;
+};
+
+texture* texture::create(
+    unsigned w,
+    unsigned h,
+    GLenum external_format,
+    GLint internal_format,
+    GLenum type
+){
+    return new empty_texture(w, h, external_format, internal_format, type);
+}
+
+void texture::basic_load(const std::string& path) const
+{
+    if(tex) return;
+
+    tex = load_texture(
+        path,
+        internal_format,
+        external_format,
+        target,
+        type
+    );
+
+    if(tex == 0)
+    {
+        throw std::runtime_error("Unable to read texture " + path);
+    }
+}
+
+void texture::basic_load(
+    unsigned w,
+    unsigned h,
+    GLenum external_format,
+    GLint internal_format,
+    GLenum type
+) const {
+    if(tex) return;
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexStorage2D(GL_TEXTURE_2D, 1, internal_format, w, h);
+}
+
+void texture::basic_unload() const
+{
+    if(tex != 0)
+    {
+        glDeleteTextures(1, &tex);
+        tex = 0;
+    }
 }

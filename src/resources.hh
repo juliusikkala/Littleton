@@ -5,180 +5,159 @@
 #include <typeinfo>
 #include <typeindex>
 #include <type_traits>
-#include <functional>
+#include <iterator>
+#include <memory>
 
-class basic_resource_ptr
+// Not every resource in resource_store has to derive from this; only if they
+// provide (optional) lazy loading is this resource class required.
+class resource
 {
-friend class resource_store;
 public:
-    basic_resource_ptr();
-    ~basic_resource_ptr();
+    virtual ~resource();
 
-    void pin() const;
-    void unpin() const;
-
-
-    bool operator<(const basic_resource_ptr& other) const;
-    bool operator<=(const basic_resource_ptr& other) const;
-    bool operator>(const basic_resource_ptr& other) const;
-    bool operator>=(const basic_resource_ptr& other) const;
-    bool operator==(const basic_resource_ptr& other) const;
-    bool operator!=(const basic_resource_ptr& other) const;
-
-    operator bool() const;
-
-protected:
-    struct shared
-    {
-        unsigned references;
-        unsigned global_pins;
-        std::function<void*()> create_resource;
-        std::function<void(void*)> delete_resource;
-        void* resource;
-    };
-
-    basic_resource_ptr(shared* other_s);
-    basic_resource_ptr(const basic_resource_ptr& other);
-    basic_resource_ptr(basic_resource_ptr&& other);
-
-    void reset(shared* other_s);
-
-    basic_resource_ptr& operator=(basic_resource_ptr&& other);
-    basic_resource_ptr& operator=(const basic_resource_ptr& other);
-
-    mutable unsigned local_pins;
-    mutable shared* s;
-};
-
-template<typename T>
-class resource_ptr: public basic_resource_ptr
-{
-friend class resource_store;
-public:
-    resource_ptr();
-
-    template<
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
-    >
-    resource_ptr(const resource_ptr<U>& other);
-
-    template<
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
-    >
-    resource_ptr(resource_ptr<U>&& other);
-
-    explicit resource_ptr(
-        std::function<void*()> create_resource,
-        std::function<void(void*)> delete_resource =
-            [](void* res){ delete ((T*)res);}
-    );
-
-    /* Takes ownership of the pointer. Note that lazy loading will not
-     * work in this case, the data will be released only when the last
-     * resource_ptr referring to it is being destructed.
-     */
-    explicit resource_ptr(T* ptr);
-
-    /* Doesn't take ownership! Make sure the reference outlives this
-     * resource_ptr and all its copies!
-     */
-    explicit resource_ptr(T& reference);
-
-    /* Make sure that the arguments can be safely copied and will be usable
-     * during the lifetime of the resource. Be extra careful with pointers,
-     * including C-style strings. String literals should be safe though,
-     * they're stored statically according to standard.
-     */
-    template<typename... Args>
-    static resource_ptr<T> create(Args&&... args);
-
-    T& operator*() const;
-
-    T* operator->() const;
-
-    T* get() const;
-
-    resource_ptr<T>& operator=(T* other);
-    resource_ptr<T>& operator=(T& other);
-    template<
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
-    >
-    resource_ptr<T>& operator=(resource_ptr<U>&& other);
-
-    template<
-        typename U,
-        typename = std::enable_if_t<std::is_convertible_v<U*, T*>>
-    >
-    resource_ptr<T>& operator=(const resource_ptr<U>& other);
-
-private:
-    // Note that this is not type safe!
-    resource_ptr(const basic_resource_ptr& other);
-    resource_ptr(shared* s);
+    virtual void load() const;
+    virtual void unload() const;
 };
 
 class resource_store
 {
+private:
+    struct container
+    {
+        virtual ~container() = 0;
+        void* data;
+    };
+
+    template<typename T>
+    class typed_container: public container
+    {
+    public:
+        typed_container(T* data);
+        ~typed_container();
+    };
+
+
+    using inner_map = std::unordered_map<
+        std::string,
+        std::unique_ptr<container>
+    >;
+    using internal_map = std::unordered_map<std::type_index, inner_map>;
+    mutable internal_map resources;
+
 public:
+
+    // There is nothing in this language that I hate more than iterators.
+    template<typename T, typename I>
+    class resource_iterator: public std::iterator<std::forward_iterator_tag, T>
+    {
+    public:
+        resource_iterator() = default;
+        resource_iterator(const resource_iterator<T, I>& other) = default;
+
+        void swap(resource_iterator<T, I>& other) noexcept;
+
+        resource_iterator<T, I>& operator++();
+        resource_iterator<T, I> operator++(int);
+
+        template<typename U>
+        bool operator==(const resource_iterator<U, I>& other) const;
+
+        template<typename U>
+        bool operator!=(const resource_iterator<U, I>& other) const;
+
+        T& operator*() const;
+        T* operator->() const;
+
+        const std::string& name() const;
+
+        template<typename J>
+        operator resource_iterator<const T, J>() const;
+
+    private:
+        template<typename U>
+        friend class iterable;
+
+        template<typename U>
+        friend class const_iterable;
+
+        friend class resource_store;
+
+        explicit resource_iterator(I it);
+        I it;
+    };
+
+    template<typename T>
+    using iterator = resource_iterator<T, inner_map::iterator>;
+
+    template<typename T>
+    using const_iterator =
+        resource_iterator<const T, inner_map::const_iterator>;
+
     resource_store();
     resource_store(const resource_store& other) = delete;
     resource_store(resource_store& other) = delete;
     ~resource_store();
 
-    template<typename T, typename... Args>
-    const resource_ptr<T>& create(const std::string& name, Args&&... args);
+    // Takes ownership of the pointer.
+    template<typename T>
+    T* add(const std::string& name, T* res);
 
     template<typename T>
-    const resource_ptr<T>& add(const std::string& name, resource_ptr<T> res);
+    T* add(const std::string& name, T&& res);
 
-    /* Note that while the resource is removed from this store, it may have
-     * references elsewhere and not be freed because of that.
-     */
+    void add_dfo(const std::string& path);
+
+    // Unsafe, deletes the pointer to the resource.
     template<typename T>
     void remove(const std::string& name);
 
     template<typename T>
-    const resource_ptr<T>& get(const std::string& name) const;
-
-    void add_dfo(const std::string& dfo_path);
-
-    // Essentially makes sure that all resources in this store are loaded.
-    void pin_all();
-    void unpin_all();
-
-    // These pins will stay, unlike if you pinned the resource_ptr yourself
-    template<typename T>
-    void pin(const std::string& name);
+    T* get(const std::string& name) const;
 
     template<typename T>
-    void unpin(const std::string& name);
+    iterator<T> begin();
 
-private:
+    template<typename T>
+    iterator<T> end();
 
-    struct name_type
-    {
-        std::type_index type;
-        std::string name;
+    template<typename T>
+    const_iterator<T> cbegin() const;
 
-        bool operator==(const name_type& other) const;
-    };
+    template<typename T>
+    const_iterator<T> cend() const;
 
-    class name_type_hash
+    template<typename T>
+    class iterable
     {
     public:
-        size_t operator()(const name_type& nt) const;
+        iterator<T> begin();
+        iterator<T> end();
+    private:
+        friend class resource_store;
+        iterable(inner_map& m);
+
+        inner_map& m;
     };
 
-    std::unordered_map<
-        name_type,
-        basic_resource_ptr,
-        name_type_hash
-    > resources;
+    template<typename T>
+    class const_iterable
+    {
+    public:
+        const_iterator<T> cbegin() const;
+        const_iterator<T> cend() const;
+    private:
+        friend class resource_store;
+        const_iterable(const inner_map& m);
+
+        const inner_map& m;
+    };
+
+    template<typename T>
+    iterable<T> get_iterable();
+
+    template<typename T>
+    const_iterable<T> get_const_iterable() const;
 };
 
 #include "resources.tcc"
 #endif
-

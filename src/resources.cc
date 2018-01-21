@@ -10,160 +10,19 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <map>
 
-basic_resource_ptr::~basic_resource_ptr()
-{
-    reset(nullptr);
-}
+resource::~resource() {}
+void resource::load() const {}
+void resource::unload() const {}
 
-void basic_resource_ptr::pin() const
-{
-    if(s)
-    {
-        local_pins++;
-        s->global_pins++;
-        if(s->global_pins == 1)
-        {
-            s->resource = s->create_resource();
-        }
-    }
-}
-
-void basic_resource_ptr::unpin() const
-{
-    if(s && local_pins != 0)
-    {
-        local_pins--;
-        s->global_pins--;
-        if(s->global_pins == 0)
-        {
-            s->delete_resource(s->resource);
-            s->resource = nullptr;
-        }
-    }
-}
-
-bool basic_resource_ptr::operator<(const basic_resource_ptr& other) const
-{
-    return s < other.s;
-}
-
-bool basic_resource_ptr::operator<=(const basic_resource_ptr& other) const
-{
-    return s <= other.s;
-}
-
-bool basic_resource_ptr::operator>(const basic_resource_ptr& other) const
-{
-    return s > other.s;
-}
-
-bool basic_resource_ptr::operator>=(const basic_resource_ptr& other) const
-{
-    return s >= other.s;
-}
-
-bool basic_resource_ptr::operator==(const basic_resource_ptr& other) const
-{
-    return s == other.s;
-}
-
-bool basic_resource_ptr::operator!=(const basic_resource_ptr& other) const
-{
-    return s != other.s;
-}
-
-basic_resource_ptr::operator bool() const
-{
-    return s;
-}
-
-basic_resource_ptr::basic_resource_ptr()
-: local_pins(0), s(nullptr) { }
-
-basic_resource_ptr::basic_resource_ptr(shared* other_s)
-: local_pins(0), s(other_s) { if(s) s->references++; }
-
-basic_resource_ptr::basic_resource_ptr(const basic_resource_ptr& other)
-: local_pins(0), s(other.s) { if(s) s->references++; }
-
-basic_resource_ptr::basic_resource_ptr(basic_resource_ptr&& other)
-: local_pins(other.local_pins), s(other.s)
-{
-    other.local_pins = 0;
-    other.s = nullptr;
-}
-
-void basic_resource_ptr::reset(shared* other_s)
-{
-    if(s)
-    {
-        s->global_pins -= local_pins;
-        if(s->global_pins == 0 && s->resource)
-        {
-            s->delete_resource(s->resource);
-            s->resource = nullptr;
-        }
-
-        s->references--;
-        if(s->references == 0)
-        {
-            if(s->resource)
-            {
-                s->delete_resource(s->resource);
-            }
-            delete s;
-        }
-    }
-
-    local_pins = 0;
-    s = other_s;
-    if(s) s->references++;
-}
-
-basic_resource_ptr& basic_resource_ptr::operator=(basic_resource_ptr&& other)
-{
-    if(s)
-    {
-        s->global_pins -= local_pins;
-        if(s->global_pins == 0 && s->resource)
-        {
-            s->delete_resource(s->resource);
-            s->resource = nullptr;
-        }
-
-        s->references--;
-        if(s->references == 0)
-        {
-            if(s->resource)
-            {
-                s->delete_resource(s->resource);
-            }
-            delete s;
-        }
-    }
-    s = other.s;
-    local_pins = other.local_pins;
-
-    other.local_pins = 0;
-    other.s = nullptr;
-    return *this;
-}
-
-basic_resource_ptr& basic_resource_ptr::operator=(
-    const basic_resource_ptr& other
-){
-    reset(other.s);
-    return *this;
-}
+resource_store::container::~container() {};
 
 resource_store::resource_store() { }
-
 resource_store::~resource_store() { }
 
-class dfo_file_resource
+class dfo_file_wrapper
 {
 public:
-    dfo_file_resource(const std::string& path)
+    dfo_file_wrapper(const std::string& path)
     {
         if(!dfo_open_file(&file, path.c_str(), 0))
         {
@@ -171,7 +30,7 @@ public:
         }
     }
 
-    ~dfo_file_resource()
+    ~dfo_file_wrapper()
     {
         dfo_close(&file);
     }
@@ -184,30 +43,16 @@ private:
     dfo_file file;
 };
 
-using dfo_ptr = resource_ptr<dfo_file_resource>;
-
-class dfo_buffer_reader
+class vertex_buffer_dfo: public vertex_buffer
 {
 public:
-    dfo_buffer_reader(dfo_ptr res, dfo_buffer* buf)
-    : res(res), buf(buf)
-    {
-        this->res.pin();
-    }
+    vertex_buffer_dfo(
+        const std::shared_ptr<dfo_file_wrapper>& res,
+        dfo_buffer* buf
+    ): res(res), buf(buf) {}
 
-    dfo_buffer_reader(const dfo_buffer_reader& other)
-    : res(other.res), buf(other.buf)
+    void load() const override
     {
-        this->res.pin();
-    }
-
-    ~dfo_buffer_reader()
-    {
-    }
-
-    void* operator()()
-    {
-        vertex_buffer* new_buf = nullptr;
         float* vertices = nullptr;
         uint32_t* indices = new uint32_t[buf->index_count];
 
@@ -245,7 +90,7 @@ public:
             );
         }
 
-        new_buf = new vertex_buffer(
+        basic_load(
             (vertex_buffer::vertex_type)buf->type,
             buf->vertex_count,
             vertices,
@@ -255,11 +100,15 @@ public:
 
         delete [] vertices;
         delete [] indices;
-        return new_buf;
+    }
+
+    void unload() const override
+    {
+        basic_unload();
     }
 
 private:
-    dfo_ptr res;
+    std::shared_ptr<dfo_file_wrapper> res;
     dfo_buffer* buf;
 };
 
@@ -270,30 +119,33 @@ static glm::vec4 dfo_rgba_to_vec4(dfo_rgba rgba)
 
 void resource_store::add_dfo(const std::string& dfo_path)
 {
-    dfo_ptr res = create<dfo_file_resource>(dfo_path, dfo_path);
+    std::shared_ptr<dfo_file_wrapper> res(new dfo_file_wrapper(dfo_path));
 
     const dfo_file* file = res->get_file();
 
     // Add all vertex buffers
-    std::map<dfo_buffer*, vertex_buffer_ptr> vertex_buffers;
+    std::map<dfo_buffer*, vertex_buffer*> vertex_buffers;
 
     for(uint32_t i = 0; i < file->buffer_count; ++i)
     {
         dfo_buffer* buf = file->buffer_table[i];
-        vertex_buffers[buf] = vertex_buffer_ptr(dfo_buffer_reader(res, buf));
+        vertex_buffers[buf] = add<vertex_buffer>(
+            dfo_path + "/buffer_" + std::to_string(i),
+            new vertex_buffer_dfo(res, buf)
+        );
     }
 
     // Add all textures
-    std::map<dfo_texture*, texture_ptr> textures;
+    std::map<dfo_texture*, texture*> textures;
 
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
-        textures[tex] = create<texture>(tex->path, std::string(tex->path));
+        textures[tex] = add<texture>(tex->path, texture::create(tex->path));
     }
 
     // Add all materials
-    std::map<dfo_material*, material_ptr> materials;
+    std::map<dfo_material*, material*> materials;
 
     for(uint32_t i = 0; i < file->material_count; ++i)
     {
@@ -335,11 +187,11 @@ void resource_store::add_dfo(const std::string& dfo_path)
         else if(mat->subsurface_depth.tex)
             m->subsurface_depth = textures.at(mat->subsurface_depth.tex);
 
-        materials[mat] = add(mat->name, material_ptr(m));
+        materials[mat] = add<material>(mat->name, m);
     }
 
     // Add all models.
-    std::map<dfo_model*, model_ptr> models;
+    std::map<dfo_model*, model*> models;
 
     for(uint32_t i = 0; i < file->model_count; ++i)
     {
@@ -354,11 +206,11 @@ void resource_store::add_dfo(const std::string& dfo_path)
             );
         }
 
-        models[mod] = add(mod->name, model_ptr(m));
+        models[mod] = add<model>(mod->name, m);
     }
 
     // Add objects.
-    std::map<dfo_object*, object_ptr> objects;
+    std::map<dfo_object*, object*> objects;
     for(uint32_t i = 0; i < file->object_count; ++i)
     {
         dfo_object* obj = file->object_table[i];
@@ -366,33 +218,6 @@ void resource_store::add_dfo(const std::string& dfo_path)
         if(obj->parent) o->set_parent(objects.at(obj->parent));
         if(obj->model) o->set_model(models.at(obj->model));
         o->set_transform(glm::make_mat4(obj->transform));
-        objects[obj] = add(obj->name, object_ptr(o));
+        objects[obj] = add<object>(obj->name, o);
     }
 }
-
-void resource_store::pin_all()
-{
-    for(auto& pair: resources)
-    {
-        pair.second.pin();
-    }
-}
-
-void resource_store::unpin_all()
-{
-    for(auto& pair: resources)
-    {
-        pair.second.unpin();
-    }
-}
-
-bool resource_store::name_type::operator==(const name_type& other) const
-{
-    return other.type == type && other.name == name;
-}
-
-size_t resource_store::name_type_hash::operator()(const name_type& nt) const
-{
-    return nt.type.hash_code() + std::hash<std::string>()(nt.name);
-}
-

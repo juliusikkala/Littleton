@@ -35,11 +35,63 @@ static void throw_program_error(GLuint program)
     }
 }
 
+shader::shader(): program(0) {}
+
 shader::shader(
     const std::string& vert_src,
     const std::string& frag_src
 ): program(0)
 {
+    basic_load(vert_src, frag_src);
+}
+
+shader::~shader()
+{
+    basic_unload();
+}
+
+GLuint shader::get_program() const
+{
+    load();
+    return program;
+}
+
+class src_shader: public shader
+{
+public:
+    src_shader(
+        const std::string& vert_src,
+        const std::string& frag_src
+    ): vert_src(vert_src), frag_src(frag_src) {}
+
+    void load() const override
+    {
+        basic_load(vert_src, frag_src);
+    }
+
+    void unload() const override
+    {
+        basic_unload();
+    }
+
+private:
+    std::string vert_src;
+    std::string frag_src;
+};
+
+shader* shader::create(
+    const std::string& vert_src,
+    const std::string& frag_src
+){
+    return new src_shader(vert_src, frag_src);
+}
+
+void shader::basic_load(
+    const std::string& vert_src,
+    const std::string& frag_src
+) const {
+    if(program) return;
+
     GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
     const char* vsrc = vert_src.c_str();
@@ -69,12 +121,11 @@ shader::shader(
     throw_program_error(program);
 }
 
-shader::~shader()
+void shader::basic_unload() const
 {
-    if(program != 0) glDeleteProgram(program);
-}
-
-GLuint shader::get_program() const
-{
-    return program;
+    if(program != 0)
+    {
+        glDeleteProgram(program);
+        program = 0;
+    }
 }

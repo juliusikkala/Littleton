@@ -1,5 +1,6 @@
 #include "window.hh"
 #include "resources.hh"
+#include "texture.hh"
 #include "object.hh"
 #include "pipeline.hh"
 #include "method/clear.hh"
@@ -14,6 +15,11 @@ int main()
     pipeline p(
         clear_sky
     );
+
+    for(auto it = resources.begin<texture>(); it != resources.end<texture>(); ++it)
+    {
+        std::cout<<it.name()<<std::endl;
+    }
 
     bool running = true;
     while(running)

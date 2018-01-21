@@ -4,7 +4,7 @@
 #include "glheaders.hh"
 #include "resources.hh"
 
-class vertex_buffer
+class vertex_buffer: public resource
 {
 public:
     enum vertex_type
@@ -13,6 +13,7 @@ public:
         VERTEX_PNTT = 1 // Position, Normal, Tangent, Texture
     };
 
+    vertex_buffer();
     vertex_buffer(
         vertex_type type,
         size_t vertex_count,
@@ -30,12 +31,20 @@ public:
     void draw() const;
     vertex_type get_type() const;
 
-private:
-    GLuint vbo, ibo, vao;
-    size_t index_count;
-    vertex_type type;
-};
+protected:
+    void basic_load(
+        vertex_type type,
+        size_t vertex_count,
+        const float* vertices,
+        size_t index_count,
+        const uint32_t* indices
+    ) const;
 
-using vertex_buffer_ptr = resource_ptr<vertex_buffer>;
+    void basic_unload() const;
+
+    mutable GLuint vbo, ibo, vao;
+    mutable size_t index_count;
+    mutable vertex_type type;
+};
 
 #endif

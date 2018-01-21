@@ -3,9 +3,10 @@
 #include "resources.hh"
 #include "glheaders.hh"
 
-class shader
+class shader: public resource
 {
 public:
+    shader();
     shader(
         const std::string& vert_src,
         const std::string& frag_src
@@ -14,10 +15,19 @@ public:
 
     GLuint get_program() const;
 
-private:
-    GLuint program;
-};
+    static shader* create(
+        const std::string& vert_src,
+        const std::string& frag_src
+    );
 
-using shader_ptr = resource_ptr<shader>;
+protected:
+    void basic_load(
+        const std::string& vert_src,
+        const std::string& frag_src
+    ) const;
+    void basic_unload() const;
+
+    mutable GLuint program;
+};
 
 #endif

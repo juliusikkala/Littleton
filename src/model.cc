@@ -6,8 +6,8 @@ size_t model::group_count() const
 }
 
 void model::add_vertex_group(
-    const material_ptr& mat,
-    const vertex_buffer_ptr& vertex
+    material* mat,
+    vertex_buffer* vertex
 ){
     groups.emplace_back(vertex_group{mat, vertex});
 }

@@ -14,14 +14,69 @@ static size_t vertex_size(vertex_buffer::vertex_type type)
     }
 }
 
+vertex_buffer::vertex_buffer(): vbo(0), ibo(0), vao(0)
+{
+}
+
 vertex_buffer::vertex_buffer(
     vertex_type type,
     size_t vertex_count,
     const float* vertices,
     size_t index_count,
     const uint32_t* indices
-): vbo(0), ibo(0), vao(0), index_count(index_count), type(type)
+): vbo(0), ibo(0), vao(0)
 {
+    basic_load(type, vertex_count, vertices, index_count, indices);
+}
+
+vertex_buffer::vertex_buffer(vertex_buffer&& other)
+{
+    other.load();
+
+    vbo = other.vbo;
+    ibo = other.ibo;
+    vao = other.vao;
+    index_count = other.index_count;
+    type = other.type;
+
+    other.vbo = 0;
+    other.ibo = 0;
+    other.vao = 0;
+}
+
+vertex_buffer::~vertex_buffer()
+{
+    basic_unload();
+}
+
+GLuint vertex_buffer::get_vbo() const { load(); return vbo; }
+GLuint vertex_buffer::get_ibo() const { load(); return ibo; }
+GLuint vertex_buffer::get_vao() const { load(); return vao; }
+void vertex_buffer::draw() const
+{
+    load();
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, index_count);
+}
+
+vertex_buffer::vertex_type vertex_buffer::get_type() const
+{
+    load();
+    return type;
+}
+
+void vertex_buffer::basic_load(
+    vertex_type type,
+    size_t vertex_count,
+    const float* vertices,
+    size_t index_count,
+    const uint32_t* indices
+) const {
+    if(vao) return;
+
+    this->type = type;
+    this->index_count = index_count;
+
     size_t vs = vertex_size(type);
 
     glGenVertexArrays(1, &vao);
@@ -82,32 +137,21 @@ vertex_buffer::vertex_buffer(
     }
 }
 
-vertex_buffer::vertex_buffer(vertex_buffer&& other)
-: vbo(other.vbo), ibo(other.ibo), vao(other.vao),
-  index_count(other.index_count), type(other.type)
+void vertex_buffer::basic_unload() const
 {
-    other.vbo = 0;
-    other.ibo = 0;
-    other.vao = 0;
-}
-
-vertex_buffer::~vertex_buffer()
-{
-    if(vbo != 0) glDeleteBuffers(1, &vbo);
-    if(ibo != 0) glDeleteBuffers(1, &ibo);
-    if(vao != 0) glDeleteVertexArrays(1, &vao);
-}
-
-GLuint vertex_buffer::get_vbo() const { return vbo; }
-GLuint vertex_buffer::get_ibo() const { return ibo; }
-GLuint vertex_buffer::get_vao() const { return vao; }
-void vertex_buffer::draw() const
-{
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, index_count);
-}
-
-vertex_buffer::vertex_type vertex_buffer::get_type() const
-{
-    return type;
+    if(vbo != 0)
+    {
+        glDeleteBuffers(1, &vbo);
+        vbo = 0;
+    }
+    if(ibo != 0)
+    {
+        glDeleteBuffers(1, &ibo);
+        ibo = 0;
+    }
+    if(vao != 0)
+    {
+        glDeleteVertexArrays(1, &vao);
+        vao = 0;
+    }
 }

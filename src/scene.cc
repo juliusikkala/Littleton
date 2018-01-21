@@ -7,12 +7,12 @@ void scene::set_camera(const camera& cam) { this->cam = cam; }
 camera& scene::get_camera() { return cam; }
 const camera& scene::get_camera() const { return cam; }
 
-void scene::add(const object_ptr& obj)
+void scene::add(object* obj)
 {
     objects.insert(obj);
 }
 
-void scene::remove(const object_ptr& obj)
+void scene::remove(object* obj)
 {
     objects.erase(obj);
 }

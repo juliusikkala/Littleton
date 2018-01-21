@@ -15,16 +15,15 @@ public:
     camera& get_camera();
     const camera& get_camera() const;
 
-    void add(const object_ptr& obj);
-
-    void remove(const object_ptr& obj);
+    void add(object* obj);
+    void remove(object* obj);
 
     void clear();
 
     size_t object_count() const;
 
-    using iterator = std::set<object_ptr>::iterator;
-    using const_iterator = std::set<object_ptr>::const_iterator;
+    using iterator = std::set<object*>::iterator;
+    using const_iterator = std::set<object*>::const_iterator;
 
     iterator begin();
     const_iterator begin() const;
@@ -34,7 +33,7 @@ public:
 
 private:
     camera cam;
-    std::set<object_ptr> objects;
+    std::set<object*> objects;
 };
 
 #endif
