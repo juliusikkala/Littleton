@@ -115,6 +115,9 @@ public:
     T* get(const std::string& name) const;
 
     template<typename T>
+    size_t size() const;
+
+    template<typename T>
     iterator<T> begin();
 
     template<typename T>

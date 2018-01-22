@@ -131,6 +131,12 @@ T* resource_store::get(const std::string& name) const
 }
 
 template<typename T>
+size_t resource_store::size() const
+{
+    return resources[typeid(T)].size();
+}
+
+template<typename T>
 resource_store::iterator<T> resource_store::begin()
 {
     return iterator<T>(resources[typeid(T)].begin());

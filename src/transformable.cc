@@ -87,3 +87,22 @@ glm::mat4 transformable::get_inverse_transform() const
         * glm::translate(-position);
 }
 
+transformable_node::transformable_node(transformable_node* parent)
+: parent(parent) {}
+
+glm::mat4 transformable_node::get_global_transform() const 
+{
+    return parent ?
+        get_transform() * parent->get_global_transform() :
+        get_transform();
+}
+
+void transformable_node::set_parent(transformable_node* parent)
+{
+    this->parent = parent;
+}
+
+transformable_node* transformable_node::get_parent() const
+{
+    return parent;
+}

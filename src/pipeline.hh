@@ -13,21 +13,14 @@ public:
 class pipeline
 {
 public:
-    template<typename... Args>
-    pipeline(Args&&... rest);
+    pipeline(const std::vector<pipeline_method*>& methods);
     pipeline(pipeline&& other);
     ~pipeline();
 
     void execute();
 
 private:
-    void append_method();
-    
-    template<typename T, typename... Args>
-    void append_method(T&& method, Args&&... rest);
-
-    std::vector<std::unique_ptr<pipeline_method>> methods;
+    std::vector<pipeline_method*> methods;
 };
 
-#include "pipeline.tcc"
 #endif

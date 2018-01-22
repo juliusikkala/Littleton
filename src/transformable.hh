@@ -36,4 +36,18 @@ private:
     glm::vec3 position, scaling;
 };
 
+class transformable_node: public transformable
+{
+public:
+    transformable_node(transformable_node* parent = nullptr);
+
+    glm::mat4 get_global_transform() const;
+
+    void set_parent(transformable_node* parent = nullptr);
+    transformable_node* get_parent() const;
+
+private:
+    transformable_node* parent;
+};
+
 #endif

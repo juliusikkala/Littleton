@@ -12,9 +12,9 @@ int main()
     resource_store resources;
     resources.add_dfo("data/test.dfo");
     method::clear clear_sky(glm::vec4(0.5, 0.5, 1.0, 0.0));
-    pipeline p(
-        clear_sky
-    );
+    pipeline p({
+        &clear_sky
+    });
 
     for(auto it = resources.begin<texture>(); it != resources.end<texture>(); ++it)
     {

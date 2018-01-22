@@ -5,7 +5,7 @@
 
 namespace method
 {
-    class clear
+    class clear: public pipeline_method
     {
     public:
         clear(
@@ -15,7 +15,7 @@ namespace method
         );
         ~clear();
 
-        pipeline_method* pipeline_build(pipeline& p) const;
+        void execute() override;
 
     private:
         glm::vec4 color;
