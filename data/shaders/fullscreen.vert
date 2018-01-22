@@ -7,7 +7,7 @@
 #version 330 core
 
 layout(location = 0) in vec2 vertex;
-layout(location = 3) vec3 uv;
+out vec2 uv;
 
 void main(void)
 {

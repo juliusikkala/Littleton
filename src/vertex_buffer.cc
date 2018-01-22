@@ -102,7 +102,7 @@ void vertex_buffer::draw() const
 {
     load();
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, index_count);
+    glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, nullptr);
 }
 
 vertex_buffer::vertex_type vertex_buffer::get_type() const
@@ -137,12 +137,7 @@ void vertex_buffer::basic_load(
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        vertex_count * vs,
-        vertices,
-        GL_STATIC_DRAW
-    );
+    glBufferData(GL_ARRAY_BUFFER, vertex_count * vs, vertices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -166,7 +161,8 @@ void vertex_buffer::basic_load(
                 (const GLvoid*)(offset)
             );
             offset += sizes[i]*sizeof(float);
-        } glDisableVertexAttribArray(i);
+            glEnableVertexAttribArray(i);
+        } else glDisableVertexAttribArray(i);
     }
 }
 
@@ -177,11 +173,13 @@ void vertex_buffer::basic_unload() const
         glDeleteBuffers(1, &vbo);
         vbo = 0;
     }
+
     if(ibo != 0)
     {
         glDeleteBuffers(1, &ibo);
         ibo = 0;
     }
+
     if(vao != 0)
     {
         glDeleteVertexArrays(1, &vao);
@@ -196,15 +194,15 @@ static const GLfloat quad_vertices[] = {
     -1.0f, -1.0f, 0
 };
 
-static const GLuint quad_indices[] = {0,1,2,1,3,2};
+static const GLuint quad_indices[] = {0,2,1,1,2,3};
 
-vertex_buffer* vertex_buffer::create_fullscreen()
+vertex_buffer vertex_buffer::create_fullscreen()
 {
-    return new vertex_buffer(
+    return vertex_buffer(
         VERTEX_P,
         sizeof(quad_vertices)/(sizeof(float)*3),
         quad_vertices,
-        sizeof(quad_indices)/sizeof(GLint),
+        sizeof(quad_indices)/sizeof(GLuint),
         quad_indices
     );
 }

@@ -33,7 +33,7 @@ public:
     vertex_type get_type() const;
 
     /* Note that the created buffer is _not_ lazily loaded! */
-    static vertex_buffer* create_fullscreen();
+    static vertex_buffer create_fullscreen();
 
 protected:
     void basic_load(

@@ -4,119 +4,38 @@
 template<typename T>
 void uniform_set_value(GLint location, size_t count, const T* value);
 
-template<>
-void uniform_set_value<float>(
-    GLint location, size_t count, const float* value
-){
-    glUniform1fv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::vec2>(
-    GLint location, size_t count, const glm::vec2* value
-){
-    glUniform2fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::vec3>(
-    GLint location, size_t count, const glm::vec3* value
-){
-    glUniform3fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::vec4>(
-    GLint location, size_t count, const glm::vec4* value
-){
-    glUniform4fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<int>(
-    GLint location, size_t count, const int* value
-){
-    glUniform1iv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::ivec2>(
-    GLint location, size_t count, const glm::ivec2* value
-){
-    glUniform2iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<glm::ivec3>(
-    GLint location, size_t count, const glm::ivec3* value
-){
-    glUniform3iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<glm::ivec4>(
-    GLint location, size_t count, const glm::ivec4* value
-){
-    glUniform4iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<unsigned>(
-    GLint location, size_t count, const unsigned* value
-){
-    glUniform1uiv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::uvec2>(
-    GLint location, size_t count, const glm::uvec2* value
-){
-    glUniform2uiv(location, count, (unsigned*)value);
-}
-
-template<>
-void uniform_set_value<glm::uvec3>(
-    GLint location, size_t count, const glm::uvec3* value
-){
-    glUniform3uiv(location, count, (unsigned*)value);
-}
-
-template<>
-void uniform_set_value<glm::uvec4>(
-    GLint location, size_t count, const glm::uvec4* value
-){
-    glUniform4uiv(location, count, (unsigned*)value);
-}
-
-// Bool vectors should be set using glm::ivec instead of this.
-template<>
-void uniform_set_value<bool>(
-    GLint location, size_t count, const bool* value
-){
-    int v = *value;
-    glUniform1iv(location, 1, &v);
-}
-
-template<>
-void uniform_set_value<glm::mat2>(
-    GLint location, size_t count, const glm::mat2* value
-){
-    glUniformMatrix2fv(location, count, GL_FALSE, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::mat3>(
-    GLint location, size_t count, const glm::mat3* value
-){
-    glUniformMatrix3fv(location, count, GL_FALSE, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::mat4>(
-    GLint location, size_t count, const glm::mat4* value
-){
-    glUniformMatrix4fv(location, count, GL_FALSE, (float*)value);
-}
+template<> void uniform_set_value<float>(
+    GLint location, size_t count, const float* value);
+template<> void uniform_set_value<glm::vec2>(
+    GLint location, size_t count, const glm::vec2* value);
+template<> void uniform_set_value<glm::vec3>(
+    GLint location, size_t count, const glm::vec3* value);
+template<> void uniform_set_value<glm::vec4>(
+    GLint location, size_t count, const glm::vec4* value);
+template<> void uniform_set_value<int>(
+    GLint location, size_t count, const int* value);
+template<> void uniform_set_value<glm::ivec2>(
+    GLint location, size_t count, const glm::ivec2* value);
+template<> void uniform_set_value<glm::ivec3>(
+    GLint location, size_t count, const glm::ivec3* value);
+template<> void uniform_set_value<glm::ivec4>(
+    GLint location, size_t count, const glm::ivec4* value);
+template<> void uniform_set_value<unsigned>(
+    GLint location, size_t count, const unsigned* value);
+template<> void uniform_set_value<glm::uvec2>(
+    GLint location, size_t count, const glm::uvec2* value);
+template<> void uniform_set_value<glm::uvec3>(
+    GLint location, size_t count, const glm::uvec3* value);
+template<> void uniform_set_value<glm::uvec4>(
+    GLint location, size_t count, const glm::uvec4* value);
+template<> void uniform_set_value<bool>(
+    GLint location, size_t count, const bool* value);
+template<> void uniform_set_value<glm::mat2>(
+    GLint location, size_t count, const glm::mat2* value);
+template<> void uniform_set_value<glm::mat3>(
+    GLint location, size_t count, const glm::mat3* value);
+template<> void uniform_set_value<glm::mat4>(
+    GLint location, size_t count, const glm::mat4* value);
 
 template<typename T>
 bool shader::is_compatible(const std::string& name, size_t count)
@@ -160,7 +79,7 @@ void shader::set(
 template<typename T>
 bool shader::is_compatible(GLenum type, GLint size, size_t count)
 {
-    if(size != count) return false;
+    if((unsigned)size != count) return false;
 
     if constexpr (std::is_same_v<T, float>)
         return type == GL_FLOAT;

@@ -2,37 +2,37 @@
 #include "helpers.hh"
 #include <stdexcept>
 
-static void throw_shader_error(GLuint shader)
+static void throw_shader_error(GLuint shader, const std::string& name)
 {
     GLint status = GL_FALSE;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-    if(!status)
+    if(status != GL_TRUE)
     {
         GLsizei length = 0;
-        glGetShaderInfoLog(shader, 0, &length, NULL);
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         char* err = new char[length+1];
         glGetShaderInfoLog(shader, length+1, &length, err);
         std::string err_str(err);
         delete [] err;
-        throw std::runtime_error(err_str);
+        throw std::runtime_error(name + ": " + err_str);
     }
 }
 
-static void throw_program_error(GLuint program)
+static void throw_program_error(GLuint program, const std::string& name)
 {
     GLint status = GL_FALSE;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
 
-    if(!status)
+    if(status != GL_TRUE)
     {
         GLsizei length = 0;
-        glGetProgramInfoLog(program, 0, &length, NULL);
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
         char* err = new char[length+1];
         glGetProgramInfoLog(program, length+1, &length, err);
         std::string err_str(err);
         delete [] err;
-        throw std::runtime_error(err_str);
+        throw std::runtime_error(name + ": " + err_str);
     }
 }
 
@@ -156,8 +156,8 @@ void shader::basic_load(
     glCompileShader(vshader);
     glCompileShader(fshader);
 
-    throw_shader_error(vshader);
-    throw_shader_error(fshader);
+    throw_shader_error(vshader, "Vertex shader");
+    throw_shader_error(fshader, "Fragment shader");
 
     program = glCreateProgram();
     glAttachShader(program, vshader);
@@ -172,7 +172,7 @@ void shader::basic_load(
     glBindAttribLocation(program, 3, "uv");
 
     glLinkProgram(program);
-    throw_program_error(program);
+    throw_program_error(program, "Shader program");
 
     // Populate uniforms
     GLuint uniform_count = 0;
@@ -180,8 +180,14 @@ void shader::basic_load(
 
     for(GLuint i = 0; i < uniform_count; ++i)
     {
-        GLsizei length = 0;
-        glGetActiveUniformName(program, i, 0, &length, nullptr);
+        GLint length = 0;
+        glGetActiveUniformsiv(
+            program,
+            1,
+            &i,
+            GL_UNIFORM_NAME_LENGTH,
+            (GLint*)&length
+        );
         char* name = new char[length];
         glGetActiveUniformName(program, i, length, nullptr, name);
 
@@ -214,7 +220,122 @@ void shader::basic_unload() const
 {
     if(program != 0)
     {
+        uniforms.clear();
         glDeleteProgram(program);
         program = 0;
     }
+}
+
+template<>
+void uniform_set_value<float>(
+    GLint location, size_t count, const float* value
+){
+    glUniform1fv(location, count, value);
+}
+
+template<>
+void uniform_set_value<glm::vec2>(
+    GLint location, size_t count, const glm::vec2* value
+){
+    glUniform2fv(location, count, (float*)value);
+}
+
+template<>
+void uniform_set_value<glm::vec3>(
+    GLint location, size_t count, const glm::vec3* value
+){
+    glUniform3fv(location, count, (float*)value);
+}
+
+template<>
+void uniform_set_value<glm::vec4>(
+    GLint location, size_t count, const glm::vec4* value
+){
+    glUniform4fv(location, count, (float*)value);
+}
+
+template<>
+void uniform_set_value<int>(
+    GLint location, size_t count, const int* value
+){
+    glUniform1iv(location, count, value);
+}
+
+template<>
+void uniform_set_value<glm::ivec2>(
+    GLint location, size_t count, const glm::ivec2* value
+){
+    glUniform2iv(location, count, (int*)value);
+}
+
+template<>
+void uniform_set_value<glm::ivec3>(
+    GLint location, size_t count, const glm::ivec3* value
+){
+    glUniform3iv(location, count, (int*)value);
+}
+
+template<>
+void uniform_set_value<glm::ivec4>(
+    GLint location, size_t count, const glm::ivec4* value
+){
+    glUniform4iv(location, count, (int*)value);
+}
+
+template<>
+void uniform_set_value<unsigned>(
+    GLint location, size_t count, const unsigned* value
+){
+    glUniform1uiv(location, count, value);
+}
+
+template<>
+void uniform_set_value<glm::uvec2>(
+    GLint location, size_t count, const glm::uvec2* value
+){
+    glUniform2uiv(location, count, (unsigned*)value);
+}
+
+template<>
+void uniform_set_value<glm::uvec3>(
+    GLint location, size_t count, const glm::uvec3* value
+){
+    glUniform3uiv(location, count, (unsigned*)value);
+}
+
+template<>
+void uniform_set_value<glm::uvec4>(
+    GLint location, size_t count, const glm::uvec4* value
+){
+    glUniform4uiv(location, count, (unsigned*)value);
+}
+
+// Bool vectors should be set using glm::ivec instead of this.
+template<>
+void uniform_set_value<bool>(
+    GLint location, size_t count, const bool* value
+){
+    int v = *value;
+    glUniform1iv(location, 1, &v);
+}
+
+template<>
+void uniform_set_value<glm::mat2>(
+    GLint location, size_t count, const glm::mat2* value
+){
+    glUniformMatrix2fv(location, count, GL_FALSE, (float*)value);
+}
+
+template<>
+void uniform_set_value<glm::mat3>(
+    GLint location, size_t count, const glm::mat3* value
+){
+    glUniformMatrix3fv(location, count, GL_FALSE, (float*)value);
+}
+
+template<>
+void uniform_set_value<glm::mat4>(
+    GLint location, size_t count, const glm::mat4* value
+){
+    glUniformMatrix4fv(location, count, GL_FALSE, (float*)value);
 }

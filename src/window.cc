@@ -11,8 +11,10 @@ window::window(
     const char* title,
     bool fullscreen,
     bool vsync,
+    unsigned framerate_limit,
     unsigned samples
-) {
+): framerate_limit(framerate_limit), last_frame(0), delta(0)
+{
     if(initialized)
     {
         throw std::runtime_error("There can be only one window.");
@@ -82,6 +84,7 @@ window::window(
     initialized = true;
 
     SDL_GL_SetSwapInterval(vsync);
+    last_frame = SDL_GetTicks();
 }
 
 window::~window()
@@ -97,7 +100,39 @@ int window::poll(SDL_Event& event)
     return SDL_PollEvent(&event);
 }
 
-void window::swap()
+void window::present()
 {
     SDL_GL_SwapWindow(win);
+
+    if(framerate_limit)
+    {
+        int frame_ticks = SDL_GetTicks() - last_frame;
+        int required_ticks = 1000 / framerate_limit;
+        int sleep_ticks = required_ticks - frame_ticks;
+
+        if(sleep_ticks > 0) SDL_Delay(sleep_ticks);
+    }
+    unsigned this_frame = SDL_GetTicks();
+    delta = this_frame - last_frame;
+    last_frame = this_frame;
+}
+
+void window::set_framerate_limit(unsigned framerate_limit)
+{
+    this->framerate_limit = framerate_limit;
+}
+
+unsigned window::get_framerate_limit() const
+{
+    return framerate_limit;
+}
+
+int window::get_delta_ms() const
+{
+    return delta;
+}
+
+float window::get_delta() const
+{
+    return delta/1000.0f;
 }

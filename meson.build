@@ -12,6 +12,7 @@ src = [
   'src/object.cc',
   'src/pipeline.cc',
   'src/method/clear.cc',
+  'src/method/fullscreen_effect.cc',
   'src/scene.cc',
   'src/camera.cc',
   'src/transformable.cc',
