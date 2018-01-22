@@ -10,7 +10,8 @@ public:
     enum vertex_type
     {
         VERTEX_PN = 0, // Position, Normal
-        VERTEX_PNTT = 1 // Position, Normal, Tangent, Texture
+        VERTEX_PNTT = 1, // Position, Normal, Tangent, Texture
+        VERTEX_P = 2 // Position
     };
 
     vertex_buffer();
@@ -30,6 +31,9 @@ public:
     GLuint get_vao() const;
     void draw() const;
     vertex_type get_type() const;
+
+    /* Note that the created buffer is _not_ lazily loaded! */
+    static vertex_buffer* create_fullscreen();
 
 protected:
     void basic_load(

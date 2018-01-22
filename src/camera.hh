@@ -3,10 +3,10 @@
 #include "transformable.hh"
 #include <glm/glm.hpp>
 
-class camera: public transformable
+class camera: public transformable_node
 {
 public:
-    camera();
+    camera(transformable_node* parent = nullptr);
     ~camera();
 
     void perspective(float fov, float aspect, float near);

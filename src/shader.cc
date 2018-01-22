@@ -1,4 +1,5 @@
 #include "shader.hh"
+#include "helpers.hh"
 #include <stdexcept>
 
 static void throw_shader_error(GLuint shader)
@@ -84,6 +85,39 @@ shader* shader::create(
     const std::string& frag_src
 ){
     return new src_shader(vert_src, frag_src);
+}
+
+class file_shader: public shader
+{
+public:
+    file_shader(
+        const std::string& vert_path,
+        const std::string& frag_path
+    ): vert_path(vert_path), frag_path(frag_path) {}
+
+    void load() const override
+    {
+        basic_load(
+            read_text_file(vert_path),
+            read_text_file(frag_path)
+        );
+    }
+
+    void unload() const override
+    {
+        basic_unload();
+    }
+
+private:
+    std::string vert_path;
+    std::string frag_path;
+};
+
+shader* shader::create_from_file(
+    const std::string& vert_path,
+    const std::string& frag_path
+){
+    return new file_shader(vert_path, frag_path);
 }
 
 void shader::basic_load(

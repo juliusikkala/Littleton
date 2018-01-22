@@ -1,7 +1,7 @@
 #include "camera.hh"
 #include <glm/gtc/matrix_transform.hpp>
 
-camera::camera() {}
+camera::camera(transformable_node* parent): transformable_node(parent) {}
 camera::~camera() {}
 
 void camera::perspective(float fov, float aspect, float near)

@@ -9,6 +9,52 @@ static size_t vertex_size(vertex_buffer::vertex_type type)
         return 6*sizeof(float);
     case vertex_buffer::VERTEX_PNTT:
         return 12*sizeof(float);
+    case vertex_buffer::VERTEX_P:
+        return 3*sizeof(float);
+    default:
+        return 0;
+    }
+}
+
+static size_t position_size(vertex_buffer::vertex_type type)
+{
+    switch(type)
+    {
+    default:
+        return 3;
+    }
+}
+
+static size_t normal_size(vertex_buffer::vertex_type type)
+{
+    switch(type)
+    {
+    case vertex_buffer::VERTEX_PN:
+        return 3;
+    case vertex_buffer::VERTEX_PNTT:
+        return 3;
+    default:
+        return 0;
+    }
+}
+
+static size_t tangent_size(vertex_buffer::vertex_type type)
+{
+    switch(type)
+    {
+    case vertex_buffer::VERTEX_PNTT:
+        return 4;
+    default:
+        return 0;
+    }
+}
+
+static size_t uv_size(vertex_buffer::vertex_type type)
+{
+    switch(type)
+    {
+    case vertex_buffer::VERTEX_PNTT:
+        return 2;
     default:
         return 0;
     }
@@ -78,6 +124,13 @@ void vertex_buffer::basic_load(
     this->index_count = index_count;
 
     size_t vs = vertex_size(type);
+    size_t sizes[4] = {
+        position_size(type),
+        normal_size(type),
+        tangent_size(type),
+        uv_size(type)
+    };
+    size_t offset = 0;
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -100,40 +153,20 @@ void vertex_buffer::basic_load(
         GL_STATIC_DRAW
     );
 
-    // Position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vs, 0);
-
-    // Normal
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        vs,
-        (const GLvoid*)(3*sizeof(float))
-    );
-
-    if(type == VERTEX_PNTT)
+    for(unsigned i = 0; i < sizeof(sizes)/sizeof(size_t); ++i)
     {
-        // Tangent
-        glVertexAttribPointer(
-            2,
-            4,
-            GL_FLOAT,
-            GL_FALSE,
-            vs,
-            (const GLvoid*)(6*sizeof(float))
-        );
-
-        // Texture
-        glVertexAttribPointer(
-            3,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            vs,
-            (const GLvoid*)(10*sizeof(float))
-        );
+        if(sizes[i])
+        {
+            glVertexAttribPointer(
+                i,
+                sizes[i],
+                GL_FLOAT,
+                GL_FALSE,
+                vs,
+                (const GLvoid*)(offset)
+            );
+            offset += sizes[i]*sizeof(float);
+        } glDisableVertexAttribArray(i);
     }
 }
 
@@ -154,4 +187,24 @@ void vertex_buffer::basic_unload() const
         glDeleteVertexArrays(1, &vao);
         vao = 0;
     }
+}
+
+static const GLfloat quad_vertices[] = {
+    1.0f, 1.0f, 0,
+    1.0f, -1.0f, 0,
+    -1.0f, 1.0f, 0,
+    -1.0f, -1.0f, 0
+};
+
+static const GLuint quad_indices[] = {0,1,2,1,3,2};
+
+vertex_buffer* vertex_buffer::create_fullscreen()
+{
+    return new vertex_buffer(
+        VERTEX_P,
+        sizeof(quad_vertices)/(sizeof(float)*3),
+        quad_vertices,
+        sizeof(quad_indices)/sizeof(GLint),
+        quad_indices
+    );
 }

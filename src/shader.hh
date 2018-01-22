@@ -20,6 +20,11 @@ public:
         const std::string& frag_src
     );
 
+    static shader* create_from_file(
+        const std::string& vert_path,
+        const std::string& frag_path
+    );
+
 protected:
     void basic_load(
         const std::string& vert_src,

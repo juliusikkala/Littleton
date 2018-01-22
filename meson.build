@@ -14,7 +14,8 @@ src = [
   'src/method/clear.cc',
   'src/scene.cc',
   'src/camera.cc',
-  'src/transformable.cc'
+  'src/transformable.cc',
+  'src/helpers.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils')
