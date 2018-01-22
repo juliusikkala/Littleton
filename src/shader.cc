@@ -46,6 +46,14 @@ shader::shader(
     basic_load(vert_src, frag_src);
 }
 
+shader::shader(shader&& other)
+{
+    other.load();
+    program = other.program;
+    uniforms = std::move(other.uniforms);
+    other.program = 0;
+}
+
 shader::~shader()
 {
     basic_unload();
@@ -56,6 +64,18 @@ GLuint shader::get_program() const
     load();
     return program;
 }
+
+void shader::bind() const
+{
+    load();
+    static GLuint current_program = 0;
+    if(program != current_program)
+    {
+        glUseProgram(program);
+        current_program = program;
+    }
+}
+
 
 class src_shader: public shader
 {
@@ -153,6 +173,41 @@ void shader::basic_load(
 
     glLinkProgram(program);
     throw_program_error(program);
+
+    // Populate uniforms
+    GLuint uniform_count = 0;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, (GLint*)&uniform_count);
+
+    for(GLuint i = 0; i < uniform_count; ++i)
+    {
+        GLsizei length = 0;
+        glGetActiveUniformName(program, i, 0, &length, nullptr);
+        char* name = new char[length];
+        glGetActiveUniformName(program, i, length, nullptr, name);
+
+        struct uniform_data data;
+        data.location = glGetUniformLocation(program, name);
+
+        glGetActiveUniformsiv(
+            program,
+            1,
+            &i,
+            GL_UNIFORM_SIZE,
+            (GLint*)&data.size
+        );
+
+        glGetActiveUniformsiv(
+            program,
+            1,
+            &i,
+            GL_UNIFORM_TYPE,
+            (GLint*)&data.type
+        );
+
+        uniforms[name] = data;
+
+        delete [] name;
+    }
 }
 
 void shader::basic_unload() const

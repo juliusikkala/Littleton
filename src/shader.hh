@@ -3,6 +3,8 @@
 #include "resources.hh"
 #include "glheaders.hh"
 
+class shader;
+
 class shader: public resource
 {
 public:
@@ -11,6 +13,7 @@ public:
         const std::string& vert_src,
         const std::string& frag_src
     );
+    shader(shader&& other);
     ~shader();
 
     GLuint get_program() const;
@@ -25,14 +28,46 @@ public:
         const std::string& frag_path
     );
 
+    void bind() const;
+
+    template<typename T>
+    bool is_compatible(const std::string& name, size_t count = 1);
+
+    template<typename T>
+    void set(const std::string& name, const T& value);
+
+    template<typename T>
+    void set(
+        const std::string& name,
+        size_t count,
+        const T* value
+    );
+
 protected:
     void basic_load(
         const std::string& vert_src,
         const std::string& frag_src
     ) const;
+
     void basic_unload() const;
 
+    struct uniform_data
+    {
+        GLuint location;
+        GLint size;
+        GLenum type;
+    };
+
+    template<typename T>
+    bool is_compatible(GLenum type, GLint size, size_t count = 1);
+
     mutable GLuint program;
+    mutable std::unordered_map<
+        std::string,
+        uniform_data
+    > uniforms;
 };
+
+#include "shader.tcc"
 
 #endif
