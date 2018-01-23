@@ -97,6 +97,13 @@ glm::mat4 transformable_node::get_global_transform() const
         get_transform();
 }
 
+glm::mat4 transformable_node::get_inverse_global_transform() const
+{
+    return parent ?
+        parent->get_inverse_global_transform() * get_inverse_transform():
+        get_inverse_transform();
+}
+
 void transformable_node::set_parent(transformable_node* parent)
 {
     this->parent = parent;

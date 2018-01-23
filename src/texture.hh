@@ -8,13 +8,17 @@ class texture: public resource
 {
 public:
     texture();
-    texture(const std::string& path);
+    texture(
+        const std::string& path,
+        GLenum target = GL_TEXTURE_2D
+    );
     texture(
         unsigned w,
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        GLenum target = GL_TEXTURE_2D
     );
     texture(const texture& other) = delete;
     texture(texture&& other);
@@ -26,23 +30,28 @@ public:
     GLenum get_target() const;
     GLenum get_type() const;
 
-    static texture* create(const std::string& path);
+    static texture* create(
+        const std::string& path,
+        GLenum target = GL_TEXTURE_2D
+    );
     static texture* create(
         unsigned w,
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        GLenum target = GL_TEXTURE_2D
     );
 
 protected:
-    void basic_load(const std::string& path) const;
+    void basic_load(const std::string& path, GLenum target) const;
     void basic_load(
         unsigned w,
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        GLenum target
     ) const;
     void basic_unload() const;
 

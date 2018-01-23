@@ -1,177 +1,93 @@
 #include "texture.hh"
-#include <gli/gli.hpp>
 #include <glm/glm.hpp>
+#include <algorithm>
+#include <cmath>
+#include "stb_image.h"
 
 static GLuint load_texture(
     const std::string& path,
+    GLenum target,
     GLint& internal_format,
     GLenum& external_format,
-    GLenum& target,
     GLenum& type
 ){
-    gli::gl gl(gli::gl::PROFILE_GL33);
-    gli::texture texture = gli::load(path);
-    if(texture.empty()) return 0;
+    int w = 0, h = 0, n = 0;
+    bool hdr = stbi_is_hdr(path.c_str());
+    void* data = nullptr;
 
-    gli::gl::format format = gl.translate(
-        texture.format(),
-        texture.swizzles()
-    );
-    internal_format = format.Internal;
-    external_format = format.External;
-    type = format.Type;
-    target = gl.translate(texture.target());
-    glm::tvec3<GLsizei> extent = texture.extent();
+    if(hdr)
+    {
+        data = stbi_loadf(path.c_str(), &w, &h, &n, 0);
+        type = GL_FLOAT;
+    }
+    else
+    {
+        data = stbi_load(path.c_str(), &w, &h, &n, 0);
+        type = GL_UNSIGNED_BYTE;
+    }
 
-    GLuint gl_tex = 0;
+    if(!data)
+    {
+        throw std::runtime_error("Unable to read " + path);
+    }
 
-    glGenTextures(1, &gl_tex);
+    switch(n)
+    {
+    case 1:
+        internal_format = hdr ? GL_R16 : GL_R8;
+        external_format = GL_RED;
+        break;
+    case 2:
+        internal_format = hdr ? GL_RG16 : GL_RG8;
+        external_format = GL_RG;
+        break;
+    case 3:
+        internal_format = hdr ? GL_RGB16 : GL_RGB8;
+        external_format = GL_RGB;
+        break;
+    case 4:
+        internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
+        external_format = GL_RGBA;
+        break;
+    }
+
+    unsigned mipmap_count = floor(log2(std::max(w, h)))+1;
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(target, gl_tex);
-    glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture.levels() - 1);
-    glTexParameteri(target, GL_TEXTURE_SWIZZLE_R, format.Swizzles[0]);
-    glTexParameteri(target, GL_TEXTURE_SWIZZLE_G, format.Swizzles[1]);
-    glTexParameteri(target, GL_TEXTURE_SWIZZLE_B, format.Swizzles[2]);
-    glTexParameteri(target, GL_TEXTURE_SWIZZLE_A, format.Swizzles[3]);
+    glBindTexture(target, tex);
 
-    switch(target)
-    {
-    case GL_TEXTURE_1D:
-        glTexStorage1D(target, texture.levels(), internal_format, extent.x);
-        break;
-    case GL_TEXTURE_1D_ARRAY:
-    case GL_TEXTURE_2D:
-    case GL_TEXTURE_CUBE_MAP:
-    case GL_TEXTURE_RECTANGLE:
-        glTexStorage2D(
-            target,
-            texture.levels(),
-            internal_format,
-            extent.x,
-            target == GL_TEXTURE_1D_ARRAY ? texture.layers() : extent.y
-        );
-        break;
-    case GL_TEXTURE_2D_ARRAY:
-    case GL_TEXTURE_3D:
-    case GL_TEXTURE_CUBE_MAP_ARRAY:
-        glTexStorage3D(
-            target,
-            texture.levels(),
-            internal_format,
-            extent.x,
-            extent.y,
-            target == GL_TEXTURE_3D ?
-                extent.z : texture.layers() * texture.faces()
-        );
-        break;
-    default:
-        glDeleteTextures(1, &gl_tex);
-        return 0;
-    }
+    glTexStorage2D(
+        target,
+        mipmap_count,
+        internal_format,
+        w, h
+    );
 
-    for(size_t layer = 0; layer < texture.layers(); ++layer)
-    {
-        for(size_t face = 0; face < texture.faces(); ++face)
-        {
-            for(size_t level = 0; level < texture.levels(); ++level)
-            {
-                extent = texture.extent(level);
-                GLenum face_target = gli::is_target_cube(texture.target()) ?
-                    face + GL_TEXTURE_CUBE_MAP_POSITIVE_X : target;
+    glTexSubImage2D(
+        target, 0, 0, 0, w, h,
+        external_format, type,
+        data
+    );
 
-                switch(target)
-                {
-                case GL_TEXTURE_1D:
-                    if(gli::is_compressed(texture.format()))
-                    {
-                        glCompressedTexSubImage1D(
-                            face_target, level,
-                            0, extent.x,
-                            internal_format, texture.size(level),
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    else
-                    {
-                        glTexSubImage1D(
-                            face_target, level,
-                            0, extent.x,
-                            external_format, type,
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    break;
-                case GL_TEXTURE_1D_ARRAY:
-                case GL_TEXTURE_2D:
-                case GL_TEXTURE_CUBE_MAP:
-                case GL_TEXTURE_RECTANGLE:
-                    if(gli::is_compressed(texture.format()))
-                    {
-                        glCompressedTexSubImage2D(
-                            face_target, level,
-                            0, 0, extent.x,
-                            target == GL_TEXTURE_1D_ARRAY ? layer : extent.y,
-                            internal_format, texture.size(level),
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    else
-                    {
-                        glTexSubImage2D(
-                            face_target, level,
-                            0, 0, extent.x,
-                            target == GL_TEXTURE_1D_ARRAY ? layer : extent.y,
-                            external_format, type,
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    break;
-                case GL_TEXTURE_2D_ARRAY:
-                case GL_TEXTURE_3D:
-                case GL_TEXTURE_CUBE_MAP_ARRAY:
-                    if(gli::is_compressed(texture.format()))
-                    {
-                        glCompressedTexSubImage3D(
-                            face_target, level,
-                            0, 0, 0, extent.x, extent.y,
-                            target == GL_TEXTURE_3D ? extent.z : layer,
-                            internal_format, texture.size(level),
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    else
-                    {
-                        glTexSubImage3D(
-                            face_target, level,
-                            0, 0, 0, extent.x, extent.y,
-                            target == GL_TEXTURE_3D ? extent.z : layer,
-                            external_format, type,
-                            texture.data(layer, face, level)
-                        );
-                    }
-                    break;
-                default:
-                    glDeleteTextures(1, &gl_tex);
-                    return 0;
-                }
-            }
-        }
-    }
+    glGenerateMipmap(target);
 
-    return gl_tex;
+    stbi_image_free(data);
+    return tex;
 }
 
 texture::texture()
-: tex(0) {}
+: tex(0), target(GL_TEXTURE_2D) {}
 
-texture::texture(const std::string& path)
-: tex(0)
+texture::texture(const std::string& path, GLenum target)
+: tex(0), target(target)
 {
     tex = load_texture(
         path,
+        target,
         internal_format,
         external_format,
-        target,
         type
     );
     if(tex == 0)
@@ -185,9 +101,10 @@ texture::texture(
     unsigned h,
     GLenum external_format,
     GLint internal_format,
-    GLenum type
+    GLenum type,
+    GLenum target
 ): tex(0), internal_format(internal_format), external_format(external_format),
-   target(GL_TEXTURE_2D), type(type)
+   target(target), type(type)
 {
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -245,12 +162,15 @@ GLenum texture::get_type() const
 class file_texture: public texture
 {
 public:
-    file_texture(const std::string& path)
-    : path(path) { }
+    file_texture(const std::string& path, GLenum target)
+    : path(path)
+    {
+        this->target = target;
+    }
 
     void load() const override
     {
-        basic_load(path);
+        basic_load(path, target);
     }
 
     void unload() const override
@@ -261,9 +181,9 @@ private:
     std::string path;
 };
 
-texture* texture::create(const std::string& path)
+texture* texture::create(const std::string& path, GLenum target)
 {
-    return new file_texture(path);
+    return new file_texture(path, target);
 }
 
 class empty_texture: public texture
@@ -274,18 +194,19 @@ public:
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        GLenum target
     ): w(w), h(h)
     {
         this->external_format = external_format;
         this->internal_format = internal_format;
         this->type = type;
-        this->target = GL_TEXTURE_2D;
+        this->target = target;
     }
 
     void load() const override
     {
-        basic_load(w, h, external_format, internal_format, type);
+        basic_load(w, h, external_format, internal_format, type, target);
     }
 
     void unload() const override
@@ -302,20 +223,23 @@ texture* texture::create(
     unsigned h,
     GLenum external_format,
     GLint internal_format,
-    GLenum type
+    GLenum type,
+    GLenum target
 ){
-    return new empty_texture(w, h, external_format, internal_format, type);
+    return new empty_texture(
+        w, h, external_format, internal_format, type, target
+    );
 }
 
-void texture::basic_load(const std::string& path) const
+void texture::basic_load(const std::string& path, GLenum target) const
 {
     if(tex) return;
 
     tex = load_texture(
         path,
+        target,
         internal_format,
         external_format,
-        target,
         type
     );
 
@@ -330,13 +254,14 @@ void texture::basic_load(
     unsigned h,
     GLenum external_format,
     GLint internal_format,
-    GLenum type
+    GLenum type,
+    GLenum target
 ) const {
     if(tex) return;
 
     glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexStorage2D(GL_TEXTURE_2D, 1, internal_format, w, h);
+    glBindTexture(target, tex);
+    glTexStorage2D(target, 1, internal_format, w, h);
 }
 
 void texture::basic_unload() const

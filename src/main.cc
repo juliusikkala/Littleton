@@ -12,11 +12,18 @@ int main()
 { 
     window w(640, 480, "dflowers", false, false);
     resource_store resources;
+    resources.add(
+        "cat_eyes_white",
+        texture::create("data/images/cat_eyes_white.png")
+    );
     resources.add_dfo("data/test.dfo");
     method::clear clear_sky(glm::vec4(0.5, 0.5, 1.0, 0.0));
     method::fullscreen_effect effect(
         read_text_file("data/shaders/test.frag")
     );
+    texture* cat_eyes_white = resources.get<texture>("cat_eyes_white");
+    cat_eyes_white->load();
+
     pipeline p({
         &effect
     });
@@ -41,7 +48,6 @@ int main()
         effect.get_shader()->set<float>("time", SDL_GetTicks()/1000.0f);
         p.execute();
         w.present();
-        std::cout << w.get_delta_ms() << std::endl;
     }
     return 0;
 }
