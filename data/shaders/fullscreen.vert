@@ -11,6 +11,7 @@ out vec2 uv;
 
 void main(void)
 {
-    gl_Position = vec4(vertex, 0, 1.0);
-    uv = vertex;
+    gl_Position = vec4(vertex, 0, 1.0f);
+    uv = vertex*0.5f+0.5f;
+    uv.y = 1-uv.y;
 }

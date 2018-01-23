@@ -10,7 +10,7 @@
 
 int main()
 { 
-    window w(640, 480, "dflowers", false, false);
+    window w(768, 768, "dflowers", false, false);
     resource_store resources;
     resources.add(
         "cat_eyes_white",
@@ -22,6 +22,7 @@ int main()
         read_text_file("data/shaders/test.frag")
     );
     texture* cat_eyes_white = resources.get<texture>("cat_eyes_white");
+    shader* effect_shader = effect.get_shader();
     cat_eyes_white->load();
 
     pipeline p({
@@ -45,7 +46,9 @@ int main()
                 break;
             };
         }
-        effect.get_shader()->set<float>("time", SDL_GetTicks()/1000.0f);
+        cat_eyes_white->bind();
+        effect_shader->set<float>("time", SDL_GetTicks()/1000.0f);
+        effect_shader->set<int>("tex", 0);
         p.execute();
         w.present();
     }

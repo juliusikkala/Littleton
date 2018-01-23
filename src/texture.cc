@@ -56,6 +56,8 @@ static GLuint load_texture(
     GLuint tex = 0;
     glGenTextures(1, &tex);
     glActiveTexture(GL_TEXTURE0);
+    GLint prev_tex;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &prev_tex);
     glBindTexture(target, tex);
 
     glTexStorage2D(
@@ -72,6 +74,11 @@ static GLuint load_texture(
     );
 
     glGenerateMipmap(target);
+
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    if(prev_tex != 0) glBindTexture(target, prev_tex);
 
     stbi_image_free(data);
     return tex;
@@ -157,6 +164,13 @@ GLenum texture::get_type() const
 {
     load();
     return type;
+}
+
+void texture::bind(unsigned index)
+{
+    load();
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(target, tex);
 }
 
 class file_texture: public texture

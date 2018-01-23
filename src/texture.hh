@@ -34,6 +34,7 @@ public:
         const std::string& path,
         GLenum target = GL_TEXTURE_2D
     );
+
     static texture* create(
         unsigned w,
         unsigned h,
@@ -42,6 +43,8 @@ public:
         GLenum type,
         GLenum target = GL_TEXTURE_2D
     );
+
+    void bind(unsigned index = 0);
 
 protected:
     void basic_load(const std::string& path, GLenum target) const;
