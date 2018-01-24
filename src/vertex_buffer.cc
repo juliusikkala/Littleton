@@ -95,9 +95,33 @@ vertex_buffer::~vertex_buffer()
     basic_unload();
 }
 
+shader::definition_map vertex_buffer::get_definitions() const
+{
+    load();
+    switch(type)
+    {
+    case vertex_buffer::VERTEX_PN:
+        return {{"VERTEX_POSITION", "0"}, {"VERTEX_NORMAL", "1"}};
+    case vertex_buffer::VERTEX_PNTT:
+        return {
+            {"VERTEX_POSITION", "0"},
+            {"VERTEX_NORMAL", "1"},
+            {"VERTEX_TANGENT", "2"},
+            {"VERTEX_UV", "3"},
+        };
+    case vertex_buffer::VERTEX_P:
+        return {
+            {"VERTEX_POSITION", "0"}
+        };
+    default:
+        return {};
+    }
+}
+
 GLuint vertex_buffer::get_vbo() const { load(); return vbo; }
 GLuint vertex_buffer::get_ibo() const { load(); return ibo; }
 GLuint vertex_buffer::get_vao() const { load(); return vao; }
+
 void vertex_buffer::draw() const
 {
     load();

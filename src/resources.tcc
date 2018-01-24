@@ -53,13 +53,7 @@ bool resource_store::resource_iterator<T, I>::operator!=(
 }
 
 template<typename T, typename I>
-T& resource_store::resource_iterator<T, I>::operator*() const
-{
-    return *(T*)it->second->data;
-}
-
-template<typename T, typename I>
-T* resource_store::resource_iterator<T, I>::operator->() const
+T* resource_store::resource_iterator<T, I>::operator*() const
 {
     return (T*)it->second->data;
 }

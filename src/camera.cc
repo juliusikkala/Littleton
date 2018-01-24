@@ -6,12 +6,12 @@ camera::~camera() {}
 
 void camera::perspective(float fov, float aspect, float near)
 {
-    projection = glm::infinitePerspective(fov, aspect, near);
+    projection = glm::infinitePerspective(glm::radians(fov), aspect, near);
 }
 
 void camera::perspective(float fov, float aspect, float near, float far)
 {
-    projection = glm::perspective(fov, aspect, near, far);
+    projection = glm::perspective(glm::radians(fov), aspect, near, far);
 }
 
 void camera::orthographic(float w, float h)

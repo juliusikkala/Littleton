@@ -16,6 +16,7 @@ public:
     );
     void rotate(glm::quat rotation);
     void set_orientation(float angle, glm::vec3 axis);
+    void set_orientation(float pitch, float yaw, float roll = 0);
     void set_orientation(glm::quat orientation = glm::quat());
     glm::quat get_orientation() const;
 

@@ -1,4 +1,8 @@
-project('DarkFlowers', 'cpp', default_options : ['cpp_std=c++1z'])
+project(
+  'DarkFlowers',
+  'cpp',
+  default_options : ['cpp_std=c++1z', 'buildtype=debugoptimized']
+)
 
 src = [
   'lib/stb_image.c',
@@ -16,12 +20,13 @@ src = [
   'src/camera.cc',
   'src/transformable.cc',
   'src/helpers.cc',
+  'src/shader_cache.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_render.cc',
 ]
 
-dfoutils_sp = subproject('DFOUtils')
+dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])
 dfo_dep = dfoutils_sp.get_variable('dfo_dep')
 
 cc = meson.get_compiler('cpp')

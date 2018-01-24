@@ -60,7 +60,7 @@ public:
 
         if(buf->type == DFO_VERTEX_PN)
         {
-            float* vertices = new float[6 * buf->vertex_count];
+            vertices = new float[6 * buf->vertex_count];
 
             if(!dfo_read_buffer(res->get_file(), buf, vertices, indices))
             {
@@ -71,7 +71,7 @@ public:
         }
         else if(buf->type == DFO_VERTEX_PNT)
         {
-            float* vertices = new float[12 * buf->vertex_count];
+            vertices = new float[12 * buf->vertex_count];
 
             if(!dfo_read_buffer_tangent(
                 res->get_file(),

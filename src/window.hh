@@ -1,6 +1,7 @@
 #ifndef WINDOW_HH
 #define WINDOW_HH
 #include <SDL2/SDL.h>
+#include <glm/glm.hpp>
 
 class window
 {
@@ -26,9 +27,13 @@ public:
     int get_delta_ms() const;
     float get_delta() const;
 
+    glm::uvec2 get_size() const;
+    float get_aspect() const;
+
 private:
     static bool initialized;
 
+    unsigned w, h;
     unsigned framerate_limit;
     int last_frame;
     int delta;

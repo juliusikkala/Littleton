@@ -3,6 +3,7 @@
 #include <memory>
 #include "glheaders.hh"
 #include "resources.hh"
+#include "shader.hh"
 
 class vertex_buffer: public resource
 {
@@ -25,6 +26,8 @@ public:
     vertex_buffer(const vertex_buffer& other) = delete;
     vertex_buffer(vertex_buffer&& other);
     ~vertex_buffer();
+
+    shader::definition_map get_definitions() const;
 
     GLuint get_vbo() const;
     GLuint get_ibo() const;

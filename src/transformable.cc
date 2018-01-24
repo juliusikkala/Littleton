@@ -14,7 +14,7 @@ transformable::transformable(const transformable& other)
 
 void transformable::rotate(float angle, glm::vec3 axis, glm::vec3 local_origin)
 {
-    glm::quat rotation = glm::angleAxis(angle, axis);
+    glm::quat rotation = glm::angleAxis(glm::radians(angle), axis);
     orientation = rotation * orientation;
     position += local_origin + rotation * -local_origin;
 }
@@ -26,12 +26,23 @@ void transformable::rotate(glm::quat rotation)
 
 void transformable::set_orientation(float angle, glm::vec3 axis)
 {
-    orientation = glm::angleAxis(angle, axis);
+    orientation = glm::angleAxis(glm::radians(angle), axis);
 }
 
 void transformable::set_orientation(glm::quat orientation)
 {
     this->orientation = orientation;
+}
+
+void transformable::set_orientation(float pitch, float yaw, float roll)
+{
+    this->orientation = glm::quat(
+        glm::vec3(
+            glm::radians(pitch),
+            glm::radians(yaw),
+            glm::radians(roll)
+        )
+    );
 }
 
 glm::quat transformable::get_orientation() const { return orientation; }
@@ -87,7 +98,7 @@ transformable_node::transformable_node(transformable_node* parent)
 glm::mat4 transformable_node::get_global_transform() const 
 {
     return parent ?
-        get_transform() * parent->get_global_transform() :
+        parent->get_global_transform() * get_transform():
         get_transform();
 }
 

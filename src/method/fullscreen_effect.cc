@@ -8,11 +8,11 @@ method::fullscreen_effect::~fullscreen_effect() { }
 
 void method::fullscreen_effect::execute()
 {
-    if(effect)
-    {
-        effect->bind();
-        fullscreen_quad.draw();
-    }
+    if(!effect) return;
+
+    glDisable(GL_DEPTH_TEST);
+    effect->bind();
+    fullscreen_quad.draw();
 }
 
 void method::fullscreen_effect::set_shader(shader* effect)

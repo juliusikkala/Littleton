@@ -3,8 +3,11 @@
 #include <stdexcept>
 #include <sstream>
 
-static void throw_shader_error(GLuint shader, const std::string& name)
-{
+static void throw_shader_error(
+    GLuint shader,
+    const std::string& name,
+    const std::string& src
+){
     GLint status = GL_FALSE;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
@@ -16,12 +19,14 @@ static void throw_shader_error(GLuint shader, const std::string& name)
         glGetShaderInfoLog(shader, length+1, &length, err);
         std::string err_str(err);
         delete [] err;
-        throw std::runtime_error(name + ": " + err_str);
+        throw std::runtime_error(name + ": " + err_str + "\n" + src);
     }
 }
 
-static void throw_program_error(GLuint program, const std::string& name)
-{
+static void throw_program_error(
+    GLuint program,
+    const std::string& name
+){
     GLint status = GL_FALSE;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
 
@@ -193,8 +198,8 @@ void shader::basic_load(
     glCompileShader(vshader);
     glCompileShader(fshader);
 
-    throw_shader_error(vshader, "Vertex shader");
-    throw_shader_error(fshader, "Fragment shader");
+    throw_shader_error(vshader, "Vertex shader", vert_src_spliced);
+    throw_shader_error(fshader, "Fragment shader", frag_src_spliced);
 
     program = glCreateProgram();
     glAttachShader(program, vshader);

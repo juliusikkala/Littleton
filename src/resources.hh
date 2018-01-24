@@ -65,8 +65,7 @@ public:
         template<typename U>
         bool operator!=(const resource_iterator<U, I>& other) const;
 
-        T& operator*() const;
-        T* operator->() const;
+        T* operator*() const;
 
         const std::string& name() const;
 

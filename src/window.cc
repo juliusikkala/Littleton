@@ -13,7 +13,7 @@ window::window(
     bool vsync,
     unsigned framerate_limit,
     unsigned samples
-): framerate_limit(framerate_limit), last_frame(0), delta(0)
+): w(w), h(h), framerate_limit(framerate_limit), last_frame(0), delta(0)
 {
     if(initialized)
     {
@@ -135,4 +135,14 @@ int window::get_delta_ms() const
 float window::get_delta() const
 {
     return delta/1000.0f;
+}
+
+glm::uvec2 window::get_size() const
+{
+    return glm::uvec2(w, h);
+}
+
+float window::get_aspect() const
+{
+    return w/(float)h;
 }
