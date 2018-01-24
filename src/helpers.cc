@@ -21,6 +21,7 @@ std::string read_text_file(const std::string& path)
         delete [] data;
         throw std::runtime_error("Unable to read " + path);
     }
+    fclose(f);
     std::string ret(data, sz);
 
     delete [] data;

@@ -1,25 +1,26 @@
 #include "fullscreen_effect.hh"
 #include "helpers.hh"
 
-method::fullscreen_effect::fullscreen_effect(const std::string& fshader_source)
-: effect(read_text_file("data/shaders/fullscreen.vert"), fshader_source),
-  fullscreen_quad(vertex_buffer::create_fullscreen())
-{}
+method::fullscreen_effect::fullscreen_effect(shader* effect)
+: effect(effect), fullscreen_quad(vertex_buffer::create_fullscreen()) {}
 
 method::fullscreen_effect::~fullscreen_effect() { }
 
 void method::fullscreen_effect::execute()
 {
-    effect.bind();
-    fullscreen_quad.draw();
+    if(effect)
+    {
+        effect->bind();
+        fullscreen_quad.draw();
+    }
 }
 
-shader* method::fullscreen_effect::get_shader()
+void method::fullscreen_effect::set_shader(shader* effect)
 {
-    return &effect;
+    this->effect = effect;
 }
 
-const shader* method::fullscreen_effect::get_shader() const
+shader* method::fullscreen_effect::get_shader() const
 {
-    return &effect;
+    return effect;
 }

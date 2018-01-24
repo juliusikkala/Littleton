@@ -6,19 +6,20 @@
 
 namespace method
 {
+    // Assumes the vertex shader is data/shaders/fullscreen.vert
     class fullscreen_effect: public pipeline_method
     {
     public:
-        fullscreen_effect(const std::string& fshader_source);
+        fullscreen_effect(shader* effect = nullptr);
         ~fullscreen_effect();
 
         void execute() override;
 
-        shader* get_shader();
-        const shader* get_shader() const;
+        void set_shader(shader* effect);
+        shader* get_shader() const;
 
     private:
-        shader effect;
+        shader* effect;
         vertex_buffer fullscreen_quad;
     };
 }

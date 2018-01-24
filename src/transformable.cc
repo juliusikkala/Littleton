@@ -81,12 +81,6 @@ glm::mat4 transformable::get_transform() const
         * glm::scale(scaling);
 }
 
-glm::mat4 transformable::get_inverse_transform() const
-{
-    return glm::scale(1.0f/scaling) * glm::toMat4(glm::inverse(orientation))
-        * glm::translate(-position);
-}
-
 transformable_node::transformable_node(transformable_node* parent)
 : parent(parent) {}
 
@@ -95,13 +89,6 @@ glm::mat4 transformable_node::get_global_transform() const
     return parent ?
         get_transform() * parent->get_global_transform() :
         get_transform();
-}
-
-glm::mat4 transformable_node::get_inverse_global_transform() const
-{
-    return parent ?
-        parent->get_inverse_global_transform() * get_inverse_transform():
-        get_inverse_transform();
 }
 
 void transformable_node::set_parent(transformable_node* parent)

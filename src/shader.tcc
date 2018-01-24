@@ -38,14 +38,16 @@ template<> void uniform_set_value<glm::mat4>(
     GLint location, size_t count, const glm::mat4* value);
 
 template<typename T>
-bool shader::is_compatible(const std::string& name, size_t count)
+bool shader::is_compatible(const std::string& name, size_t count) const
 {
+    load();
     return is_compatible<T>(uniforms.find(name), count);
 }
 
 template<typename T>
 void shader::set(const std::string& name, const T& value)
 {
+    load();
     auto it = uniforms.find(name);
     if(it == uniforms.end()) return;
 
@@ -64,6 +66,7 @@ void shader::set(
     size_t count,
     const T* value
 ){
+    load();
     auto it = uniforms.find(name);
     if(it == uniforms.end()) return;
 

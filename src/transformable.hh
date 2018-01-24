@@ -29,7 +29,6 @@ public:
 
     void set_transform(const glm::mat4& transform);
     glm::mat4 get_transform() const;
-    glm::mat4 get_inverse_transform() const;
 
 private:
     glm::quat orientation;
@@ -42,7 +41,6 @@ public:
     transformable_node(transformable_node* parent = nullptr);
 
     glm::mat4 get_global_transform() const;
-    glm::mat4 get_inverse_global_transform() const;
 
     void set_parent(transformable_node* parent = nullptr);
     transformable_node* get_parent() const;

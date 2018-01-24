@@ -1,13 +1,18 @@
 #ifndef MATERIAL_HH
 #define MATERIAL_HH
-#include "texture.hh"
+#include "shader.hh"
 #include <glm/glm.hpp>
 #include <variant>
+
+class texture;
 
 struct material
 {
 public:
     material();
+
+    shader::definition_map get_definitions() const;
+    void apply(shader* s);
 
     std::variant<texture*, float> metallic;
     std::variant<texture*, glm::vec4> color;

@@ -53,6 +53,8 @@ public:
 
     void load() const override
     {
+        if(vao) return;
+
         float* vertices = nullptr;
         uint32_t* indices = new uint32_t[buf->index_count];
 

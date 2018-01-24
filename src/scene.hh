@@ -8,12 +8,14 @@
 class scene
 {
 public:
-    scene();
+    scene(
+        camera* cam,
+        std::set<object*> objects = {}
+    );
     ~scene();
 
-    void set_camera(const camera& cam);
-    camera& get_camera();
-    const camera& get_camera() const;
+    void set_camera(camera* cam);
+    camera* get_camera() const;
 
     void add(object* obj);
     void remove(object* obj);
@@ -26,13 +28,13 @@ public:
     using const_iterator = std::set<object*>::const_iterator;
 
     iterator begin();
-    const_iterator begin() const;
+    const_iterator cbegin() const;
 
     iterator end();
-    const_iterator end() const;
+    const_iterator cend() const;
 
 private:
-    camera cam;
+    camera* cam;
     std::set<object*> objects;
 };
 
