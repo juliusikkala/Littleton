@@ -13,7 +13,7 @@ int main()
 { 
     window w(1280, 720, "dflowers", false, true);
     resource_store resources;
-    resources.add_dfo("data/test_scene.dfo");
+    resources.add_dfo("data/test_scene.dfo", "data");
 
     texture* cat_eyes_white = resources.add(
         "cat_eyes_white",

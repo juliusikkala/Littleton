@@ -34,6 +34,7 @@ public:
     );
 
     void bind() const;
+    static void unbind();
 
     template<typename T>
     bool is_compatible(const std::string& name, size_t count = 1) const;
@@ -67,6 +68,7 @@ protected:
     template<typename T>
     static bool is_compatible(GLenum type, GLint size, size_t count = 1);
 
+    static GLuint current_program;
     mutable GLuint program;
     mutable std::unordered_map<
         std::string,

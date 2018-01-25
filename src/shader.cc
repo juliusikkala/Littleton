@@ -42,6 +42,8 @@ static void throw_program_error(
     }
 }
 
+GLuint shader::current_program = 0;
+
 shader::shader(): program(0) {}
 
 shader::shader(
@@ -75,12 +77,17 @@ GLuint shader::get_program() const
 void shader::bind() const
 {
     load();
-    static GLuint current_program = 0;
     if(program != current_program)
     {
         glUseProgram(program);
         current_program = program;
     }
+}
+
+void shader::unbind()
+{
+    glUseProgram(0);
+    current_program = 0;
 }
 
 
@@ -262,6 +269,11 @@ void shader::basic_unload() const
 {
     if(program != 0)
     {
+        if(program == current_program)
+        {
+            unbind();
+        }
+
         uniforms.clear();
         glDeleteProgram(program);
         program = 0;

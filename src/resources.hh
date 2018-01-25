@@ -104,7 +104,7 @@ public:
     template<typename T>
     T* add(const std::string& name, T&& res);
 
-    void add_dfo(const std::string& path);
+    void add_dfo(const std::string& path, const std::string& data_prefix = "");
 
     // Unsafe, deletes the pointer to the resource.
     template<typename T>

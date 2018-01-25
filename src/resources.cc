@@ -119,8 +119,10 @@ static glm::vec4 dfo_rgba_to_vec4(dfo_rgba rgba)
     return glm::vec4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
 }
 
-void resource_store::add_dfo(const std::string& dfo_path)
-{
+void resource_store::add_dfo(
+    const std::string& dfo_path,
+    const std::string& data_prefix
+){
     std::shared_ptr<dfo_file_wrapper> res(new dfo_file_wrapper(dfo_path));
 
     const dfo_file* file = res->get_file();
@@ -143,7 +145,14 @@ void resource_store::add_dfo(const std::string& dfo_path)
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
-        textures[tex] = add<texture>(tex->path, texture::create(tex->path));
+        textures[tex] = add<texture>(
+            tex->path,
+            texture::create(
+                data_prefix.empty() ? 
+                    tex->path :
+                    data_prefix + "/" + tex->path
+            )
+        );
     }
 
     // Add all materials

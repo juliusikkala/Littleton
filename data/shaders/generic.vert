@@ -30,7 +30,7 @@ void main(void)
     f_normal = n_mv * v_normal;
 
 #ifdef VERTEX_TANGENT
-    f_tangent = n_mv * v_tangent;
+    f_tangent = n_mv * v_tangent.xyz;
     f_bitangent = n_mv * (cross(v_normal, v_tangent.xyz) * v_tangent.w);
 #endif
 #endif
