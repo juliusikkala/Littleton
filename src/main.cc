@@ -71,8 +71,8 @@ int main()
                 break;
             };
         }
+        suzanne->rotate_local(1, glm::vec3(0,1,0));
         sphere->lookat(&cam);
-        cam.lookat(suzanne);
         p.execute();
         w.present();
     }

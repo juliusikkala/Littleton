@@ -14,6 +14,12 @@ public:
         glm::vec3 axis,
         glm::vec3 local_origin = glm::vec3(0)
     );
+
+    void rotate_local(
+        float angle,
+        glm::vec3 axis,
+        glm::vec3 local_origin = glm::vec3(0)
+    );
     void rotate(glm::quat rotation);
     void set_orientation(float angle, glm::vec3 axis);
     void set_orientation(float pitch, float yaw, float roll = 0);
@@ -21,6 +27,7 @@ public:
     glm::quat get_orientation() const;
 
     void translate(glm::vec3 offset); 
+    void translate_local(glm::vec3 offset);
     void set_position(glm::vec3 position = glm::vec3(0));
     glm::vec3 get_position() const;
 

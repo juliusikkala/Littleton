@@ -20,6 +20,14 @@ void transformable::rotate(float angle, glm::vec3 axis, glm::vec3 local_origin)
     orientation = glm::normalize(rotation * orientation);
     position += local_origin + rotation * -local_origin;
 }
+void transformable::rotate_local(
+    float angle,
+    glm::vec3 axis,
+    glm::vec3 local_origin
+){
+    axis = orientation * axis;
+    rotate(angle, axis, local_origin);
+}
 
 void transformable::rotate(glm::quat rotation)
 {
@@ -52,6 +60,11 @@ glm::quat transformable::get_orientation() const { return orientation; }
 void transformable::translate(glm::vec3 offset)
 {
     this->position += offset;
+}
+
+void transformable::translate_local(glm::vec3 offset)
+{
+    this->position += orientation * offset;
 }
 
 void transformable::set_position(glm::vec3 position)
@@ -151,18 +164,26 @@ void transformable_node::lookat(
     glm::vec3 forward,
     float angle_limit
 ){
-    glm::vec3 dir = pos - position;
+    glm::vec3 eye = position;
+    glm::mat4 parent_transform;
+    if(parent)
+    {
+        parent_transform = parent->get_global_transform();
+        // Perform the lookat in world space.
+        // While we could perform this in local space, this method avoids
+        // computing the inverse matrix of parent_transform and seems to have
+        // fewer edge cases.
+        eye = parent_transform * glm::vec4(position, 1);
+    }
+
+    glm::vec3 dir = pos - eye;
     glm::quat global_orientation = quat_lookat(dir, up, forward);
-    glm::quat target;
+    glm::quat target = global_orientation;
 
     if(parent)
     {
-        target =
-            glm::inverse(parent->get_global_orientation()) * global_orientation;
-    }
-    else
-    {
-        target = global_orientation;
+        // Translate world space target back to local space
+        target = glm::inverse(get_matrix_orientation(parent_transform)) * target;
     }
 
     if(angle_limit < 0) orientation = target;
