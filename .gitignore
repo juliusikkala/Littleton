@@ -2,3 +2,5 @@ build
 *.swp
 config.hh
 dna.txt
+*.blend1
+*.blend2

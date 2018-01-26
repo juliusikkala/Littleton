@@ -8,6 +8,7 @@
 #include "method/forward_render.hh"
 #include "helpers.hh"
 #include <iostream>
+#include <glm/gtc/random.hpp>
 
 int main()
 { 
@@ -33,10 +34,13 @@ int main()
             read_text_file("data/shaders/forward_render.frag")
         )
     );
+    object* suzanne = resources.get<object>("Suzanne");
+    object* sphere = resources.get<object>("Sphere");
 
     camera cam;
-    cam.perspective(60, w.get_aspect(), 0.1, 10);
+    cam.perspective(90, w.get_aspect(), 0.1, 20);
     cam.translate(glm::vec3(2.0,2.0,2.0));
+    cam.lookat(suzanne);
     scene main_scene(&cam);
 
     for(auto it = resources.begin<object>(); it != resources.end<object>(); ++it)
@@ -67,7 +71,8 @@ int main()
                 break;
             };
         }
-        cam.set_orientation(-25, 45 + sin(SDL_GetTicks()/400.0f)*15);
+        sphere->lookat(&cam);
+        cam.lookat(suzanne);
         p.execute();
         w.present();
     }

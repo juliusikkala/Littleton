@@ -24,6 +24,7 @@ public:
     void set_position(glm::vec3 position = glm::vec3(0));
     glm::vec3 get_position() const;
 
+    void scale(float scale);
     void scale(glm::vec3 scale);
     void set_scaling(glm::vec3 scaling = glm::vec3(1));
     glm::vec3 get_scaling() const;
@@ -31,7 +32,20 @@ public:
     void set_transform(const glm::mat4& transform);
     glm::mat4 get_transform() const;
 
-private:
+    void lookat(
+        glm::vec3 pos,
+        glm::vec3 up = glm::vec3(0,1,0),
+        glm::vec3 forward = glm::vec3(0,0,-1),
+        float angle_limit = -1
+    );
+    void lookat(
+        const transformable* other,
+        glm::vec3 up = glm::vec3(0,1,0),
+        glm::vec3 forward = glm::vec3(0,0,-1),
+        float angle_limit = -1
+    );
+
+protected:
     glm::quat orientation;
     glm::vec3 position, scaling;
 };
@@ -43,10 +57,33 @@ public:
 
     glm::mat4 get_global_transform() const;
 
+    glm::vec3 get_global_position() const;
+    glm::quat get_global_orientation() const;
+    glm::vec3 get_global_scaling() const;
+
     void set_parent(transformable_node* parent = nullptr);
     transformable_node* get_parent() const;
 
-private:
+    void lookat(
+        glm::vec3 pos,
+        glm::vec3 up = glm::vec3(0,1,0),
+        glm::vec3 forward = glm::vec3(0,0,-1),
+        float angle_limit = -1
+    );
+    void lookat(
+        const transformable* other,
+        glm::vec3 up = glm::vec3(0,1,0),
+        glm::vec3 forward = glm::vec3(0,0,-1),
+        float angle_limit = -1
+    );
+    void lookat(
+        const transformable_node* other,
+        glm::vec3 up = glm::vec3(0,1,0),
+        glm::vec3 forward = glm::vec3(0,0,-1),
+        float angle_limit = -1
+    );
+
+protected:
     transformable_node* parent;
 };
 

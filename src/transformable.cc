@@ -1,6 +1,8 @@
 #include "transformable.hh"
+#include "helpers.hh"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 transformable::transformable()
 : position(0), scaling(1)
@@ -15,13 +17,13 @@ transformable::transformable(const transformable& other)
 void transformable::rotate(float angle, glm::vec3 axis, glm::vec3 local_origin)
 {
     glm::quat rotation = glm::angleAxis(glm::radians(angle), axis);
-    orientation = rotation * orientation;
+    orientation = glm::normalize(rotation * orientation);
     position += local_origin + rotation * -local_origin;
 }
 
 void transformable::rotate(glm::quat rotation)
 {
-    orientation = rotation * orientation;
+    orientation = glm::normalize(rotation * orientation);
 }
 
 void transformable::set_orientation(float angle, glm::vec3 axis)
@@ -59,6 +61,11 @@ void transformable::set_position(glm::vec3 position)
 
 glm::vec3 transformable::get_position() const { return position; }
 
+void transformable::scale(float scale)
+{
+    this->scaling *= scale;
+}
+
 void transformable::scale(glm::vec3 scale)
 {
     this->scaling *= scale;
@@ -72,24 +79,35 @@ glm::vec3 transformable::get_scaling() const { return scaling; }
 
 void transformable::set_transform(const glm::mat4& transform)
 {
-    position = transform[3];
-    scaling = glm::vec3(
-        glm::length(transform[0]),
-        glm::length(transform[1]),
-        glm::length(transform[2])
-    );
-    orientation = glm::quat(glm::mat4(
-        transform[0]/scaling.x,
-        transform[1]/scaling.y,
-        transform[2]/scaling.z,
-        glm::vec4(0,0,0,1)
-    ));
+    decompose_matrix(transform, position, scaling, orientation);
 }
 
 glm::mat4 transformable::get_transform() const
 {
     return glm::translate(position) * glm::toMat4(orientation)
         * glm::scale(scaling);
+}
+
+void transformable::lookat(
+    glm::vec3 pos,
+    glm::vec3 up,
+    glm::vec3 forward,
+    float angle_limit
+){
+    glm::vec3 dir = pos - position;
+    glm::quat target = quat_lookat(dir, up, forward);
+
+    if(angle_limit < 0) orientation = target;
+    else orientation = rotate_towards(orientation, target, angle_limit);
+}
+
+void transformable::lookat(
+    const transformable* other,
+    glm::vec3 up,
+    glm::vec3 forward,
+    float angle_limit
+){
+    lookat(other->position, up, forward, angle_limit);
 }
 
 transformable_node::transformable_node(transformable_node* parent)
@@ -102,6 +120,21 @@ glm::mat4 transformable_node::get_global_transform() const
         get_transform();
 }
 
+glm::vec3 transformable_node::get_global_position() const
+{
+    return get_matrix_translation(get_global_transform());
+}
+
+glm::quat transformable_node::get_global_orientation() const
+{
+    return get_matrix_orientation(get_global_transform());
+}
+
+glm::vec3 transformable_node::get_global_scaling() const
+{
+    return get_matrix_scaling(get_global_transform());
+}
+
 void transformable_node::set_parent(transformable_node* parent)
 {
     this->parent = parent;
@@ -110,4 +143,46 @@ void transformable_node::set_parent(transformable_node* parent)
 transformable_node* transformable_node::get_parent() const
 {
     return parent;
+}
+
+void transformable_node::lookat(
+    glm::vec3 pos,
+    glm::vec3 up,
+    glm::vec3 forward,
+    float angle_limit
+){
+    glm::vec3 dir = pos - position;
+    glm::quat global_orientation = quat_lookat(dir, up, forward);
+    glm::quat target;
+
+    if(parent)
+    {
+        target =
+            glm::inverse(parent->get_global_orientation()) * global_orientation;
+    }
+    else
+    {
+        target = global_orientation;
+    }
+
+    if(angle_limit < 0) orientation = target;
+    else orientation = rotate_towards(orientation, target, angle_limit);
+}
+
+void transformable_node::lookat(
+    const transformable* other,
+    glm::vec3 up,
+    glm::vec3 forward,
+    float angle_limit
+){
+    lookat(other->get_position(), up, forward, angle_limit);
+}
+
+void transformable_node::lookat(
+    const transformable_node* other,
+    glm::vec3 up,
+    glm::vec3 forward,
+    float angle_limit
+){
+    lookat(other->get_global_position(), up, forward, angle_limit);
 }
