@@ -21,6 +21,7 @@ src = [
   'src/transformable.cc',
   'src/helpers.cc',
   'src/shader_cache.cc',
+  'src/uniform.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_render.cc',

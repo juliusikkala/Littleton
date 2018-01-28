@@ -60,6 +60,7 @@ shader::shader(shader&& other)
     other.load();
     program = other.program;
     uniforms = std::move(other.uniforms);
+    blocks = std::move(other.blocks);
     other.program = 0;
 }
 
@@ -227,15 +228,19 @@ void shader::basic_load(
     GLuint uniform_count = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, (GLint*)&uniform_count);
 
+    // Read uniforms in default block (they can be set separately by the user)
     for(GLuint i = 0; i < uniform_count; ++i)
     {
         GLint length = 0;
+        GLint block = 0;
         glGetActiveUniformsiv(
-            program,
-            1,
-            &i,
-            GL_UNIFORM_NAME_LENGTH,
-            (GLint*)&length
+            program, 1, &i, GL_UNIFORM_BLOCK_INDEX, (GLint*)&block
+        );
+        // Not in default block
+        if(block != -1) continue;
+
+        glGetActiveUniformsiv(
+            program, 1, &i, GL_UNIFORM_NAME_LENGTH, (GLint*)&length
         );
         char* name = new char[length];
         glGetActiveUniformName(program, i, length, nullptr, name);
@@ -244,22 +249,91 @@ void shader::basic_load(
         data.location = glGetUniformLocation(program, name);
 
         glGetActiveUniformsiv(
-            program,
-            1,
-            &i,
-            GL_UNIFORM_SIZE,
-            (GLint*)&data.size
+            program, 1, &i, GL_UNIFORM_SIZE, (GLint*)&data.size
         );
 
         glGetActiveUniformsiv(
-            program,
-            1,
-            &i,
-            GL_UNIFORM_TYPE,
-            (GLint*)&data.type
+            program, 1, &i, GL_UNIFORM_TYPE, (GLint*)&data.type
         );
 
         uniforms[name] = data;
+
+        delete [] name;
+    }
+
+    // Read uniform blocks
+    GLuint block_count = 0;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, (GLint*)&block_count);
+
+    std::vector<GLint> indices;
+
+    for(GLuint i = 0; i < block_count; ++i)
+    {
+        GLint length = 0;
+        glGetActiveUniformBlockiv(
+            program, i, GL_UNIFORM_BLOCK_NAME_LENGTH, (GLint*)&length
+        );
+        char* name = new char[length];
+        glGetActiveUniformBlockName(program, i, length, nullptr, name);
+        std::string name_prefix = std::string(name) + ".";
+
+        std::unordered_map<std::string, uniform_block_type::uniform_info> info;
+        GLint size = 0;
+
+        GLint count = 0;
+        glGetActiveUniformBlockiv(
+            program, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &count
+        );
+        indices.resize(count);
+        glGetActiveUniformBlockiv(
+            program, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indices.data()
+        );
+
+        // Add all the uniforms in this block to 'info'
+        for(GLuint ui: indices)
+        {
+            glGetActiveUniformsiv(
+                program, 1, &ui, GL_UNIFORM_NAME_LENGTH, (GLint*)&length
+            );
+            char* name = new char[length];
+            glGetActiveUniformName(program, ui, length, nullptr, name);
+            std::string shortened_name(name);
+            delete [] name;
+
+            if(shortened_name.compare(
+                0, name_prefix.length(), name_prefix
+            ) == 0)
+            {
+                shortened_name = shortened_name.substr(name_prefix.length());
+            }
+
+            uniform_block_type::uniform_info data;
+
+            glGetActiveUniformsiv(
+                program, 1, &ui, GL_UNIFORM_OFFSET, &data.offset
+            );
+
+            glGetActiveUniformsiv(program, 1, &ui, GL_UNIFORM_SIZE, &data.size);
+
+            glGetActiveUniformsiv(
+                program, 1, &ui, GL_UNIFORM_ARRAY_STRIDE, &data.array_stride
+            );
+
+            glGetActiveUniformsiv(
+                program, 1, &ui, GL_UNIFORM_MATRIX_STRIDE, &data.matrix_stride
+            );
+
+            glGetActiveUniformsiv(
+                program, 1, &ui, GL_UNIFORM_TYPE, (GLint*)&data.type
+            );
+
+            info[shortened_name] = data;
+        }
+
+        blocks.emplace(
+            name,
+            block_data{i, uniform_block_type(std::move(info), size)}
+        );
 
         delete [] name;
     }
@@ -275,121 +349,8 @@ void shader::basic_unload() const
         }
 
         uniforms.clear();
+        blocks.clear();
         glDeleteProgram(program);
         program = 0;
     }
-}
-
-template<>
-void uniform_set_value<float>(
-    GLint location, size_t count, const float* value
-){
-    glUniform1fv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::vec2>(
-    GLint location, size_t count, const glm::vec2* value
-){
-    glUniform2fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::vec3>(
-    GLint location, size_t count, const glm::vec3* value
-){
-    glUniform3fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::vec4>(
-    GLint location, size_t count, const glm::vec4* value
-){
-    glUniform4fv(location, count, (float*)value);
-}
-
-template<>
-void uniform_set_value<int>(
-    GLint location, size_t count, const int* value
-){
-    glUniform1iv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::ivec2>(
-    GLint location, size_t count, const glm::ivec2* value
-){
-    glUniform2iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<glm::ivec3>(
-    GLint location, size_t count, const glm::ivec3* value
-){
-    glUniform3iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<glm::ivec4>(
-    GLint location, size_t count, const glm::ivec4* value
-){
-    glUniform4iv(location, count, (int*)value);
-}
-
-template<>
-void uniform_set_value<unsigned>(
-    GLint location, size_t count, const unsigned* value
-){
-    glUniform1uiv(location, count, value);
-}
-
-template<>
-void uniform_set_value<glm::uvec2>(
-    GLint location, size_t count, const glm::uvec2* value
-){
-    glUniform2uiv(location, count, (unsigned*)value);
-}
-
-template<>
-void uniform_set_value<glm::uvec3>(
-    GLint location, size_t count, const glm::uvec3* value
-){
-    glUniform3uiv(location, count, (unsigned*)value);
-}
-
-template<>
-void uniform_set_value<glm::uvec4>(
-    GLint location, size_t count, const glm::uvec4* value
-){
-    glUniform4uiv(location, count, (unsigned*)value);
-}
-
-// Bool vectors should be set using glm::ivec instead of this.
-template<>
-void uniform_set_value<bool>(
-    GLint location, size_t count, const bool* value
-){
-    int v = *value;
-    glUniform1iv(location, 1, &v);
-}
-
-template<>
-void uniform_set_value<glm::mat2>(
-    GLint location, size_t count, const glm::mat2* value
-){
-    glUniformMatrix2fv(location, count, GL_FALSE, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::mat3>(
-    GLint location, size_t count, const glm::mat3* value
-){
-    glUniformMatrix3fv(location, count, GL_FALSE, (float*)value);
-}
-
-template<>
-void uniform_set_value<glm::mat4>(
-    GLint location, size_t count, const glm::mat4* value
-){
-    glUniformMatrix4fv(location, count, GL_FALSE, (float*)value);
 }

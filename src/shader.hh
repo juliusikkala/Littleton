@@ -2,6 +2,7 @@
 #define SHADER_HH
 #include "resources.hh"
 #include "glheaders.hh"
+#include "uniform.hh"
 #include <map>
 
 class shader;
@@ -65,15 +66,19 @@ protected:
         GLenum type;
     };
 
+    struct block_data
+    {
+        GLuint index;
+        uniform_block_type type;
+    };
+
     template<typename T>
     static bool is_compatible(GLenum type, GLint size, size_t count = 1);
 
     static GLuint current_program;
     mutable GLuint program;
-    mutable std::unordered_map<
-        std::string,
-        uniform_data
-    > uniforms;
+    mutable std::unordered_map<std::string, uniform_data> uniforms;
+    mutable std::unordered_map<std::string, block_data> blocks;
 };
 
 #include "shader.tcc"
