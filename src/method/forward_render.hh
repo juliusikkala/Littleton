@@ -11,21 +11,21 @@ namespace method
     public:
         forward_render(
             shader_cache* forward_shader = nullptr,
-            scene* render_scene = nullptr
+            render_scene* scene = nullptr
         );
         ~forward_render();
 
         void set_shader_cache(shader_cache* s);
         shader_cache* get_shader_cache() const;
 
-        void set_scene(scene* s);
-        scene* get_scene() const;
+        void set_scene(render_scene* s);
+        render_scene* get_scene() const;
 
         void execute() override;
 
     private:
         shader_cache* forward_shader;
-        scene* render_scene;
+        render_scene* scene;
     };
 }
 

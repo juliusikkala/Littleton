@@ -50,6 +50,7 @@ public:
         const T* value
     );
 
+    bool block_exists(const std::string& name) const;
     uniform_block_type get_block_type(const std::string& name) const;
 
     // Performs no safety checks! You must manually bind the block!

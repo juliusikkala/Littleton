@@ -94,7 +94,7 @@ template<typename T>
 bool uniform_block_type::is_compatible(const std::string& name, size_t count)
 {
     auto it = uniforms.find(name);
-    if(it == uniforms.end()) return true;
+    if(it == uniforms.end()) return false;
 
     uniform_info& info = it->second;
 
@@ -111,7 +111,8 @@ template<typename T>
 void uniform_block::set(const std::string& name, size_t count, const T* value)
 {
     auto it = type.uniforms.find(name);
-    if(it == type.uniforms.end()) return;
+    if(it == type.uniforms.end())
+        throw std::runtime_error("No uniform named " + name);
 
     uniform_block_type::uniform_info& info = it->second;
 

@@ -13,10 +13,15 @@ struct material_t
 
 uniform material_t material;
 
+#if defined(LIGHT_COUNT) && LIGHT_COUNT >= 1
 uniform Lights
 {
-    vec3 test;
+    vec3 colors[LIGHT_COUNT];
+    vec3 positions[LIGHT_COUNT];
 } lights;
+#endif
+
+in vec3 f_position;
 
 #ifdef VERTEX_NORMAL
 in vec3 f_normal;
@@ -36,7 +41,7 @@ out vec4 out_color;
 vec4 get_color()
 {
 #ifdef MATERIAL_COLOR_CONSTANT
-    return material.color * vec4(lights.test, 1);
+    return material.color;
 #elif defined(MATERIAL_COLOR_TEXTURE)
     return texture(
         material.color,
@@ -53,5 +58,27 @@ vec4 get_color()
 
 void main(void)
 {
-    out_color = get_color();
+    vec4 diffuse_color = get_color();
+    vec4 color;
+#ifdef VERTEX_NORMAL
+    vec3 normal = normalize(f_normal);
+#endif
+
+#if defined(LIGHT_COUNT) && defined(VERTEX_NORMAL)
+    color = vec4(0.0f,0.0f,0.0f,1.0f);
+
+#if LIGHT_COUNT > 0
+    for(int i = 0; i < LIGHT_COUNT; ++i)
+    {
+        vec3 dir = lights.positions[i] - f_position;
+        float dist = length(dir);
+        dir/=dist;
+        float ctheta = clamp(dot(normal, dir), 0, 1);
+        color.rgb += lights.colors[i]*diffuse_color.rgb*ctheta/(dist*dist);
+    }
+#endif
+#else
+    color = diffuse_color;
+#endif
+    out_color = color;
 }

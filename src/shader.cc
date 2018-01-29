@@ -163,6 +163,12 @@ shader* shader::create_from_file(
     return new file_shader(vert_path, frag_path, definitions);
 }
 
+bool shader::block_exists(const std::string& name) const
+{
+    load();
+    return blocks.find(name) != blocks.end();
+}
+
 uniform_block_type shader::get_block_type(const std::string& name) const
 {
     load();
@@ -339,11 +345,20 @@ void shader::basic_load(
             std::string shortened_name(name);
             delete [] name;
 
+            // Remove prefix
             if(shortened_name.compare(
                 0, name_prefix.length(), name_prefix
             ) == 0)
             {
                 shortened_name = shortened_name.substr(name_prefix.length());
+            }
+            // Remove [0]
+            if(
+                shortened_name.length() > 3 &&
+                shortened_name.compare(shortened_name.length()-3, 3, "[0]") == 0
+            ){
+                shortened_name =
+                    shortened_name.substr(0, shortened_name.length()-3);
             }
 
             uniform_block_type::uniform_info data;
