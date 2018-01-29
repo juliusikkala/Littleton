@@ -163,6 +163,42 @@ shader* shader::create_from_file(
     return new file_shader(vert_path, frag_path, definitions);
 }
 
+uniform_block_type shader::get_block_type(const std::string& name) const
+{
+    load();
+    auto it = blocks.find(name);
+    if(it == blocks.end())
+        throw std::runtime_error("No such block type \"" + name +"\"");
+
+    return it->second.type;
+}
+
+void shader::set_block(const std::string& name, unsigned bind_point)
+{
+    load();
+    auto it = blocks.find(name);
+    if(it == blocks.end()) return;
+
+    bind();
+    glUniformBlockBinding(program, it->second.index, bind_point);
+}
+
+void shader::set_block(
+    const std::string& name,
+    const uniform_block& block,
+    unsigned bind_point
+){
+    load();
+    auto it = blocks.find(name);
+    if(it == blocks.end()) return;
+    if(it->second.type == block.get_type())
+        throw std::runtime_error("Incorrect block type for " + name);
+
+    bind();
+    block.bind(bind_point);
+    glUniformBlockBinding(program, it->second.index, bind_point);
+}
+
 static std::string generate_definition_src(
     const shader::definition_map& definitions
 ){
@@ -279,6 +315,9 @@ void shader::basic_load(
 
         std::unordered_map<std::string, uniform_block_type::uniform_info> info;
         GLint size = 0;
+        glGetActiveUniformBlockiv(
+            program, i, GL_UNIFORM_BLOCK_DATA_SIZE, &size
+        );
 
         GLint count = 0;
         glGetActiveUniformBlockiv(

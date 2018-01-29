@@ -7,6 +7,9 @@
 #include <memory>
 
 template<typename T>
+bool uniform_is_compatible(GLenum type, GLint size, size_t count = 1);
+
+template<typename T>
 void uniform_set_value(GLint location, size_t count, const T* value);
 
 template<> void uniform_set_value<float>(
@@ -45,7 +48,7 @@ template<> void uniform_set_value<glm::mat4>(
 
 class uniform_block_type
 {
-friend class shader;
+friend class uniform_block;
 public:
     struct uniform_info
     {
@@ -64,7 +67,7 @@ public:
 
     // Use this only when you know what you are doing.
     uniform_block_type(
-        std::unordered_map<std::string, uniform_info>&& info,
+        std::unordered_map<std::string, uniform_info>&& uniforms,
         size_t size
     );
 
@@ -72,33 +75,49 @@ public:
     bool exists(const std::string& name) const;
     uniform_info get_info(const std::string& name) const;
 
+    template<typename T>
+    bool is_compatible(const std::string& name, size_t count = 1);
+
     bool operator==(const uniform_block_type& other) const;
     bool operator!=(const uniform_block_type& other) const;
 
 private:
-    std::unordered_map<std::string, uniform_info> info;
+    std::unordered_map<std::string, uniform_info> uniforms;
 
     size_t size;
 };
 
 class uniform_block
 {
-private:
+public:
     uniform_block(const uniform_block_type& type);
     uniform_block(const uniform_block& block);
     uniform_block(uniform_block&& block);
     ~uniform_block();
 
-    template<typename T>
-    bool is_compatible(const std::string& name, size_t count = 1) const;
+    const uniform_block_type& get_type() const;
 
     template<typename T>
     void set(const std::string& name, const T& value);
 
-public:
+    template<typename T>
+    void set(const std::string& name, size_t count, const T* value);
+
+    void bind(unsigned index = 0) const;
+
+    // Upload the block once you have set all the variables you are going to
+    // set. Generally, you'll want to upload before binding.
+    void upload();
+
+private:
+    void basic_load();
+    void basic_unload();
+
     uniform_block_type type;
     GLuint ubo;
-    void* buffer;
+    uint8_t* buffer;
 };
+
+#include "uniform.tcc"
 
 #endif

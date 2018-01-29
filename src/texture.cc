@@ -72,11 +72,10 @@ static GLuint load_texture(
         external_format, type,
         data
     );
-
     glGenerateMipmap(target);
 
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 

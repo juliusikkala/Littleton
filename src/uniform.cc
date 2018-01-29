@@ -117,30 +117,30 @@ void uniform_set_value<glm::mat4>(
 }
 
 uniform_block_type::uniform_block_type(const uniform_block_type& other)
-: info(other.info), size(other.size) { }
+: uniforms(other.uniforms), size(other.size) { }
 
 uniform_block_type::uniform_block_type(uniform_block_type&& other)
-: info(std::move(other.info)), size(other.size) { }
+: uniforms(std::move(other.uniforms)), size(other.size) { }
 
 uniform_block_type::uniform_block_type(
-    std::unordered_map<std::string, uniform_info>&& info,
+    std::unordered_map<std::string, uniform_info>&& uniforms,
     size_t size
-): info(std::move(info)), size(size) { }
+): uniforms(std::move(uniforms)), size(size) { }
 
 size_t uniform_block_type::get_total_size() const { return size; }
 
 bool uniform_block_type::exists(const std::string& name) const
 {
-    auto it = info.find(name);
-    return it != info.end();
+    auto it = uniforms.find(name);
+    return it != uniforms.end();
 }
 
 uniform_block_type::uniform_info uniform_block_type::get_info(
     const std::string& name
 ) const
 {
-    auto it = info.find(name);
-    if(it == info.end())
+    auto it = uniforms.find(name);
+    if(it == uniforms.end())
     {
         throw std::runtime_error("No uniform named \""+name+"\" in block");
     }
@@ -149,12 +149,12 @@ uniform_block_type::uniform_info uniform_block_type::get_info(
 
 bool uniform_block_type::operator==(const uniform_block_type& other) const
 {
-    return size == other.size && info == other.info;
+    return size == other.size && uniforms == other.uniforms;
 }
 
 bool uniform_block_type::operator!=(const uniform_block_type& other) const
 {
-    return size != other.size || info != other.info;
+    return size != other.size || uniforms != other.uniforms;
 }
 
 bool uniform_block_type::uniform_info::operator==(
@@ -169,4 +169,78 @@ bool uniform_block_type::uniform_info::operator!=(
 ) const
 {
     return memcmp(this, &other, sizeof(*this));
+}
+
+uniform_block::uniform_block(const uniform_block_type& type)
+: type(type), ubo(0)
+{
+    basic_load();
+}
+
+uniform_block::uniform_block(const uniform_block& block)
+: type(block.type), ubo(0)
+{
+    basic_load();
+    memcpy(buffer, block.buffer, type.get_total_size());
+}
+
+uniform_block::uniform_block(uniform_block&& block)
+: type(std::move(block.type)), ubo(block.ubo), buffer(block.buffer)
+{
+    block.ubo = 0;
+    block.buffer = nullptr;
+}
+
+uniform_block::~uniform_block()
+{
+    basic_unload();
+}
+
+const uniform_block_type& uniform_block::get_type() const
+{
+    return type;
+}
+
+void uniform_block::bind(unsigned index) const
+{
+    glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
+}
+
+void uniform_block::upload()
+{
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    GLvoid* p = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, buffer, type.get_total_size());
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
+
+void uniform_block::basic_load()
+{
+    if(ubo != 0) return;
+
+    buffer = new uint8_t[type.get_total_size()];
+
+    glGenBuffers(1, &ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBufferData(
+        GL_UNIFORM_BUFFER,
+        type.get_total_size(),
+        buffer,
+        GL_DYNAMIC_DRAW
+    );
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void uniform_block::basic_unload()
+{
+    if(ubo != 0)
+    {
+        glDeleteBuffers(1, &ubo);
+        ubo = 0;
+    }
+    if(buffer != nullptr)
+    {
+        delete [] buffer;
+        buffer = nullptr;
+    }
 }

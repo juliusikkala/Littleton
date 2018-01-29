@@ -13,6 +13,11 @@ struct material_t
 
 uniform material_t material;
 
+uniform Lights
+{
+    vec3 test;
+} lights;
+
 #ifdef VERTEX_NORMAL
 in vec3 f_normal;
 
@@ -31,7 +36,7 @@ out vec4 out_color;
 vec4 get_color()
 {
 #ifdef MATERIAL_COLOR_CONSTANT
-    return material.color;
+    return material.color * vec4(lights.test, 1);
 #elif defined(MATERIAL_COLOR_TEXTURE)
     return texture(
         material.color,

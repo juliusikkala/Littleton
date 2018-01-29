@@ -9,6 +9,20 @@ method::forward_render::forward_render(
 
 method::forward_render::~forward_render() {}
 
+static std::unique_ptr<uniform_block> create_light_block(
+    const std::string& block_name,
+    shader* compatible_shader
+){
+    std::unique_ptr<uniform_block> light_block(
+        new uniform_block(compatible_shader->get_block_type(block_name))
+    );
+
+    light_block->set("test", glm::vec3(1.0, 1.0, 1.0));
+    light_block->upload();
+
+    return light_block;
+}
+
 void method::forward_render::execute()
 {
     if(!forward_shader || !render_scene)
@@ -23,6 +37,8 @@ void method::forward_render::execute()
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
     glm::mat4 vp = p * v;
+
+    std::unique_ptr<uniform_block> light_block;
 
     for(object* obj: *render_scene)
     {
@@ -43,6 +59,11 @@ void method::forward_render::execute()
 
             shader* s = forward_shader->get(definitions);
             s->bind();
+
+            if(!light_block) light_block = create_light_block("Lights", s);
+            light_block->bind(0);
+
+            s->set_block("Lights", 0);
 
             s->set("mvp", mvp);
             s->set("n_mv", n_mv);

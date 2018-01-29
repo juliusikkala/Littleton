@@ -50,6 +50,18 @@ public:
         const T* value
     );
 
+    uniform_block_type get_block_type(const std::string& name) const;
+
+    // Performs no safety checks! You must manually bind the block!
+    void set_block(const std::string& name, unsigned bind_point);
+
+    // Checks that the type is compatible and binds the block.
+    void set_block(
+        const std::string& name,
+        const uniform_block& block,
+        unsigned bind_point
+    );
+
 protected:
     void basic_load(
         const std::string& vert_src,
@@ -71,9 +83,6 @@ protected:
         GLuint index;
         uniform_block_type type;
     };
-
-    template<typename T>
-    static bool is_compatible(GLenum type, GLint size, size_t count = 1);
 
     static GLuint current_program;
     mutable GLuint program;
