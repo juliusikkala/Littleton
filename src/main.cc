@@ -12,8 +12,7 @@
 
 int main()
 { 
-    window w(1280, 720, "dflowers", false, false);
-    w.set_framerate_limit(60);
+    window w(1920, 1080, "dflowers", true, true);
     resource_store resources;
     resources.add_dfo("data/test_scene.dfo", "data");
 
@@ -50,8 +49,8 @@ int main()
         if(o->get_model()) main_scene.add_object(o);
     }
 
-    point_light l1(glm::vec3(1,0.5,0.5) * 1.0f);
-    point_light l2(glm::vec3(0.5,0.5,1) * 1.0f);
+    point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
+    point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     main_scene.add_light(&l1);
     main_scene.add_light(&l2);
 
@@ -78,7 +77,7 @@ int main()
                 break;
             };
         }
-        suzanne->rotate_local(1, glm::vec3(0,1,0));
+        suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
         l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
         l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
         sphere->lookat(&cam);

@@ -57,7 +57,7 @@ window::window(
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         w, h,
-        SDL_WINDOW_OPENGL | (fullscreen && SDL_WINDOW_FULLSCREEN)
+        SDL_WINDOW_OPENGL | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
     );
 
     if(!win)
@@ -65,6 +65,7 @@ window::window(
         SDL_Quit();
         throw std::runtime_error(SDL_GetError());
     }
+    SDL_GetWindowSize(win, (int*)&(this->w), (int*)&(this->h));
 
     ctx = SDL_GL_CreateContext(win);
     if(!ctx)
