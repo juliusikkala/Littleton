@@ -48,6 +48,32 @@ static std::unique_ptr<uniform_block> create_light_block(
         ++i;
     }
 
+    i = 0;
+    for(spotlight* l: scene->get_spotlights())
+    {
+        std::string prefix = "spot["+std::to_string(i)+"].";
+        light_block->set(
+            prefix + "color",
+            l->get_color()
+        );
+        light_block->set(
+            prefix + "position",
+            l->get_global_position()
+        );
+        light_block->set(
+            prefix + "direction",
+            glm::normalize(l->get_global_direction())
+        );
+        light_block->set<float>(
+            prefix + "cutoff",
+            cos(glm::radians(l->get_cutoff_angle()))
+        );
+        light_block->set(
+            prefix + "exponent",
+            l->get_falloff_exponent()
+        );
+        ++i;
+    }
     light_block->upload();
 
     return light_block;
@@ -73,7 +99,8 @@ void method::forward_render::execute()
         {"LIGHTING", ""},
         {"POINT_LIGHT_COUNT", std::to_string(scene->point_light_count())},
         {"DIRECTIONAL_LIGHT_COUNT",
-         std::to_string(scene->directional_light_count())}
+         std::to_string(scene->directional_light_count())},
+        {"SPOTLIGHT_COUNT", std::to_string(scene->spotlight_count())}
     });
 
     for(object* obj: scene->get_objects())

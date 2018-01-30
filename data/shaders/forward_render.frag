@@ -25,6 +25,15 @@ struct directional_light
     vec3 direction;
 };
 
+struct spotlight
+{
+    vec3 color;
+    vec3 position;
+    vec3 direction;
+    float cutoff;
+    float exponent;
+};
+
 #ifdef LIGHTING
 uniform Lights
 {
@@ -33,6 +42,9 @@ uniform Lights
 #endif
 #if DIRECTIONAL_LIGHT_COUNT > 0
     directional_light directional[DIRECTIONAL_LIGHT_COUNT];
+#endif
+#if SPOTLIGHT_COUNT > 0
+    spotlight spot[SPOTLIGHT_COUNT];
 #endif
 } lights;
 #endif
@@ -101,6 +113,20 @@ void main(void)
         vec3 dir = l.direction;
         float ctheta = clamp(dot(normal, -dir), 0, 1);
         color.rgb += l.color*diffuse_color.rgb*ctheta;
+    }
+#endif
+#if SPOTLIGHT_COUNT > 0
+    for(int i = 0; i < SPOTLIGHT_COUNT; ++i)
+    {
+        spotlight l = lights.spot[i];
+        vec3 dir = l.position - f_position;
+        float dist = length(dir);
+        dir/=dist;
+        float cutoff = dot(dir, -l.direction);
+        cutoff = cutoff > l.cutoff ? (1-pow(1-(cutoff-l.cutoff), l.exponent)) : 0;
+
+        float ctheta = clamp(dot(normal, dir), 0, 1)*cutoff;
+        color.rgb += l.color*diffuse_color.rgb*ctheta/(dist*dist);
     }
 #endif
 #else

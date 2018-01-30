@@ -49,11 +49,14 @@ int main()
 
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
+    spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
+    parrasvalo.set_falloff_exponent(1000);
+    parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
+
     directional_light sun(glm::vec3(1,1,1) * 1.5f);
-    main_scene.add_light(&l1);
-    main_scene.add_light(&l2);
-    sun.set_direction(glm::vec3(-1,-1,-1));
-    //main_scene.add_light(&sun);
+    //main_scene.add_light(&l1);
+    //main_scene.add_light(&l2);
+    main_scene.add_light(&parrasvalo);
 
     method::clear clear(glm::vec4(0.5, 0.5, 1.0, 0.0));
     method::fullscreen_effect effect(effect_shader);
@@ -108,6 +111,8 @@ int main()
         suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
         l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
         l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
+        parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
+        parrasvalo.set_cutoff_angle(sin(time)*45+45);
         sphere->lookat(&cam);
         p.execute();
         w.present();
