@@ -24,6 +24,8 @@ public:
     void set_framerate_limit(unsigned framerate_limit);
     unsigned get_framerate_limit() const;
 
+    void grab_mouse(bool enabled = true);
+
     int get_delta_ms() const;
     float get_delta() const;
 

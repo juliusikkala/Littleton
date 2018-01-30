@@ -25,7 +25,7 @@ struct directional_light
     vec3 direction;
 };
 
-#if defined(LIGHTING)
+#ifdef LIGHTING
 uniform Lights
 {
 #if POINT_LIGHT_COUNT > 0
@@ -81,7 +81,7 @@ void main(void)
 #endif
 
 #if defined(LIGHTING) && defined(VERTEX_NORMAL)
-    color = vec4(0.0f,0.0f,0.0f,1.0f);
+    color = vec4(0.0f,0.0f,0.0f,diffuse_color.a);
 
 #if POINT_LIGHT_COUNT > 0
     for(int i = 0; i < POINT_LIGHT_COUNT; ++i)
@@ -106,5 +106,6 @@ void main(void)
 #else
     color = diffuse_color;
 #endif
+    if(color.a < 0.5f) discard;
     out_color = color;
 }

@@ -128,6 +128,12 @@ unsigned window::get_framerate_limit() const
     return framerate_limit;
 }
 
+void window::grab_mouse(bool enabled)
+{
+    SDL_SetWindowGrab(win, (SDL_bool)enabled);
+    SDL_SetRelativeMouseMode((SDL_bool)enabled);
+}
+
 int window::get_delta_ms() const
 {
     return delta;
