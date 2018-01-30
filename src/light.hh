@@ -3,10 +3,11 @@
 #include "transformable.hh"
 #include <glm/glm.hpp>
 
-class point_light: public transformable_node
+
+class light
 {
 public:
-    point_light(glm::vec3 color = glm::vec3(1.0));
+    light(glm::vec3 color = glm::vec3(1.0));
 
     void set_color(glm::vec3 color);
     glm::vec3 get_color() const;
@@ -15,7 +16,28 @@ private:
     glm::vec3 color;
 };
 
-class spotlight: public point_light
+class directional_light: public light
+{
+public:
+    directional_light(
+        glm::vec3 color = glm::vec3(1.0),
+        glm::vec3 direction = glm::vec3(0,-1,0)
+    );
+
+    void set_direction(glm::vec3 color);
+    glm::vec3 get_direction() const;
+
+private:
+    glm::vec3 direction;
+};
+
+class point_light: public light, public transformable_node
+{
+public:
+    point_light(glm::vec3 color = glm::vec3(1.0));
+};
+
+class spotlight: public directional_light, public transformable_node
 {
 public:
     spotlight(
@@ -31,8 +53,6 @@ public:
     void set_falloff_exponent(float falloff_exponent);
     float get_falloff_exponent() const;
 
-    void set_direction(glm::vec3 direction);
-    glm::vec3 get_direction() const;
     glm::vec3 get_global_direction() const;
 
 private:

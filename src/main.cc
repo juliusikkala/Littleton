@@ -12,7 +12,7 @@
 
 int main()
 { 
-    window w(1920, 1080, "dflowers", true, true);
+    window w(1280, 720, "dflowers", false, true);
     resource_store resources;
     resources.add_dfo("data/test_scene.dfo", "data");
 
@@ -51,8 +51,10 @@ int main()
 
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
-    main_scene.add_light(&l1);
-    main_scene.add_light(&l2);
+    directional_light sun(glm::vec3(1,1,1) * 1.0f);
+    //main_scene.add_light(&l1);
+    //main_scene.add_light(&l2);
+    main_scene.add_light(&sun);
 
     method::clear clear(glm::vec4(0.5, 0.5, 1.0, 0.0));
     method::fullscreen_effect effect(effect_shader);
@@ -77,9 +79,22 @@ int main()
                 break;
             };
         }
+        if(((int)time)&1)
+        {
+            main_scene.add_light(&l1);
+        }
+        else
+        {
+            main_scene.remove_light(&l1);
+        }
         suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
         l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
         l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
+        sun.set_direction(glm::vec3(
+            sin(time),
+            cos(time),
+            0
+        ));
         sphere->lookat(&cam);
         p.execute();
         w.present();

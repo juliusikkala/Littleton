@@ -1,25 +1,41 @@
 #include "light.hh"
 #include <glm/gtx/quaternion.hpp>
 
-point_light::point_light(glm::vec3 color)
+light::light(glm::vec3 color)
 : color(color) {}
 
-void point_light::set_color(glm::vec3 color)
+void light::set_color(glm::vec3 color)
 {
     this->color = color;
 }
 
-glm::vec3 point_light::get_color() const
+glm::vec3 light::get_color() const
 {
     return color;
 }
+
+directional_light::directional_light(glm::vec3 color, glm::vec3 direction)
+: light(color), direction(direction) {}
+
+void directional_light::set_direction(glm::vec3 direction)
+{
+    this->direction = direction;
+}
+
+glm::vec3 directional_light::get_direction() const
+{
+    return direction;
+}
+
+point_light::point_light(glm::vec3 color)
+: light(color) {}
 
 spotlight::spotlight(
     glm::vec3 color,
     glm::vec3 direction,
     float cutoff_angle,
     float falloff_exponent
-): point_light(color), cutoff_angle(cutoff_angle),
+): directional_light(color, direction), cutoff_angle(cutoff_angle),
  falloff_exponent(falloff_exponent)
 {
     set_direction(direction);
@@ -45,18 +61,8 @@ float spotlight::get_falloff_exponent() const
     return falloff_exponent;
 }
 
-void spotlight::set_direction(glm::vec3 dir)
-{
-    set_orientation(glm::rotation(glm::vec3(0,0,1), dir));
-}
-
-glm::vec3 spotlight::get_direction() const
-{
-    return get_orientation() * glm::vec3(0,0,1);
-}
-
 glm::vec3 spotlight::get_global_direction() const
 {
-    return get_global_orientation() * glm::vec3(0,0,1);
+    return get_global_orientation() * get_direction();
 }
 

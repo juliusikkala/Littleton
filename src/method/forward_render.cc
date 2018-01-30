@@ -18,17 +18,36 @@ static std::unique_ptr<uniform_block> create_light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
 
-    std::vector<glm::vec3> colors;
-    std::vector<glm::vec3> positions;
-
+    unsigned i = 0;
     for(point_light* l: scene->get_point_lights())
     {
-        colors.push_back(l->get_color());
-        positions.push_back(l->get_global_position());
+        std::string prefix = "point["+std::to_string(i)+"].";
+        light_block->set(
+            prefix + "color",
+            l->get_color()
+        );
+        light_block->set(
+            prefix + "position",
+            l->get_global_position()
+        );
+        ++i;
     }
 
-    light_block->set("colors", colors.size(), colors.data());
-    light_block->set("positions", positions.size(), positions.data());
+    i = 0;
+    for(directional_light* l: scene->get_directional_lights())
+    {
+        std::string prefix = "directional["+std::to_string(i)+"].";
+        light_block->set(
+            prefix + "color",
+            l->get_color()
+        );
+        light_block->set(
+            prefix + "direction",
+            glm::normalize(l->get_direction())
+        );
+        ++i;
+    }
+
     light_block->upload();
 
     return light_block;
@@ -51,7 +70,10 @@ void method::forward_render::execute()
 
     std::unique_ptr<uniform_block> light_block;
     shader::definition_map scene_definitions({
-        {"LIGHT_COUNT", std::to_string(scene->point_light_count())}
+        {"LIGHTING", ""},
+        {"POINT_LIGHT_COUNT", std::to_string(scene->point_light_count())},
+        {"DIRECTIONAL_LIGHT_COUNT",
+         std::to_string(scene->directional_light_count())}
     });
 
     for(object* obj: scene->get_objects())

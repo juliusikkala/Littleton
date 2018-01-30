@@ -13,11 +13,27 @@ struct material_t
 
 uniform material_t material;
 
-#if defined(LIGHT_COUNT) && LIGHT_COUNT >= 1
+struct point_light
+{
+    vec3 color;
+    vec3 position;
+};
+
+struct directional_light
+{
+    vec3 color;
+    vec3 direction;
+};
+
+#if defined(LIGHTING)
 uniform Lights
 {
-    vec3 colors[LIGHT_COUNT];
-    vec3 positions[LIGHT_COUNT];
+#if POINT_LIGHT_COUNT > 0
+    point_light point[POINT_LIGHT_COUNT];
+#endif
+#if DIRECTIONAL_LIGHT_COUNT > 0
+    directional_light directional[DIRECTIONAL_LIGHT_COUNT];
+#endif
 } lights;
 #endif
 
@@ -64,17 +80,27 @@ void main(void)
     vec3 normal = normalize(f_normal);
 #endif
 
-#if defined(LIGHT_COUNT) && defined(VERTEX_NORMAL)
+#if defined(LIGHTING) && defined(VERTEX_NORMAL)
     color = vec4(0.0f,0.0f,0.0f,1.0f);
 
-#if LIGHT_COUNT > 0
-    for(int i = 0; i < LIGHT_COUNT; ++i)
+#if POINT_LIGHT_COUNT > 0
+    for(int i = 0; i < POINT_LIGHT_COUNT; ++i)
     {
-        vec3 dir = lights.positions[i] - f_position;
+        point_light l = lights.point[i];
+        vec3 dir = l.position - f_position;
         float dist = length(dir);
         dir/=dist;
         float ctheta = clamp(dot(normal, dir), 0, 1);
-        color.rgb += lights.colors[i]*diffuse_color.rgb*ctheta/(dist*dist);
+        color.rgb += l.color*diffuse_color.rgb*ctheta/(dist*dist);
+    }
+#endif
+#if DIRECTIONAL_LIGHT_COUNT > 0
+    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; ++i)
+    {
+        directional_light l = lights.directional[i];
+        vec3 dir = l.direction;
+        float ctheta = clamp(dot(normal, -dir), 0, 1);
+        color.rgb += l.color*diffuse_color.rgb*ctheta;
     }
 #endif
 #else
