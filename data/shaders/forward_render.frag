@@ -123,7 +123,7 @@ void main(void)
         float dist = length(dir);
         dir/=dist;
         float cutoff = dot(dir, -l.direction);
-        cutoff = cutoff > l.cutoff ? (1-pow(1-(cutoff-l.cutoff), l.exponent)) : 0;
+        cutoff = cutoff > l.cutoff ? 1-pow(1-(cutoff-l.cutoff)/(1-l.cutoff), l.exponent) : 0;
 
         float ctheta = clamp(dot(normal, dir), 0, 1)*cutoff;
         color.rgb += l.color*diffuse_color.rgb*ctheta/(dist*dist);
