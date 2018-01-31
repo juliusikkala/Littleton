@@ -23,6 +23,8 @@ src = [
   'src/shader_cache.cc',
   'src/uniform.cc',
   'src/light.cc',
+  'src/render_target.cc',
+  'src/framebuffer.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_render.cc',

@@ -9,7 +9,8 @@ static GLuint load_texture(
     GLenum target,
     GLint& internal_format,
     GLenum& external_format,
-    GLenum& type
+    GLenum& type,
+    glm::uvec2& size
 ){
     int w = 0, h = 0, n = 0;
     bool hdr = stbi_is_hdr(path.c_str());
@@ -25,6 +26,8 @@ static GLuint load_texture(
         data = stbi_load(path.c_str(), &w, &h, &n, 0);
         type = GL_UNSIGNED_BYTE;
     }
+    size.x = w;
+    size.y = h;
 
     if(!data)
     {
@@ -56,7 +59,7 @@ static GLuint load_texture(
     GLuint tex = 0;
     glGenTextures(1, &tex);
     glActiveTexture(GL_TEXTURE0);
-    GLint prev_tex;
+    GLint prev_tex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &prev_tex);
     glBindTexture(target, tex);
 
@@ -91,17 +94,7 @@ texture::texture()
 texture::texture(const std::string& path, GLenum target)
 : tex(0), target(target)
 {
-    tex = load_texture(
-        path,
-        target,
-        internal_format,
-        external_format,
-        type
-    );
-    if(tex == 0)
-    {
-        throw std::runtime_error("Unable to read texture " + path);
-    }
+    basic_load(path, target);
 }
 
 texture::texture(
@@ -109,14 +102,11 @@ texture::texture(
     unsigned h,
     GLenum external_format,
     GLint internal_format,
-    GLenum type,
-    GLenum target
+    GLenum type
 ): tex(0), internal_format(internal_format), external_format(external_format),
-   target(target), type(type)
+   target(GL_TEXTURE_2D), type(type)
 {
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexStorage2D(GL_TEXTURE_2D, 1, internal_format, w, h);
+    basic_load(w, h, external_format, internal_format, type, target);
 }
 
 texture::texture(texture&& other)
@@ -165,6 +155,12 @@ GLenum texture::get_type() const
 {
     load();
     return type;
+}
+
+glm::uvec2 texture::get_size() const
+{
+    load();
+    return size;
 }
 
 void texture::bind(unsigned index)
@@ -238,11 +234,10 @@ texture* texture::create(
     unsigned h,
     GLenum external_format,
     GLint internal_format,
-    GLenum type,
-    GLenum target
+    GLenum type
 ){
     return new empty_texture(
-        w, h, external_format, internal_format, type, target
+        w, h, external_format, internal_format, type, GL_TEXTURE_2D
     );
 }
 
@@ -255,7 +250,8 @@ void texture::basic_load(const std::string& path, GLenum target) const
         target,
         internal_format,
         external_format,
-        type
+        type,
+        size
     );
 
     if(tex == 0)
@@ -276,7 +272,23 @@ void texture::basic_load(
 
     glGenTextures(1, &tex);
     glBindTexture(target, tex);
-    glTexStorage2D(target, 1, internal_format, w, h);
+    glTexImage2D(
+        target,
+        0,
+        internal_format,
+        w,
+        h,
+        0,
+        external_format,
+        type,
+        nullptr
+    );
+
+    this->external_format = external_format;
+    this->internal_format = internal_format;
+    this->type = type;
+    this->target = target;
+    this->size = glm::uvec2(w, h);
 }
 
 void texture::basic_unload() const

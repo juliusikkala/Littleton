@@ -3,6 +3,7 @@
 #include "glheaders.hh"
 #include "resources.hh"
 #include <string>
+#include <glm/glm.hpp>
 
 class texture: public resource
 {
@@ -17,8 +18,7 @@ public:
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type,
-        GLenum target = GL_TEXTURE_2D
+        GLenum type
     );
     texture(const texture& other) = delete;
     texture(texture&& other);
@@ -29,6 +29,7 @@ public:
     GLenum get_external_format() const;
     GLenum get_target() const;
     GLenum get_type() const;
+    glm::uvec2 get_size() const;
 
     static texture* create(
         const std::string& path,
@@ -40,8 +41,7 @@ public:
         unsigned h,
         GLenum external_format,
         GLint internal_format,
-        GLenum type,
-        GLenum target = GL_TEXTURE_2D
+        GLenum type
     );
 
     void bind(unsigned index = 0);
@@ -61,6 +61,7 @@ protected:
     mutable GLuint tex;
     mutable GLint internal_format;
     mutable GLenum external_format, target, type;
+    mutable glm::uvec2 size;
 };
 
 #endif

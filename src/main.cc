@@ -50,7 +50,7 @@ int main()
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
-    parrasvalo.set_falloff_exponent(1000);
+    parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
     directional_light sun(glm::vec3(1,1,1) * 1.5f);
