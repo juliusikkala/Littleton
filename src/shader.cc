@@ -44,18 +44,20 @@ static void throw_program_error(
 
 GLuint shader::current_program = 0;
 
-shader::shader(): program(0) {}
+shader::shader(context& ctx): glresource(ctx), program(0) {}
 
 shader::shader(
+    context& ctx,
     const std::string& vert_src,
     const std::string& frag_src,
     const definition_map& definitions
-): program(0)
+): glresource(ctx), program(0)
 {
     basic_load(vert_src, frag_src, definitions);
 }
 
 shader::shader(shader&& other)
+: glresource(other.get_context())
 {
     other.load();
     program = other.program;
@@ -96,10 +98,12 @@ class src_shader: public shader
 {
 public:
     src_shader(
+        context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
         const definition_map& definitions
-    ): vert_src(vert_src), frag_src(frag_src), definitions(definitions) {}
+    ): shader(ctx), vert_src(vert_src), frag_src(frag_src),
+       definitions(definitions) {}
 
     void load() const override
     {
@@ -118,21 +122,24 @@ private:
 };
 
 shader* shader::create(
+    context& ctx,
     const std::string& vert_src,
     const std::string& frag_src,
     const definition_map& definitions
 ){
-    return new src_shader(vert_src, frag_src, definitions);
+    return new src_shader(ctx, vert_src, frag_src, definitions);
 }
 
 class file_shader: public shader
 {
 public:
     file_shader(
+        context& ctx,
         const std::string& vert_path,
         const std::string& frag_path,
         const definition_map& definitions
-    ): vert_path(vert_path), frag_path(frag_path), definitions(definitions) {}
+    ): shader(ctx), vert_path(vert_path), frag_path(frag_path),
+       definitions(definitions) {}
 
     void load() const override
     {
@@ -156,11 +163,12 @@ private:
 };
 
 shader* shader::create_from_file(
+    context& ctx,
     const std::string& vert_path,
     const std::string& frag_path,
     const definition_map& definitions
 ){
-    return new file_shader(vert_path, frag_path, definitions);
+    return new file_shader(ctx, vert_path, frag_path, definitions);
 }
 
 bool shader::block_exists(const std::string& name) const

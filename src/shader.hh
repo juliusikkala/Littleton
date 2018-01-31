@@ -7,12 +7,13 @@
 
 class shader;
 
-class shader: public resource
+class shader: public resource, public glresource
 {
 public:
     using definition_map = std::map<std::string, std::string>;
-    shader();
+    shader(context& ctx);
     shader(
+        context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
         const definition_map& definitions = {}
@@ -23,12 +24,14 @@ public:
     GLuint get_program() const;
 
     static shader* create(
+        context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
         const definition_map& definitions = {}
     );
 
     static shader* create_from_file(
+        context& ctx,
         const std::string& vert_path,
         const std::string& frag_path,
         const definition_map& definitions = {}

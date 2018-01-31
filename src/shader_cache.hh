@@ -6,10 +6,11 @@
 #include <unordered_map>
 #include <memory>
 
-class shader_cache
+class shader_cache: public glresource
 {
 public:
     shader_cache(
+        context& ctx,
         const std::string& vert_src,
         const std::string& frag_src
     );

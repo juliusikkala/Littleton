@@ -19,6 +19,17 @@ public:
     virtual void unload() const;
 };
 
+class context;
+class glresource
+{
+public:
+    glresource(context& ctx);
+
+    context& get_context() const;
+private:
+    context* ctx;
+};
+
 class resource_store
 {
 private:
@@ -43,6 +54,7 @@ private:
     >;
     using internal_map = std::unordered_map<std::type_index, inner_map>;
     mutable internal_map resources;
+    context* ctx;
 
 public:
 
@@ -92,7 +104,7 @@ public:
     using const_iterator =
         resource_iterator<const T, inner_map::const_iterator>;
 
-    resource_store();
+    resource_store(context& ctx);
     resource_store(const resource_store& other) = delete;
     resource_store(resource_store& other) = delete;
     ~resource_store();

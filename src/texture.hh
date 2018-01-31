@@ -5,21 +5,24 @@
 #include <string>
 #include <glm/glm.hpp>
 
-class texture: public resource
+class texture: public resource, public glresource
 {
 public:
-    texture();
     texture(
+        context& ctx,
         const std::string& path,
         GLenum target = GL_TEXTURE_2D
     );
+
     texture(
+        context& ctx,
         unsigned w,
         unsigned h,
         GLenum external_format,
         GLint internal_format,
         GLenum type
     );
+
     texture(const texture& other) = delete;
     texture(texture&& other);
     ~texture();
@@ -32,11 +35,13 @@ public:
     glm::uvec2 get_size() const;
 
     static texture* create(
+        context& ctx,
         const std::string& path,
         GLenum target = GL_TEXTURE_2D
     );
 
     static texture* create(
+        context& ctx,
         unsigned w,
         unsigned h,
         GLenum external_format,
@@ -47,6 +52,8 @@ public:
     void bind(unsigned index = 0);
 
 protected:
+    texture(context& ctx);
+
     void basic_load(const std::string& path, GLenum target) const;
     void basic_load(
         unsigned w,

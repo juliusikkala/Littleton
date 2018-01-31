@@ -16,13 +16,15 @@ int main()
     window w(1280, 720, "dflowers", true, false);
     std::cout << w.get_vendor_name() << std::endl
               << w.get_renderer() << std::endl;
+
     w.set_framerate_limit(120);
     w.grab_mouse();
-    resource_store resources;
+    resource_store resources(w);
     resources.add_dfo("data/test_scene.dfo", "data");
 
     shader* effect_shader = resources.add("cat",
         shader::create_from_file(
+            w,
             "data/shaders/fullscreen.vert",
             "data/shaders/test.frag", {
                 {"TEXTURE_COLOR", "vec4(1.0,0.0,0.0,1.0)"}
@@ -31,6 +33,7 @@ int main()
     );
     shader_cache* render_shader = resources.add("render",
         new shader_cache(
+            w,
             read_text_file("data/shaders/generic.vert"),
             read_text_file("data/shaders/forward_render.frag")
         )
@@ -62,7 +65,7 @@ int main()
     main_scene.add_light(&parrasvalo);
 
     method::clear clear(glm::vec4(0.5, 0.5, 1.0, 0.0));
-    method::fullscreen_effect effect(effect_shader);
+    method::fullscreen_effect effect(w, effect_shader);
     method::forward_render render(render_shader, &main_scene);
 
     pipeline p({&clear, &effect, &render});

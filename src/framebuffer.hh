@@ -1,13 +1,15 @@
 #ifndef FRAMEBUFFER_HH
 #define FRAMEBUFFER_HH
 #include "render_target.hh"
+#include "resources.hh"
 #include <vector>
 
 class texture;
-class framebuffer: public render_target
+class framebuffer: public glresource, public render_target
 {
 public:
     framebuffer(
+        context& ctx,
         glm::uvec2 size,
         std::vector<texture*>&& targets = {},
         GLenum depth_stencil_format = GL_DEPTH24_STENCIL8

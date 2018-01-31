@@ -60,22 +60,25 @@ static size_t uv_size(vertex_buffer::vertex_type type)
     }
 }
 
-vertex_buffer::vertex_buffer(): vbo(0), ibo(0), vao(0)
+vertex_buffer::vertex_buffer(context& ctx)
+: glresource(ctx), vbo(0), ibo(0), vao(0)
 {
 }
 
 vertex_buffer::vertex_buffer(
+    context& ctx,
     vertex_type type,
     size_t vertex_count,
     const float* vertices,
     size_t index_count,
     const uint32_t* indices
-): vbo(0), ibo(0), vao(0)
+): glresource(ctx), vbo(0), ibo(0), vao(0)
 {
     basic_load(type, vertex_count, vertices, index_count, indices);
 }
 
 vertex_buffer::vertex_buffer(vertex_buffer&& other)
+: glresource(other.get_context())
 {
     other.load();
 
@@ -220,9 +223,10 @@ static const GLfloat quad_vertices[] = {
 
 static const GLuint quad_indices[] = {0,2,1,1,2,3};
 
-vertex_buffer vertex_buffer::create_fullscreen()
+vertex_buffer vertex_buffer::create_fullscreen(context& ctx)
 {
     return vertex_buffer(
+        ctx,
         VERTEX_P,
         sizeof(quad_vertices)/(sizeof(float)*3),
         quad_vertices,

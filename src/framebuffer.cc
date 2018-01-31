@@ -1,13 +1,15 @@
 #include "framebuffer.hh"
 #include "texture.hh"
+#include "context.hh"
 #include <stdexcept>
 #include <string>
 
 framebuffer::framebuffer(
+    context& ctx,
     glm::uvec2 size,
     std::vector<texture*>&& targets,
     GLenum depth_stencil_format
-): render_target(fbo, size), targets(std::move(targets))
+): glresource(ctx), render_target(fbo, size), targets(std::move(targets))
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -29,7 +31,7 @@ framebuffer::framebuffer(
 }
 
 framebuffer::framebuffer(framebuffer&& f)
-: render_target(f), targets(std::move(f.targets)),
+: glresource(f.get_context()), render_target(f), targets(std::move(f.targets)),
   depth_stencil(f.depth_stencil)
 {
     f.fbo = 0;
@@ -44,13 +46,12 @@ framebuffer::~framebuffer()
 
 void framebuffer::set_target(texture* target, unsigned index)
 {
-    // TODO: Create context object with cached queries, all glresources must
-    // be created using the context. class resource -> loadable, unrelated with
-    // glresource.
-    if(index >= 8)
+    unsigned max_attachments = get_context()[GL_MAX_COLOR_ATTACHMENTS];
+    if(index >= max_attachments)
         throw std::runtime_error(
             "Failed to set framebuffer target at index "
-            + std::to_string(index) + ", maximum is 7."
+            + std::to_string(index) + ", maximum is "
+            + std::to_string(max_attachments-1)
         );
 
     if(target->get_size() != size)

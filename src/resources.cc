@@ -14,9 +14,12 @@ resource::~resource() {}
 void resource::load() const {}
 void resource::unload() const {}
 
+glresource::glresource(context& ctx): ctx(&ctx) {}
+context& glresource::get_context() const { return *ctx; }
+
 resource_store::container::~container() {};
 
-resource_store::resource_store() { }
+resource_store::resource_store(context& ctx): ctx(&ctx) { }
 resource_store::~resource_store() { }
 
 class dfo_file_wrapper
@@ -47,9 +50,10 @@ class vertex_buffer_dfo: public vertex_buffer
 {
 public:
     vertex_buffer_dfo(
+        context& ctx,
         const std::shared_ptr<dfo_file_wrapper>& res,
         dfo_buffer* buf
-    ): res(res), buf(buf) {}
+    ): vertex_buffer(ctx), res(res), buf(buf) {}
 
     void load() const override
     {
@@ -135,7 +139,7 @@ void resource_store::add_dfo(
         dfo_buffer* buf = file->buffer_table[i];
         vertex_buffers[buf] = add<vertex_buffer>(
             dfo_path + "/buffer_" + std::to_string(i),
-            new vertex_buffer_dfo(res, buf)
+            new vertex_buffer_dfo(*ctx, res, buf)
         );
     }
 
@@ -148,6 +152,7 @@ void resource_store::add_dfo(
         textures[tex] = add<texture>(
             tex->path,
             texture::create(
+                *ctx,
                 data_prefix.empty() ? 
                     tex->path :
                     data_prefix + "/" + tex->path

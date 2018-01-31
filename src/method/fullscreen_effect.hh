@@ -10,7 +10,7 @@ namespace method
     class fullscreen_effect: public pipeline_method
     {
     public:
-        fullscreen_effect(shader* effect = nullptr);
+        fullscreen_effect(context& ctx, shader* effect = nullptr);
         ~fullscreen_effect();
 
         void execute() override;

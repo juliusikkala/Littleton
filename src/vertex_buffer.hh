@@ -5,7 +5,7 @@
 #include "resources.hh"
 #include "shader.hh"
 
-class vertex_buffer: public resource
+class vertex_buffer: public resource, public glresource
 {
 public:
     enum vertex_type
@@ -15,15 +15,15 @@ public:
         VERTEX_P = 2 // Position
     };
 
-    vertex_buffer();
+    vertex_buffer(context& ctx);
     vertex_buffer(
+        context& ctx,
         vertex_type type,
         size_t vertex_count,
         const float* vertices,
         size_t index_count,
         const uint32_t* indices
     );
-    vertex_buffer(const vertex_buffer& other) = delete;
     vertex_buffer(vertex_buffer&& other);
     ~vertex_buffer();
 
@@ -36,7 +36,7 @@ public:
     vertex_type get_type() const;
 
     /* Note that the created buffer is _not_ lazily loaded! */
-    static vertex_buffer create_fullscreen();
+    static vertex_buffer create_fullscreen(context& ctx);
 
 protected:
     void basic_load(

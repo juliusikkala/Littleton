@@ -1,10 +1,12 @@
 #include "texture.hh"
+#include "context.hh"
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <cmath>
 #include "stb_image.h"
 
 static GLuint load_texture(
+    context& ctx,
     const std::string& path,
     GLenum target,
     GLint& internal_format,
@@ -33,6 +35,14 @@ static GLuint load_texture(
     {
         throw std::runtime_error("Unable to read " + path);
     }
+    int max_size = ctx[GL_MAX_TEXTURE_SIZE];
+    if(w > max_size || h > max_size)
+        throw std::runtime_error(
+            "Texture is too large, maximum is "
+            + std::to_string(max_size) + "x" + std::to_string(max_size)
+            + " but texture is " + std::to_string(w) + "x"
+            + std::to_string(h) + "."
+        );
 
     switch(n)
     {
@@ -88,28 +98,30 @@ static GLuint load_texture(
     return tex;
 }
 
-texture::texture()
-: tex(0), target(GL_TEXTURE_2D) {}
+texture::texture(context& ctx)
+: glresource(ctx), tex(0), target(GL_TEXTURE_2D) {}
 
-texture::texture(const std::string& path, GLenum target)
-: tex(0), target(target)
+texture::texture(context& ctx, const std::string& path, GLenum target)
+: glresource(ctx), tex(0), target(target)
 {
     basic_load(path, target);
 }
 
 texture::texture(
+    context& ctx,
     unsigned w,
     unsigned h,
     GLenum external_format,
     GLint internal_format,
     GLenum type
-): tex(0), internal_format(internal_format), external_format(external_format),
-   target(GL_TEXTURE_2D), type(type)
+): glresource(ctx), tex(0), internal_format(internal_format),
+   external_format(external_format), target(GL_TEXTURE_2D), type(type)
 {
     basic_load(w, h, external_format, internal_format, type, target);
 }
 
 texture::texture(texture&& other)
+: glresource(other.get_context())
 {
     other.load();
 
@@ -173,8 +185,8 @@ void texture::bind(unsigned index)
 class file_texture: public texture
 {
 public:
-    file_texture(const std::string& path, GLenum target)
-    : path(path)
+    file_texture(context& ctx, const std::string& path, GLenum target)
+    : texture(ctx), path(path)
     {
         this->target = target;
     }
@@ -192,22 +204,23 @@ private:
     std::string path;
 };
 
-texture* texture::create(const std::string& path, GLenum target)
+texture* texture::create(context& ctx, const std::string& path, GLenum target)
 {
-    return new file_texture(path, target);
+    return new file_texture(ctx, path, target);
 }
 
 class empty_texture: public texture
 {
 public:
     empty_texture(
+        context& ctx,
         unsigned w,
         unsigned h,
         GLenum external_format,
         GLint internal_format,
         GLenum type,
         GLenum target
-    ): w(w), h(h)
+    ): texture(ctx), w(w), h(h)
     {
         this->external_format = external_format;
         this->internal_format = internal_format;
@@ -230,6 +243,7 @@ private:
 };
 
 texture* texture::create(
+    context& ctx,
     unsigned w,
     unsigned h,
     GLenum external_format,
@@ -237,7 +251,7 @@ texture* texture::create(
     GLenum type
 ){
     return new empty_texture(
-        w, h, external_format, internal_format, type, GL_TEXTURE_2D
+        ctx, w, h, external_format, internal_format, type, GL_TEXTURE_2D
     );
 }
 
@@ -246,6 +260,7 @@ void texture::basic_load(const std::string& path, GLenum target) const
     if(tex) return;
 
     tex = load_texture(
+        get_context(),
         path,
         target,
         internal_format,

@@ -1,8 +1,8 @@
 #include "fullscreen_effect.hh"
 #include "helpers.hh"
 
-method::fullscreen_effect::fullscreen_effect(shader* effect)
-: effect(effect), fullscreen_quad(vertex_buffer::create_fullscreen()) {}
+method::fullscreen_effect::fullscreen_effect(context& ctx, shader* effect)
+: effect(effect), fullscreen_quad(vertex_buffer::create_fullscreen(ctx)) {}
 
 method::fullscreen_effect::~fullscreen_effect() { }
 
