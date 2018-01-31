@@ -87,6 +87,8 @@ window::window(
 
     SDL_GL_SetSwapInterval(vsync);
     last_frame = SDL_GetTicks();
+
+    context::init();
 }
 
 window::~window()

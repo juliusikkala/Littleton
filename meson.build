@@ -25,6 +25,7 @@ src = [
   'src/light.cc',
   'src/render_target.cc',
   'src/framebuffer.cc',
+  'src/context.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_render.cc',

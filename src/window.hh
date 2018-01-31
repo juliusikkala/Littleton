@@ -1,10 +1,11 @@
 #ifndef WINDOW_HH
 #define WINDOW_HH
 #include "render_target.hh"
+#include "context.hh"
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 
-class window: public render_target
+class window: public context, public render_target
 {
 public:
     window(

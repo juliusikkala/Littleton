@@ -13,7 +13,10 @@
 
 int main()
 { 
-    window w(1280, 720, "dflowers", true, true);
+    window w(1280, 720, "dflowers", true, false);
+    std::cout << w.get_vendor_name() << std::endl
+              << w.get_renderer() << std::endl;
+    w.set_framerate_limit(120);
     w.grab_mouse();
     resource_store resources;
     resources.add_dfo("data/test_scene.dfo", "data");
