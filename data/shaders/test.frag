@@ -7,6 +7,7 @@ uniform float time;
 
 void main(void)
 {
-    vec3 dir = normalize(vec3(uv*2-1, sin(time)+1.0f));
-    color = vec4(dir.xy*0.5f+0.5f, dir.z, 1.0f);
+    vec3 dir = normalize(vec3(uv*2-1, 0.5f));
+    dir = vec3(dir.xy*0.5f+0.5f, dir.z);
+    color = vec4(dir, 1.0f);
 }

@@ -11,6 +11,8 @@ static size_t vertex_size(vertex_buffer::vertex_type type)
         return 12*sizeof(float);
     case vertex_buffer::VERTEX_P:
         return 3*sizeof(float);
+    case vertex_buffer::VERTEX_PT:
+        return 5*sizeof(float);
     default:
         return 0;
     }
@@ -30,7 +32,6 @@ static size_t normal_size(vertex_buffer::vertex_type type)
     switch(type)
     {
     case vertex_buffer::VERTEX_PN:
-        return 3;
     case vertex_buffer::VERTEX_PNTT:
         return 3;
     default:
@@ -54,6 +55,7 @@ static size_t uv_size(vertex_buffer::vertex_type type)
     switch(type)
     {
     case vertex_buffer::VERTEX_PNTT:
+    case vertex_buffer::VERTEX_PT:
         return 2;
     default:
         return 0;
@@ -115,6 +117,11 @@ shader::definition_map vertex_buffer::get_definitions() const
     case vertex_buffer::VERTEX_P:
         return {
             {"VERTEX_POSITION", "0"}
+        };
+    case vertex_buffer::VERTEX_PT:
+        return {
+            {"VERTEX_POSITION", "0"},
+            {"VERTEX_UV", "3"}
         };
     default:
         return {};
@@ -215,20 +222,20 @@ void vertex_buffer::basic_unload() const
 }
 
 static const GLfloat quad_vertices[] = {
-    1.0f, 1.0f, 0,
-    1.0f, -1.0f, 0,
-    -1.0f, 1.0f, 0,
-    -1.0f, -1.0f, 0
+    1.0f, 1.0f, 0, 1.0f, 1.0f,
+    1.0f, -1.0f, 0, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0, 0.0f, 0.0f
 };
 
 static const GLuint quad_indices[] = {0,2,1,1,2,3};
 
-vertex_buffer vertex_buffer::create_fullscreen(context& ctx)
+vertex_buffer vertex_buffer::create_square(context& ctx)
 {
     return vertex_buffer(
         ctx,
-        VERTEX_P,
-        sizeof(quad_vertices)/(sizeof(float)*3),
+        VERTEX_PT,
+        sizeof(quad_vertices)/(sizeof(float)*5),
         quad_vertices,
         sizeof(quad_indices)/sizeof(GLuint),
         quad_indices

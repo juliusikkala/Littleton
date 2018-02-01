@@ -3,6 +3,7 @@
 #include "texture.hh"
 #include "object.hh"
 #include "pipeline.hh"
+#include "framebuffer.hh"
 #include "method/clear.hh"
 #include "method/fullscreen_effect.hh"
 #include "method/forward_render.hh"
@@ -11,13 +12,22 @@
 #include <algorithm>
 #include <glm/gtc/random.hpp>
 
+struct gbuffer
+{
+    gbuffer(context& ctx, glm::uvec2 size)
+    : color(ctx, size.x, size.y, GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE),
+      fb(ctx, size, {&color}) {}
+
+    texture color;
+    framebuffer fb;
+};
+
 int main()
 { 
-    window w(1280, 720, "dflowers", true, false);
+    window w(1280, 720, "dflowers", true, true);
     std::cout << w.get_vendor_name() << std::endl
               << w.get_renderer() << std::endl;
 
-    w.set_framerate_limit(120);
     w.grab_mouse();
     resource_store resources(w);
     resources.add_dfo("data/test_scene.dfo", "data");
@@ -26,9 +36,15 @@ int main()
         shader::create_from_file(
             w,
             "data/shaders/fullscreen.vert",
-            "data/shaders/test.frag", {
-                {"TEXTURE_COLOR", "vec4(1.0,0.0,0.0,1.0)"}
-            }
+            "data/shaders/test.frag"
+        )
+    );
+
+    shader* texture_shader = resources.add("texture",
+        shader::create_from_file(
+            w,
+            "data/shaders/fullscreen.vert",
+            "data/shaders/texture.frag"
         )
     );
     shader_cache* render_shader = resources.add("render",
@@ -60,15 +76,19 @@ int main()
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
     directional_light sun(glm::vec3(1,1,1) * 1.5f);
-    //main_scene.add_light(&l1);
-    //main_scene.add_light(&l2);
+    main_scene.add_light(&l1);
+    main_scene.add_light(&l2);
     main_scene.add_light(&parrasvalo);
 
-    method::clear clear(glm::vec4(0.5, 0.5, 1.0, 0.0));
-    method::fullscreen_effect effect(w, effect_shader);
-    method::forward_render render(render_shader, &main_scene);
+    gbuffer buf(w, w.get_size());
+    method::clear clear(buf.fb, glm::vec4(1.0, 0.0, 0.0, 0.0));
+    method::fullscreen_effect sky(buf.fb, effect_shader);
+    method::forward_render render(buf.fb, render_shader, &main_scene);
+    method::fullscreen_effect color_to_window(
+        w, texture_shader, {{"tex", &buf.color}}
+    );
 
-    pipeline p({&clear, &effect, &render});
+    pipeline p({&clear, &sky, &render, &color_to_window});
 
     bool running = true;
     float time = 0;

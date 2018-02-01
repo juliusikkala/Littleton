@@ -1,6 +1,7 @@
 #ifndef WINDOW_HH
 #define WINDOW_HH
 #include "render_target.hh"
+#include "resources.hh"
 #include "context.hh"
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
@@ -18,6 +19,7 @@ public:
         unsigned samples = 0
     );
     window(const window& other) = delete;
+    window(window&& other) = delete;
     ~window();
 
     int poll(SDL_Event& event);

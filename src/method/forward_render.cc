@@ -3,9 +3,10 @@
 #include <glm/gtc/matrix_inverse.hpp>
 
 method::forward_render::forward_render(
+    render_target& target,
     shader_cache* forward_shader,
     render_scene* scene
-): forward_shader(forward_shader), scene(scene) {}
+): pipeline_method(target), forward_shader(forward_shader), scene(scene) {}
 
 method::forward_render::~forward_render() {}
 

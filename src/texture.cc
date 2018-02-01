@@ -94,6 +94,9 @@ static GLuint load_texture(
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
+    if(glGetError() != GL_NO_ERROR)
+        throw std::runtime_error("Failed to create texture from " + path);
+
     stbi_image_free(data);
     return tex;
 }
@@ -298,6 +301,14 @@ void texture::basic_load(
         type,
         nullptr
     );
+
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    if(glGetError() != GL_NO_ERROR)
+        throw std::runtime_error("Failed to create empty texture");
 
     this->external_format = external_format;
     this->internal_format = internal_format;

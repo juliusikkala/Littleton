@@ -1,12 +1,14 @@
 #ifndef RENDER_TARGET_HH
 #define RENDER_TARGET_HH
 #include "glheaders.hh"
+#include "resources.hh"
 #include <glm/glm.hpp>
 
-class render_target
+class render_target: public glresource
 {
 public:
     render_target(
+        context& ctx,
         GLuint fbo = 0,
         glm::uvec2 size = glm::uvec2(0)
     );
@@ -23,7 +25,7 @@ protected:
     GLuint fbo;
     glm::uvec2 size;
 
-    static GLuint current_fbo;
+    static GLint current_fbo;
 };
 
 #endif

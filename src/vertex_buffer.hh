@@ -12,7 +12,8 @@ public:
     {
         VERTEX_PN = 0, // Position, Normal
         VERTEX_PNTT = 1, // Position, Normal, Tangent, Texture
-        VERTEX_P = 2 // Position
+        VERTEX_P = 2, // Position
+        VERTEX_PT = 3 // Position, Texture
     };
 
     vertex_buffer(context& ctx);
@@ -35,8 +36,10 @@ public:
     void draw() const;
     vertex_type get_type() const;
 
-    /* Note that the created buffer is _not_ lazily loaded! */
-    static vertex_buffer create_fullscreen(context& ctx);
+    // Creates a square buffer with coordinates at (1,1), (1,-1), (-1,1) and
+    // (-1,-1).
+    // Note that the created buffer is _not_ lazily loaded!
+    static vertex_buffer create_square(context& ctx);
 
 protected:
     void basic_load(

@@ -10,6 +10,7 @@ namespace method
     {
     public:
         forward_render(
+            render_target& target,
             shader_cache* forward_shader = nullptr,
             render_scene* scene = nullptr
         );

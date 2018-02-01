@@ -9,7 +9,7 @@ framebuffer::framebuffer(
     glm::uvec2 size,
     std::vector<texture*>&& targets,
     GLenum depth_stencil_format
-): glresource(ctx), render_target(fbo, size), targets(std::move(targets))
+): render_target(ctx, fbo, size), targets(std::move(targets))
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -24,14 +24,20 @@ framebuffer::framebuffer(
             size.x,
             size.y
         );
+        glFramebufferRenderbuffer(
+            GL_FRAMEBUFFER,
+            GL_DEPTH_STENCIL_ATTACHMENT,
+            GL_RENDERBUFFER,
+            depth_stencil
+        );
     }
     else depth_stencil = 0;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);
+    if(current_fbo != -1) glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);
 }
 
 framebuffer::framebuffer(framebuffer&& f)
-: glresource(f.get_context()), render_target(f), targets(std::move(f.targets)),
+: render_target(f), targets(std::move(f.targets)),
   depth_stencil(f.depth_stencil)
 {
     f.fbo = 0;
@@ -40,8 +46,8 @@ framebuffer::framebuffer(framebuffer&& f)
 
 framebuffer::~framebuffer()
 {
-    if(fbo != 0) glDeleteFramebuffers(1, &fbo);
     if(depth_stencil != 0) glDeleteRenderbuffers(1, &depth_stencil);
+    if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
 
 void framebuffer::set_target(texture* target, unsigned index)
@@ -49,7 +55,7 @@ void framebuffer::set_target(texture* target, unsigned index)
     unsigned max_attachments = get_context()[GL_MAX_COLOR_ATTACHMENTS];
     if(index >= max_attachments)
         throw std::runtime_error(
-            "Failed to set framebuffer target at index "
+            "Unable to set framebuffer target at index "
             + std::to_string(index) + ", maximum is "
             + std::to_string(max_attachments-1)
         );

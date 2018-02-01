@@ -5,7 +5,7 @@
 #include <vector>
 
 class texture;
-class framebuffer: public glresource, public render_target
+class framebuffer: public render_target
 {
 public:
     framebuffer(

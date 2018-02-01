@@ -1,8 +1,12 @@
 #include "clear.hh"
 #include "glheaders.hh"
 
-method::clear::clear(glm::vec4 color, double depth, int stencil)
-: color(color), depth(depth), stencil(stencil) {}
+method::clear::clear(
+    render_target& target,
+    glm::vec4 color,
+    double depth,
+    int stencil
+): pipeline_method(target), color(color), depth(depth), stencil(stencil) {}
 
 method::clear::~clear(){}
 

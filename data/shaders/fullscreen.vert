@@ -7,11 +7,11 @@
 #version 330 core
 
 layout(location = 0) in vec2 vertex;
+layout(location = 3) in vec2 v_uv;
 out vec2 uv;
 
 void main(void)
 {
     gl_Position = vec4(vertex, 0, 1.0f);
-    uv = vertex*0.5f+0.5f;
-    uv.y = 1-uv.y;
+    uv = v_uv;
 }

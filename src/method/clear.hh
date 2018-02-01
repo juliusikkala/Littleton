@@ -9,6 +9,7 @@ namespace method
     {
     public:
         clear(
+            render_target& target,
             glm::vec4 color = glm::vec4(0),
             double depth = 1,
             int stencil = 0
