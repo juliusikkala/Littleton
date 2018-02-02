@@ -20,6 +20,9 @@ public:
     glm::uvec2 get_size() const;
     float get_aspect() const;
 
+    GLuint get_fbo() const;
+    static GLint get_current_fbo();
+
 protected:
     GLuint fbo;
     glm::uvec2 size;

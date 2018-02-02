@@ -1,14 +1,14 @@
-#include "forward_render.hh"
+#include "forward_pass.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
-method::forward_render::forward_render(
+method::forward_pass::forward_pass(
     render_target& target,
     shader_cache* forward_shader,
     render_scene* scene
 ): pipeline_method(target), forward_shader(forward_shader), scene(scene) {}
 
-method::forward_render::~forward_render() {}
+method::forward_pass::~forward_pass() {}
 
 static std::unique_ptr<uniform_block> create_light_block(
     const std::string& block_name,
@@ -80,7 +80,7 @@ static std::unique_ptr<uniform_block> create_light_block(
     return light_block;
 }
 
-void method::forward_render::execute()
+void method::forward_pass::execute()
 {
     if(!forward_shader || !scene)
         return;
@@ -152,16 +152,16 @@ void method::forward_render::execute()
     }
 }
 
-void method::forward_render::set_shader_cache(shader_cache* s)
+void method::forward_pass::set_shader_cache(shader_cache* s)
 {
     forward_shader = s;
 }
 
-shader_cache* method::forward_render::get_shader_cache() const
+shader_cache* method::forward_pass::get_shader_cache() const
 {
     return forward_shader;
 }
 
-void method::forward_render::set_scene(render_scene* s) { scene = s; }
-render_scene* method::forward_render::get_scene() const { return scene; }
+void method::forward_pass::set_scene(render_scene* s) { scene = s; }
+render_scene* method::forward_pass::get_scene() const { return scene; }
 

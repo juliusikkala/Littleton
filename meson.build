@@ -29,8 +29,9 @@ src = [
   'src/gbuffer.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
-  'src/method/forward_render.cc',
+  'src/method/forward_pass.cc',
   'src/method/geometry_pass.cc',
+  'src/method/blit_framebuffer.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

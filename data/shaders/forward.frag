@@ -3,8 +3,8 @@
  */
 #version 330 core
 
-#include "material.glsl"
 #include "generic_fragment_input.glsl"
+#include "material.glsl"
 
 struct point_light
 {

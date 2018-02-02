@@ -40,3 +40,13 @@ float render_target::get_aspect() const
 {
     return size.x/(float)size.y;
 }
+
+GLuint render_target::get_fbo() const
+{
+    return fbo;
+}
+
+GLint render_target::get_current_fbo()
+{
+    return current_fbo;
+}
