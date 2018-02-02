@@ -2,16 +2,9 @@
  * forward rendering, and supports materials.
  */
 #version 330 core
-struct material_t
-{
-#ifdef MATERIAL_COLOR_CONSTANT
-    vec4 color;
-#elif defined(MATERIAL_COLOR_TEXTURE)
-    sampler2D color;
-#endif
-};
 
-uniform material_t material;
+#include "material.glsl"
+#include "generic_fragment_input.glsl"
 
 struct point_light
 {
@@ -47,21 +40,6 @@ uniform Lights
     spotlight spot[SPOTLIGHT_COUNT];
 #endif
 } lights;
-#endif
-
-in vec3 f_position;
-
-#ifdef VERTEX_NORMAL
-in vec3 f_normal;
-
-#ifdef VERTEX_TANGENT
-in vec3 f_tangent;
-in vec3 f_bitangent;
-#endif
-#endif
-
-#ifdef VERTEX_UV
-in vec2 f_uv;
 #endif
 
 out vec4 out_color;

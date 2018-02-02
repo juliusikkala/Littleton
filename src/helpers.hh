@@ -7,6 +7,8 @@
 
 std::string read_text_file(const std::string& path);
 
+std::string get_file_folder(const std::string& path);
+
 template<typename T>
 void hash_combine(std::size_t& seed, const T& v);
 

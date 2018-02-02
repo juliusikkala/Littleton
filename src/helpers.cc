@@ -28,6 +28,11 @@ std::string read_text_file(const std::string& path)
     return ret;
 }
 
+std::string get_file_folder(const std::string& path)
+{
+    return path.substr(0, path.find_last_of('/') + 1);
+}
+
 void decompose_matrix(
     const glm::mat4& transform,
     glm::vec3& translation,

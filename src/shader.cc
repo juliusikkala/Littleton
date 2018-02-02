@@ -2,6 +2,8 @@
 #include "helpers.hh"
 #include <stdexcept>
 #include <sstream>
+#include <set>
+#include <regex>
 
 static void throw_shader_error(
     GLuint shader,
@@ -42,6 +44,107 @@ static void throw_program_error(
     }
 }
 
+static std::string generate_definition_src(
+    const shader::definition_map& definitions
+){
+    std::stringstream ss;
+    for(auto& pair: definitions)
+        ss << "#define " << pair.first << " " << pair.second << std::endl;
+    return ss.str();
+}
+
+static std::string remove_comments(const std::string& source)
+{
+    std::string processed = source;
+    while(1)
+    {
+        size_t block = processed.find("/*");
+        size_t line = processed.find("//");
+
+        if(block == std::string::npos && line == std::string::npos)
+            break;
+
+        if(block < line)
+        {
+            size_t block_end = processed.find("*/", block+2);
+            processed.erase(block, block_end-block+2);
+        }
+        else
+        {
+            size_t line_end = processed.find("\n", line+2);
+            processed.erase(line, line_end-line+1);
+        }
+    }
+    return processed;
+}
+
+static std::string splice_definitions(
+    const std::string& source,
+    const std::string& definitions
+){
+    size_t offset = source.find("#version");
+    if(offset == std::string::npos) return definitions + source;
+
+    offset = source.find_first_of('\n', offset) + 1;
+
+    return source.substr(0, offset) + definitions + source.substr(offset);
+}
+
+static std::string process_source(
+    const std::string& source,
+    const std::string& definitions,
+    const std::vector<std::string>& include_path
+){
+    std::string processed = remove_comments(source);
+    processed = splice_definitions(processed, definitions);
+    
+    std::set<std::string> included;
+
+    static const std::regex include_regex(
+        "#\\s*include\\s*\"(.*)\"",
+        std::regex::optimize
+    );
+
+    std::smatch include_match;
+    while(std::regex_search(processed, include_match, include_regex))
+    {
+        std::string include_file = include_match[1];
+        if(included.count(include_file)) continue;
+
+        std::string include_src;
+        bool success = false;
+
+        for(const std::string& path: include_path)
+        {
+            try
+            {
+                include_src = read_text_file(path + include_file);
+            }
+            catch(...)
+            {
+                continue;
+            }
+
+            success = true;
+            break;
+        }
+        if(!success)
+            throw std::runtime_error(
+                "Unable to find file " + include_file + " for #include"
+            );
+
+        included.insert(include_file);
+
+        processed.replace(
+            include_match[0].first,
+            include_match[0].second,
+            remove_comments(include_src)
+        );
+    }
+
+    return processed;
+}
+
 GLuint shader::current_program = 0;
 
 shader::shader(context& ctx): glresource(ctx), program(0) {}
@@ -50,10 +153,15 @@ shader::shader(
     context& ctx,
     const std::string& vert_src,
     const std::string& frag_src,
-    const definition_map& definitions
+    const definition_map& definitions,
+    const std::vector<std::string>& include_path
 ): glresource(ctx), program(0)
 {
-    basic_load(vert_src, frag_src, definitions);
+    std::string definition_src = generate_definition_src(definitions);
+    basic_load(
+        process_source(vert_src, definition_src, include_path),
+        process_source(frag_src, definition_src, include_path)
+    );
 }
 
 shader::shader(shader&& other)
@@ -101,13 +209,16 @@ public:
         context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
-        const definition_map& definitions
-    ): shader(ctx), vert_src(vert_src), frag_src(frag_src),
-       definitions(definitions) {}
+        const std::string& definition_src,
+        const std::vector<std::string>& include_path
+    ): shader(ctx),
+       vert_src(process_source(vert_src, definition_src, include_path)),
+       frag_src(process_source(frag_src, definition_src, include_path))
+    { }
 
     void load() const override
     {
-        basic_load(vert_src, frag_src, definitions);
+        basic_load(vert_src, frag_src);
     }
 
     void unload() const override
@@ -118,57 +229,49 @@ public:
 private:
     std::string vert_src;
     std::string frag_src;
-    definition_map definitions;
 };
 
 shader* shader::create(
     context& ctx,
     const std::string& vert_src,
     const std::string& frag_src,
-    const definition_map& definitions
+    const definition_map& definitions,
+    const std::vector<std::string>& include_path
 ){
-    return new src_shader(ctx, vert_src, frag_src, definitions);
+    std::string definition_src = generate_definition_src(definitions);
+    return new src_shader(
+        ctx,
+        vert_src,
+        frag_src,
+        definition_src,
+        include_path
+    );
 }
-
-class file_shader: public shader
-{
-public:
-    file_shader(
-        context& ctx,
-        const std::string& vert_path,
-        const std::string& frag_path,
-        const definition_map& definitions
-    ): shader(ctx), vert_path(vert_path), frag_path(frag_path),
-       definitions(definitions) {}
-
-    void load() const override
-    {
-        if(program) return;
-        basic_load(
-            read_text_file(vert_path),
-            read_text_file(frag_path),
-            definitions
-        );
-    }
-
-    void unload() const override
-    {
-        basic_unload();
-    }
-
-private:
-    std::string vert_path;
-    std::string frag_path;
-    definition_map definitions;
-};
 
 shader* shader::create_from_file(
     context& ctx,
     const std::string& vert_path,
     const std::string& frag_path,
-    const definition_map& definitions
+    const definition_map& definitions,
+    const std::vector<std::string>& include_path
 ){
-    return new file_shader(ctx, vert_path, frag_path, definitions);
+    std::string definition_src = generate_definition_src(definitions);
+    std::vector<std::string> extended_include_path = {
+        get_file_folder(vert_path),
+        get_file_folder(frag_path)
+    };
+    extended_include_path.insert(
+        extended_include_path.end(),
+        include_path.begin(),
+        include_path.end()
+    );
+    return new src_shader(
+        ctx,
+        read_text_file(vert_path),
+        read_text_file(frag_path),
+        definition_src,
+        extended_include_path
+    );
 }
 
 bool shader::block_exists(const std::string& name) const
@@ -213,51 +316,25 @@ void shader::set_block(
     glUniformBlockBinding(program, it->second.index, bind_point);
 }
 
-static std::string generate_definition_src(
-    const shader::definition_map& definitions
-){
-    std::stringstream ss;
-    for(auto& pair: definitions)
-        ss << "#define " << pair.first << " " << pair.second << std::endl;
-    return ss.str();
-}
-
-static std::string splice_definitions(
-    const std::string& definitions,
-    const std::string& source
-){
-    size_t offset = source.find("#version");
-    if(offset == std::string::npos) return definitions + source;
-
-    offset = source.find_first_of('\n', offset) + 1;
-
-    return source.substr(0, offset) + definitions + source.substr(offset);
-}
-
 void shader::basic_load(
     const std::string& vert_src,
-    const std::string& frag_src,
-    const definition_map& definitions
+    const std::string& frag_src
 ) const {
     if(program) return;
 
     GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string definition_src = generate_definition_src(definitions);
-    std::string vert_src_spliced =
-        splice_definitions(definition_src, vert_src).c_str();
-    std::string frag_src_spliced =
-        splice_definitions(definition_src, frag_src).c_str();
-    const char* vsrc = vert_src_spliced.c_str();
-    const char* fsrc = frag_src_spliced.c_str();
+
+    const char* vsrc = vert_src.c_str();
+    const char* fsrc = frag_src.c_str();
     glShaderSource(vshader, 1, &vsrc, NULL);
     glShaderSource(fshader, 1, &fsrc, NULL);
 
     glCompileShader(vshader);
     glCompileShader(fshader);
 
-    throw_shader_error(vshader, "Vertex shader", vert_src_spliced);
-    throw_shader_error(fshader, "Fragment shader", frag_src_spliced);
+    throw_shader_error(vshader, "Vertex shader", vert_src);
+    throw_shader_error(fshader, "Fragment shader", frag_src);
 
     program = glCreateProgram();
     glAttachShader(program, vshader);

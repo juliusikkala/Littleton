@@ -4,6 +4,7 @@
 #include "glheaders.hh"
 #include "uniform.hh"
 #include <map>
+#include <vector>
 
 class shader;
 
@@ -16,7 +17,8 @@ public:
         context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
-        const definition_map& definitions = {}
+        const definition_map& definitions = {},
+        const std::vector<std::string>& include_path = {}
     );
     shader(shader&& other);
     ~shader();
@@ -27,14 +29,16 @@ public:
         context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
-        const definition_map& definitions = {}
+        const definition_map& definitions = {},
+        const std::vector<std::string>& include_path = {}
     );
 
     static shader* create_from_file(
         context& ctx,
         const std::string& vert_path,
         const std::string& frag_path,
-        const definition_map& definitions = {}
+        const definition_map& definitions = {},
+        const std::vector<std::string>& include_path = {}
     );
 
     void bind() const;
@@ -69,8 +73,7 @@ public:
 protected:
     void basic_load(
         const std::string& vert_src,
-        const std::string& frag_src,
-        const definition_map& definitions
+        const std::string& frag_src
     ) const;
 
     void basic_unload() const;

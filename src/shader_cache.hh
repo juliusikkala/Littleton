@@ -12,7 +12,16 @@ public:
     shader_cache(
         context& ctx,
         const std::string& vert_src,
-        const std::string& frag_src
+        const std::string& frag_src,
+        const std::vector<std::string>& include_path = {}
+    );
+    shader_cache(shader_cache&& other);
+
+    static shader_cache* create_from_file(
+        context& ctx,
+        const std::string& vert_path,
+        const std::string& frag_path,
+        const std::vector<std::string>& include_path = {}
     );
 
     void clear();
@@ -20,6 +29,7 @@ public:
 
 private:
     std::string vert_src, frag_src;
+    std::vector<std::string> include_path;
     mutable std::unordered_map<
         shader::definition_map,
         std::unique_ptr<shader>,

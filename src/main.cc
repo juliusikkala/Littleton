@@ -39,11 +39,12 @@ int main()
             "data/shaders/texture.frag"
         )
     );
+
     shader_cache* geometry_shader = resources.add("render",
-        new shader_cache(
+        shader_cache::create_from_file(
             w,
-            read_text_file("data/shaders/generic.vert"),
-            read_text_file("data/shaders/geometry.frag")
+            "data/shaders/generic.vert",
+            "data/shaders/geometry.frag"
         )
     );
     object* suzanne = resources.get<object>("Suzanne");
@@ -55,8 +56,11 @@ int main()
     cam.lookat(suzanne);
     render_scene main_scene(&cam);
 
-    for(auto it = resources.begin<object>(); it != resources.end<object>(); ++it)
-    {
+    for(
+        auto it = resources.begin<object>();
+        it != resources.end<object>();
+        ++it
+    ){
         object* o = *it;
         if(o->get_model()) main_scene.add_object(o);
     }
@@ -67,7 +71,6 @@ int main()
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-    directional_light sun(glm::vec3(1,1,1) * 1.5f);
     main_scene.add_light(&l1);
     main_scene.add_light(&l2);
     main_scene.add_light(&parrasvalo);
@@ -132,6 +135,7 @@ int main()
         parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
         parrasvalo.set_cutoff_angle(sin(time)*45+45);
         sphere->lookat(&cam);
+
         p.execute();
         w.present();
         time += w.get_delta();
