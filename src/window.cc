@@ -13,7 +13,7 @@ window::window(
     bool vsync,
     unsigned framerate_limit,
     unsigned samples
-): render_target(*this, 0, glm::uvec2(w, h)), framerate_limit(framerate_limit),
+): render_target(*this, glm::uvec2(w, h)), framerate_limit(framerate_limit),
    last_frame(0), delta(0)
 {
     if(initialized)

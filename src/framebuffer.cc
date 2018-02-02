@@ -9,7 +9,7 @@ framebuffer::framebuffer(
     glm::uvec2 size,
     std::vector<texture*>&& targets,
     GLenum depth_stencil_format
-): render_target(ctx, fbo, size), targets(std::move(targets))
+): render_target(ctx, size), targets(std::move(targets))
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -88,6 +88,7 @@ void framebuffer::remove_target(unsigned index)
 void framebuffer::bind()
 {
     render_target::bind();
+    std::vector<unsigned> attachments;
     for(unsigned i = 0; i < targets.size(); ++i)
     {
         texture* target = targets[i];
@@ -98,7 +99,10 @@ void framebuffer::bind()
             target->get_texture(),
             0
         );
+        attachments.push_back(GL_COLOR_ATTACHMENT0+i);
     }
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         throw std::runtime_error("Attempt to bind an incomplete framebuffer!");
+
+    glDrawBuffers(attachments.size(), attachments.data());
 }

@@ -7,24 +7,16 @@
 #include "method/clear.hh"
 #include "method/fullscreen_effect.hh"
 #include "method/forward_render.hh"
+#include "method/geometry_pass.hh"
 #include "helpers.hh"
+#include "gbuffer.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
 
-struct gbuffer
-{
-    gbuffer(context& ctx, glm::uvec2 size)
-    : color(ctx, size.x, size.y, GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE),
-      fb(ctx, size, {&color}) {}
-
-    texture color;
-    framebuffer fb;
-};
-
 int main()
 { 
-    window w(1280, 720, "dflowers", true, true);
+    window w(1280, 720, "dflowers", false, true);
     std::cout << w.get_vendor_name() << std::endl
               << w.get_renderer() << std::endl;
 
@@ -47,11 +39,11 @@ int main()
             "data/shaders/texture.frag"
         )
     );
-    shader_cache* render_shader = resources.add("render",
+    shader_cache* geometry_shader = resources.add("render",
         new shader_cache(
             w,
             read_text_file("data/shaders/generic.vert"),
-            read_text_file("data/shaders/forward_render.frag")
+            read_text_file("data/shaders/geometry.frag")
         )
     );
     object* suzanne = resources.get<object>("Suzanne");
@@ -81,14 +73,14 @@ int main()
     main_scene.add_light(&parrasvalo);
 
     gbuffer buf(w, w.get_size());
-    method::clear clear(buf.fb, glm::vec4(1.0, 0.0, 0.0, 0.0));
-    method::fullscreen_effect sky(buf.fb, effect_shader);
-    method::forward_render render(buf.fb, render_shader, &main_scene);
+    method::clear clear(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
+    method::fullscreen_effect sky(buf, effect_shader);
+    method::geometry_pass gp(buf, geometry_shader, &main_scene);
     method::fullscreen_effect color_to_window(
-        w, texture_shader, {{"tex", &buf.color}}
+        w, texture_shader, {{"tex", &buf.get_color_emission()}}
     );
 
-    pipeline p({&clear, &sky, &render, &color_to_window});
+    pipeline p({&clear, &sky, &gp, &color_to_window});
 
     bool running = true;
     float time = 0;

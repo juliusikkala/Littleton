@@ -2,8 +2,8 @@
 
 GLint render_target::current_fbo = -1;
 
-render_target::render_target(context& ctx, GLuint fbo, glm::uvec2 size)
-: glresource(ctx), fbo(fbo), size(size) {}
+render_target::render_target(context& ctx, glm::uvec2 size)
+: glresource(ctx), fbo(0), size(size) {}
 
 render_target::~render_target() {}
 

@@ -9,7 +9,6 @@ class render_target: public glresource
 public:
     render_target(
         context& ctx,
-        GLuint fbo = 0,
         glm::uvec2 size = glm::uvec2(0)
     );
     virtual ~render_target();
