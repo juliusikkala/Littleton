@@ -3,7 +3,7 @@
  */
 #version 330 core
 
-#include "deferred.glsl"
+#include "deferred_output.glsl"
 
 void main(void)
 {

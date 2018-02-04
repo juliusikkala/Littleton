@@ -5,27 +5,7 @@
 
 #include "generic_fragment_input.glsl"
 #include "material.glsl"
-
-struct point_light
-{
-    vec3 color;
-    vec3 position;
-};
-
-struct directional_light
-{
-    vec3 color;
-    vec3 direction;
-};
-
-struct spotlight
-{
-    vec3 color;
-    vec3 position;
-    vec3 direction;
-    float cutoff;
-    float exponent;
-};
+#include "light_types.glsl"
 
 #ifdef LIGHTING
 uniform Lights
@@ -76,35 +56,22 @@ void main(void)
 #if POINT_LIGHT_COUNT > 0
     for(int i = 0; i < POINT_LIGHT_COUNT; ++i)
     {
-        point_light l = lights.point[i];
-        vec3 dir = l.position - f_position;
-        float dist = length(dir);
-        dir/=dist;
-        float ctheta = clamp(dot(normal, dir), 0, 1);
-        color.rgb += l.color*diffuse_color.rgb*ctheta/(dist*dist);
+        float diffuse = point_light_diffuse(lights.point[i], f_position, normal);
+        color.rgb += diffuse_color.rgb * diffuse;
     }
 #endif
 #if DIRECTIONAL_LIGHT_COUNT > 0
     for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; ++i)
     {
-        directional_light l = lights.directional[i];
-        vec3 dir = l.direction;
-        float ctheta = clamp(dot(normal, -dir), 0, 1);
-        color.rgb += l.color*diffuse_color.rgb*ctheta;
+        float diffuse = directional_light_diffuse(lights.directional[i], normal);
+        color.rgb += diffuse_color.rgb*diffuse;
     }
 #endif
 #if SPOTLIGHT_COUNT > 0
     for(int i = 0; i < SPOTLIGHT_COUNT; ++i)
     {
-        spotlight l = lights.spot[i];
-        vec3 dir = l.position - f_position;
-        float dist = length(dir);
-        dir/=dist;
-        float cutoff = dot(dir, -l.direction);
-        cutoff = cutoff > l.cutoff ? 1-pow(1-(cutoff-l.cutoff)/(1-l.cutoff), l.exponent) : 0;
-
-        float ctheta = clamp(dot(normal, dir), 0, 1)*cutoff;
-        color.rgb += l.color*diffuse_color.rgb*ctheta/(dist*dist);
+        float diffuse = spotlight_diffuse(lights.spot[i], f_position, normal);
+        color.rgb += diffuse_color.rgb*diffuse;
     }
 #endif
 #else

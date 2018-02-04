@@ -20,7 +20,9 @@ public:
     void set_target(texture* target, unsigned index = 0);
     void remove_target(unsigned index = 0);
 
-    void bind() override;
+    void update_targets();
+
+    void bind(GLenum target) override;
 
 private:
     std::vector<texture*> targets;

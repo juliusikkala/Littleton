@@ -46,7 +46,7 @@ gbuffer::gbuffer(context& ctx, glm::uvec2 size)
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         throw std::runtime_error("GBuffer is incomplete!");
 
-    if(current_fbo != -1) glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);
+    reinstate_current_fbo();
 }
 
 gbuffer::gbuffer(gbuffer&& other)

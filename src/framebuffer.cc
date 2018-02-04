@@ -33,7 +33,7 @@ framebuffer::framebuffer(
     }
     else depth_stencil = 0;
 
-    if(current_fbo != -1) glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);
+    reinstate_current_fbo();
 }
 
 framebuffer::framebuffer(framebuffer&& f)
@@ -85,18 +85,18 @@ void framebuffer::remove_target(unsigned index)
     }
 }
 
-void framebuffer::bind()
+void framebuffer::bind(GLenum target)
 {
-    render_target::bind();
+    render_target::bind(target);
     std::vector<unsigned> attachments;
     for(unsigned i = 0; i < targets.size(); ++i)
     {
-        texture* target = targets[i];
+        texture* t = targets[i];
         glFramebufferTexture2D(
-            GL_FRAMEBUFFER,
+            target,
             GL_COLOR_ATTACHMENT0+i,
-            target->get_target(),
-            target->get_texture(),
+            t->get_target(),
+            t->get_texture(),
             0
         );
         attachments.push_back(GL_COLOR_ATTACHMENT0+i);
@@ -104,5 +104,9 @@ void framebuffer::bind()
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         throw std::runtime_error("Attempt to bind an incomplete framebuffer!");
 
-    glDrawBuffers(attachments.size(), attachments.data());
+    if(target == GL_DRAW_FRAMEBUFFER || target == GL_FRAMEBUFFER)
+        glDrawBuffers(attachments.size(), attachments.data());
+
+    if(target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER)
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
 }

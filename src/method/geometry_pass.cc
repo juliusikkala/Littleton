@@ -25,6 +25,7 @@ void method::geometry_pass::execute()
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
 
     camera* cam = scene->get_camera();
     if(!cam) return;

@@ -32,6 +32,7 @@ src = [
   'src/method/forward_pass.cc',
   'src/method/geometry_pass.cc',
   'src/method/blit_framebuffer.cc',
+  'src/method/lighting_pass.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

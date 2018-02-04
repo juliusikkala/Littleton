@@ -77,6 +77,24 @@ glm::quat get_matrix_orientation(const glm::mat4& transform)
     ));
 }
 
+void decompose_perspective(
+    const glm::mat4& perspective,
+    float& near,
+    float& far,
+    float& fov,
+    float& aspect
+){
+    float a = perspective[2][2];
+    float b = perspective[3][2];
+    float c = perspective[0][0];
+    float d = perspective[1][1];
+
+    near = b/(1-a);
+    far = -b/(1+a);
+    fov = 2*atan(1/d);
+    aspect = d/c;
+}
+
 glm::quat rotate_towards(
     glm::quat orig,
     glm::quat dest,

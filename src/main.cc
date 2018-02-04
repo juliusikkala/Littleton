@@ -8,6 +8,7 @@
 #include "method/fullscreen_effect.hh"
 #include "method/forward_pass.hh"
 #include "method/geometry_pass.hh"
+#include "method/lighting_pass.hh"
 #include "method/blit_framebuffer.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
@@ -19,8 +20,8 @@ int main()
 { 
     window w(1280, 720, "dflowers", true, true);
     w.set_framerate_limit(120);
-    std::cout << w.get_vendor_name() << std::endl
-              << w.get_renderer() << std::endl;
+    std::cout << "GPU Vendor: " << w.get_vendor_name() << std::endl
+              << "Renderer:   " << w.get_renderer() << std::endl;
 
     w.grab_mouse();
     resource_store resources(w);
@@ -34,14 +35,6 @@ int main()
         )
     );
 
-    shader* texture_shader = resources.add("texture",
-        shader::create_from_file(
-            w,
-            "data/shaders/fullscreen.vert",
-            "data/shaders/texture.frag"
-        )
-    );
-
     shader_cache* geometry_shader = resources.add("drender",
         shader_cache::create_from_file(
             w,
@@ -50,19 +43,20 @@ int main()
         )
     );
 
-    shader_cache* forward_shader = resources.add("frender",
+    shader_cache* lighting_shader = resources.add("lrender",
         shader_cache::create_from_file(
             w,
-            "data/shaders/generic.vert",
-            "data/shaders/forward.frag"
+            "data/shaders/lighting.vert",
+            "data/shaders/lighting.frag"
         )
     );
+
     object* suzanne = resources.get<object>("Suzanne");
     object* sphere = resources.get<object>("Sphere");
-    object* cube = resources.get<object>("Cube");
 
     camera cam;
     cam.perspective(90, w.get_aspect(), 0.1, 20);
+
     cam.translate(glm::vec3(0.0,2.0,1.0));
     cam.lookat(suzanne);
     render_scene deferred_scene(&cam);
@@ -76,29 +70,48 @@ int main()
         if(o->get_model()) deferred_scene.add_object(o);
     }
 
-    render_scene forward_scene(&cam);
-
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-    forward_scene.add_light(&l1);
-    forward_scene.add_light(&l2);
-    forward_scene.add_light(&parrasvalo);
-    forward_scene.add_object(cube);
-    deferred_scene.remove_object(cube);
+    deferred_scene.add_light(&l1);
+    deferred_scene.add_light(&l2);
+    deferred_scene.add_light(&parrasvalo);
 
+    glm::uvec2 render_resolution = w.get_size();
 
-    gbuffer buf(w, w.get_size());
-    method::clear clear(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
+    texture color_tex(
+        w,
+        render_resolution.x,
+        render_resolution.y,
+        GL_RGBA,
+        GL_RGBA8,
+        GL_UNSIGNED_BYTE
+    );
+
+    framebuffer screen(
+        w,
+        render_resolution,
+        {&color_tex},
+        0
+    );
+
+    gbuffer buf(w, render_resolution);
+    method::clear clear_buf(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
+    method::clear clear_screen(screen, glm::vec4(0.0, 0.0, 0.0, 0.0));
     method::fullscreen_effect sky(buf, effect_shader);
     method::geometry_pass gp(buf, geometry_shader, &deferred_scene);
-    method::blit_framebuffer buf_to_window(w, buf);
-    method::forward_pass fp(w, forward_shader, &forward_scene);
 
-    pipeline p({&clear, &sky, &gp, &buf_to_window, &fp});
+    method::lighting_pass lp(screen, buf, lighting_shader, &deferred_scene);
+    method::blit_framebuffer screen_to_window(
+        w,
+        screen,
+        method::blit_framebuffer::COLOR_ONLY
+    );
+
+    pipeline p({&clear_buf, &clear_screen, &gp, &lp, &screen_to_window});
 
     bool running = true;
     float time = 0;

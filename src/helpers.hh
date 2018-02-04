@@ -43,6 +43,14 @@ glm::vec3 get_matrix_translation(const glm::mat4& transform);
 glm::vec3 get_matrix_scaling(const glm::mat4& transform);
 glm::quat get_matrix_orientation(const glm::mat4& transform);
 
+void decompose_perspective(
+    const glm::mat4& perspective,
+    float& near,
+    float& far,
+    float& fov,
+    float& aspect
+);
+
 glm::quat rotate_towards(
     glm::quat orig,
     glm::quat dest,

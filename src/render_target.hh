@@ -13,21 +13,25 @@ public:
     );
     virtual ~render_target();
 
-    virtual void bind();
+    virtual void bind(GLenum target = GL_FRAMEBUFFER);
     virtual void unbind();
-    bool is_bound() const;
+    bool is_bound(GLenum target = GL_FRAMEBUFFER) const;
 
     glm::uvec2 get_size() const;
     float get_aspect() const;
 
     GLuint get_fbo() const;
-    static GLint get_current_fbo();
+
+    static GLint get_current_read_fbo();
+    static GLint get_current_write_fbo();
+    static void reinstate_current_fbo();
 
 protected:
     GLuint fbo;
     glm::uvec2 size;
 
-    static GLint current_fbo;
+    static GLint current_read_fbo;
+    static GLint current_write_fbo;
 };
 
 #endif
