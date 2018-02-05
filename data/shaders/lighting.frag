@@ -18,6 +18,9 @@ void main(void)
 {
     vec3 diffuse_color = get_albedo();
     vec3 normal = decode_normal();
+    float roughness, metallic, ior;
+    decode_material(roughness, metallic, ior);
+
 #if !defined(DIRECTIONAL_LIGHT)
     vec3 pos = decode_position();
 #endif
@@ -30,6 +33,5 @@ void main(void)
     vec3 diffuse = directional_light_diffuse(light, normal);
 #endif
 
-    out_color =
-        vec4(diffuse_color.rgb*diffuse, 1.0f);
+    out_color = vec4(diffuse_color.rgb*diffuse, 1.0f);
 }

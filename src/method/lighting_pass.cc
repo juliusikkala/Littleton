@@ -48,6 +48,7 @@ void method::lighting_pass::execute()
     buf->get_depth_stencil().bind(0);
     buf->get_color_emission().bind(1);
     buf->get_normal().bind(2);
+    buf->get_material().bind(3);
 
     float near, far, fov, aspect;
     decompose_perspective(p, near, far, fov, aspect);
@@ -62,9 +63,10 @@ void method::lighting_pass::execute()
     shader* pls = lighting_shader->get(point_light_definitions);
     pls->bind();
 
-    pls->set("depth_stencil", 0);
-    pls->set("color_emission", 1);
-    pls->set("normal", 2);
+    pls->set("in_depth_stencil", 0);
+    pls->set("in_color_emission", 1);
+    pls->set("in_normal", 2);
+    pls->set("in_material", 3);
     pls->set("perspective_data", perspective_data);
 
     for(point_light* l: scene->get_point_lights())
@@ -82,9 +84,10 @@ void method::lighting_pass::execute()
     shader* sls = lighting_shader->get(spotlight_definitions);
     sls->bind();
 
-    sls->set("depth_stencil", 0);
-    sls->set("color_emission", 1);
-    sls->set("normal", 2);
+    sls->set("in_depth_stencil", 0);
+    sls->set("in_color_emission", 1);
+    sls->set("in_normal", 2);
+    sls->set("in_material", 3);
     sls->set("perspective_data", perspective_data);
 
     for(spotlight* l: scene->get_spotlights())
@@ -116,9 +119,10 @@ void method::lighting_pass::execute()
     shader* dls = lighting_shader->get(directional_light_definitions);
     dls->bind();
 
-    dls->set("depth_stencil", 0);
-    dls->set("color_emission", 1);
-    dls->set("normal", 2);
+    dls->set("in_depth_stencil", 0);
+    dls->set("in_color_emission", 1);
+    dls->set("in_normal", 2);
+    dls->set("in_material", 3);
 
     for(directional_light* l: scene->get_directional_lights())
     {

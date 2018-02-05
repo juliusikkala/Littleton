@@ -72,7 +72,7 @@ static std::string remove_comments(const std::string& source)
         else
         {
             size_t line_end = processed.find("\n", line+2);
-            processed.erase(line, line_end-line+1);
+            processed.erase(line, line_end-line);
         }
     }
     return processed;

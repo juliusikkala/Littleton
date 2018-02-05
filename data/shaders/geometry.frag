@@ -10,10 +10,12 @@ void main(void)
     vec4 color = get_material_color();
 
     if(color.a < 0.5f) discard;
-    color_emission = color;
+    out_color_emission = color;
 
 #ifdef VERTEX_NORMAL
-    normal = encode_normal(f_normal);
+    out_normal = encode_normal(f_normal);
 #endif
+
+    out_material = encode_material();
 }
 

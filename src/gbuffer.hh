@@ -14,13 +14,14 @@ public:
     texture& get_depth_stencil();
     texture& get_color_emission();
     texture& get_normal();
+    texture& get_material();
 
 private:
     texture depth_stencil;
     texture color_emission;
     texture normal;
+    texture material;//roughness, metallic, ior, subsurface depth
     //texture subsurface;
-    //texture material;//roughness, metallic, ior, depth
 };
 
 #endif
