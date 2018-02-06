@@ -8,6 +8,7 @@
 static GLuint load_texture(
     context& ctx,
     const std::string& path,
+    bool srgb,
     GLenum target,
     GLint& internal_format,
     GLenum& external_format,
@@ -55,11 +56,13 @@ static GLuint load_texture(
         external_format = GL_RG;
         break;
     case 3:
-        internal_format = hdr ? GL_RGB16 : GL_RGB8;
+        if(srgb) internal_format = GL_SRGB8;
+        else internal_format = hdr ? GL_RGB16 : GL_RGB8;
         external_format = GL_RGB;
         break;
     case 4:
-        internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
+        if(srgb) internal_format = GL_SRGB8_ALPHA8;
+        else internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
         external_format = GL_RGBA;
         break;
     }
@@ -104,10 +107,14 @@ static GLuint load_texture(
 texture::texture(context& ctx)
 : glresource(ctx), tex(0), target(GL_TEXTURE_2D) {}
 
-texture::texture(context& ctx, const std::string& path, GLenum target)
-: glresource(ctx), tex(0), target(target)
+texture::texture(
+    context& ctx,
+    const std::string& path,
+    bool srgb,
+    GLenum target
+): glresource(ctx), tex(0), target(target)
 {
-    basic_load(path, target);
+    basic_load(path, srgb, target);
 }
 
 texture::texture(
@@ -189,28 +196,38 @@ void texture::bind(unsigned index)
 class file_texture: public texture
 {
 public:
-    file_texture(context& ctx, const std::string& path, GLenum target)
-    : texture(ctx), path(path)
+    file_texture(
+        context& ctx,
+        const std::string& path,
+        bool srgb,
+        GLenum target
+    ): texture(ctx), srgb(srgb), path(path)
     {
         this->target = target;
     }
 
     void load() const override
     {
-        basic_load(path, target);
+        basic_load(path, srgb, target);
     }
 
     void unload() const override
     {
         basic_unload();
     }
+
 private:
+    bool srgb;
     std::string path;
 };
 
-texture* texture::create(context& ctx, const std::string& path, GLenum target)
-{
-    return new file_texture(ctx, path, target);
+texture* texture::create(
+    context& ctx,
+    const std::string& path,
+    bool srgb,
+    GLenum target
+){
+    return new file_texture(ctx, path, srgb, target);
 }
 
 class empty_texture: public texture
@@ -259,13 +276,18 @@ texture* texture::create(
     );
 }
 
-void texture::basic_load(const std::string& path, GLenum target) const
+void texture::basic_load(
+    const std::string& path,
+    bool srgb,
+    GLenum target
+) const
 {
     if(tex) return;
 
     tex = load_texture(
         get_context(),
         path,
+        srgb,
         target,
         internal_format,
         external_format,

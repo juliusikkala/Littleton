@@ -11,6 +11,7 @@ public:
     texture(
         context& ctx,
         const std::string& path,
+        bool srgb = false,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -37,6 +38,7 @@ public:
     static texture* create(
         context& ctx,
         const std::string& path,
+        bool srgb = false,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -54,7 +56,7 @@ public:
 protected:
     texture(context& ctx);
 
-    void basic_load(const std::string& path, GLenum target) const;
+    void basic_load(const std::string& path, bool srgb, GLenum target) const;
     void basic_load(
         unsigned w,
         unsigned h,

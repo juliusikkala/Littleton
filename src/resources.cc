@@ -155,7 +155,8 @@ void resource_store::add_dfo(
                 *ctx,
                 data_prefix.empty() ? 
                     tex->path :
-                    data_prefix + "/" + tex->path
+                    data_prefix + "/" + tex->path,
+                tex->type == DFO_TEX_SRGB_COLOR
             )
         );
     }
