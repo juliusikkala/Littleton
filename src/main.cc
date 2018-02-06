@@ -13,6 +13,7 @@
 #include "method/visualize_gbuffer.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
+#include "doublebuffer.hh"
 #include "shader_store.hh"
 #include <iostream>
 #include <algorithm>
@@ -62,40 +63,51 @@ int main()
 
     glm::uvec2 render_resolution = w.get_size();
 
-    texture color_tex(
+    doublebuffer screen(
         w,
-        render_resolution.x,
-        render_resolution.y,
+        render_resolution,
         GL_RGBA,
         GL_RGBA8,
         GL_UNSIGNED_BYTE
     );
 
-    framebuffer screen(
-        w,
-        render_resolution,
-        {&color_tex},
-        0
-    );
-
     gbuffer buf(w, render_resolution);
     method::clear clear_buf(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::clear clear_screen(screen, glm::vec4(0.0, 0.0, 0.0, 0.0));
+    method::clear clear_screen(screen.input(), glm::vec4(0.0, 0.0, 0.0, 0.0));
     method::geometry_pass gp(buf, shaders, &deferred_scene);
 
-    method::visualize_gbuffer visualizer(screen, buf, shaders, &deferred_scene);
+    method::visualize_gbuffer visualizer(
+        screen.input(),
+        buf,
+        shaders,
+        &deferred_scene
+    );
 
-    method::lighting_pass lp(screen, buf, shaders, &deferred_scene);
+    method::lighting_pass lp(screen.input(), buf, shaders, &deferred_scene);
     method::blit_framebuffer screen_to_window(
         w,
-        screen,
+        screen.input(),
         method::blit_framebuffer::COLOR_ONLY
     );
 
-    //pipeline p({&clear_buf, &clear_screen, &gp, &lp, &screen_to_window});
-    pipeline p({&clear_buf, &clear_screen, &gp, &visualizer, &screen_to_window});
+    pipeline render({
+        &clear_buf,
+        &clear_screen,
+        &gp,
+        &lp,
+        &screen_to_window
+    });
+
+    pipeline visualize({
+        &clear_buf,
+        &clear_screen,
+        &gp,
+        &visualizer,
+        &screen_to_window
+    });
 
     bool running = true;
+    bool show_visualizer = false;
     float time = 0;
     float pitch = 0, yaw = 0;
     float speed = 2;
@@ -116,6 +128,7 @@ int main()
                 if(e.key.keysym.sym == SDLK_ESCAPE) running = false;
                 if(e.key.keysym.sym == SDLK_PLUS) speed *= 1.1;
                 if(e.key.keysym.sym == SDLK_MINUS) speed /= 1.1;
+                if(e.key.keysym.sym == SDLK_v) show_visualizer = !show_visualizer;
 
                 break;
             case SDL_MOUSEMOTION:
@@ -146,7 +159,9 @@ int main()
         parrasvalo.set_cutoff_angle(sin(time)*45+45);
         sphere->lookat(&cam);
 
-        p.execute();
+        if(!show_visualizer) render.execute();
+        else visualize.execute();
+
         w.present();
         time += w.get_delta();
     }

@@ -133,6 +133,7 @@ texture::texture(texture&& other)
     external_format = other.external_format;
     target = other.target;
     type = other.type;
+    size = other.size;
 
     other.tex = 0;
 }
