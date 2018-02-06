@@ -36,7 +36,6 @@ void method::lighting_pass::execute()
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
-    glm::mat4 vp = p * v;
 
     shader::definition_map point_light_definitions({{"POINT_LIGHT", ""}});
     shader::definition_map directional_light_definitions(

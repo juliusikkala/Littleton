@@ -10,6 +10,7 @@
 #include "method/geometry_pass.hh"
 #include "method/lighting_pass.hh"
 #include "method/blit_framebuffer.hh"
+#include "method/visualize_gbuffer.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "shader_store.hh"
@@ -82,6 +83,8 @@ int main()
     method::clear clear_screen(screen, glm::vec4(0.0, 0.0, 0.0, 0.0));
     method::geometry_pass gp(buf, shaders, &deferred_scene);
 
+    method::visualize_gbuffer visualizer(screen, buf, shaders, &deferred_scene);
+
     method::lighting_pass lp(screen, buf, shaders, &deferred_scene);
     method::blit_framebuffer screen_to_window(
         w,
@@ -89,7 +92,8 @@ int main()
         method::blit_framebuffer::COLOR_ONLY
     );
 
-    pipeline p({&clear_buf, &clear_screen, &gp, &lp, &screen_to_window});
+    //pipeline p({&clear_buf, &clear_screen, &gp, &lp, &screen_to_window});
+    pipeline p({&clear_buf, &clear_screen, &gp, &visualizer, &screen_to_window});
 
     bool running = true;
     float time = 0;

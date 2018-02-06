@@ -8,6 +8,11 @@ uniform vec4 perspective_data;
 
 in vec2 uv;
 
+float get_depth()
+{
+    return texture(in_depth_stencil, uv).x;
+}
+
 vec3 decode_position()
 {
     float depth = texture(in_depth_stencil, uv).x * 2.0f - 1.0f;
