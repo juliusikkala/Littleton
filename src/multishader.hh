@@ -12,24 +12,21 @@ class multishader: public glresource
 public:
     multishader(
         context& ctx,
-        const std::string& vert_src,
-        const std::string& frag_src,
+        const shader::source& source,
+        const std::vector<std::string>& include_path = {}
+    );
+    multishader(
+        context& ctx,
+        const shader::path& path,
         const std::vector<std::string>& include_path = {}
     );
     multishader(multishader&& other);
-
-    static multishader* create_from_file(
-        context& ctx,
-        const std::string& vert_path,
-        const std::string& frag_path,
-        const std::vector<std::string>& include_path = {}
-    );
 
     void clear();
     shader* get(const shader::definition_map& definitions = {}) const;
 
 private:
-    std::string vert_src, frag_src;
+    shader::source source;
     std::vector<std::string> include_path;
     mutable std::unordered_map<
         shader::definition_map,

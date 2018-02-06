@@ -149,24 +149,38 @@ static std::string process_source(
     return processed;
 }
 
+shader::source::source(const std::string& vert, const std::string& frag)
+: vert(vert), frag(frag) {}
+
+shader::source::source(const path& p)
+: vert(read_text_file(p.vert)), frag(read_text_file(p.frag))
+{
+}
+
 GLuint shader::current_program = 0;
 
 shader::shader(context& ctx): glresource(ctx), program(0) {}
 
 shader::shader(
     context& ctx,
-    const std::string& vert_src,
-    const std::string& frag_src,
+    const source& s,
     const definition_map& definitions,
     const std::vector<std::string>& include_path
 ): glresource(ctx), program(0)
 {
     std::string definition_src = generate_definition_src(definitions);
     basic_load(
-        process_source(vert_src, definition_src, include_path),
-        process_source(frag_src, definition_src, include_path)
+        process_source(s.vert, definition_src, include_path),
+        process_source(s.frag, definition_src, include_path)
     );
 }
+
+shader::shader(
+    context& ctx,
+    const path& p,
+    const definition_map& definitions,
+    const std::vector<std::string>& include_path
+): shader(ctx, source(p), definitions, include_path) {}
 
 shader::shader(shader&& other)
 : glresource(other.get_context())
@@ -211,13 +225,12 @@ class src_shader: public shader
 public:
     src_shader(
         context& ctx,
-        const std::string& vert_src,
-        const std::string& frag_src,
+        const source& s,
         const std::string& definition_src,
         const std::vector<std::string>& include_path
     ): shader(ctx),
-       vert_src(process_source(vert_src, definition_src, include_path)),
-       frag_src(process_source(frag_src, definition_src, include_path))
+       vert_src(process_source(s.vert, definition_src, include_path)),
+       frag_src(process_source(s.frag, definition_src, include_path))
     { }
 
     void load() const override
@@ -237,32 +250,24 @@ private:
 
 shader* shader::create(
     context& ctx,
-    const std::string& vert_src,
-    const std::string& frag_src,
+    const source& s,
     const definition_map& definitions,
     const std::vector<std::string>& include_path
 ){
     std::string definition_src = generate_definition_src(definitions);
-    return new src_shader(
-        ctx,
-        vert_src,
-        frag_src,
-        definition_src,
-        include_path
-    );
+    return new src_shader(ctx, s, definition_src, include_path);
 }
 
-shader* shader::create_from_file(
+shader* shader::create(
     context& ctx,
-    const std::string& vert_path,
-    const std::string& frag_path,
+    const path& p,
     const definition_map& definitions,
     const std::vector<std::string>& include_path
 ){
     std::string definition_src = generate_definition_src(definitions);
     std::vector<std::string> extended_include_path = {
-        boost::filesystem::path(vert_path).parent_path().string(),
-        boost::filesystem::path(frag_path).parent_path().string()
+        boost::filesystem::path(p.vert).parent_path().string(),
+        boost::filesystem::path(p.frag).parent_path().string()
     };
     extended_include_path.insert(
         extended_include_path.end(),
@@ -271,8 +276,7 @@ shader* shader::create_from_file(
     );
     return new src_shader(
         ctx,
-        read_text_file(vert_path),
-        read_text_file(frag_path),
+        source(p),
         definition_src,
         extended_include_path
     );

@@ -28,26 +28,32 @@ int main()
     resources.add_dfo("data/test_scene.dfo", "data");
 
     shader* effect_shader = resources.add("cat",
-        shader::create_from_file(
+        shader::create(
             w,
-            "data/shaders/fullscreen.vert",
-            "data/shaders/test.frag"
+            shader::path{
+                "data/shaders/fullscreen.vert",
+                "data/shaders/test.frag"
+            }
         )
     );
 
     multishader* geometry_shader = resources.add("drender",
-        multishader::create_from_file(
+        new multishader(
             w,
-            "data/shaders/generic.vert",
-            "data/shaders/geometry.frag"
+            shader::path{
+                "data/shaders/generic.vert",
+                "data/shaders/geometry.frag"
+            }
         )
     );
 
     multishader* lighting_shader = resources.add("lrender",
-        multishader::create_from_file(
+        new multishader(
             w,
-            "data/shaders/lighting.vert",
-            "data/shaders/lighting.frag"
+            shader::path{
+                "data/shaders/lighting.vert",
+                "data/shaders/lighting.frag"
+            }
         )
     );
 

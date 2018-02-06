@@ -5,6 +5,7 @@
 #include "uniform.hh"
 #include <map>
 #include <vector>
+#include <initializer_list>
 
 class shader;
 
@@ -12,11 +13,33 @@ class shader: public resource, public glresource
 {
 public:
     using definition_map = std::map<std::string, std::string>;
+
+    struct path
+    {
+        std::string vert;
+        std::string frag;
+    };
+
+    struct source
+    {
+        source() = default;
+        source(const std::string& vert, const std::string& frag);
+        source(const path& p);
+
+        std::string vert;
+        std::string frag;
+    };
+
     shader(context& ctx);
     shader(
         context& ctx,
-        const std::string& vert_src,
-        const std::string& frag_src,
+        const source& s,
+        const definition_map& definitions = {},
+        const std::vector<std::string>& include_path = {}
+    );
+    shader(
+        context& ctx,
+        const path& s,
         const definition_map& definitions = {},
         const std::vector<std::string>& include_path = {}
     );
@@ -27,16 +50,14 @@ public:
 
     static shader* create(
         context& ctx,
-        const std::string& vert_src,
-        const std::string& frag_src,
+        const source& s,
         const definition_map& definitions = {},
         const std::vector<std::string>& include_path = {}
     );
 
-    static shader* create_from_file(
+    static shader* create(
         context& ctx,
-        const std::string& vert_path,
-        const std::string& frag_path,
+        const path& p,
         const definition_map& definitions = {},
         const std::vector<std::string>& include_path = {}
     );

@@ -30,6 +30,11 @@ private:
     context* ctx;
 };
 
+// TODO: Break this thing up, this 'everything-container' is kinda smelly
+// Maybe type-specific stores like object_store, shader_store and so on,
+// add_dfo would become a separate function taking the necessary stores as
+// dependencies. resource_store could be a 'master' store, either through
+// deriving every other store type or containing them.
 class resource_store
 {
 private:
