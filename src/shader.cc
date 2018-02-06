@@ -4,6 +4,7 @@
 #include <sstream>
 #include <set>
 #include <regex>
+#include <boost/filesystem.hpp>
 
 static void throw_shader_error(
     GLuint shader,
@@ -118,7 +119,10 @@ static std::string process_source(
         {
             try
             {
-                include_src = read_text_file(path + include_file);
+                boost::filesystem::path dir(path);
+                boost::filesystem::path file(include_file);
+
+                include_src = read_text_file((dir/file).string());
             }
             catch(...)
             {
@@ -257,8 +261,8 @@ shader* shader::create_from_file(
 ){
     std::string definition_src = generate_definition_src(definitions);
     std::vector<std::string> extended_include_path = {
-        get_file_folder(vert_path),
-        get_file_folder(frag_path)
+        boost::filesystem::path(vert_path).parent_path().string(),
+        boost::filesystem::path(frag_path).parent_path().string()
     };
     extended_include_path.insert(
         extended_include_path.end(),

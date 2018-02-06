@@ -1,4 +1,5 @@
 #include "shader_cache.hh"
+#include <boost/filesystem.hpp>
 
 shader_cache::shader_cache(
     context& ctx,
@@ -46,8 +47,8 @@ shader_cache* shader_cache::create_from_file(
     const std::vector<std::string>& include_path
 ){
     std::vector<std::string> extended_include_path = {
-        get_file_folder(vert_path),
-        get_file_folder(frag_path)
+        boost::filesystem::path(vert_path).parent_path().string(),
+        boost::filesystem::path(frag_path).parent_path().string()
     };
     extended_include_path.insert(
         extended_include_path.end(),

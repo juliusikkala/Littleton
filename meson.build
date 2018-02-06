@@ -44,6 +44,7 @@ sdl2_dep = dependency('sdl2')
 glew_dep = dependency('glew')
 glm_dep = dependency('glm', version: '>=0.9.8')
 thread_dep = dependency('threads')
+boost_dep = dependency('boost', modules : ['filesystem', 'system'])
 srcdir = include_directories('src')
 libdir = include_directories('lib')
 
@@ -56,7 +57,8 @@ executable(
     sdl2_dep,
     glew_dep,
     glm_dep,
-    thread_dep
+    thread_dep,
+    boost_dep
   ],
   include_directories: [srcdir, libdir],
   install: true,

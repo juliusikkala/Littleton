@@ -5,6 +5,7 @@
 #include <map>
 #include <unordered_map>
 #include <memory>
+#include <boost/functional/hash.hpp>
 
 class shader_cache: public glresource
 {
@@ -33,12 +34,7 @@ private:
     mutable std::unordered_map<
         shader::definition_map,
         std::unique_ptr<shader>,
-        map_hasher<
-            shader::definition_map::key_type,
-            shader::definition_map::mapped_type,
-            shader::definition_map::key_compare,
-            shader::definition_map::allocator_type
-        >
+        boost::hash<shader::definition_map>
     > cache;
 };
 
