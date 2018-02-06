@@ -20,7 +20,7 @@ src = [
   'src/camera.cc',
   'src/transformable.cc',
   'src/helpers.cc',
-  'src/shader_cache.cc',
+  'src/multishader.cc',
   'src/uniform.cc',
   'src/light.cc',
   'src/render_target.cc',

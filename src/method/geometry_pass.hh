@@ -2,7 +2,7 @@
 #define METHOD_GEOMETRY_PASS_HH
 #include "pipeline.hh"
 #include "gbuffer.hh"
-#include "shader_cache.hh"
+#include "multishader.hh"
 #include "scene.hh"
 
 namespace method
@@ -12,7 +12,7 @@ namespace method
     public:
         geometry_pass(
             gbuffer& buf,
-            shader_cache* geometry_shader,
+            multishader* geometry_shader,
             render_scene* scene
         );
 
@@ -22,7 +22,7 @@ namespace method
         void execute() override;
 
     private:
-        shader_cache* geometry_shader;
+        multishader* geometry_shader;
         render_scene* scene;
     };
 };

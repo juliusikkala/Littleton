@@ -4,7 +4,7 @@
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,
-    shader_cache* geometry_shader,
+    multishader* geometry_shader,
     render_scene* scene
 ): pipeline_method(buf), geometry_shader(geometry_shader), scene(scene) {}
 

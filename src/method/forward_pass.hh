@@ -1,7 +1,7 @@
 #ifndef METHOD_FORWARD_PASS_HH
 #define METHOD_FORWARD_PASS_HH
 #include "pipeline.hh"
-#include "shader_cache.hh"
+#include "multishader.hh"
 #include "scene.hh"
 
 namespace method
@@ -11,13 +11,13 @@ namespace method
     public:
         forward_pass(
             render_target& target,
-            shader_cache* forward_shader = nullptr,
+            multishader* forward_shader = nullptr,
             render_scene* scene = nullptr
         );
         ~forward_pass();
 
-        void set_shader_cache(shader_cache* s);
-        shader_cache* get_shader_cache() const;
+        void set_shader(multishader* s);
+        multishader* get_shader() const;
 
         void set_scene(render_scene* s);
         render_scene* get_scene() const;
@@ -25,7 +25,7 @@ namespace method
         void execute() override;
 
     private:
-        shader_cache* forward_shader;
+        multishader* forward_shader;
         render_scene* scene;
     };
 }

@@ -2,7 +2,7 @@
 #define METHOD_LIGHTING_PASS_HH
 #include "pipeline.hh"
 #include "gbuffer.hh"
-#include "shader_cache.hh"
+#include "multishader.hh"
 #include "vertex_buffer.hh"
 #include "scene.hh"
 
@@ -14,7 +14,7 @@ namespace method
         lighting_pass(
             render_target& target,
             gbuffer& buf,
-            shader_cache* lighting_shader,
+            multishader* lighting_shader,
             render_scene* scene
         );
 
@@ -26,7 +26,7 @@ namespace method
     private:
         gbuffer* buf;
 
-        shader_cache* lighting_shader;
+        multishader* lighting_shader;
         render_scene* scene;
 
         vertex_buffer fullscreen_quad;

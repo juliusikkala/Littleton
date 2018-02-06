@@ -3,7 +3,7 @@
 method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
-    shader_cache* lighting_shader,
+    multishader* lighting_shader,
     render_scene* scene
 ): pipeline_method(target), buf(&buf), lighting_shader(lighting_shader),
    scene(scene),

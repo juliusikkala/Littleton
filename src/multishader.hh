@@ -1,5 +1,5 @@
-#ifndef SHADER_CACHE_HH
-#define SHADER_CACHE_HH
+#ifndef MULTISHADER_HH
+#define MULTISHADER_HH
 #include "shader.hh"
 #include "helpers.hh"
 #include <map>
@@ -7,18 +7,18 @@
 #include <memory>
 #include <boost/functional/hash.hpp>
 
-class shader_cache: public glresource
+class multishader: public glresource
 {
 public:
-    shader_cache(
+    multishader(
         context& ctx,
         const std::string& vert_src,
         const std::string& frag_src,
         const std::vector<std::string>& include_path = {}
     );
-    shader_cache(shader_cache&& other);
+    multishader(multishader&& other);
 
-    static shader_cache* create_from_file(
+    static multishader* create_from_file(
         context& ctx,
         const std::string& vert_path,
         const std::string& frag_path,

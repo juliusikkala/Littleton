@@ -35,16 +35,16 @@ int main()
         )
     );
 
-    shader_cache* geometry_shader = resources.add("drender",
-        shader_cache::create_from_file(
+    multishader* geometry_shader = resources.add("drender",
+        multishader::create_from_file(
             w,
             "data/shaders/generic.vert",
             "data/shaders/geometry.frag"
         )
     );
 
-    shader_cache* lighting_shader = resources.add("lrender",
-        shader_cache::create_from_file(
+    multishader* lighting_shader = resources.add("lrender",
+        multishader::create_from_file(
             w,
             "data/shaders/lighting.vert",
             "data/shaders/lighting.frag"

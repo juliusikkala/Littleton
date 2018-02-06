@@ -1,7 +1,7 @@
-#include "shader_cache.hh"
+#include "multishader.hh"
 #include <boost/filesystem.hpp>
 
-shader_cache::shader_cache(
+multishader::multishader(
     context& ctx,
     const std::string& vert_src,
     const std::string& frag_src,
@@ -10,19 +10,19 @@ shader_cache::shader_cache(
    include_path(include_path)
 {}
 
-shader_cache::shader_cache(shader_cache&& other)
+multishader::multishader(multishader&& other)
 : glresource(other.get_context()),
   vert_src(std::move(other.vert_src)),
   frag_src(std::move(other.frag_src)),
   include_path(std::move(other.include_path))
 {}
 
-void shader_cache::clear()
+void multishader::clear()
 {
     cache.clear();
 }
 
-shader* shader_cache::get(const shader::definition_map& definitions) const
+shader* multishader::get(const shader::definition_map& definitions) const
 {
     auto it = cache.find(definitions);
     if(it == cache.end())
@@ -40,7 +40,7 @@ shader* shader_cache::get(const shader::definition_map& definitions) const
     return it->second.get();
 }
 
-shader_cache* shader_cache::create_from_file(
+multishader* multishader::create_from_file(
     context& ctx,
     const std::string& vert_path,
     const std::string& frag_path,
@@ -55,7 +55,7 @@ shader_cache* shader_cache::create_from_file(
         include_path.begin(),
         include_path.end()
     );
-    return new shader_cache(
+    return new multishader(
         ctx,
         read_text_file(vert_path),
         read_text_file(frag_path),
