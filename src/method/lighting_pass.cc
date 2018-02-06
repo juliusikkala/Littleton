@@ -3,9 +3,10 @@
 method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
-    multishader* lighting_shader,
+    shader_store& store,
     render_scene* scene
-): pipeline_method(target), buf(&buf), lighting_shader(lighting_shader),
+): pipeline_method(target), buf(&buf),
+   lighting_shader(store.get(shader::path{"lighting.vert", "lighting.frag"})),
    scene(scene),
    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
 {}

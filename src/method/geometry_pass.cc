@@ -4,9 +4,11 @@
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,
-    multishader* geometry_shader,
+    shader_store& store,
     render_scene* scene
-): pipeline_method(buf), geometry_shader(geometry_shader), scene(scene) {}
+): pipeline_method(buf),
+   geometry_shader(store.get(shader::path{"generic.vert", "geometry.frag"})),
+   scene(scene) {}
 
 void method::geometry_pass::set_scene(render_scene* scene)
 {

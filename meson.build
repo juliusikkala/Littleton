@@ -27,6 +27,7 @@ src = [
   'src/framebuffer.cc',
   'src/context.cc',
   'src/gbuffer.cc',
+  'src/shader_store.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',

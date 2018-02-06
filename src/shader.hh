@@ -18,6 +18,8 @@ public:
     {
         std::string vert;
         std::string frag;
+
+        bool operator==(const path& other) const;
     };
 
     struct source
@@ -117,6 +119,11 @@ protected:
     mutable std::unordered_map<std::string, uniform_data> uniforms;
     mutable std::unordered_map<std::string, block_data> blocks;
 };
+
+namespace boost 
+{
+    size_t hash_value(const shader::path& p);
+}
 
 #include "shader.tcc"
 

@@ -2,7 +2,7 @@
 #define METHOD_GEOMETRY_PASS_HH
 #include "pipeline.hh"
 #include "gbuffer.hh"
-#include "multishader.hh"
+#include "shader_store.hh"
 #include "scene.hh"
 
 namespace method
@@ -12,7 +12,7 @@ namespace method
     public:
         geometry_pass(
             gbuffer& buf,
-            multishader* geometry_shader,
+            shader_store& store,
             render_scene* scene
         );
 

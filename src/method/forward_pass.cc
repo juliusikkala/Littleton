@@ -4,9 +4,11 @@
 
 method::forward_pass::forward_pass(
     render_target& target,
-    multishader* forward_shader,
+    shader_store& store,
     render_scene* scene
-): pipeline_method(target), forward_shader(forward_shader), scene(scene) {}
+): pipeline_method(target),
+   forward_shader(store.get(shader::path{"generic.vert", "forward.frag"})),
+   scene(scene) {}
 
 method::forward_pass::~forward_pass() {}
 

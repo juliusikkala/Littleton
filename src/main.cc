@@ -12,6 +12,7 @@
 #include "method/blit_framebuffer.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
+#include "shader_store.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -27,35 +28,7 @@ int main()
     resource_store resources(w);
     resources.add_dfo("data/test_scene.dfo", "data");
 
-    shader* effect_shader = resources.add("cat",
-        shader::create(
-            w,
-            shader::path{
-                "data/shaders/fullscreen.vert",
-                "data/shaders/test.frag"
-            }
-        )
-    );
-
-    multishader* geometry_shader = resources.add("drender",
-        new multishader(
-            w,
-            shader::path{
-                "data/shaders/generic.vert",
-                "data/shaders/geometry.frag"
-            }
-        )
-    );
-
-    multishader* lighting_shader = resources.add("lrender",
-        new multishader(
-            w,
-            shader::path{
-                "data/shaders/lighting.vert",
-                "data/shaders/lighting.frag"
-            }
-        )
-    );
+    shader_store shaders(w, {"data/shaders/"});
 
     object* suzanne = resources.get<object>("Suzanne");
     object* sphere = resources.get<object>("Sphere");
@@ -107,10 +80,9 @@ int main()
     gbuffer buf(w, render_resolution);
     method::clear clear_buf(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
     method::clear clear_screen(screen, glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::fullscreen_effect sky(buf, effect_shader);
-    method::geometry_pass gp(buf, geometry_shader, &deferred_scene);
+    method::geometry_pass gp(buf, shaders, &deferred_scene);
 
-    method::lighting_pass lp(screen, buf, lighting_shader, &deferred_scene);
+    method::lighting_pass lp(screen, buf, shaders, &deferred_scene);
     method::blit_framebuffer screen_to_window(
         w,
         screen,

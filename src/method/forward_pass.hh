@@ -1,7 +1,7 @@
 #ifndef METHOD_FORWARD_PASS_HH
 #define METHOD_FORWARD_PASS_HH
 #include "pipeline.hh"
-#include "multishader.hh"
+#include "shader_store.hh"
 #include "scene.hh"
 
 namespace method
@@ -11,7 +11,7 @@ namespace method
     public:
         forward_pass(
             render_target& target,
-            multishader* forward_shader = nullptr,
+            shader_store& shaders,
             render_scene* scene = nullptr
         );
         ~forward_pass();

@@ -5,6 +5,7 @@
 #include <set>
 #include <regex>
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
 
 static void throw_shader_error(
     GLuint shader,
@@ -149,6 +150,20 @@ static std::string process_source(
     return processed;
 }
 
+
+bool shader::path::operator==(const path& other) const
+{
+    return vert == other.vert && frag == other.frag;
+}
+
+size_t boost::hash_value(const shader::path& p)
+{
+    std::size_t seed = 0;
+    boost::hash_combine(seed, p.vert);
+    boost::hash_combine(seed, p.frag);
+    return seed;
+}
+
 shader::source::source(const std::string& vert, const std::string& frag)
 : vert(vert), frag(frag) {}
 
@@ -156,6 +171,7 @@ shader::source::source(const path& p)
 : vert(read_text_file(p.vert)), frag(read_text_file(p.frag))
 {
 }
+
 
 GLuint shader::current_program = 0;
 
