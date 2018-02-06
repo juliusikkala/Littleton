@@ -123,6 +123,34 @@ static glm::vec4 dfo_rgba_to_vec4(dfo_rgba rgba)
     return glm::vec4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
 }
 
+static GLint dfo_interpolation_to_gl(dfo_interpolation_type interpolation)
+{
+    switch(interpolation)
+    {
+    case DFO_INTERPOLATE_NEAREST:
+        return GL_NEAREST;
+    case DFO_INTERPOLATE_LINEAR:
+        return GL_LINEAR_MIPMAP_LINEAR;
+    default:
+        throw std::runtime_error("Unknown DFO interpolation type!");
+    }
+}
+
+static GLint dfo_extension_to_gl(dfo_extension_type extension)
+{
+    switch(extension)
+    {
+    case DFO_EXTENSION_REPEAT:
+        return GL_REPEAT;
+    case DFO_EXTENSION_CLAMP:
+        return GL_CLAMP_TO_EDGE;
+    case DFO_EXTENSION_CLIP:
+        return GL_CLAMP_TO_BORDER;
+    default:
+        throw std::runtime_error("Unknown DFO extension type!");
+    }
+}
+
 void resource_store::add_dfo(
     const std::string& dfo_path,
     const std::string& data_prefix
@@ -156,7 +184,11 @@ void resource_store::add_dfo(
                 data_prefix.empty() ? 
                     tex->path :
                     data_prefix + "/" + tex->path,
-                tex->type == DFO_TEX_SRGB_COLOR
+                {
+                    tex->type == DFO_TEX_SRGB_COLOR,
+                    dfo_interpolation_to_gl(tex->interpolation),
+                    dfo_extension_to_gl(tex->extension)
+                }
             )
         );
     }

@@ -8,10 +8,17 @@
 class texture: public resource, public glresource
 {
 public:
+    struct params
+    {
+        bool srgb = false;
+        GLint interpolation = GL_LINEAR_MIPMAP_LINEAR;
+        GLint extension = GL_REPEAT;
+    };
+
     texture(
         context& ctx,
         const std::string& path,
-        bool srgb = false,
+        const params& p,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -38,7 +45,7 @@ public:
     static texture* create(
         context& ctx,
         const std::string& path,
-        bool srgb = false,
+        const params& p,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -56,7 +63,11 @@ public:
 protected:
     texture(context& ctx);
 
-    void basic_load(const std::string& path, bool srgb, GLenum target) const;
+    void basic_load(
+        const std::string& path,
+        const params& p,
+        GLenum target
+    ) const;
     void basic_load(
         unsigned w,
         unsigned h,

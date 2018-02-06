@@ -5,10 +5,23 @@
 #include <cmath>
 #include "stb_image.h"
 
+static GLint interpolation_without_mipmap(GLint interpolation)
+{
+    if(
+        interpolation == GL_LINEAR_MIPMAP_LINEAR ||
+        interpolation == GL_LINEAR_MIPMAP_NEAREST
+    ) return GL_LINEAR; 
+    else if(
+        interpolation == GL_NEAREST_MIPMAP_NEAREST ||
+        interpolation == GL_NEAREST_MIPMAP_LINEAR
+    ) return GL_NEAREST; 
+    else return interpolation;
+}
+
 static GLuint load_texture(
     context& ctx,
     const std::string& path,
-    bool srgb,
+    const texture::params& p,
     GLenum target,
     GLint& internal_format,
     GLenum& external_format,
@@ -56,12 +69,12 @@ static GLuint load_texture(
         external_format = GL_RG;
         break;
     case 3:
-        if(srgb) internal_format = GL_SRGB8;
+        if(p.srgb) internal_format = GL_SRGB8;
         else internal_format = hdr ? GL_RGB16 : GL_RGB8;
         external_format = GL_RGB;
         break;
     case 4:
-        if(srgb) internal_format = GL_SRGB8_ALPHA8;
+        if(p.srgb) internal_format = GL_SRGB8_ALPHA8;
         else internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
         external_format = GL_RGBA;
         break;
@@ -90,10 +103,18 @@ static GLuint load_texture(
     );
     glGenerateMipmap(target);
 
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(
+        target,
+        GL_TEXTURE_MIN_FILTER,
+        p.interpolation
+    );
+    glTexParameteri(
+        target,
+        GL_TEXTURE_MAG_FILTER,
+        interpolation_without_mipmap(p.interpolation)
+    );
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
@@ -110,11 +131,11 @@ texture::texture(context& ctx)
 texture::texture(
     context& ctx,
     const std::string& path,
-    bool srgb,
+    const params& p,
     GLenum target
 ): glresource(ctx), tex(0), target(target)
 {
-    basic_load(path, srgb, target);
+    basic_load(path, p, target);
 }
 
 texture::texture(
@@ -199,16 +220,16 @@ public:
     file_texture(
         context& ctx,
         const std::string& path,
-        bool srgb,
+        const params& p,
         GLenum target
-    ): texture(ctx), srgb(srgb), path(path)
+    ): texture(ctx), p(p), path(path)
     {
         this->target = target;
     }
 
     void load() const override
     {
-        basic_load(path, srgb, target);
+        basic_load(path, p, target);
     }
 
     void unload() const override
@@ -217,17 +238,17 @@ public:
     }
 
 private:
-    bool srgb;
+    params p;
     std::string path;
 };
 
 texture* texture::create(
     context& ctx,
     const std::string& path,
-    bool srgb,
+    const params& p,
     GLenum target
 ){
-    return new file_texture(ctx, path, srgb, target);
+    return new file_texture(ctx, path, p, target);
 }
 
 class empty_texture: public texture
@@ -278,7 +299,7 @@ texture* texture::create(
 
 void texture::basic_load(
     const std::string& path,
-    bool srgb,
+    const params& p,
     GLenum target
 ) const
 {
@@ -287,7 +308,7 @@ void texture::basic_load(
     tex = load_texture(
         get_context(),
         path,
-        srgb,
+        p,
         target,
         internal_format,
         external_format,
