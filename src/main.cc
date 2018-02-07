@@ -12,6 +12,7 @@
 #include "method/blit_framebuffer.hh"
 #include "method/visualize_gbuffer.hh"
 #include "method/gamma.hh"
+#include "method/kernel.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -85,6 +86,9 @@ int main()
     );
 
     method::lighting_pass lp(screen.input(), buf, shaders, &deferred_scene);
+    screen.swap();
+    method::kernel kernel(screen.input(), screen.output(), shaders, method::kernel::SHARPEN);
+
     method::blit_framebuffer screen_to_window(
         w,
         screen.input(),
@@ -96,6 +100,7 @@ int main()
         &clear_screen,
         &gp,
         &lp,
+        &kernel,
         &screen_to_window
     });
 
@@ -104,6 +109,7 @@ int main()
         &clear_screen,
         &gp,
         &visualizer,
+        &kernel,
         &screen_to_window
     });
 

@@ -1,7 +1,7 @@
 #ifndef METHOD_GAMMA_HH
 #define METHOD_GAMMA_HH
 #include "pipeline.hh"
-#include "gbuffer.hh"
+#include "texture.hh"
 #include "shader_store.hh"
 #include "vertex_buffer.hh"
 
