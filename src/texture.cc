@@ -207,11 +207,12 @@ glm::uvec2 texture::get_size() const
     return size;
 }
 
-void texture::bind(unsigned index)
+GLint texture::bind(unsigned index)
 {
     load();
     glActiveTexture(GL_TEXTURE0 + index);
     glBindTexture(target, tex);
+    return index;
 }
 
 class file_texture: public texture

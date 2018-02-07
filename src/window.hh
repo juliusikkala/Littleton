@@ -9,15 +9,18 @@
 class window: public context, public render_target
 {
 public:
-    window(
-        unsigned w = 640,
-        unsigned h = 480,
-        const char* title = "dflowers",
-        bool fullscreen = false,
-        bool vsync = true,
-        unsigned framerate_limit = 0,
-        unsigned samples = 0
-    );
+    struct params
+    {
+        std::string title = "dflowers";
+        glm::uvec2 size = glm::uvec2(640, 480);
+        bool fullscreen = false;
+        bool vsync = true;
+        bool srgb = true;
+        unsigned framerate_limit = 0;
+        unsigned samples = 0;
+    };
+
+    window(const params& p);
     window(const window& other) = delete;
     window(window&& other) = delete;
     ~window();

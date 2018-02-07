@@ -5,16 +5,9 @@
 
 bool window::initialized = false;
 
-window::window(
-    unsigned w,
-    unsigned h,
-    const char* title,
-    bool fullscreen,
-    bool vsync,
-    unsigned framerate_limit,
-    unsigned samples
-): render_target(*this, glm::uvec2(w, h)), framerate_limit(framerate_limit),
-   last_frame(0), delta(0)
+window::window(const params& p)
+: render_target(*this, p.size), framerate_limit(p.framerate_limit),
+  last_frame(0), delta(0)
 {
     if(initialized)
     {
@@ -40,10 +33,12 @@ window::window(
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-    if(samples != 0)
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, (int)p.srgb);
+
+    if(p.samples != 0)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, p.samples);
     }
     else
     {
@@ -54,11 +49,11 @@ window::window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     win = SDL_CreateWindow(
-        title,
+        p.title.c_str(),
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        w, h,
-        SDL_WINDOW_OPENGL | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
+        p.size.x, p.size.y,
+        SDL_WINDOW_OPENGL | (p.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)
     );
 
     if(!win)
@@ -85,10 +80,11 @@ window::window(
 
     initialized = true;
 
-    SDL_GL_SetSwapInterval(vsync);
+    SDL_GL_SetSwapInterval(p.vsync);
     last_frame = SDL_GetTicks();
 
     context::init();
+    if(p.srgb) glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 window::~window()

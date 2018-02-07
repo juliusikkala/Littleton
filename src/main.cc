@@ -11,6 +11,7 @@
 #include "method/lighting_pass.hh"
 #include "method/blit_framebuffer.hh"
 #include "method/visualize_gbuffer.hh"
+#include "method/gamma.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -21,7 +22,7 @@
 
 int main()
 { 
-    window w(1280, 720, "dflowers", true, true);
+    window w({"dflowers", {1280, 720}, true, true, true});
     w.set_framerate_limit(120);
     std::cout << "GPU Vendor: " << w.get_vendor_name() << std::endl
               << "Renderer:   " << w.get_renderer() << std::endl;
@@ -66,8 +67,8 @@ int main()
     doublebuffer screen(
         w,
         render_resolution,
-        GL_RGBA,
-        GL_RGBA8,
+        GL_RGB,
+        GL_RGB10_A2,
         GL_UNSIGNED_BYTE
     );
 

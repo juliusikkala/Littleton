@@ -59,6 +59,13 @@ multishader* shader_store::get(const shader::path& path)
     return it->second.get();
 }
 
+shader* shader_store::get(
+    const shader::path& path,
+    const shader::definition_map& definitions
+){
+    return get(path)->get(definitions);
+}
+
 size_t shader_store::size() const { return shaders.size(); }
 
 shader_store::iterator shader_store::begin() { return shaders.begin(); }

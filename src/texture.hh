@@ -58,7 +58,8 @@ public:
         GLenum type
     );
 
-    void bind(unsigned index = 0);
+    // Returns the index
+    GLint bind(unsigned index = 0);
 
 protected:
     texture(context& ctx);

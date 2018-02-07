@@ -34,6 +34,10 @@ public:
     void remove(const shader::path& path);
 
     multishader* get(const shader::path& path);
+    shader* get(
+        const shader::path& path,
+        const shader::definition_map& definitions
+    );
 
     size_t size() const;
 

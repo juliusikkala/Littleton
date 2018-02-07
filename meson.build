@@ -36,6 +36,7 @@ src = [
   'src/method/blit_framebuffer.cc',
   'src/method/lighting_pass.cc',
   'src/method/visualize_gbuffer.cc',
+  'src/method/gamma.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])
