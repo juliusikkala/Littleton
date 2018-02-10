@@ -111,7 +111,11 @@ static std::string process_source(
     while(std::regex_search(processed, include_match, include_regex))
     {
         std::string include_file = include_match[1];
-        if(included.count(include_file)) continue;
+        if(included.count(include_file))
+        {
+            processed.erase(include_match[0].first, include_match[0].second);
+            continue;
+        }
 
         std::string include_src;
         bool success = false;

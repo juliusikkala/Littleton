@@ -1,3 +1,5 @@
+#include "constants.glsl"
+
 struct point_light
 {
     vec3 color;
