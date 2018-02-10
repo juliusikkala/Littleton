@@ -42,7 +42,7 @@ int main()
 
     cam.translate(glm::vec3(0.0,2.0,1.0));
     cam.lookat(suzanne);
-    render_scene deferred_scene(&cam);
+    render_scene main_scene(&cam);
 
     for(
         auto it = resources.begin<object>();
@@ -50,7 +50,7 @@ int main()
         ++it
     ){
         object* o = *it;
-        if(o->get_model()) deferred_scene.add_object(o);
+        if(o->get_model()) main_scene.add_object(o);
     }
 
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
@@ -59,9 +59,9 @@ int main()
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-    deferred_scene.add_light(&l1);
-    deferred_scene.add_light(&l2);
-    deferred_scene.add_light(&parrasvalo);
+    main_scene.add_light(&l1);
+    main_scene.add_light(&l2);
+    main_scene.add_light(&parrasvalo);
 
     glm::uvec2 render_resolution = w.get_size();
 
@@ -76,18 +76,18 @@ int main()
     gbuffer buf(w, render_resolution);
     method::clear clear_buf(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
     method::clear clear_screen(screen.input(), glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::geometry_pass gp(buf, shaders, &deferred_scene);
+    method::clear clear_window(w, glm::vec4(0.0, 0.0, 0.0, 0.0));
+    method::forward_pass fp(w, shaders, &main_scene);
+    method::geometry_pass gp(buf, shaders, &main_scene);
 
     method::visualize_gbuffer visualizer(
         screen.input(),
         buf,
         shaders,
-        &deferred_scene
+        &main_scene
     );
 
-    method::lighting_pass lp(screen.input(), buf, shaders, &deferred_scene);
-    screen.swap();
-    method::kernel kernel(screen.input(), screen.output(), shaders, method::kernel::SHARPEN);
+    method::lighting_pass lp(screen.input(), buf, shaders, &main_scene);
 
     method::blit_framebuffer screen_to_window(
         w,
@@ -95,12 +95,11 @@ int main()
         method::blit_framebuffer::COLOR_ONLY
     );
 
-    pipeline render({
+    pipeline deferred_render({
         &clear_buf,
         &clear_screen,
         &gp,
         &lp,
-        &kernel,
         &screen_to_window
     });
 
@@ -109,12 +108,15 @@ int main()
         &clear_screen,
         &gp,
         &visualizer,
-        &kernel,
         &screen_to_window
     });
 
+    pipeline forward_render({&clear_window, &fp});
+
+    pipeline* pipelines[] = {&deferred_render, &visualize, &forward_render};
+
     bool running = true;
-    bool show_visualizer = false;
+    unsigned pipeline_index = 0;
     float time = 0;
     float pitch = 0, yaw = 0;
     float speed = 2;
@@ -135,7 +137,9 @@ int main()
                 if(e.key.keysym.sym == SDLK_ESCAPE) running = false;
                 if(e.key.keysym.sym == SDLK_PLUS) speed *= 1.1;
                 if(e.key.keysym.sym == SDLK_MINUS) speed /= 1.1;
-                if(e.key.keysym.sym == SDLK_v) show_visualizer = !show_visualizer;
+                if(e.key.keysym.sym == SDLK_1) pipeline_index = 0;
+                if(e.key.keysym.sym == SDLK_2) pipeline_index = 1;
+                if(e.key.keysym.sym == SDLK_3) pipeline_index = 2;
 
                 break;
             case SDL_MOUSEMOTION:
@@ -166,8 +170,7 @@ int main()
         parrasvalo.set_cutoff_angle(sin(time)*45+45);
         sphere->lookat(&cam);
 
-        if(!show_visualizer) render.execute();
-        else visualize.execute();
+        pipelines[pipeline_index]->execute();
 
         w.present();
         time += w.get_delta();

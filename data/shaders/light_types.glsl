@@ -1,4 +1,5 @@
 #include "constants.glsl"
+#include "brdf.glsl"
 
 struct point_light
 {
@@ -21,24 +22,63 @@ struct spotlight
     float exponent;
 };
 
-vec3 point_light_diffuse(point_light l, vec3 pos, vec3 normal)
-{
+vec3 calc_point_light(
+    point_light l,
+    vec3 pos,
+    vec3 surface_color,
+    vec3 view_dir,
+    vec3 normal,
+    float roughness,
+    float f0,
+    float metallic
+){
     vec3 dir = l.position - pos;
     float dist = length(dir);
     dir/=dist;
-    float ctheta = clamp(dot(normal, dir), 0, 1);
-    return l.color*ctheta/(dist*dist);
+
+    return brdf(
+        l.color/(dist*dist),
+        dir,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 }
 
-vec3 directional_light_diffuse(directional_light l, vec3 normal)
-{
-    vec3 dir = l.direction;
-    float ctheta = clamp(dot(normal, -dir), 0, 1);
-    return l.color*ctheta;
+vec3 calc_directional_light(
+    directional_light l,
+    vec3 surface_color,
+    vec3 view_dir,
+    vec3 normal,
+    float roughness,
+    float f0,
+    float metallic
+){
+    return brdf(
+        l.color,
+        -l.direction,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 }
 
-vec3 spotlight_diffuse(spotlight l, vec3 pos, vec3 normal)
-{
+vec3 calc_spotlight(
+    spotlight l,
+    vec3 pos,
+    vec3 surface_color,
+    vec3 view_dir,
+    vec3 normal,
+    float roughness,
+    float f0,
+    float metallic
+){
     vec3 dir = l.position - pos;
     float dist = length(dir);
     dir/=dist;
@@ -48,6 +88,14 @@ vec3 spotlight_diffuse(spotlight l, vec3 pos, vec3 normal)
         1-pow(1-(cutoff-l.cutoff)/(1-l.cutoff), l.exponent) :
         0;
 
-    float ctheta = clamp(dot(normal, dir), 0, 1)*cutoff;
-    return l.color*ctheta/(dist*dist);
+    return brdf(
+        l.color*cutoff/(dist*dist),
+        dir,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 }

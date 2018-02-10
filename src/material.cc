@@ -82,7 +82,7 @@ void material::apply(shader* s)
         s->set("material.normal", 3);
     }
 
-    s->set("material.ior", ior);
+    s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
 
     if(emission.index() == 0)
     {

@@ -24,58 +24,72 @@ uniform Lights
 
 out vec4 out_color;
 
-vec4 get_color()
-{
-#ifdef MATERIAL_COLOR_CONSTANT
-    return material.color;
-#elif defined(MATERIAL_COLOR_TEXTURE)
-    return texture(
-        material.color,
-#ifdef VERTEX_UV
-        f_uv
-#else
-        vec2(0.0f)
-#endif
-    );
-#else
-    return vec4(1.0f, 0.0f, 0.0f, 1.0f);
-#endif
-}
-
 void main(void)
 {
-    vec4 diffuse_color = get_color();
+    vec4 surface_color = get_material_color();
     vec4 color;
 #ifdef VERTEX_NORMAL
     vec3 normal = normalize(f_normal);
 #endif
 
 #if defined(LIGHTING) && defined(VERTEX_NORMAL)
-    color = vec4(0.0f,0.0f,0.0f,diffuse_color.a);
+    color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
+    vec3 pos = f_position;
+    vec3 view_dir = normalize(-f_position);
+    float roughness = get_material_roughness();
+    roughness = roughness * roughness;
+    float metallic = get_material_metallic();
+    float f0 = get_material_f0() / 2.0f;
 
 #if POINT_LIGHT_COUNT > 0
     for(int i = 0; i < POINT_LIGHT_COUNT; ++i)
     {
-        float diffuse = point_light_diffuse(lights.point[i], f_position, normal);
-        color.rgb += diffuse_color.rgb * diffuse;
+        color.rgb += calc_point_light(
+            lights.point[i],
+            f_position,
+            surface_color.rgb,
+            view_dir,
+            normal,
+            roughness,
+            f0,
+            metallic
+        );
     }
 #endif
+
 #if DIRECTIONAL_LIGHT_COUNT > 0
     for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; ++i)
     {
-        float diffuse = directional_light_diffuse(lights.directional[i], normal);
-        color.rgb += diffuse_color.rgb*diffuse;
+        color.rgb += calc_directional_light(
+            lights.directional[i],
+            surface_color.rgb,
+            view_dir,
+            normal,
+            roughness,
+            f0,
+            metallic
+        );
     }
 #endif
+
 #if SPOTLIGHT_COUNT > 0
     for(int i = 0; i < SPOTLIGHT_COUNT; ++i)
     {
-        float diffuse = spotlight_diffuse(lights.spot[i], f_position, normal);
-        color.rgb += diffuse_color.rgb*diffuse;
+        color.rgb += calc_spotlight(
+            lights.spot[i],
+            f_position,
+            surface_color.rgb,
+            view_dir,
+            normal,
+            roughness,
+            f0,
+            metallic
+        );
     }
 #endif
+
 #else
-    color = diffuse_color;
+    color = surface_color;
 #endif
     if(color.a < 0.5f) discard;
     out_color = color;

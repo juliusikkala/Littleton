@@ -16,21 +16,21 @@ void main(void)
 #elif defined(SHOW_COLOR)
     out_color = vec4(get_albedo(), 1.0f);
 #elif defined(SHOW_ROUGHNESS)
-    float roughness, metallic, ior;
-    decode_material(roughness, metallic, ior);
+    float roughness, metallic, f0;
+    decode_material(roughness, metallic, f0);
     out_color = vec4(vec3(roughness), 1.0f);
 #elif defined(SHOW_METALLIC)
-    float roughness, metallic, ior;
-    decode_material(roughness, metallic, ior);
+    float roughness, metallic, f0;
+    decode_material(roughness, metallic, f0);
     out_color = vec4(vec3(metallic), 1.0f);
 #elif defined(SHOW_IOR)
-    float roughness, metallic, ior;
-    decode_material(roughness, metallic, ior);
-    out_color = vec4(vec3((ior-1.0f)/4.0f), 1.0f);
+    float roughness, metallic, f0;
+    decode_material(roughness, metallic, f0);
+    out_color = vec4(vec3(f0*2.0f), 1.0f);
 #elif defined(SHOW_MATERIAL)
-    float roughness, metallic, ior;
-    decode_material(roughness, metallic, ior);
-    out_color = vec4(roughness, metallic, (ior-1.0f)/4.0f, 1.0f);
+    float roughness, metallic, f0;
+    decode_material(roughness, metallic, f0);
+    out_color = vec4(roughness, metallic, f0 * 2.0f, 1.0f);
 #else
     out_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 #endif

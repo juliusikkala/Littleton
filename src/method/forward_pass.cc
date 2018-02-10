@@ -15,7 +15,8 @@ method::forward_pass::~forward_pass() {}
 static std::unique_ptr<uniform_block> create_light_block(
     const std::string& block_name,
     light_scene* scene,
-    shader* compatible_shader
+    shader* compatible_shader,
+    const glm::mat4& v
 ){
     std::unique_ptr<uniform_block> light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
@@ -31,7 +32,7 @@ static std::unique_ptr<uniform_block> create_light_block(
         );
         light_block->set(
             prefix + "position",
-            l->get_global_position()
+            glm::vec3(v * glm::vec4(l->get_global_position(), 1))
         );
         ++i;
     }
@@ -46,7 +47,7 @@ static std::unique_ptr<uniform_block> create_light_block(
         );
         light_block->set(
             prefix + "direction",
-            glm::normalize(l->get_direction())
+            glm::normalize(glm::vec3(v * glm::vec4(l->get_direction(), 0)))
         );
         ++i;
     }
@@ -61,11 +62,12 @@ static std::unique_ptr<uniform_block> create_light_block(
         );
         light_block->set(
             prefix + "position",
-            l->get_global_position()
+            glm::vec3(v * glm::vec4(l->get_global_position(), 1))
         );
         light_block->set(
             prefix + "direction",
-            glm::normalize(l->get_global_direction())
+            glm::normalize(glm::vec3(
+                v * glm::vec4(l->get_global_direction(), 0)))
         );
         light_block->set<float>(
             prefix + "cutoff",
@@ -96,7 +98,6 @@ void method::forward_pass::execute()
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
-    glm::mat4 vp = p * v;
 
     std::unique_ptr<uniform_block> light_block;
     shader::definition_map scene_definitions({
@@ -112,9 +113,9 @@ void method::forward_pass::execute()
         model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(m));
-        glm::mat4 mvp = vp * m;
+        glm::mat4 mv = v * obj->get_global_transform();
+        glm::mat3 n_mv(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
 
         for(model::vertex_group& group: *mod)
         {
@@ -140,14 +141,14 @@ void method::forward_pass::execute()
 
             if(!light_block && s->block_exists("Lights"))
             {
-                light_block = create_light_block("Lights", scene, s);
+                light_block = create_light_block("Lights", scene, s, v);
                 light_block->bind(0);
             }
             if(light_block) s->set_block("Lights", 0);
 
             s->set("mvp", mvp);
-            s->set("m", m);
-            s->set("n_m", n_m);
+            s->set("m", mv);
+            s->set("n_m", n_mv);
 
             group.mat->apply(s);
             group.mesh->draw();

@@ -21,7 +21,7 @@ vec4 encode_material()
     return vec4(
         get_material_roughness(),
         get_material_metallic(),
-        (get_material_ior()-1.0f)/4.0f,
+        get_material_f0(),
         0.0f
     );
 }

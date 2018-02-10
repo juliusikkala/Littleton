@@ -16,22 +16,48 @@ out vec4 out_color;
 
 void main(void)
 {
-    vec3 diffuse_color = get_albedo();
+    vec3 surface_color = get_albedo();
     vec3 normal = decode_normal();
-    float roughness, metallic, ior;
-    decode_material(roughness, metallic, ior);
+    float roughness, metallic, f0;
+    decode_material(roughness, metallic, f0);
+    roughness = roughness * roughness;
 
-#if !defined(DIRECTIONAL_LIGHT)
     vec3 pos = decode_position();
-#endif
+    vec3 view_dir = normalize(-pos);
 
 #ifdef POINT_LIGHT
-    vec3 diffuse = point_light_diffuse(light, pos, normal);
+    vec3 lighting = calc_point_light(
+        light,
+        pos,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 #elif defined(SPOTLIGHT)
-    vec3 diffuse = spotlight_diffuse(light, pos, normal);
+    vec3 lighting = calc_spotlight(
+        light,
+        pos,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 #elif defined(DIRECTIONAL_LIGHT)
-    vec3 diffuse = directional_light_diffuse(light, normal);
+    vec3 lighting = calc_directional_light(
+        light,
+        surface_color,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
 #endif
 
-    out_color = vec4(diffuse_color.rgb*diffuse, 1.0f);
+    out_color = vec4(lighting, 1.0f);
 }

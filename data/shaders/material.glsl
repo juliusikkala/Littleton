@@ -22,7 +22,7 @@ struct material_t
     sampler2D normal;
 #endif
 
-    float ior;
+    float f0;
 };
 
 uniform material_t material;
@@ -95,7 +95,7 @@ vec3 get_material_normal()
 }
 #endif
 
-float get_material_ior()
+float get_material_f0()
 {
-    return material.ior;
+    return material.f0;
 }

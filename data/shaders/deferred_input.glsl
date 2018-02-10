@@ -19,7 +19,7 @@ vec3 decode_position()
     float n = perspective_data.z;
     float f = perspective_data.w;
     // Linearize depth
-    depth = 2 * n * f / (n + f - depth * (f - n));
+    depth = 2.0f * n * f / (n + f - depth * (f - n));
     return vec3((0.5f-uv)*perspective_data.xy*depth, depth);
 }
 
@@ -31,12 +31,14 @@ vec3 decode_normal()
     return vec3(f*n2, 1.0f - d);
 }
 
-void decode_material(out float roughness, out float metallic, out float ior)
+void decode_material(out float roughness, out float metallic, out float f0)
 {
     vec4 encoded = texture(in_material, uv);
     roughness = encoded.x;
     metallic = encoded.y;
-    ior = encoded.z*4.0f+1.0f;
+    // Instead of deferred_output.glsl, f0 is multiplied by 2 in material.cc
+    // in order to use most of the available range and resolution.
+    f0 = encoded.z/2.0f;
 }
 
 vec3 get_albedo()
