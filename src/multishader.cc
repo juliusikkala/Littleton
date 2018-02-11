@@ -37,12 +37,17 @@ void multishader::clear()
     cache.clear();
 }
 
+void multishader::unload()
+{
+    for(auto& pair: cache) pair.second->unload();
+}
+
 shader* multishader::get(const shader::definition_map& definitions) const
 {
     auto it = cache.find(definitions);
     if(it == cache.end())
     {
-        shader* s = new shader(
+        shader* s = shader::create(
             get_context(),
             source,
             definitions,

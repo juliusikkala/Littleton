@@ -22,7 +22,13 @@ public:
     );
     multishader(multishader&& other);
 
+    // This is slightly dangerous if someone is keeping a reference to a
+    // shader. Please use unload instead.
     void clear();
+
+    // Unloads all shaders in the cache.
+    void unload();
+
     shader* get(const shader::definition_map& definitions = {}) const;
 
 private:
