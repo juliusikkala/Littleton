@@ -116,6 +116,17 @@ static GLuint load_texture(
     glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
 
+
+    if(GLEW_EXT_texture_filter_anisotropic)
+    {
+        unsigned max_anisotropy = ctx[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
+        glTexParameterf(
+            target,
+            GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            std::min(p.anisotropy, max_anisotropy)
+        );
+    }
+
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
     if(glGetError() != GL_NO_ERROR)

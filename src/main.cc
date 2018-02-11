@@ -69,7 +69,7 @@ int main()
         w,
         render_resolution,
         GL_RGB,
-        GL_RGB10_A2,
+        GL_RGB16F,
         GL_UNSIGNED_BYTE
     );
 

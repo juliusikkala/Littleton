@@ -13,6 +13,7 @@ public:
         bool srgb = false;
         GLint interpolation = GL_LINEAR_MIPMAP_LINEAR;
         GLint extension = GL_REPEAT;
+        unsigned anisotropy = 16;
     };
 
     texture(
