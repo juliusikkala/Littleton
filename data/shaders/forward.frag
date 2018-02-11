@@ -30,6 +30,11 @@ void main(void)
     vec4 color;
 #ifdef VERTEX_NORMAL
     vec3 normal = normalize(f_normal);
+#if defined(MATERIAL_NORMAL_TEXTURE) && defined(VERTEX_TANGENT)
+    mat3 tbn = mat3(normalize(f_tangent), normalize(f_bitangent), normal);
+    vec3 ts_normal = get_material_normal();
+    normal = normalize(tbn * ts_normal);
+#endif
 #endif
 
 #if defined(LIGHTING) && defined(VERTEX_NORMAL)

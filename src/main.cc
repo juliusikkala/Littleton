@@ -168,7 +168,6 @@ int main()
         l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
         parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
         parrasvalo.set_cutoff_angle(sin(time)*45+45);
-        sphere->lookat(&cam);
 
         pipelines[pipeline_index]->execute();
 

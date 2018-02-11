@@ -13,7 +13,15 @@ void main(void)
     out_color_emission = color;
 
 #ifdef VERTEX_NORMAL
-    out_normal = encode_normal(f_normal);
+    vec3 normal = normalize(f_normal);
+
+#if defined(MATERIAL_NORMAL_TEXTURE) && defined(VERTEX_TANGENT)
+    mat3 tbn = mat3(normalize(f_tangent), normalize(f_bitangent), normal);
+    vec3 ts_normal = get_material_normal();
+    normal = tbn * ts_normal;
+#endif
+
+    out_normal = encode_normal(normal);
 #endif
 
     out_material = encode_material();
