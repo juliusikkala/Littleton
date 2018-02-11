@@ -117,6 +117,7 @@ int main()
 
     bool running = true;
     unsigned pipeline_index = 0;
+    bool paused = false;
     float time = 0;
     float pitch = 0, yaw = 0;
     float speed = 2;
@@ -140,6 +141,7 @@ int main()
                 if(e.key.keysym.sym == SDLK_1) pipeline_index = 0;
                 if(e.key.keysym.sym == SDLK_2) pipeline_index = 1;
                 if(e.key.keysym.sym == SDLK_3) pipeline_index = 2;
+                if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
 
                 break;
             case SDL_MOUSEMOTION:
@@ -163,16 +165,20 @@ int main()
         cam.perspective(fov, w.get_aspect(), 0.1, 20);
         cam.set_orientation(pitch, yaw);
 
-        suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
-        l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
-        l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
-        parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
-        parrasvalo.set_cutoff_angle(sin(time)*45+45);
+        if(!paused)
+        {
+            time += w.get_delta();
+            suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
+            l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
+            l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
+            parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
+            parrasvalo.set_cutoff_angle(sin(time)*45+45);
+        }
 
         pipelines[pipeline_index]->execute();
 
         w.present();
-        time += w.get_delta();
     }
+
     return 0;
 }
