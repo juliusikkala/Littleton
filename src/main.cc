@@ -138,7 +138,7 @@ using deferred_pipeline = custom_pipeline<deferred_data>;
 using visualizer_pipeline = custom_pipeline<visualizer_data>;
 using forward_pipeline = custom_pipeline<forward_data>;
 
-int main()
+int main(int argc, char** argv)
 { 
     window w({"dflowers", {1280, 720}, true, true, false});
     w.set_framerate_limit(120);

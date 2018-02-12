@@ -1,7 +1,7 @@
 #include "window.hh"
 #include <stdexcept>
 #include "glheaders.hh"
-#include <SDL2/SDL_opengl.h>
+#include <SDL_opengl.h>
 
 bool window::initialized = false;
 

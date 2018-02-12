@@ -3,7 +3,7 @@
 #include "render_target.hh"
 #include "resources.hh"
 #include "context.hh"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <glm/glm.hpp>
 
 class window: public context, public render_target
