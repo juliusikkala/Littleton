@@ -61,24 +61,24 @@ doublebuffer::target::~target()
     if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
 
-doublebuffer::target& doublebuffer::input()
+doublebuffer::target& doublebuffer::input(unsigned index)
 {
-    return targets[cur_index];
+    return targets[index^cur_index];
 }
 
-const doublebuffer::target& doublebuffer::input() const
+const doublebuffer::target& doublebuffer::input(unsigned index) const
 {
-    return targets[cur_index];
+    return targets[index^cur_index];
 }
 
-texture& doublebuffer::output()
+texture& doublebuffer::output(unsigned index)
 {
-    return buffers[1-cur_index];
+    return buffers[1-(index^cur_index)];
 }
 
-const texture& doublebuffer::output() const
+const texture& doublebuffer::output(unsigned index) const
 {
-    return buffers[1-cur_index];
+    return buffers[1-(index^cur_index)];
 }
 
 void doublebuffer::swap()

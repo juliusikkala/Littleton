@@ -13,6 +13,7 @@
 #include "method/visualize_gbuffer.hh"
 #include "method/gamma.hh"
 #include "method/kernel.hh"
+#include "method/tonemap.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -21,9 +22,125 @@
 #include <algorithm>
 #include <glm/gtc/random.hpp>
 
+struct deferred_data
+{
+    deferred_data(
+        window& w,
+        glm::uvec2 resolution,
+        shader_store& shaders,
+        render_scene* main_scene
+    ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+      buf(w, resolution),
+      clear_buf(buf),
+      clear_screen(screen.input(0)),
+      gp(buf, shaders, main_scene),
+      lp(screen.input(0), buf, shaders, main_scene),
+      tm(screen.input(1), screen.output(1), shaders),
+      screen_to_window(w, screen.input(1), method::blit_framebuffer::COLOR_ONLY)
+    {
+    }
+
+    const std::vector<pipeline_method*> get_methods()
+    {
+        return {&clear_buf, &clear_screen, &gp, &lp, &tm, &screen_to_window};
+    }
+
+    doublebuffer screen;
+    gbuffer buf;
+
+    method::clear clear_buf;
+    method::clear clear_screen;
+    method::geometry_pass gp;
+    method::lighting_pass lp;
+    method::tonemap tm;
+    method::blit_framebuffer screen_to_window;
+};
+
+struct visualizer_data
+{
+    visualizer_data(
+        window& w,
+        glm::uvec2 resolution,
+        shader_store& shaders,
+        render_scene* main_scene
+    ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+      buf(w, resolution),
+      clear_buf(buf),
+      clear_screen(screen.input(0)),
+      gp(buf, shaders, main_scene),
+      visualizer(screen.input(0), buf, shaders, main_scene),
+      screen_to_window(w, screen.input(0), method::blit_framebuffer::COLOR_ONLY)
+    {}
+
+    const std::vector<pipeline_method*> get_methods()
+    {
+        return {&clear_buf, &clear_screen, &gp, &visualizer, &screen_to_window};
+    }
+
+    doublebuffer screen;
+    gbuffer buf;
+
+    method::clear clear_buf;
+    method::clear clear_screen;
+    method::geometry_pass gp;
+    method::visualize_gbuffer visualizer;
+    method::blit_framebuffer screen_to_window;
+};
+
+struct forward_data
+{
+    forward_data(
+        window& w,
+        glm::uvec2 resolution,
+        shader_store& shaders,
+        render_scene* main_scene
+    ):color_buffer(w, resolution.x, resolution.y, GL_RGB, GL_RGB16F, GL_FLOAT),
+      screen(w, resolution, {&color_buffer}, GL_DEPTH24_STENCIL8),
+      postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+      clear_screen(screen),
+      fp(screen, shaders, main_scene),
+      tm(postprocess.input(0), color_buffer, shaders),
+      postprocess_to_window(
+        w,
+        postprocess.input(0),
+        method::blit_framebuffer::COLOR_ONLY)
+    {}
+
+
+    const std::vector<pipeline_method*> get_methods()
+    {
+        return {&clear_screen, &fp, &tm, &postprocess_to_window};
+    }
+
+    texture color_buffer;
+    framebuffer screen;
+    doublebuffer postprocess;
+
+    method::clear clear_screen;
+    method::forward_pass fp;
+    method::tonemap tm;
+    method::blit_framebuffer postprocess_to_window;
+};
+
+template<typename T>
+class custom_pipeline: public T, public pipeline
+{
+public:
+    custom_pipeline(
+        window& w,
+        glm::uvec2 resolution,
+        shader_store& shaders,
+        render_scene* main_scene
+    ): T(w, resolution, shaders, main_scene), pipeline(T::get_methods()) {}
+};
+
+using deferred_pipeline = custom_pipeline<deferred_data>;
+using visualizer_pipeline = custom_pipeline<visualizer_data>;
+using forward_pipeline = custom_pipeline<forward_data>;
+
 int main()
 { 
-    window w({"dflowers", {1280, 720}, true, true, true});
+    window w({"dflowers", {1280, 720}, true, true, false});
     w.set_framerate_limit(120);
     std::cout << "GPU Vendor: " << w.get_vendor_name() << std::endl
               << "Renderer:   " << w.get_renderer() << std::endl;
@@ -35,7 +152,6 @@ int main()
     shader_store shaders(w, {"data/shaders/"});
 
     object* suzanne = resources.get<object>("Suzanne");
-    object* sphere = resources.get<object>("Sphere");
 
     camera cam;
     cam.perspective(90, w.get_aspect(), 0.1, 20);
@@ -65,55 +181,11 @@ int main()
 
     glm::uvec2 render_resolution = w.get_size();
 
-    doublebuffer screen(
-        w,
-        render_resolution,
-        GL_RGB,
-        GL_RGB16F,
-        GL_UNSIGNED_BYTE
-    );
+    deferred_pipeline dp(w, render_resolution, shaders, &main_scene);
+    visualizer_pipeline vp(w, render_resolution, shaders, &main_scene);
+    forward_pipeline fp(w, render_resolution, shaders, &main_scene);
 
-    gbuffer buf(w, render_resolution);
-    method::clear clear_buf(buf, glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::clear clear_screen(screen.input(), glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::clear clear_window(w, glm::vec4(0.0, 0.0, 0.0, 0.0));
-    method::forward_pass fp(w, shaders, &main_scene);
-    method::geometry_pass gp(buf, shaders, &main_scene);
-
-    method::visualize_gbuffer visualizer(
-        screen.input(),
-        buf,
-        shaders,
-        &main_scene
-    );
-
-    method::lighting_pass lp(screen.input(), buf, shaders, &main_scene);
-
-    method::blit_framebuffer screen_to_window(
-        w,
-        screen.input(),
-        method::blit_framebuffer::COLOR_ONLY
-    );
-
-    pipeline deferred_render({
-        &clear_buf,
-        &clear_screen,
-        &gp,
-        &lp,
-        &screen_to_window
-    });
-
-    pipeline visualize({
-        &clear_buf,
-        &clear_screen,
-        &gp,
-        &visualizer,
-        &screen_to_window
-    });
-
-    pipeline forward_render({&clear_window, &fp});
-
-    pipeline* pipelines[] = {&deferred_render, &visualize, &forward_render};
+    pipeline* pipelines[] = {&dp, &vp, &fp};
 
     bool running = true;
     unsigned pipeline_index = 0;

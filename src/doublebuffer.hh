@@ -25,11 +25,11 @@ public:
         ~target();
     };
 
-    target& input();
-    const target& input() const;
+    target& input(unsigned index = 0);
+    const target& input(unsigned index = 0) const;
 
-    texture& output();
-    const texture& output() const;
+    texture& output(unsigned index = 0);
+    const texture& output(unsigned index = 0) const;
 
     void swap();
 

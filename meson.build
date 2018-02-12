@@ -38,6 +38,7 @@ src = [
   'src/method/visualize_gbuffer.cc',
   'src/method/gamma.cc',
   'src/method/kernel.cc',
+  'src/method/tonemap.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])
