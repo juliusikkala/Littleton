@@ -123,6 +123,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <Link>
       <AdditionalDependencies>$(ProjectDir)lib\external\SDL2-2.0.7\lib\x64\SDL2main.lib;$(ProjectDir)lib\external\SDL2-2.0.7\lib\x64\SDL2.lib;$(ProjectDir)lib\external\glew-2.1.0\lib\Release\x64\glew32.lib;opengl32.lib;libdfo.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)$(IntDir);$(ProjectDir)lib\external\boost_1_66_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
