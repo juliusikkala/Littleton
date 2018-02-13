@@ -1,8 +1,6 @@
 #include "shader_store.hh"
 #include <boost/filesystem.hpp>
 
-    std::vector<std::string> shader_path;
-
 static std::string find_file(
     const std::vector<std::string> prefixes,
     const std::string& suffix
@@ -39,7 +37,8 @@ multishader* shader_store::add(const shader::path& path)
 
     shader::path full_path{
         find_file(shader_path, path.vert),
-        find_file(shader_path, path.frag)
+        find_file(shader_path, path.frag),
+        path.geom.empty() ? "" : find_file(shader_path, path.geom)
     };
     multishader* s = new multishader(*ctx, full_path, shader_path); 
     shaders[path] = std::unique_ptr<multishader>(s);

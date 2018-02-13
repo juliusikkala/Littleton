@@ -18,6 +18,7 @@ public:
     {
         std::string vert;
         std::string frag;
+        std::string geom;
 
         bool operator==(const path& other) const;
     };
@@ -25,11 +26,16 @@ public:
     struct source
     {
         source() = default;
-        source(const std::string& vert, const std::string& frag);
+        source(
+            const std::string& vert,
+            const std::string& frag,
+            const std::string& geom
+        );
         source(const path& p);
 
         std::string vert;
         std::string frag;
+        std::string geom;
     };
 
     shader(context& ctx);
@@ -94,10 +100,7 @@ public:
     );
 
 protected:
-    void basic_load(
-        const std::string& vert_src,
-        const std::string& frag_src
-    ) const;
+    void basic_load(const source& src) const;
 
     void basic_unload() const;
 

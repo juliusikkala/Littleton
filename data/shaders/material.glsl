@@ -35,7 +35,7 @@ vec4 get_material_color()
     return texture(
         material.color,
 #ifdef VERTEX_UV
-        f_uv
+        f_in.uv
 #else
         vec2(0.0f)
 #endif
@@ -53,7 +53,7 @@ float get_material_metallic()
     return texture(
         material.metallic,
 #ifdef VERTEX_UV
-        f_uv
+        f_in.uv
 #else
         vec2(0.0f)
 #endif
@@ -71,7 +71,7 @@ float get_material_roughness()
     return texture(
         material.roughness,
 #ifdef VERTEX_UV
-        f_uv
+        f_in.uv
 #else
         vec2(0.0f)
 #endif
@@ -87,7 +87,7 @@ vec3 get_material_normal()
     return texture(
         material.normal,
 #ifdef VERTEX_UV
-        f_uv
+        f_in.uv
 #else
         vec2(0.0f)
 #endif

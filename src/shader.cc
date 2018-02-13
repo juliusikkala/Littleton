@@ -97,6 +97,7 @@ static std::string process_source(
     const std::string& definitions,
     const std::vector<std::string>& include_path
 ){
+    if(source.empty()) return source;
     std::string processed = remove_comments(source);
     processed = splice_definitions(processed, definitions);
     
@@ -168,11 +169,15 @@ size_t boost::hash_value(const shader::path& p)
     return seed;
 }
 
-shader::source::source(const std::string& vert, const std::string& frag)
-: vert(vert), frag(frag) {}
+shader::source::source(
+    const std::string& vert,
+    const std::string& frag,
+    const std::string& geom
+): vert(vert), frag(frag), geom(geom) {}
 
 shader::source::source(const path& p)
-: vert(read_text_file(p.vert)), frag(read_text_file(p.frag))
+: vert(read_text_file(p.vert)), frag(read_text_file(p.frag)),
+  geom(p.geom.empty() ? "" : read_text_file(p.geom))
 {
 }
 
@@ -189,10 +194,12 @@ shader::shader(
 ): glresource(ctx), program(0)
 {
     std::string definition_src = generate_definition_src(definitions);
-    basic_load(
+
+    basic_load({
         process_source(s.vert, definition_src, include_path),
-        process_source(s.frag, definition_src, include_path)
-    );
+        process_source(s.frag, definition_src, include_path),
+        process_source(s.geom, definition_src, include_path)
+    });
 }
 
 shader::shader(
@@ -249,13 +256,16 @@ public:
         const std::string& definition_src,
         const std::vector<std::string>& include_path
     ): shader(ctx),
-       vert_src(process_source(s.vert, definition_src, include_path)),
-       frag_src(process_source(s.frag, definition_src, include_path))
+       src(
+           process_source(s.vert, definition_src, include_path),
+           process_source(s.frag, definition_src, include_path),
+           process_source(s.geom, definition_src, include_path)
+       )
     { }
 
     void load() const override
     {
-        basic_load(vert_src, frag_src);
+        basic_load(src);
     }
 
     void unload() const override
@@ -264,8 +274,7 @@ public:
     }
 
 private:
-    std::string vert_src;
-    std::string frag_src;
+    source src;
 };
 
 shader* shader::create(
@@ -287,7 +296,8 @@ shader* shader::create(
     std::string definition_src = generate_definition_src(definitions);
     std::vector<std::string> extended_include_path = {
         boost::filesystem::path(p.vert).parent_path().string(),
-        boost::filesystem::path(p.frag).parent_path().string()
+        boost::filesystem::path(p.frag).parent_path().string(),
+        boost::filesystem::path(p.geom).parent_path().string()
     };
     extended_include_path.insert(
         extended_include_path.end(),
@@ -344,37 +354,38 @@ void shader::set_block(
     glUniformBlockBinding(program, it->second.index, bind_point);
 }
 
-void shader::basic_load(
-    const std::string& vert_src,
-    const std::string& frag_src
-) const {
+void shader::basic_load(const source& src) const
+{
     if(program) return;
 
-    GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    const char* vsrc = vert_src.c_str();
-    const char* fsrc = frag_src.c_str();
-    glShaderSource(vshader, 1, &vsrc, NULL);
-    glShaderSource(fshader, 1, &fsrc, NULL);
-
-    glCompileShader(vshader);
-    glCompileShader(fshader);
-
-    throw_shader_error(vshader, "Vertex shader", vert_src);
-    throw_shader_error(fshader, "Fragment shader", frag_src);
-
     program = glCreateProgram();
+
+    const char* vsrc = src.vert.c_str();
+    GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vshader, 1, &vsrc, NULL);
+    glCompileShader(vshader);
+    throw_shader_error(vshader, "Vertex shader", src.vert);
     glAttachShader(program, vshader);
-    glAttachShader(program, fshader);
-
     glDeleteShader(vshader);
-    glDeleteShader(fshader);
 
-    glBindAttribLocation(program, 0, "position");
-    glBindAttribLocation(program, 1, "normal");
-    glBindAttribLocation(program, 2, "tangent");
-    glBindAttribLocation(program, 3, "uv");
+    const char* fsrc = src.frag.c_str();
+    GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fshader, 1, &fsrc, NULL);
+    glCompileShader(fshader);
+    throw_shader_error(fshader, "Fragment shader", src.frag);
+    glAttachShader(program, fshader);
+    glDeleteShader(fshader);
+    
+    if(!src.geom.empty())
+    {
+        const char* gsrc = src.geom.c_str();
+        GLuint gshader = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(gshader, 1, &gsrc, NULL);
+        glCompileShader(gshader);
+        throw_shader_error(gshader, "Geometry shader", src.geom);
+        glAttachShader(program, gshader);
+        glDeleteShader(gshader);
+    }
 
     glLinkProgram(program);
     throw_program_error(program, "Shader program");

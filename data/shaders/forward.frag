@@ -29,9 +29,9 @@ void main(void)
     vec4 surface_color = get_material_color();
     vec4 color;
 #ifdef VERTEX_NORMAL
-    vec3 normal = normalize(f_normal);
+    vec3 normal = normalize(f_in.normal);
 #if defined(MATERIAL_NORMAL_TEXTURE) && defined(VERTEX_TANGENT)
-    mat3 tbn = mat3(normalize(f_tangent), normalize(f_bitangent), normal);
+    mat3 tbn = mat3(normalize(f_in.tangent), normalize(f_in.bitangent), normal);
     vec3 ts_normal = get_material_normal();
     normal = normalize(tbn * ts_normal);
 #endif
@@ -39,8 +39,8 @@ void main(void)
 
 #if defined(LIGHTING) && defined(VERTEX_NORMAL)
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
-    vec3 pos = f_position;
-    vec3 view_dir = normalize(-f_position);
+    vec3 pos = f_in.position;
+    vec3 view_dir = normalize(-f_in.position);
     float roughness = get_material_roughness();
     roughness = roughness * roughness;
     float metallic = get_material_metallic();
@@ -51,7 +51,7 @@ void main(void)
     {
         color.rgb += calc_point_light(
             lights.point[i],
-            f_position,
+            f_in.position,
             surface_color.rgb,
             view_dir,
             normal,
@@ -82,7 +82,7 @@ void main(void)
     {
         color.rgb += calc_spotlight(
             lights.spot[i],
-            f_position,
+            f_in.position,
             surface_color.rgb,
             view_dir,
             normal,
