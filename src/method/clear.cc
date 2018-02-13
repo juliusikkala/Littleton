@@ -14,6 +14,7 @@ void method::clear::execute()
 {
     target_method::execute();
 
+    glStencilMask(0xFF);
     glClearColor(color.r, color.g, color.b, color.a);
     glClearDepth(depth);
     glClearStencil(stencil);

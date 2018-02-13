@@ -61,6 +61,19 @@ doublebuffer::target::~target()
     if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
 
+void doublebuffer::target::set_depth_stencil(texture* depth_stencil)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_STENCIL_ATTACHMENT,
+        depth_stencil->get_target(),
+        depth_stencil->get_texture(),
+        0
+    );
+    reinstate_current_fbo();
+}
+
 doublebuffer::target& doublebuffer::input(unsigned index)
 {
     return targets[index^cur_index];
@@ -79,6 +92,16 @@ texture& doublebuffer::output(unsigned index)
 const texture& doublebuffer::output(unsigned index) const
 {
     return buffers[1-(index^cur_index)];
+}
+
+void doublebuffer::set_depth_stencil(texture* depth_stencil)
+{
+    set_depth_stencil(0, depth_stencil);
+}
+
+void doublebuffer::set_depth_stencil(unsigned index, texture* depth_stencil)
+{
+    return targets[index^cur_index].set_depth_stencil(depth_stencil);
 }
 
 void doublebuffer::swap()

@@ -33,6 +33,7 @@ void method::tonemap::execute()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
 
     tonemap_shader->bind();
     tonemap_shader->set<float>("exposure", exposure);

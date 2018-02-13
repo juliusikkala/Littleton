@@ -5,15 +5,13 @@
 #include "pipeline.hh"
 #include "framebuffer.hh"
 #include "method/clear.hh"
-#include "method/fullscreen_effect.hh"
 #include "method/forward_pass.hh"
 #include "method/geometry_pass.hh"
 #include "method/lighting_pass.hh"
 #include "method/blit_framebuffer.hh"
 #include "method/visualize_gbuffer.hh"
-#include "method/gamma.hh"
-#include "method/kernel.hh"
 #include "method/tonemap.hh"
+#include "method/sky.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -35,14 +33,16 @@ struct deferred_data
       clear_screen(screen.input(0)),
       gp(buf, shaders, main_scene),
       lp(screen.input(0), buf, shaders, main_scene),
+      sky(screen.input(0), shaders, main_scene),
       tm(screen.input(1), screen.output(1), shaders),
       screen_to_window(w, screen.input(1), method::blit_framebuffer::COLOR_ONLY)
     {
+        screen.set_depth_stencil(0, &buf.get_depth_stencil());
     }
 
     const std::vector<pipeline_method*> get_methods()
     {
-        return {&clear_buf, &clear_screen, &gp, &lp, &tm, &screen_to_window};
+        return {&clear_buf, &clear_screen, &gp, &lp, &sky, &tm, &screen_to_window};
     }
 
     doublebuffer screen;
@@ -52,6 +52,7 @@ struct deferred_data
     method::clear clear_screen;
     method::geometry_pass gp;
     method::lighting_pass lp;
+    method::sky sky;
     method::tonemap tm;
     method::blit_framebuffer screen_to_window;
 };
@@ -99,6 +100,7 @@ struct forward_data
       postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       clear_screen(screen),
       fp(screen, shaders, main_scene),
+      sky(screen, shaders, main_scene),
       tm(postprocess.input(0), color_buffer, shaders),
       postprocess_to_window(
         w,
@@ -109,7 +111,7 @@ struct forward_data
 
     const std::vector<pipeline_method*> get_methods()
     {
-        return {&clear_screen, &fp, &tm, &postprocess_to_window};
+        return {&clear_screen, &fp, &sky, &tm, &postprocess_to_window};
     }
 
     texture color_buffer;
@@ -118,6 +120,7 @@ struct forward_data
 
     method::clear clear_screen;
     method::forward_pass fp;
+    method::sky sky;
     method::tonemap tm;
     method::blit_framebuffer postprocess_to_window;
 };
@@ -188,7 +191,7 @@ int main(int argc, char** argv)
     pipeline* pipelines[] = {&dp, &vp, &fp};
 
     bool running = true;
-    unsigned pipeline_index = 0;
+    unsigned pipeline_index = 2;
     bool paused = false;
     float time = 0;
     float pitch = 0, yaw = 0;

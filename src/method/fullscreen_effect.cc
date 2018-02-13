@@ -18,6 +18,7 @@ void method::fullscreen_effect::execute()
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
     effect->bind();
 
     int i = 0;

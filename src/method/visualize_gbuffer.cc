@@ -93,6 +93,7 @@ void method::visualize_gbuffer::execute()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
 
     camera* cam = scene->get_camera();
     if(!cam) return;

@@ -56,6 +56,7 @@ void method::kernel::execute()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
 
     kernel_shader->bind();
     kernel_shader->set("kernel", k);

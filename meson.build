@@ -39,6 +39,7 @@ src = [
   'src/method/gamma.cc',
   'src/method/kernel.cc',
   'src/method/tonemap.cc',
+  'src/method/sky.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

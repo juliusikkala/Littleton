@@ -32,6 +32,7 @@ void method::lighting_pass::execute()
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
+    glDisable(GL_STENCIL_TEST);
 
     camera* cam = scene->get_camera();
     if(!cam) return;

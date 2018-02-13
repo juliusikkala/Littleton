@@ -23,6 +23,8 @@ public:
         target(context& ctx, texture& tex);
         target(target&& other);
         ~target();
+
+        void set_depth_stencil(texture* depth_stencil);
     };
 
     target& input(unsigned index = 0);
@@ -30,6 +32,9 @@ public:
 
     texture& output(unsigned index = 0);
     const texture& output(unsigned index = 0) const;
+
+    void set_depth_stencil(texture* depth_stencil);
+    void set_depth_stencil(unsigned index, texture* depth_stencil);
 
     void swap();
 

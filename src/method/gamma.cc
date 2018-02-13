@@ -30,6 +30,7 @@ void method::gamma::execute()
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
+    glDisable(GL_STENCIL_TEST);
 
     gamma_shader->bind();
     gamma_shader->set("gamma", 1.0f/g);
