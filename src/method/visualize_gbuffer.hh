@@ -8,7 +8,7 @@
 
 namespace method
 {
-    class visualize_gbuffer: public pipeline_method
+    class visualize_gbuffer: public target_method
     {
     public:
         visualize_gbuffer(

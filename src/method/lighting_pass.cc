@@ -5,7 +5,7 @@ method::lighting_pass::lighting_pass(
     gbuffer& buf,
     shader_store& store,
     render_scene* scene
-): pipeline_method(target), buf(&buf),
+): target_method(target), buf(&buf),
    lighting_shader(store.get(shader::path{"lighting.vert", "lighting.frag"})),
    scene(scene),
    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
@@ -23,6 +23,8 @@ render_scene* method::lighting_pass::get_scene() const
 
 void method::lighting_pass::execute()
 {
+    target_method::execute();
+
     if(!lighting_shader || !scene)
         return;
 

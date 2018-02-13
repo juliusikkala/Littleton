@@ -28,7 +28,7 @@ method::kernel::kernel(
     texture& src,
     shader_store& store,
     const glm::mat3& k
-): pipeline_method(target), src(&src),
+): target_method(target), src(&src),
    kernel_shader(
         store.get(shader::path{"fullscreen.vert", "kernel.frag"}, {})
    ),
@@ -49,6 +49,8 @@ glm::mat3 method::kernel::get_kernel() const
 
 void method::kernel::execute()
 {
+    target_method::execute();
+
     if(!kernel_shader || !src) return;
 
     glDisable(GL_DEPTH_TEST);

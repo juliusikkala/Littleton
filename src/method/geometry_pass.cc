@@ -6,7 +6,7 @@ method::geometry_pass::geometry_pass(
     gbuffer& buf,
     shader_store& store,
     render_scene* scene
-): pipeline_method(buf),
+): target_method(buf),
    geometry_shader(store.get(shader::path{"generic.vert", "geometry.frag"})),
    scene(scene) {}
 
@@ -22,6 +22,7 @@ render_scene* method::geometry_pass::get_scene() const
 
 void method::geometry_pass::execute()
 {
+    target_method::execute();
     if(!geometry_shader || !scene)
         return;
 

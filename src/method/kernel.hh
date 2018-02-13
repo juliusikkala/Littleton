@@ -7,7 +7,7 @@
 
 namespace method
 {
-    class kernel: public pipeline_method
+    class kernel: public target_method
     {
     public:
         static const glm::mat3 SHARPEN;

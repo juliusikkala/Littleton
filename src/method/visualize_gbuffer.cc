@@ -5,7 +5,7 @@ method::visualize_gbuffer::visualize_gbuffer(
     gbuffer& buf,
     shader_store& store,
     render_scene* scene
-): pipeline_method(target), buf(&buf),
+): target_method(target), buf(&buf),
    visualize_shader(store.get(
         shader::path{"fullscreen.vert", "visualize.frag"}
    )),
@@ -86,6 +86,8 @@ static void render_visualizer(
 
 void method::visualize_gbuffer::execute()
 {
+    target_method::execute();
+
     if(!visualize_shader || visualizers.size() == 0 || !scene) return;
 
     glDisable(GL_DEPTH_TEST);

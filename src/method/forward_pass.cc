@@ -6,7 +6,7 @@ method::forward_pass::forward_pass(
     render_target& target,
     shader_store& store,
     render_scene* scene
-): pipeline_method(target),
+): target_method(target),
    forward_shader(store.get(shader::path{"generic.vert", "forward.frag"})),
    scene(scene) {}
 
@@ -86,6 +86,8 @@ static std::unique_ptr<uniform_block> create_light_block(
 
 void method::forward_pass::execute()
 {
+    target_method::execute();
+
     if(!forward_shader || !scene)
         return;
 

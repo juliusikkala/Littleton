@@ -5,7 +5,7 @@ method::tonemap::tonemap(
     texture& src,
     shader_store& store,
     float exposure
-): pipeline_method(target), src(&src),
+): target_method(target), src(&src),
    tonemap_shader(
         store.get(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
    ),
@@ -26,6 +26,8 @@ float method::tonemap::get_exposure() const
 
 void method::tonemap::execute()
 {
+    target_method::execute();
+
     if(!tonemap_shader || !src) return;
 
     glDisable(GL_DEPTH_TEST);

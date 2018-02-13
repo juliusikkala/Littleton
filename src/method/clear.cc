@@ -6,12 +6,14 @@ method::clear::clear(
     glm::vec4 color,
     double depth,
     int stencil
-): pipeline_method(target), color(color), depth(depth), stencil(stencil) {}
+): target_method(target), color(color), depth(depth), stencil(stencil) {}
 
 method::clear::~clear(){}
 
 void method::clear::execute()
 {
+    target_method::execute();
+
     glClearColor(color.r, color.g, color.b, color.a);
     glClearDepth(depth);
     glClearStencil(stencil);

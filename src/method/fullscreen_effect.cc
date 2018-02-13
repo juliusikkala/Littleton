@@ -5,13 +5,15 @@ method::fullscreen_effect::fullscreen_effect(
     render_target& target,
     shader* effect,
     std::map<std::string, texture*>&& textures
-): pipeline_method(target), effect(effect), textures(std::move(textures)),
+): target_method(target), effect(effect), textures(std::move(textures)),
    fullscreen_quad(vertex_buffer::create_square(target.get_context())){}
 
 method::fullscreen_effect::~fullscreen_effect() { }
 
 void method::fullscreen_effect::execute()
 {
+    target_method::execute();
+
     if(!effect) return;
 
     glDisable(GL_DEPTH_TEST);

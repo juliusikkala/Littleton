@@ -7,7 +7,7 @@
 
 namespace method
 {
-    class gamma: public pipeline_method
+    class gamma: public target_method
     {
     public:
         gamma(

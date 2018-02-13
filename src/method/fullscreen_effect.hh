@@ -11,7 +11,7 @@ namespace method
 {
     // Assumes the vertex shader is data/shaders/fullscreen.vert
     // Textures will be passed by their map key as the uniform name.
-    class fullscreen_effect: public pipeline_method
+    class fullscreen_effect: public target_method
     {
     public:
         fullscreen_effect(

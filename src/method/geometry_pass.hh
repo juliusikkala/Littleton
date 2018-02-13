@@ -7,7 +7,7 @@
 
 namespace method
 {
-    class geometry_pass: public pipeline_method
+    class geometry_pass: public target_method
     {
     public:
         geometry_pass(

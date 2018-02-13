@@ -7,7 +7,7 @@
 
 namespace method
 {
-    class tonemap: public pipeline_method
+    class tonemap: public target_method
     {
     public:
         tonemap(

@@ -6,7 +6,7 @@
 
 namespace method
 {
-    class forward_pass: public pipeline_method
+    class forward_pass: public target_method
     {
     public:
         forward_pass(

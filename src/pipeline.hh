@@ -7,18 +7,27 @@
 class pipeline_method
 {
 public:
-    pipeline_method(render_target& target);
     virtual ~pipeline_method();
+
+    virtual void execute() = 0;
+};
+
+class target_method: public pipeline_method
+{
+public:
+    target_method(render_target& target);
 
     void set_target(render_target& target);
     render_target& get_target();
 
-    virtual void execute() = 0;
+    // Call this from the deriving method with target_method::execute().
+    // You can also bind the target yourself if you want to.
+    virtual void execute();
 private:
     render_target* target;
 };
 
-class pipeline
+class pipeline: public pipeline_method
 {
 public:
     pipeline(const std::vector<pipeline_method*>& methods);

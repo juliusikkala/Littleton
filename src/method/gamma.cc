@@ -5,7 +5,7 @@ method::gamma::gamma(
     texture& src,
     shader_store& store,
     float g
-): pipeline_method(target), src(&src), g(g),
+): target_method(target), src(&src), g(g),
    gamma_shader(store.get(shader::path{"fullscreen.vert", "gamma.frag"}, {})),
    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
 {
@@ -23,6 +23,8 @@ float method::gamma::get_gamma() const
 
 void method::gamma::execute()
 {
+    target_method::execute();
+
     if(!gamma_shader || !src) return;
 
     glDisable(GL_DEPTH_TEST);

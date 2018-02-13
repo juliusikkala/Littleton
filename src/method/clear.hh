@@ -5,7 +5,7 @@
 
 namespace method
 {
-    class clear: public pipeline_method
+    class clear: public target_method
     {
     public:
         clear(

@@ -8,7 +8,7 @@
 
 namespace method
 {
-    class lighting_pass: public pipeline_method
+    class lighting_pass: public target_method
     {
     public:
         lighting_pass(

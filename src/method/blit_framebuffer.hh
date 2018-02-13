@@ -6,7 +6,7 @@
 
 namespace method
 {
-    class blit_framebuffer: public pipeline_method
+    class blit_framebuffer: public target_method
     {
     public:
         enum blit_type

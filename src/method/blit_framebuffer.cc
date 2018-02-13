@@ -4,7 +4,7 @@ method::blit_framebuffer::blit_framebuffer(
     render_target& dst,
     render_target& src,
     blit_type type
-): pipeline_method(dst), src(&src), type(type) {}
+): target_method(dst), src(&src), type(type) {}
 
 void method::blit_framebuffer::set_blit_type(blit_type type)
 {
@@ -18,6 +18,8 @@ void method::blit_framebuffer::set_src(render_target& src)
 
 void method::blit_framebuffer::execute()
 {
+    target_method::execute();
+
     render_target& dst = get_target();
 
     src->bind(GL_READ_FRAMEBUFFER);
