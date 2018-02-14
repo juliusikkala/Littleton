@@ -154,6 +154,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClCompile Include="src\method\geometry_pass.cc" />
     <ClCompile Include="src\method\kernel.cc" />
     <ClCompile Include="src\method\lighting_pass.cc" />
+    <ClCompile Include="src\method\sky.cc" />
     <ClCompile Include="src\method\tonemap.cc" />
     <ClCompile Include="src\method\visualize_gbuffer.cc" />
     <ClCompile Include="src\model.cc" />
@@ -190,6 +191,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClInclude Include="src\method\geometry_pass.hh" />
     <ClInclude Include="src\method\kernel.hh" />
     <ClInclude Include="src\method\lighting_pass.hh" />
+    <ClInclude Include="src\method\sky.hh" />
     <ClInclude Include="src\method\tonemap.hh" />
     <ClInclude Include="src\method\visualize_gbuffer.hh" />
     <ClInclude Include="src\model.hh" />
@@ -206,6 +208,12 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClInclude Include="src\uniform.hh" />
     <ClInclude Include="src\vertex_buffer.hh" />
     <ClInclude Include="src\window.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\helpers.tcc" />
+    <None Include="src\resources.tcc" />
+    <None Include="src\shader.tcc" />
+    <None Include="src\uniform.tcc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

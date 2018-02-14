@@ -1,5 +1,6 @@
 #include "sky.hh"
 #include "texture.hh"
+#include <glm/gtc/constants.hpp>
 
 method::sky::sky(
     render_target& target,
@@ -76,7 +77,7 @@ void method::sky::set_conditions(
         glm::dvec3(4)
     );
 
-    rayleigh_coef = (8*pow(M_PI, 3)*pow(pow(ior, 2)-1, 2))/(3*N*wavelengths);
+    rayleigh_coef = (8*pow(glm::pi<double>(), 3)*pow(pow(ior, 2)-1, 2))/(3*N*wavelengths);
     this->rayleigh_scale_height = rayleigh_scale_height;
     this->mie_scale_height = mie_anisotropy;
     this->mie_coef = mie_coef;
