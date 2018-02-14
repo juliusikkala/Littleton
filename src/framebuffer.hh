@@ -12,7 +12,14 @@ public:
         context& ctx,
         glm::uvec2 size,
         std::vector<texture*>&& targets = {},
-        GLenum depth_stencil_format = GL_DEPTH24_STENCIL8
+        GLenum depth_stencil_format = 0
+    );
+
+    framebuffer(
+        context& ctx,
+        glm::uvec2 size,
+        std::vector<texture*>&& targets,
+        texture* depth_stencil_target
     );
     framebuffer(framebuffer&& f);
     ~framebuffer();
@@ -20,13 +27,15 @@ public:
     void set_target(texture* target, unsigned index = 0);
     void remove_target(unsigned index = 0);
 
-    void update_targets();
+    void set_depth_target(texture* target);
+    void remove_depth_target();
 
     void bind(GLenum target) override;
 
 private:
-    std::vector<texture*> targets;
-    GLuint depth_stencil;
+    std::vector<texture*> color_targets;
+    texture* depth_stencil_target;
+    GLuint depth_stencil_rbo;
 };
 
 #endif

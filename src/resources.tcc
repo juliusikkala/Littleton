@@ -102,6 +102,14 @@ T* resource_store::add(const std::string& name, T&& res)
 }
 
 template<typename T>
+bool resource_store::contains(const std::string& name) const
+{
+    auto& m = resources[typeid(T)];
+    auto it = m.find(name);
+    return it != m.end();
+}
+
+template<typename T>
 void resource_store::remove(const std::string& name)
 {
     resources[typeid(T)].erase(name);

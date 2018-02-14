@@ -33,7 +33,7 @@ struct deferred_data
       clear_screen(screen.input(0)),
       gp(buf, shaders, main_scene),
       lp(screen.input(0), buf, shaders, main_scene),
-      sky(screen.input(0), shaders, main_scene),
+      sky(screen.input(0), shaders, main_scene, &buf.get_depth_stencil()),
       tm(screen.input(1), screen.output(1), shaders),
       screen_to_window(w, screen.input(1), method::blit_framebuffer::COLOR_ONLY)
     {
@@ -96,11 +96,19 @@ struct forward_data
         shader_store& shaders,
         render_scene* main_scene
     ):color_buffer(w, resolution.x, resolution.y, GL_RGB, GL_RGB16F, GL_FLOAT),
-      screen(w, resolution, {&color_buffer}, GL_DEPTH24_STENCIL8),
+      depth_buffer(
+        w,
+        resolution.x,
+        resolution.y,
+        GL_DEPTH_STENCIL,
+        GL_DEPTH24_STENCIL8,
+        GL_UNSIGNED_INT_24_8
+      ),
+      screen(w, resolution, {&color_buffer}, &depth_buffer),
       postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       clear_screen(screen),
       fp(screen, shaders, main_scene),
-      sky(screen, shaders, main_scene),
+      sky(screen, shaders, main_scene, &depth_buffer),
       tm(postprocess.input(0), color_buffer, shaders),
       postprocess_to_window(
         w,
@@ -115,6 +123,7 @@ struct forward_data
     }
 
     texture color_buffer;
+    texture depth_buffer;
     framebuffer screen;
     doublebuffer postprocess;
 
@@ -151,10 +160,14 @@ int main(int argc, char** argv)
     w.grab_mouse();
     resource_store resources(w);
     resources.add_dfo("data/test_scene.dfo", "data");
+    resources.add_dfo("data/earth.dfo", "data");
 
     shader_store shaders(w, {"data/shaders/"});
 
     object* suzanne = resources.get<object>("Suzanne");
+    object* earth = resources.get<object>("Earth");
+    earth->set_position(glm::vec3(0, 2, -6));
+    earth->scale(2);
 
     camera cam;
     cam.perspective(90, w.get_aspect(), 0.1, 20);
@@ -175,18 +188,26 @@ int main(int argc, char** argv)
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
+    directional_light sun(glm::vec3(1,1,1)*2.0f);
+
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
     main_scene.add_light(&l1);
     main_scene.add_light(&l2);
     main_scene.add_light(&parrasvalo);
+    main_scene.add_light(&sun);
 
     glm::uvec2 render_resolution = w.get_size();
 
     deferred_pipeline dp(w, render_resolution, shaders, &main_scene);
     visualizer_pipeline vp(w, render_resolution, shaders, &main_scene);
     forward_pipeline fp(w, render_resolution, shaders, &main_scene);
+
+    dp.sky.set_parent(earth);
+    dp.sky.set_radius(2, 0.1);
+    fp.sky.set_parent(earth);
+    fp.sky.set_radius(2, 0.1);
 
     pipeline* pipelines[] = {&dp, &vp, &fp};
 
@@ -248,6 +269,7 @@ int main(int argc, char** argv)
             l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
             parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
             parrasvalo.set_cutoff_angle(sin(time)*45+45);
+            earth->rotate(w.get_delta()*60, glm::vec3(0,1,0));
         }
 
         pipelines[pipeline_index]->execute();

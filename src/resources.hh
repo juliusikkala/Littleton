@@ -121,9 +121,13 @@ public:
     template<typename T>
     T* add(const std::string& name, T&& res);
 
+    template<typename T>
+    bool contains(const std::string& name) const;
+
     void add_dfo(
         const std::string& path,
-        const std::string& data_prefix = ""
+        const std::string& data_prefix = "",
+        bool ignore_duplicates = true
     );
 
     // Unsafe, deletes the pointer to the resource.

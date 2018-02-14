@@ -76,7 +76,7 @@ static void render_visualizer(
         throw std::runtime_error("Unknown visualizer type");
     }
     s->bind();
-    s->set("in_depth_stencil", 0);
+    s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
     s->set("in_material", 3);

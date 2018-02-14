@@ -153,7 +153,8 @@ static GLint dfo_extension_to_gl(dfo_extension_type extension)
 
 void resource_store::add_dfo(
     const std::string& dfo_path,
-    const std::string& data_prefix
+    const std::string& data_prefix,
+    bool ignore_duplicates
 ){
     std::shared_ptr<dfo_file_wrapper> res(new dfo_file_wrapper(dfo_path));
 
@@ -177,8 +178,10 @@ void resource_store::add_dfo(
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
+        if(ignore_duplicates && contains<texture>(tex->name)) continue;
+
         textures[tex] = add<texture>(
-            tex->path,
+            tex->name,
             texture::create(
                 *ctx,
                 data_prefix.empty() ? 
@@ -199,6 +202,8 @@ void resource_store::add_dfo(
     for(uint32_t i = 0; i < file->material_count; ++i)
     {
         dfo_material* mat = file->material_table[i];
+        if(ignore_duplicates && contains<material>(mat->name)) continue;
+
         material* m = new material;
 
         if(mat->metallic_type == DFO_COMPONENT_CONSTANT)
@@ -245,6 +250,7 @@ void resource_store::add_dfo(
     for(uint32_t i = 0; i < file->model_count; ++i)
     {
         dfo_model* mod = file->model_table[i];
+
         model* m = new model;
         for(uint32_t j = 0; j < mod->group_count; ++j)
         {
@@ -263,10 +269,12 @@ void resource_store::add_dfo(
     for(uint32_t i = 0; i < file->object_count; ++i)
     {
         dfo_object* obj = file->object_table[i];
+
         object* o = new object;
         if(obj->parent) o->set_parent(objects.at(obj->parent));
         if(obj->model) o->set_model(models.at(obj->model));
         o->set_transform(glm::make_mat4(obj->transform));
+
         objects[obj] = add<object>(obj->name, o);
     }
 }

@@ -1,27 +1,12 @@
 #include "constants.glsl"
-uniform sampler2D in_depth_stencil;
-uniform sampler2D in_color_emission;
-uniform sampler2D in_normal;
-uniform sampler2D in_material;
-
-uniform vec4 perspective_data;
 
 in vec2 uv;
 
-float get_depth()
-{
-    return texture(in_depth_stencil, uv).x;
-}
+#include "depth.glsl"
 
-vec3 decode_position()
-{
-    float depth = texture(in_depth_stencil, uv).x * 2.0f - 1.0f;
-    float n = perspective_data.z;
-    float f = perspective_data.w;
-    // Linearize depth
-    depth = 2.0f * n * f / (n + f - depth * (f - n));
-    return vec3((0.5f-uv)*perspective_data.xy*depth, depth);
-}
+uniform sampler2D in_color_emission;
+uniform sampler2D in_normal;
+uniform sampler2D in_material;
 
 vec3 decode_normal()
 {

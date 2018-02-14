@@ -66,7 +66,7 @@ void method::lighting_pass::execute()
     shader* pls = lighting_shader->get(point_light_definitions);
     pls->bind();
 
-    pls->set("in_depth_stencil", 0);
+    pls->set("in_depth", 0);
     pls->set("in_color_emission", 1);
     pls->set("in_normal", 2);
     pls->set("in_material", 3);
@@ -87,7 +87,7 @@ void method::lighting_pass::execute()
     shader* sls = lighting_shader->get(spotlight_definitions);
     sls->bind();
 
-    sls->set("in_depth_stencil", 0);
+    sls->set("in_depth", 0);
     sls->set("in_color_emission", 1);
     sls->set("in_normal", 2);
     sls->set("in_material", 3);
@@ -122,17 +122,15 @@ void method::lighting_pass::execute()
     shader* dls = lighting_shader->get(directional_light_definitions);
     dls->bind();
 
-    dls->set("in_depth_stencil", 0);
+    dls->set("in_depth", 0);
     dls->set("in_color_emission", 1);
     dls->set("in_normal", 2);
     dls->set("in_material", 3);
+    dls->set("perspective_data", perspective_data);
 
     for(directional_light* l: scene->get_directional_lights())
     {
-        dls->set(
-            "light.color",
-            l->get_color()
-        );
+        dls->set("light.color", l->get_color());
         dls->set(
             "light.direction",
             glm::normalize(glm::vec3(v * glm::vec4(l->get_direction(), 0)))
