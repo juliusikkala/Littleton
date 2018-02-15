@@ -1,5 +1,6 @@
 #include "helpers.hh"
 #include <cstdio>
+#include <cmath>
 #include <stdexcept>
 
 std::string read_text_file(const std::string& path)
@@ -129,4 +130,34 @@ glm::quat quat_lookat(
     );
 
     return glm::normalize(fix_up * towards);
+}
+
+bool solve_quadratic(float a, float b, float c, float& x0, float& x1)
+{
+    float D = b * b - 4 * a * c;
+    float sD = sqrt(D) * sign(a);
+    float denom = -0.5f/a;
+    x0 = (b + sD) * denom;
+    x1 = (b - sD) * denom;
+    return !std::isnan(sD);
+}
+
+bool intersect_sphere(
+    glm::vec3 pos,
+    glm::vec3 dir,
+    glm::vec3 origin,
+    float radius,
+    float& t0,
+    float& t1
+){
+    glm::vec3 L = pos - origin;
+    float a = glm::dot(dir, dir);
+    float b = 2*glm::dot(dir, L);
+    float c = glm::dot(L, L) - radius * radius;
+
+    if(!solve_quadratic(a, b, c, t0, t1)) return false;
+    if(t1 < 0) return false;
+    if(t0 < 0) t0 = 0;
+
+    return true;
 }

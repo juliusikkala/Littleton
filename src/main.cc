@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 
     object* suzanne = resources.get<object>("Suzanne");
     object* earth = resources.get<object>("Earth");
-    earth->set_position(glm::vec3(0, 2, -6));
+    earth->set_position(glm::vec3(0, 2, -4));
     earth->scale(2);
 
     camera cam;
@@ -188,8 +188,8 @@ int main(int argc, char** argv)
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
-    directional_light sun(glm::vec3(1,1,1)*1.0f);
-    sun.set_direction(glm::normalize(glm::vec3(1,-1,0)));
+    directional_light sun(glm::vec3(1,1,1)*2.0f);
+    directional_light fake_sun;
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
     main_scene.add_light(&l1);
     main_scene.add_light(&l2);
     main_scene.add_light(&parrasvalo);
-    main_scene.add_light(&sun);
+    main_scene.add_light(&fake_sun);
 
     glm::uvec2 render_resolution = w.get_size();
 
@@ -205,16 +205,12 @@ int main(int argc, char** argv)
     visualizer_pipeline vp(w, render_resolution, shaders, &main_scene);
     forward_pipeline fp(w, render_resolution, shaders, &main_scene);
 
-    /*dp.sky.set_parent(earth);
-    dp.sky.set_radius(2, 0.1);
     dp.sky.set_sun(&sun);
+    dp.sky.set_intensity(5);
+    fp.sky.set_sun(&sun);
+    fp.sky.set_scaling(1/6.3781e6);
+    fp.sky.set_intensity(2);
     fp.sky.set_parent(earth);
-    fp.sky.set_radius(2, 0.1);
-    fp.sky.set_sun(&sun);
-    fp.sky.set_conditions(1e9, 284);
-    fp.sky.set_scale_height(0.05, 0.05 * (1.2/8.5));*/
-    dp.sky.set_sun(&sun);
-    fp.sky.set_sun(&sun);
 
     pipeline* pipelines[] = {&dp, &vp, &fp};
 
@@ -279,6 +275,11 @@ int main(int argc, char** argv)
             earth->rotate(w.get_delta()*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
+        //dp.sky.set_conditions(101325, 285);
+        fake_sun.set_color(
+            dp.sky.get_attenuated_sun_color(cam.get_global_position())
+        );
+        fake_sun.set_direction(sun.get_direction());
 
         pipelines[pipeline_index]->execute();
 

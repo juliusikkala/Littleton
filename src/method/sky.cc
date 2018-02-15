@@ -26,6 +26,8 @@ method::sky::sky(
    sun(sun)
 {
     set_parent(&defaults.parent);
+    set_samples();
+    set_intensity();
     set_radius();
     set_conditions();
     set_scale_height();
@@ -51,9 +53,68 @@ void method::sky::set_origin(glm::vec3 origin)
     origin_node.set_position(origin);
 }
 
+void method::sky::set_scaling(float scale)
+{
+    origin_node.set_scaling(glm::vec3(scale));
+}
+
+void method::sky::set_samples(unsigned view_samples, unsigned light_samples)
+{
+    this->view_samples = view_samples;
+    this->light_samples = light_samples;
+}
+
+void method::sky::set_intensity(float intensity)
+{
+    this->intensity = intensity;
+}
+
 void method::sky::set_sun(directional_light* sun)
 {
     this->sun = sun;
+}
+
+glm::vec3 method::sky::get_attenuated_sun_color(glm::vec3 pos)
+{
+    if(!sun) return glm::vec3(0);
+
+    glm::vec3 dir = glm::normalize(-sun->get_direction());
+    glm::vec3 origin = origin_node.get_global_position();
+    float t0, t1;
+    float scale = origin_node.get_global_scaling().x;
+    if(!intersect_sphere(
+        pos,
+        dir,
+        origin,
+        scale*(ground_radius + atmosphere_height),
+        t0,
+        t1
+    )) return glm::vec3(0);
+
+    glm::vec3 x0 = pos + t0 * dir;
+    float segment_length = (t1 - t0) / view_samples;
+    glm::vec3 segment = dir * segment_length;
+    glm::vec3 x = x0 + segment * 0.5f;
+
+    float r_optical_depth = 0;
+    float m_optical_depth = 0;
+
+    for(unsigned i = 0; i < view_samples; ++i)
+    {
+        float h = glm::distance(x, origin) - ground_radius*scale;
+        float r_h = exp(-h / (rayleigh_scale_height*scale)) * segment_length;
+        float m_h = exp(-h / (mie_scale_height*scale)) * segment_length;
+        r_optical_depth += r_h;
+        m_optical_depth += m_h;
+
+        x += segment;
+    }
+
+    glm::vec3 T = rayleigh_coef * r_optical_depth / scale +
+             glm::vec3(mie_coef * 1.1f * m_optical_depth / scale);
+    glm::vec3 attenuation = glm::exp(-T);
+
+    return attenuation * sun->get_color();
 }
 
 void method::sky::set_radius(double ground_radius, double atmosphere_height)
@@ -135,25 +196,28 @@ void method::sky::execute()
         far
     );
 
+    // Can't scale this non-uniformly.
+    float scale = origin_node.get_global_scaling().x;
+
     shader* s = sky_shader->get({
-        {"VIEW_SAMPLES", "16"},
-        {"LIGHT_SAMPLES", "3"}
+        {"VIEW_SAMPLES", std::to_string(view_samples)},
+        {"LIGHT_SAMPLES", std::to_string(light_samples)}
     });
 
     s->bind();
-    s->set("rayleigh_coef", rayleigh_coef);
-    s->set<float>("inv_rayleigh_scale_height", 1/rayleigh_scale_height);
-    s->set<float>("inv_mie_scale_height", 1/mie_scale_height);
-    s->set<float>("mie_coef", mie_coef);
+    s->set("rayleigh_coef", rayleigh_coef/scale);
+    s->set<float>("inv_rayleigh_scale_height", 1/(rayleigh_scale_height*scale));
+    s->set<float>("inv_mie_scale_height", 1/(mie_scale_height*scale));
+    s->set<float>("mie_coef", mie_coef/scale);
     s->set<float>("mie_anisotropy", mie_anisotropy);
-    s->set<float>("ground_radius", ground_radius);
+    s->set<float>("ground_radius", scale * ground_radius);
     s->set<float>(
         "atmosphere_radius2",
-        pow(ground_radius + atmosphere_height, 2)
+        pow(scale*(ground_radius + atmosphere_height), 2)
     );
     s->set("in_depth", depth_buffer->bind());
     s->set("sun_direction", -sun_direction);
-    s->set("sun_color", sun_color);
+    s->set("sun_color", intensity * sun_color);
     s->set("ip", glm::inverse(p));
     s->set("origin", origin);
     s->set("perspective_data", perspective_data);

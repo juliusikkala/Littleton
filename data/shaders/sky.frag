@@ -4,8 +4,6 @@
 in vec3 pos;
 in vec2 uv;
 
-uniform sampler2D in_color;
-
 #include "depth.glsl"
 out vec4 out_color;
 
@@ -60,7 +58,6 @@ bool intersect_sphere(
 vec4 sky_color(vec3 view_dir, float t0, float t1)
 {
     vec3 x0 = t0 * view_dir;
-    vec3 x1 = t1 * view_dir;
     float segment_length = (t1 - t0) / VIEW_SAMPLES;
     vec3 segment = view_dir * segment_length;
     vec3 x = x0 + segment * 0.5f;
@@ -102,25 +99,25 @@ vec4 sky_color(vec3 view_dir, float t0, float t1)
         for(j = 0; j < LIGHT_SAMPLES; ++j)
         {
             float lh = distance(lx, origin) - ground_radius;
-            lr_optical_depth += exp(-lh * inv_rayleigh_scale_height) * light_segment_length;
-            lm_optical_depth += exp(-lh * inv_mie_scale_height) * light_segment_length;
+            lr_optical_depth += exp(-lh * inv_rayleigh_scale_height);
+            lm_optical_depth += exp(-lh * inv_mie_scale_height);
             lx += light_segment;
         }
-        vec3 T = rayleigh_coef * (r_optical_depth + lr_optical_depth) +
-                 mie_coef * 1.1f * (m_optical_depth + lm_optical_depth);
+        vec3 T = rayleigh_coef * (r_optical_depth + lr_optical_depth * light_segment_length) +
+                 mie_coef * 1.1f * (m_optical_depth + lm_optical_depth * light_segment_length);
         vec3 attenuation = exp(-T);
         r_sum += attenuation * r_h;
         m_sum += attenuation * m_h;
 
         x += segment;
     }
-    vec3 color = (r_sum * rayleigh_coef * r_phase + m_sum * mie_coef * m_phase) * sun_color * 10;
+    vec3 color = (r_sum * rayleigh_coef * r_phase + m_sum * mie_coef * m_phase) * sun_color;
 
-    vec3 T = rayleigh_coef * (r_optical_depth) +
+    float T = rayleigh_coef.g * (r_optical_depth) +
              mie_coef * 1.1f * (m_optical_depth);
-    vec3 attenuation = exp(-T);
+    float attenuation = exp(-T);
 
-    return vec4(color, 1-attenuation.r);
+    return vec4(color, 1-attenuation);
 }
 
 void main(void)

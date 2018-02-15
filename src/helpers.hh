@@ -38,6 +38,19 @@ glm::quat quat_lookat(
     glm::vec3 forward = glm::vec3(0,0,-1)
 );
 
+#define sign(x) ((x > 0) - (x < 0))
+
+bool solve_quadratic(float a, float b, float c, float& x0, float& x1);
+
+bool intersect_sphere(
+    glm::vec3 pos,
+    glm::vec3 dir,
+    glm::vec3 origin,
+    float radius,
+    float& t0,
+    float& t1
+);
+
 #include "helpers.tcc"
 
 #endif

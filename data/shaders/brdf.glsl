@@ -35,7 +35,7 @@ vec3 brdf(
     float cos_l = max(dot(normal, light_dir), 0.0f);
     float cos_v = max(dot(normal, view_dir), 0.0f);
     float cos_h = max(dot(normal, h), 0.0f);
-    float cos_d = max(dot(view_dir, h), 0.0f);
+    float cos_d = clamp(dot(view_dir, h), 0.0f, 1.0f);
 
     vec3 radiance = light_color;
     vec3 f0_m = mix(vec3(f0), surface_color, metallic);
@@ -52,4 +52,5 @@ vec3 brdf(
     vec3 kd = (vec3(1.0f) - fresnel) * (1.0f - metallic);
 
     return (kd * surface_color + specular * PI) * radiance * cos_l;
+    //return (1-pow(1.0f - cos_d, 5.0f)) * radiance * cos_l;
 }

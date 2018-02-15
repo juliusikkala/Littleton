@@ -7,7 +7,7 @@
 #include "material.glsl"
 #include "light_types.glsl"
 
-#ifdef LIGHTING
+#if defined(LIGHTING) && (POINT_LIGHT_COUNT > 0 || DIRECTIONAL_LIGHT_COUNT > 0 || SPOTLIGHT_COUNT > 0)
 uniform Lights
 {
 #if POINT_LIGHT_COUNT > 0

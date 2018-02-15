@@ -23,6 +23,14 @@ namespace method
 
         void set_parent(transformable_node* parent = nullptr);
         void set_origin(glm::vec3 origin = glm::vec3(0));
+        void set_scaling(float scale);
+        void set_samples(
+            unsigned view_samples = 12,
+            unsigned light_samples = 4
+        );
+        void set_intensity(float intensity = 10);
+
+        glm::vec3 get_attenuated_sun_color(glm::vec3 pos = glm::vec3(0));
 
         void set_sun(directional_light* sun = nullptr);
 
@@ -59,6 +67,8 @@ namespace method
         vertex_buffer fullscreen_quad;
 
         transformable_node origin_node;
+        unsigned view_samples, light_samples;
+        float intensity;
         double ground_radius, atmosphere_height;
         double rayleigh_scale_height, mie_scale_height;
         glm::vec3 rayleigh_coef;
