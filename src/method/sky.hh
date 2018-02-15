@@ -41,10 +41,13 @@ namespace method
             double pressure,
             double temperature,
             double ior,
-            double rayleigh_scale_height = 8.5e3,
-            double mie_scale_height = 1.2e3,
-            double mie_coef = 210e-5,
+            double mie_coef = 21e-6,
             double mie_anisotropy = 0.76
+        );
+
+        void set_scale_height(
+            double rayleigh_scale_height = 8.5e3,
+            double mie_scale_height = 1.2e3
         );
 
         void execute() override;

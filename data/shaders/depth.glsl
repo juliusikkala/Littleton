@@ -11,6 +11,9 @@ float get_linear_depth()
     float depth = texture(in_depth, uv).x * 2.0f - 1.0f;
     float n = perspective_data.z;
     float f = perspective_data.w;
+
+    if(depth == 1.0f) return -INF;
+
     // Linearize depth
     depth = 2.0f * n * f / (n + f - depth * (f - n));
     return depth;

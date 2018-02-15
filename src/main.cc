@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     earth->scale(2);
 
     camera cam;
-    cam.perspective(90, w.get_aspect(), 0.1, 20);
+    cam.perspective(90, w.get_aspect(), 0.001, 10);
 
     cam.translate(glm::vec3(0.0,2.0,1.0));
     cam.lookat(suzanne);
@@ -188,7 +188,8 @@ int main(int argc, char** argv)
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
-    directional_light sun(glm::vec3(1,1,1)*2.0f);
+    directional_light sun(glm::vec3(1,1,1)*1.0f);
+    sun.set_direction(glm::normalize(glm::vec3(1,-1,0)));
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
@@ -204,10 +205,16 @@ int main(int argc, char** argv)
     visualizer_pipeline vp(w, render_resolution, shaders, &main_scene);
     forward_pipeline fp(w, render_resolution, shaders, &main_scene);
 
-    dp.sky.set_parent(earth);
+    /*dp.sky.set_parent(earth);
     dp.sky.set_radius(2, 0.1);
+    dp.sky.set_sun(&sun);
     fp.sky.set_parent(earth);
     fp.sky.set_radius(2, 0.1);
+    fp.sky.set_sun(&sun);
+    fp.sky.set_conditions(1e9, 284);
+    fp.sky.set_scale_height(0.05, 0.05 * (1.2/8.5));*/
+    dp.sky.set_sun(&sun);
+    fp.sky.set_sun(&sun);
 
     pipeline* pipelines[] = {&dp, &vp, &fp};
 
@@ -270,6 +277,7 @@ int main(int argc, char** argv)
             parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
             parrasvalo.set_cutoff_angle(sin(time)*45+45);
             earth->rotate(w.get_delta()*60, glm::vec3(0,1,0));
+            sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
 
         pipelines[pipeline_index]->execute();
