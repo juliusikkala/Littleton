@@ -8,8 +8,8 @@ doublebuffer::doublebuffer(
     GLenum type
 ): glresource(ctx), cur_index(0),
    buffers{
-    texture(ctx, size.x, size.y, external_format, internal_format, type),
-    texture(ctx, size.x, size.y, external_format, internal_format, type)
+    texture(ctx, size, external_format, internal_format, type),
+    texture(ctx, size, external_format, internal_format, type)
    },
    targets{target(ctx, buffers[0]), target(ctx, buffers[1])}
 {

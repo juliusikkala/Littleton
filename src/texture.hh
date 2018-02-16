@@ -25,8 +25,7 @@ public:
 
     texture(
         context& ctx,
-        unsigned w,
-        unsigned h,
+        glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type
@@ -52,8 +51,7 @@ public:
 
     static texture* create(
         context& ctx,
-        unsigned w,
-        unsigned h,
+        glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type
@@ -71,8 +69,7 @@ protected:
         GLenum target
     ) const;
     void basic_load(
-        unsigned w,
-        unsigned h,
+        glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type,

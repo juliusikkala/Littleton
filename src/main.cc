@@ -95,11 +95,10 @@ struct forward_data
         glm::uvec2 resolution,
         shader_store& shaders,
         render_scene* main_scene
-    ):color_buffer(w, resolution.x, resolution.y, GL_RGB, GL_RGB16F, GL_FLOAT),
+    ):color_buffer(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       depth_buffer(
         w,
-        resolution.x,
-        resolution.y,
+        resolution,
         GL_DEPTH_STENCIL,
         GL_DEPTH24_STENCIL8,
         GL_UNSIGNED_INT_24_8
@@ -166,37 +165,36 @@ int main(int argc, char** argv)
 
     object* suzanne = resources.get<object>("Suzanne");
     object* earth = resources.get<object>("Earth");
-    earth->set_position(glm::vec3(0, 2, -4));
+    earth->set_position(glm::vec3(0, 2, -6));
     earth->scale(2);
 
     camera cam;
-    cam.perspective(90, w.get_aspect(), 0.001, 10);
-
     cam.translate(glm::vec3(0.0,2.0,1.0));
     cam.lookat(suzanne);
     render_scene main_scene(&cam);
 
-    for(
+    /*for(
         auto it = resources.begin<object>();
         it != resources.end<object>();
         ++it
     ){
         object* o = *it;
         if(o->get_model()) main_scene.add_object(o);
-    }
+    }*/
+    main_scene.add_object(earth);
 
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
-    directional_light sun(glm::vec3(1,1,1)*2.0f);
+    directional_light sun(glm::vec3(1,1,1)*5.0f);
     directional_light fake_sun;
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-    main_scene.add_light(&l1);
+    /*main_scene.add_light(&l1);
     main_scene.add_light(&l2);
-    main_scene.add_light(&parrasvalo);
+    main_scene.add_light(&parrasvalo);*/
     main_scene.add_light(&fake_sun);
 
     glm::uvec2 render_resolution = w.get_size();
@@ -208,8 +206,10 @@ int main(int argc, char** argv)
     dp.sky.set_sun(&sun);
     dp.sky.set_intensity(5);
     fp.sky.set_sun(&sun);
-    fp.sky.set_scaling(1/6.3781e6);
-    fp.sky.set_intensity(2);
+    fp.sky.set_scaling(4/6.3781e6);
+    fp.sky.set_radius(6.3781e6/4);
+    fp.sky.set_samples(12,3);
+    fp.sky.set_intensity(1);
     fp.sky.set_parent(earth);
 
     pipeline* pipelines[] = {&dp, &vp, &fp};
@@ -275,10 +275,16 @@ int main(int argc, char** argv)
             earth->rotate(w.get_delta()*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
-        //dp.sky.set_conditions(101325, 285);
-        fake_sun.set_color(
-            dp.sky.get_attenuated_sun_color(cam.get_global_position())
-        );
+        if(pipeline_index == 0)
+        {
+            fake_sun.set_color(
+                dp.sky.get_attenuated_sun_color(cam.get_global_position())
+            );
+        }
+        else
+        {
+            fake_sun.set_color(sun.get_color());
+        }
         fake_sun.set_direction(sun.get_direction());
 
         pipelines[pipeline_index]->execute();

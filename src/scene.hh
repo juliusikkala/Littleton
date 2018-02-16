@@ -3,6 +3,7 @@
 #include "resources.hh"
 #include "object.hh"
 #include "light.hh"
+#include "shadow_map.hh"
 #include "camera.hh"
 #include <set>
 #include <unordered_map>
@@ -83,7 +84,37 @@ private:
     std::set<directional_light*> directional_lights;
 };
 
-class render_scene: public camera_scene, public object_scene, public light_scene
+class shadow_scene
+{
+public:
+    shadow_scene(
+        std::set<directional_shadow_map*> directional_shadow_maps = {}
+    );
+    ~shadow_scene();
+
+    void add_shadow_map(directional_shadow_map* dsm);
+    void remove_shadow_map(directional_shadow_map* dsm);
+
+    void clear_shadow_maps();
+    void clear_directional_shadow_maps();
+
+    size_t shadow_map_count() const;
+    size_t directional_shadow_map_count() const;
+
+    void set_directional_shadow_maps(
+        const std::set<directional_shadow_map*>& directional_shadow_maps
+    );
+
+    const std::set<directional_shadow_map*>&
+    get_directional_shadow_maps() const;
+
+private:
+    std::set<directional_shadow_map*> directional_shadow_maps;
+};
+
+class render_scene
+: public camera_scene, public object_scene, public light_scene,
+  public shadow_scene
 {
 public:
     render_scene(camera* cam);

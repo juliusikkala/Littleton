@@ -161,5 +161,55 @@ const std::set<directional_light*>& light_scene::get_directional_lights() const
     return directional_lights;
 }
 
+shadow_scene::shadow_scene(
+    std::set<directional_shadow_map*> directional_shadow_maps
+): directional_shadow_maps(std::move(directional_shadow_maps))
+{
+}
+
+shadow_scene::~shadow_scene() {}
+
+void shadow_scene::add_shadow_map(directional_shadow_map* dsm)
+{
+    directional_shadow_maps.insert(dsm);
+}
+
+void shadow_scene::remove_shadow_map(directional_shadow_map* dsm)
+{
+    directional_shadow_maps.erase(dsm);
+}
+
+void shadow_scene::clear_shadow_maps()
+{
+    clear_directional_shadow_maps();
+}
+
+void shadow_scene::clear_directional_shadow_maps()
+{
+    directional_shadow_maps.clear();
+}
+
+size_t shadow_scene::shadow_map_count() const
+{
+    return directional_shadow_map_count();
+}
+
+size_t shadow_scene::directional_shadow_map_count() const
+{
+    return this->directional_shadow_maps.size();
+}
+
+void shadow_scene::set_directional_shadow_maps(
+    const std::set<directional_shadow_map*>& directional_shadow_maps
+){
+    this->directional_shadow_maps = directional_shadow_maps;
+}
+
+const std::set<directional_shadow_map*>&
+shadow_scene::get_directional_shadow_maps() const
+{
+    return directional_shadow_maps;
+}
+
 render_scene::render_scene(camera* cam)
 : camera_scene(cam) {}

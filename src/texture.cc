@@ -151,15 +151,14 @@ texture::texture(
 
 texture::texture(
     context& ctx,
-    unsigned w,
-    unsigned h,
+    glm::uvec2 size,
     GLenum external_format,
     GLint internal_format,
     GLenum type
 ): glresource(ctx), tex(0), internal_format(internal_format),
    external_format(external_format), target(GL_TEXTURE_2D), type(type)
 {
-    basic_load(w, h, external_format, internal_format, type, target);
+    basic_load(size, external_format, internal_format, type, target);
 }
 
 texture::texture(texture&& other)
@@ -268,13 +267,12 @@ class empty_texture: public texture
 public:
     empty_texture(
         context& ctx,
-        unsigned w,
-        unsigned h,
+        glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type,
         GLenum target
-    ): texture(ctx), w(w), h(h)
+    ): texture(ctx), size(size)
     {
         this->external_format = external_format;
         this->internal_format = internal_format;
@@ -284,7 +282,7 @@ public:
 
     void load() const override
     {
-        basic_load(w, h, external_format, internal_format, type, target);
+        basic_load(size, external_format, internal_format, type, target);
     }
 
     void unload() const override
@@ -293,19 +291,18 @@ public:
     }
 
 private:
-    unsigned w, h;
+    glm::uvec2 size;
 };
 
 texture* texture::create(
     context& ctx,
-    unsigned w,
-    unsigned h,
+    glm::uvec2 size,
     GLenum external_format,
     GLint internal_format,
     GLenum type
 ){
     return new empty_texture(
-        ctx, w, h, external_format, internal_format, type, GL_TEXTURE_2D
+        ctx, size, external_format, internal_format, type, GL_TEXTURE_2D
     );
 }
 
@@ -335,8 +332,7 @@ void texture::basic_load(
 }
 
 void texture::basic_load(
-    unsigned w,
-    unsigned h,
+    glm::uvec2 size,
     GLenum external_format,
     GLint internal_format,
     GLenum type,
@@ -350,8 +346,8 @@ void texture::basic_load(
         target,
         0,
         internal_format,
-        w,
-        h,
+        size.x,
+        size.y,
         0,
         external_format,
         type,
@@ -370,7 +366,7 @@ void texture::basic_load(
     this->internal_format = internal_format;
     this->type = type;
     this->target = target;
-    this->size = glm::uvec2(w, h);
+    this->size = size;
 }
 
 void texture::basic_unload() const

@@ -29,6 +29,7 @@ src = [
   'src/gbuffer.cc',
   'src/shader_store.cc',
   'src/doublebuffer.cc',
+  'src/shadow_map.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',
@@ -40,6 +41,7 @@ src = [
   'src/method/kernel.cc',
   'src/method/tonemap.cc',
   'src/method/sky.cc',
+  'src/method/render_shadow_maps.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])
