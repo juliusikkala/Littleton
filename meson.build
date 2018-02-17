@@ -42,6 +42,7 @@ src = [
   'src/method/tonemap.cc',
   'src/method/sky.cc',
   'src/method/render_shadow_maps.cc',
+  'src/method/draw_texture.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

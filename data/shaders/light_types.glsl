@@ -83,10 +83,10 @@ vec3 calc_spotlight(
     float dist = length(dir);
     dir/=dist;
 
-    float cutoff = dot(dir, -l.direction);
+    float cutoff = dot(dir, normalize(-l.direction));
     cutoff = cutoff > l.cutoff ?
-        1-pow(1-(cutoff-l.cutoff)/(1-l.cutoff), l.exponent) :
-        0;
+        1.0f-pow((1.0f-cutoff)/(1.0f-l.cutoff), l.exponent) :
+        0.0f;
 
     return brdf(
         l.color*cutoff/(dist*dist),

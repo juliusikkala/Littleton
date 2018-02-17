@@ -1,11 +1,16 @@
 #include "shadow_map.hh"
+#include "helpers.hh"
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 directional_shadow_map::directional_shadow_map(
     context& ctx,
     glm::uvec2 size,
-    glm::vec3 position,
+    glm::vec3 offset,
+    glm::vec2 area,
+    glm::vec2 depth_range,
     directional_light* light
-): render_target(ctx, size), position(position), light(light),
+): render_target(ctx, size), up(0,1,0), light(light),
    depth(ctx, size, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT)
 {
     glGenFramebuffers(1, &fbo);
@@ -26,10 +31,14 @@ directional_shadow_map::directional_shadow_map(
         throw std::runtime_error("Shadow map is incomplete!");
 
     reinstate_current_fbo();
+
+    set_volume(area, depth_range);
+    target.set_position(offset);
 }
 
 directional_shadow_map::directional_shadow_map(directional_shadow_map&& other)
-: render_target(other), position(other.position), light(other.light),
+: render_target(other), target(other.target), up(other.up),
+  projection(other.projection), light(other.light),
   depth(std::move(other.depth))
 {
     other.fbo = 0;
@@ -40,20 +49,54 @@ directional_shadow_map::~directional_shadow_map()
     if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
 
-void directional_shadow_map::set_position(glm::vec3 position)
+void directional_shadow_map::set_parent(transformable_node* parent)
 {
-    this->position = position;
+    target.set_parent(parent);
 }
 
-glm::vec3 directional_shadow_map::get_position() const
+void directional_shadow_map::set_offset(glm::vec3 offset)
 {
-    return position;
+    target.set_position(offset);
 }
 
-void directional_shadow_map::set_target(glm::vec3 target_pos, float distance)
+glm::vec3 directional_shadow_map::get_offset() const
 {
-    if(!light) return;
-    this->position = target_pos - distance * light->get_direction();
+    return target.get_position();
+}
+
+void directional_shadow_map::set_volume(
+    glm::vec2 area,
+    glm::vec2 depth_range
+){
+    projection = glm::ortho(
+        -area.x/2,
+        area.x/2,
+        -area.y/2,
+        area.y/2,
+        depth_range.x,
+        depth_range.y
+    );
+}
+
+void directional_shadow_map::set_up_axis(glm::vec3 up)
+{
+    this->up = up;
+}
+
+glm::mat4 directional_shadow_map::get_view() const
+{
+    if(!light) return glm::mat4(0);
+
+    glm::mat4 translation = glm::translate(-target.get_global_position());
+    glm::mat4 rotation = glm::mat4(
+        glm::inverse(quat_lookat(light->get_direction(), up))
+    );
+    return rotation * translation;
+}
+
+glm::mat4 directional_shadow_map::get_projection() const
+{
+    return projection;
 }
 
 void directional_shadow_map::set_light(directional_light* light)

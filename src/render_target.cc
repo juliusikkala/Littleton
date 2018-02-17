@@ -37,7 +37,6 @@ void render_target::bind(GLenum target)
     default:
         throw std::runtime_error("Unknown render_target bind target");
     }
-    // Is this really necessary?
     glViewport(0, 0, size.x, size.y);
 }
 

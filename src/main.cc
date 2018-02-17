@@ -12,6 +12,8 @@
 #include "method/visualize_gbuffer.hh"
 #include "method/tonemap.hh"
 #include "method/sky.hh"
+#include "method/render_shadow_maps.hh"
+#include "method/draw_texture.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -29,6 +31,7 @@ struct deferred_data
         render_scene* main_scene
     ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
+      sm(shaders, main_scene),
       clear_buf(buf),
       clear_screen(screen.input(0)),
       gp(buf, shaders, main_scene),
@@ -42,12 +45,22 @@ struct deferred_data
 
     const std::vector<pipeline_method*> get_methods()
     {
-        return {&clear_buf, &clear_screen, &gp, &lp, &sky, &tm, &screen_to_window};
+        return {
+            &sm,
+            &clear_buf,
+            &clear_screen,
+            &gp,
+            &lp,
+            &sky,
+            &tm,
+            &screen_to_window
+        };
     }
 
     doublebuffer screen;
     gbuffer buf;
 
+    method::render_shadow_maps sm;
     method::clear clear_buf;
     method::clear clear_screen;
     method::geometry_pass gp;
@@ -105,6 +118,7 @@ struct forward_data
       ),
       screen(w, resolution, {&color_buffer}, &depth_buffer),
       postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+      sm(shaders, main_scene),
       clear_screen(screen),
       fp(screen, shaders, main_scene),
       sky(screen, shaders, main_scene, &depth_buffer),
@@ -118,7 +132,7 @@ struct forward_data
 
     const std::vector<pipeline_method*> get_methods()
     {
-        return {&clear_screen, &fp, &sky, &tm, &postprocess_to_window};
+        return {&sm, &clear_screen, &fp, &sky, &tm, &postprocess_to_window};
     }
 
     texture color_buffer;
@@ -126,6 +140,7 @@ struct forward_data
     framebuffer screen;
     doublebuffer postprocess;
 
+    method::render_shadow_maps sm;
     method::clear clear_screen;
     method::forward_pass fp;
     method::sky sky;
@@ -173,29 +188,38 @@ int main(int argc, char** argv)
     cam.lookat(suzanne);
     render_scene main_scene(&cam);
 
-    /*for(
+    for(
         auto it = resources.begin<object>();
         it != resources.end<object>();
         ++it
     ){
         object* o = *it;
         if(o->get_model()) main_scene.add_object(o);
-    }*/
-    main_scene.add_object(earth);
+    }
 
     point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
     point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
     directional_light sun(glm::vec3(1,1,1)*5.0f);
     directional_light fake_sun;
+    directional_shadow_map sun_shadow(
+        w,
+        glm::uvec2(1024, 1024),
+        glm::vec3(0),
+        glm::vec2(7.0f),
+        glm::vec2(-5.0f, 5.0f),
+        &fake_sun
+    );
+    sun_shadow.set_parent(suzanne);
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-    /*main_scene.add_light(&l1);
+    main_scene.add_light(&l1);
     main_scene.add_light(&l2);
-    main_scene.add_light(&parrasvalo);*/
+    main_scene.add_light(&parrasvalo);
     main_scene.add_light(&fake_sun);
+    main_scene.add_shadow_map(&sun_shadow);
 
     glm::uvec2 render_resolution = w.get_size();
 

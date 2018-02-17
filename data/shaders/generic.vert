@@ -5,7 +5,10 @@
 
 uniform mat4 mvp;
 uniform mat4 m;
+
+#ifdef VERTEX_NORMAL
 uniform mat3 n_m;
+#endif
 
 void main(void)
 {
