@@ -1,7 +1,7 @@
 /* This shader is meant to be used with generic.vert. It is suitable for
  * deferred rendering geometry pass, and supports materials.
  */
-#version 330 core
+#version 400 core
 
 #include "deferred_output.glsl"
 

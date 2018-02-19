@@ -51,6 +51,8 @@ bool intersect_sphere(
     float& t1
 );
 
+unsigned next_power_of_two(unsigned n);
+
 #include "helpers.tcc"
 
 #endif

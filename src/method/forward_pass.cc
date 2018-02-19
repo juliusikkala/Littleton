@@ -22,6 +22,19 @@ static std::unique_ptr<uniform_block> create_light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
 
+    light_block->set<int>(
+        "point_light_count",
+        scene->get_point_lights().size()
+    );
+    light_block->set<int>(
+        "directional_light_count",
+        scene->get_directional_lights().size()
+    );
+    light_block->set<int>(
+        "spotlight_count",
+        scene->get_spotlights().size()
+    );
+
     unsigned i = 0;
     for(point_light* l: scene->get_point_lights())
     {
@@ -108,10 +121,18 @@ void method::forward_pass::execute()
     std::unique_ptr<uniform_block> light_block;
     shader::definition_map scene_definitions({
         {"LIGHTING", ""},
-        {"POINT_LIGHT_COUNT", std::to_string(scene->point_light_count())},
-        {"DIRECTIONAL_LIGHT_COUNT",
-         std::to_string(scene->directional_light_count())},
-        {"SPOTLIGHT_COUNT", std::to_string(scene->spotlight_count())}
+        {
+            "MAX_POINT_LIGHT_COUNT",
+            std::to_string(next_power_of_two(scene->point_light_count()))
+        },
+        {
+            "MAX_DIRECTIONAL_LIGHT_COUNT",
+            std::to_string(next_power_of_two(scene->directional_light_count()))
+        },
+        {
+            "MAX_SPOTLIGHT_COUNT",
+            std::to_string(next_power_of_two(scene->spotlight_count()))
+        }
     });
 
     for(object* obj: scene->get_objects())

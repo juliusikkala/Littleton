@@ -1,23 +1,27 @@
 /* This shader is meant to be used with generic.vert. It is suitable for
  * forward rendering, and supports materials.
  */
-#version 330 core
+#version 400 core
 
 #include "generic_fragment_input.glsl"
 #include "material.glsl"
 #include "light_types.glsl"
 
-#if defined(LIGHTING) && (POINT_LIGHT_COUNT > 0 || DIRECTIONAL_LIGHT_COUNT > 0 || SPOTLIGHT_COUNT > 0)
+#if defined(LIGHTING) && (MAX_POINT_LIGHT_COUNT > 0 ||\
+    MAX_DIRECTIONAL_LIGHT_COUNT > 0 || MAX_SPOTLIGHT_COUNT > 0)
 uniform Lights
 {
-#if POINT_LIGHT_COUNT > 0
-    point_light point[POINT_LIGHT_COUNT];
+#if MAX_POINT_LIGHT_COUNT > 0
+    int point_light_count;
+    point_light point[MAX_POINT_LIGHT_COUNT];
 #endif
-#if DIRECTIONAL_LIGHT_COUNT > 0
-    directional_light directional[DIRECTIONAL_LIGHT_COUNT];
+#if MAX_DIRECTIONAL_LIGHT_COUNT > 0
+    int directional_light_count;
+    directional_light directional[MAX_DIRECTIONAL_LIGHT_COUNT];
 #endif
-#if SPOTLIGHT_COUNT > 0
-    spotlight spot[SPOTLIGHT_COUNT];
+#if MAX_SPOTLIGHT_COUNT > 0
+    int spotlight_count;
+    spotlight spot[MAX_SPOTLIGHT_COUNT];
 #endif
 } lights;
 #endif
@@ -46,8 +50,8 @@ void main(void)
     float metallic = get_material_metallic();
     float f0 = get_material_f0() / 2.0f;
 
-#if POINT_LIGHT_COUNT > 0
-    for(int i = 0; i < POINT_LIGHT_COUNT; ++i)
+#if MAX_POINT_LIGHT_COUNT > 0
+    for(int i = 0; i < lights.point_light_count; ++i)
     {
         color.rgb += calc_point_light(
             lights.point[i],
@@ -62,8 +66,8 @@ void main(void)
     }
 #endif
 
-#if DIRECTIONAL_LIGHT_COUNT > 0
-    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; ++i)
+#if MAX_DIRECTIONAL_LIGHT_COUNT > 0
+    for(int i = 0; i < lights.directional_light_count; ++i)
     {
         color.rgb += calc_directional_light(
             lights.directional[i],
@@ -77,8 +81,8 @@ void main(void)
     }
 #endif
 
-#if SPOTLIGHT_COUNT > 0
-    for(int i = 0; i < SPOTLIGHT_COUNT; ++i)
+#if MAX_SPOTLIGHT_COUNT > 0
+    for(int i = 0; i < lights.spotlight_count; ++i)
     {
         color.rgb += calc_spotlight(
             lights.spot[i],

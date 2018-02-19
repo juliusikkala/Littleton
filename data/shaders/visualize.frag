@@ -1,5 +1,5 @@
 /* This shader is for visualizing the G-Buffer. */
-#version 330 core
+#version 400 core
 #include "deferred_input.glsl"
 
 out vec4 out_color;

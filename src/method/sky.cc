@@ -19,7 +19,7 @@ method::sky::sky(
     texture* depth_buffer,
     directional_light* sun
 ): target_method(target),
-   sky_shader(store.get(shader::path{"sky.vert", "sky.frag"})),
+   sky_shader(store.get(shader::path{"sky.vert", "sky.frag"}, {})),
    scene(scene),
    depth_buffer(depth_buffer),
    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
@@ -199,27 +199,24 @@ void method::sky::execute()
     // Can't scale this non-uniformly.
     float scale = origin_node.get_global_scaling().x;
 
-    shader* s = sky_shader->get({
-        {"VIEW_SAMPLES", std::to_string(view_samples)},
-        {"LIGHT_SAMPLES", std::to_string(light_samples)}
-    });
-
-    s->bind();
-    s->set("rayleigh_coef", rayleigh_coef/scale);
-    s->set<float>("inv_rayleigh_scale_height", 1/(rayleigh_scale_height*scale));
-    s->set<float>("inv_mie_scale_height", 1/(mie_scale_height*scale));
-    s->set<float>("mie_coef", mie_coef/scale);
-    s->set<float>("mie_anisotropy", mie_anisotropy);
-    s->set<float>("ground_radius", scale * ground_radius);
-    s->set<float>(
+    sky_shader->bind();
+    sky_shader->set<int>("view_samples", view_samples);
+    sky_shader->set<int>("light_samples", light_samples);
+    sky_shader->set("rayleigh_coef", rayleigh_coef/scale);
+    sky_shader->set<float>("inv_rayleigh_scale_height", 1/(rayleigh_scale_height*scale));
+    sky_shader->set<float>("inv_mie_scale_height", 1/(mie_scale_height*scale));
+    sky_shader->set<float>("mie_coef", mie_coef/scale);
+    sky_shader->set<float>("mie_anisotropy", mie_anisotropy);
+    sky_shader->set<float>("ground_radius", scale * ground_radius);
+    sky_shader->set<float>(
         "atmosphere_radius2",
         pow(scale*(ground_radius + atmosphere_height), 2)
     );
-    s->set("in_depth", depth_buffer->bind());
-    s->set("sun_direction", -sun_direction);
-    s->set("sun_color", intensity * sun_color);
-    s->set("ip", glm::inverse(p));
-    s->set("origin", origin);
-    s->set("perspective_data", perspective_data);
+    sky_shader->set("in_depth", depth_buffer->bind());
+    sky_shader->set("sun_direction", -sun_direction);
+    sky_shader->set("sun_color", intensity * sun_color);
+    sky_shader->set("ip", glm::inverse(p));
+    sky_shader->set("origin", origin);
+    sky_shader->set("perspective_data", perspective_data);
     fullscreen_quad.draw();
 }

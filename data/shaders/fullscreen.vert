@@ -4,7 +4,7 @@
  * on every pixel. See vertex_buffer::create_fullscreen() for creating a
  * compatible vertex buffer.
  */
-#version 330 core
+#version 400 core
 
 layout(location = 0) in vec2 vertex;
 layout(location = 3) in vec2 v_uv;

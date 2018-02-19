@@ -25,8 +25,8 @@ namespace method
         void set_origin(glm::vec3 origin = glm::vec3(0));
         void set_scaling(float scale);
         void set_samples(
-            unsigned view_samples = 12,
-            unsigned light_samples = 4
+            unsigned view_samples = 10,
+            unsigned light_samples = 3
         );
         void set_intensity(float intensity = 10);
 
@@ -61,7 +61,7 @@ namespace method
         void execute() override;
 
     private:
-        multishader* sky_shader;
+        shader* sky_shader;
         render_scene* scene;
         texture* depth_buffer;
         vertex_buffer fullscreen_quad;

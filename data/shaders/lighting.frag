@@ -1,5 +1,5 @@
 /* This shader is meant to be used with lighting.vert. */
-#version 330 core
+#version 400 core
 
 #include "light_types.glsl"
 #include "deferred_input.glsl"

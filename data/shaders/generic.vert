@@ -1,5 +1,5 @@
 /* This is a generic vertex shader, passing the vertex data modified by mvp. */
-#version 330 core
+#version 400 core
 
 #include "generic_vertex_input.glsl"
 

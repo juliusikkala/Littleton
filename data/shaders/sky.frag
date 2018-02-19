@@ -1,4 +1,4 @@
-#version 330 core
+#version 400 core
 #include "constants.glsl"
 
 in vec3 pos;
@@ -48,11 +48,13 @@ bool intersect_sphere(
 }
 
 #ifndef VIEW_SAMPLES
-#define VIEW_SAMPLES 8
+uniform int view_samples;
+#define VIEW_SAMPLES view_samples
 #endif
 
 #ifndef LIGHT_SAMPLES
-#define LIGHT_SAMPLES 4
+uniform int light_samples;
+#define LIGHT_SAMPLES light_samples
 #endif
 
 vec4 sky_color(vec3 view_dir, float t0, float t1)

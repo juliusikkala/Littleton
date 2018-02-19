@@ -1,5 +1,5 @@
 /* This shader applies a filmic tonemapping algorithm to the image. */
-#version 330 core
+#version 400 core
 
 uniform sampler2D in_color;
 uniform float exposure;

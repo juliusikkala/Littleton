@@ -1,5 +1,5 @@
 /* This shader applies a kernel to the image. */
-#version 330 core
+#version 400 core
 
 uniform sampler2D in_color;
 uniform mat3 kernel;
