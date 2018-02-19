@@ -149,7 +149,7 @@ void method::lighting_pass::execute()
             dls->set("shadow.min_bias", bias.x);
             dls->set("shadow.max_bias", bias.y);
             dls->set(
-                "shadow.view_to_light",
+                "shadow.mvp",
                 lvp * glm::inverse(v)
             );
         }

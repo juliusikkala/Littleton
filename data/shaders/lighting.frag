@@ -64,10 +64,10 @@ void main(void)
     {
         lighting *= shadow_coef(
             shadow.map,
-            shadow.view_to_light * vec4(pos, 1.0f),
+            shadow.mvp * vec4(pos, 1.0f),
             get_shadow_bias(
                 normal,
-                light.direction,
+                -light.direction,
                 shadow.min_bias,
                 shadow.max_bias
             )

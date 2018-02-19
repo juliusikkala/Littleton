@@ -6,6 +6,7 @@
 #include "generic_fragment_input.glsl"
 #include "material.glsl"
 #include "light_types.glsl"
+#include "shadow.glsl"
 
 #if defined(LIGHTING)
 uniform Lights
@@ -23,6 +24,10 @@ uniform Lights
     spotlight spot[MAX_SPOTLIGHT_COUNT];
 #endif
 } lights;
+#endif
+
+#if MAX_SHADOW_MAP_COUNT > 0
+uniform shadow_map shadows[MAX_SHADOW_MAP_COUNT];
 #endif
 
 out vec4 out_color;
@@ -68,8 +73,9 @@ void main(void)
 #if MAX_DIRECTIONAL_LIGHT_COUNT > 0
     for(int i = 0; i < lights.directional_light_count; ++i)
     {
-        color.rgb += calc_directional_light(
-            lights.directional[i],
+        directional_light l = lights.directional[i];
+        vec3 c = calc_directional_light(
+            l,
             surface_color.rgb,
             view_dir,
             normal,
@@ -77,6 +83,24 @@ void main(void)
             f0,
             metallic
         );
+
+#if MAX_SHADOW_MAP_COUNT > 0
+        if(l.shadow_map_index >= 0)
+        {
+            c *= shadow_coef(
+                shadows[l.shadow_map_index].map,
+                f_in.shadow_pos[l.shadow_map_index],
+                get_shadow_bias(
+                    normal,
+                    -l.direction,
+                    shadows[l.shadow_map_index].min_bias,
+                    shadows[l.shadow_map_index].max_bias
+                )
+            );
+        }
+#endif
+
+        color.rgb += c;
     }
 #endif
 

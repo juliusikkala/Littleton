@@ -1,7 +1,7 @@
 struct shadow_map
 {
     sampler2DShadow map;
-    mat4 view_to_light;
+    mat4 mvp;
     float min_bias;
     float max_bias;
 };
@@ -16,7 +16,7 @@ float get_shadow_bias(
 }
 
 float shadow_coef(
-    sampler2DShadow shadow_map,
+    in sampler2DShadow shadow_map,
     vec4 light_space_pos,
     float bias
 ){
@@ -24,11 +24,5 @@ float shadow_coef(
     pos = pos * 0.5f + 0.5f;
     if(pos.z > 1.0f) return 1.0f;
 
-    /*
-    float light_depth = texture(shadow_map, pos.xy);
-    float frag_depth = pos.z;
-
-    return frag_depth - bias > light_depth ? 0.0f : 1.0f;
-    */
     return texture(shadow_map, vec3(pos.xy, pos.z-bias));
 }
