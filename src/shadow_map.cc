@@ -17,7 +17,7 @@ directional_shadow_map::directional_shadow_map(
        GL_DEPTH_COMPONENT,
        GL_DEPTH_COMPONENT,
        GL_FLOAT,
-       {false, GL_NEAREST, GL_CLAMP_TO_BORDER, 0, glm::vec4(1)}
+       texture::SHADOW_MAP_PARAMS
    )
 {
     glGenFramebuffers(1, &fbo);

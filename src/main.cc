@@ -114,7 +114,8 @@ struct forward_data
         resolution,
         GL_DEPTH_STENCIL,
         GL_DEPTH24_STENCIL8,
-        GL_UNSIGNED_INT_24_8
+        GL_UNSIGNED_INT_24_8,
+        texture::DEPTH_PARAMS
       ),
       screen(w, resolution, {&color_buffer}, &depth_buffer),
       postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
@@ -206,7 +207,7 @@ int main(int argc, char** argv)
         w,
         glm::uvec2(1024, 1024),
         glm::vec3(0),
-        glm::vec2(7.0f),
+        glm::vec2(8.0f),
         glm::vec2(-5.0f, 5.0f),
         &fake_sun
     );

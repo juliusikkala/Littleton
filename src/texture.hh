@@ -25,6 +25,9 @@ public:
         glm::vec4 border_color;
     };
 
+    static const params DEPTH_PARAMS;
+    static const params SHADOW_MAP_PARAMS;
+
     texture(
         context& ctx,
         const std::string& path,

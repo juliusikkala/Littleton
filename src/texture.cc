@@ -28,9 +28,26 @@ texture::params::params(
    anisotropy(anisotropy), border_color(border_color)
 {}
 
+const texture::params texture::DEPTH_PARAMS(
+    false,
+    GL_NEAREST,
+    GL_CLAMP_TO_BORDER,
+    0,
+    glm::vec4(1)
+);
+
+const texture::params texture::SHADOW_MAP_PARAMS(
+    false,
+    GL_LINEAR,
+    GL_CLAMP_TO_BORDER,
+    0,
+    glm::vec4(1)
+);
+
 static void apply_params(
     context& ctx,
     GLenum target,
+    GLenum& external_format,
     const texture::params& p,
     bool has_mipmaps = false
 ){
@@ -46,6 +63,15 @@ static void apply_params(
         GL_TEXTURE_MAG_FILTER,
         interpolation_without_mipmap(p.interpolation)
     );
+
+    if(external_format == GL_DEPTH_COMPONENT && p.interpolation == GL_LINEAR)
+    {
+        glTexParameteri(
+            target,
+            GL_TEXTURE_COMPARE_MODE,
+            GL_COMPARE_REF_TO_TEXTURE
+        );
+    }
 
     glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
@@ -160,7 +186,7 @@ static GLuint load_texture(
     );
     glGenerateMipmap(target);
 
-    apply_params(ctx, target, p, true);
+    apply_params(ctx, target, external_format, p, true);
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
@@ -394,7 +420,7 @@ void texture::basic_load(
         nullptr
     );
 
-    apply_params(get_context(), target, p);
+    apply_params(get_context(), target, external_format, p);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create empty texture");
