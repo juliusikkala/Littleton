@@ -108,6 +108,9 @@ public:
     const std::set<directional_shadow_map*>&
     get_directional_shadow_maps() const;
 
+    std::map<directional_light*, directional_shadow_map*>
+    get_directional_shadow_maps_by_light() const;
+
 private:
     std::set<directional_shadow_map*> directional_shadow_maps;
 };

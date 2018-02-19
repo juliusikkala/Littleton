@@ -120,6 +120,10 @@ void method::lighting_pass::execute()
 
     // Render directional lights
     shader* dls = lighting_shader->get(directional_light_definitions);
+
+    std::map<directional_light*, directional_shadow_map*>
+    directional_shadow_maps = scene->get_directional_shadow_maps_by_light();
+
     dls->bind();
 
     dls->set("in_depth", 0);
@@ -130,6 +134,29 @@ void method::lighting_pass::execute()
 
     for(directional_light* l: scene->get_directional_lights())
     {
+        auto shadow_it = directional_shadow_maps.find(l);
+        if(shadow_it != directional_shadow_maps.end())
+        {
+            directional_shadow_map* sm = shadow_it->second;
+            glm::mat4 lv = sm->get_view();
+            glm::mat4 lp = sm->get_projection();
+            glm::mat4 lvp = lp * lv;
+
+            glm::vec2 bias = sm->get_bias();
+
+            dls->set("light.shadow_map_index", 0);
+            dls->set("shadow.map", sm->get_depth().bind(4));
+            dls->set("shadow.min_bias", bias.x);
+            dls->set("shadow.max_bias", bias.y);
+            dls->set(
+                "shadow.view_to_light",
+                lvp * glm::inverse(v)
+            );
+        }
+        else
+        {
+            dls->set("light.shadow_map_index", -1);
+        }
         dls->set("light.color", l->get_color());
         dls->set(
             "light.direction",

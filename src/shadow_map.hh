@@ -32,6 +32,13 @@ public:
     void set_light(directional_light* light = nullptr);
     directional_light* get_light() const;
 
+    void set_bias(
+        float min_bias = 0.001,
+        float max_bias = 0.02
+    );
+
+    glm::vec2 get_bias() const;
+
     texture& get_depth();
     const texture& get_depth() const;
 
@@ -42,6 +49,7 @@ private:
 
     directional_light* light;
     texture depth;
+    float min_bias, max_bias;
 };
 
 #endif

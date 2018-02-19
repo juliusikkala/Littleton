@@ -7,20 +7,19 @@
 #include "material.glsl"
 #include "light_types.glsl"
 
-#if defined(LIGHTING) && (MAX_POINT_LIGHT_COUNT > 0 ||\
-    MAX_DIRECTIONAL_LIGHT_COUNT > 0 || MAX_SPOTLIGHT_COUNT > 0)
+#if defined(LIGHTING)
 uniform Lights
 {
-#if MAX_POINT_LIGHT_COUNT > 0
     int point_light_count;
+#if MAX_POINT_LIGHT_COUNT > 0
     point_light point[MAX_POINT_LIGHT_COUNT];
 #endif
-#if MAX_DIRECTIONAL_LIGHT_COUNT > 0
     int directional_light_count;
+#if MAX_DIRECTIONAL_LIGHT_COUNT > 0
     directional_light directional[MAX_DIRECTIONAL_LIGHT_COUNT];
 #endif
-#if MAX_SPOTLIGHT_COUNT > 0
     int spotlight_count;
+#if MAX_SPOTLIGHT_COUNT > 0
     spotlight spot[MAX_SPOTLIGHT_COUNT];
 #endif
 } lights;

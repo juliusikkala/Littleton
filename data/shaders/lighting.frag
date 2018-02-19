@@ -3,6 +3,7 @@
 
 #include "light_types.glsl"
 #include "deferred_input.glsl"
+#include "shadow.glsl"
 
 #ifdef POINT_LIGHT
 uniform point_light light;
@@ -13,6 +14,7 @@ uniform directional_light light;
 #endif
 
 out vec4 out_color;
+uniform shadow_map shadow;
 
 void main(void)
 {
@@ -57,6 +59,20 @@ void main(void)
         f0,
         metallic
     );
+
+    if(light.shadow_map_index == 0)
+    {
+        lighting *= shadow_coef(
+            shadow.map,
+            shadow.view_to_light * vec4(pos, 1.0f),
+            get_shadow_bias(
+                normal,
+                light.direction,
+                shadow.min_bias,
+                shadow.max_bias
+            )
+        );
+    }
 #endif
 
     out_color = vec4(lighting, 1.0f);

@@ -211,5 +211,16 @@ shadow_scene::get_directional_shadow_maps() const
     return directional_shadow_maps;
 }
 
+std::map<directional_light*, directional_shadow_map*>
+shadow_scene::get_directional_shadow_maps_by_light() const
+{
+    std::map<directional_light*, directional_shadow_map*> maps;
+    for(directional_shadow_map* dsm: directional_shadow_maps)
+    {
+        maps[dsm->get_light()] = dsm;
+    }
+    return maps;
+}
+
 render_scene::render_scene(camera* cam)
 : camera_scene(cam) {}

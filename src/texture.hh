@@ -10,16 +10,25 @@ class texture: public resource, public glresource
 public:
     struct params
     {
-        bool srgb = false;
-        GLint interpolation = GL_LINEAR_MIPMAP_LINEAR;
-        GLint extension = GL_REPEAT;
-        unsigned anisotropy = 16;
+        params(
+            bool srgb = false,
+            GLint interpolation = GL_LINEAR_MIPMAP_LINEAR,
+            GLint extension = GL_REPEAT,
+            unsigned anisotropy = 16,
+            glm::vec4 border_color = glm::vec4(0,0,0,0)
+        );
+
+        bool srgb;
+        GLint interpolation;
+        GLint extension;
+        unsigned anisotropy;
+        glm::vec4 border_color;
     };
 
     texture(
         context& ctx,
         const std::string& path,
-        const params& p,
+        const params& p = params(),
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -28,7 +37,8 @@ public:
         glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0)
     );
 
     texture(const texture& other) = delete;
@@ -45,7 +55,7 @@ public:
     static texture* create(
         context& ctx,
         const std::string& path,
-        const params& p,
+        const params& p = params(),
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -54,7 +64,8 @@ public:
         glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
-        GLenum type
+        GLenum type,
+        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0)
     );
 
     // Returns the index
@@ -73,6 +84,7 @@ protected:
         GLenum external_format,
         GLint internal_format,
         GLenum type,
+        const params& p,
         GLenum target
     ) const;
     void basic_unload() const;

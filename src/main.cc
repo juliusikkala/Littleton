@@ -211,6 +211,7 @@ int main(int argc, char** argv)
         &fake_sun
     );
     sun_shadow.set_parent(suzanne);
+    sun_shadow.set_bias(0.001, 0.02);
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));

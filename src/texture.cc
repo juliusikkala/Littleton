@@ -18,6 +18,59 @@ static GLint interpolation_without_mipmap(GLint interpolation)
     else return interpolation;
 }
 
+texture::params::params(
+    bool srgb,
+    GLint interpolation,
+    GLint extension,
+    unsigned anisotropy,
+    glm::vec4 border_color
+): srgb(srgb), interpolation(interpolation), extension(extension),
+   anisotropy(anisotropy), border_color(border_color)
+{}
+
+static void apply_params(
+    context& ctx,
+    GLenum target,
+    const texture::params& p,
+    bool has_mipmaps = false
+){
+    glTexParameteri(
+        target,
+        GL_TEXTURE_MIN_FILTER,
+        has_mipmaps ?
+            p.interpolation :
+            interpolation_without_mipmap(p.interpolation)
+    );
+    glTexParameteri(
+        target,
+        GL_TEXTURE_MAG_FILTER,
+        interpolation_without_mipmap(p.interpolation)
+    );
+
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
+
+    glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, (float*)&p.border_color);
+
+    if(p.anisotropy != 0 && GLEW_EXT_texture_filter_anisotropic)
+    {
+        unsigned max_anisotropy = ctx[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
+        glTexParameterf(
+            target,
+            GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            std::min(p.anisotropy, max_anisotropy)
+        );
+    }
+}
+
+static unsigned choose_alignment(unsigned line_bytes)
+{
+    if((line_bytes & 7) == 0) return 8;
+    if((line_bytes & 3) == 0) return 4;
+    if((line_bytes & 1) == 0) return 2;
+    return 1;
+}
+
 static GLuint load_texture(
     context& ctx,
     const std::string& path,
@@ -31,6 +84,8 @@ static GLuint load_texture(
     int w = 0, h = 0, n = 0;
     bool hdr = stbi_is_hdr(path.c_str());
     void* data = nullptr;
+
+    stbi_set_flip_vertically_on_load(1);
 
     if(hdr)
     {
@@ -96,6 +151,8 @@ static GLuint load_texture(
         w, h
     );
 
+    glPixelStorei(GL_UNPACK_ALIGNMENT, choose_alignment(w * n));
+
     glTexSubImage2D(
         target, 0, 0, 0, w, h,
         external_format, type,
@@ -103,29 +160,7 @@ static GLuint load_texture(
     );
     glGenerateMipmap(target);
 
-    glTexParameteri(
-        target,
-        GL_TEXTURE_MIN_FILTER,
-        p.interpolation
-    );
-    glTexParameteri(
-        target,
-        GL_TEXTURE_MAG_FILTER,
-        interpolation_without_mipmap(p.interpolation)
-    );
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
-
-
-    if(GLEW_EXT_texture_filter_anisotropic)
-    {
-        unsigned max_anisotropy = ctx[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
-        glTexParameterf(
-            target,
-            GL_TEXTURE_MAX_ANISOTROPY_EXT,
-            std::min(p.anisotropy, max_anisotropy)
-        );
-    }
+    apply_params(ctx, target, p, true);
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
@@ -154,11 +189,12 @@ texture::texture(
     glm::uvec2 size,
     GLenum external_format,
     GLint internal_format,
-    GLenum type
+    GLenum type,
+    const params& p
 ): glresource(ctx), tex(0), internal_format(internal_format),
    external_format(external_format), target(GL_TEXTURE_2D), type(type)
 {
-    basic_load(size, external_format, internal_format, type, target);
+    basic_load(size, external_format, internal_format, type, p, target);
 }
 
 texture::texture(texture&& other)
@@ -271,8 +307,9 @@ public:
         GLenum external_format,
         GLint internal_format,
         GLenum type,
+        const params& p,
         GLenum target
-    ): texture(ctx), size(size)
+    ): texture(ctx), p(p), size(size)
     {
         this->external_format = external_format;
         this->internal_format = internal_format;
@@ -282,7 +319,7 @@ public:
 
     void load() const override
     {
-        basic_load(size, external_format, internal_format, type, target);
+        basic_load(size, external_format, internal_format, type, p, target);
     }
 
     void unload() const override
@@ -291,6 +328,7 @@ public:
     }
 
 private:
+    params p;
     glm::uvec2 size;
 };
 
@@ -299,10 +337,11 @@ texture* texture::create(
     glm::uvec2 size,
     GLenum external_format,
     GLint internal_format,
-    GLenum type
+    GLenum type,
+    const params& p
 ){
     return new empty_texture(
-        ctx, size, external_format, internal_format, type, GL_TEXTURE_2D
+        ctx, size, external_format, internal_format, type, p, GL_TEXTURE_2D
     );
 }
 
@@ -336,6 +375,7 @@ void texture::basic_load(
     GLenum external_format,
     GLint internal_format,
     GLenum type,
+    const params& p,
     GLenum target
 ) const {
     if(tex) return;
@@ -354,10 +394,7 @@ void texture::basic_load(
         nullptr
     );
 
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    apply_params(get_context(), target, p);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create empty texture");
