@@ -3,7 +3,12 @@
 method::render_shadow_maps::render_shadow_maps(
     shader_store& store,
     render_scene* scene
-): depth_shader(store.get(shader::path{"generic.vert", "empty.frag"})),
+): depth_shader(
+       store.get(
+           shader::path{"generic.vert", "empty.frag"},
+           {{"VERTEX_POSITION", "0"}}
+       )
+   ),
    scene(scene)
 {}
 
@@ -25,6 +30,8 @@ void method::render_shadow_maps::execute()
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
+
+    depth_shader->bind();
 
     for(
         directional_shadow_map* shadow_map:
@@ -48,12 +55,7 @@ void method::render_shadow_maps::execute()
             {
                 if(!group.mesh) continue;
 
-                shader* ds = depth_shader->get({{
-                    "VERTEX_POSITION",
-                    group.mesh->get_definitions()["VERTEX_POSITION"]
-                }});
-                ds->bind();
-                ds->set("mvp", mvp);
+                depth_shader->set("mvp", mvp);
                 group.mesh->draw();
             }
         }

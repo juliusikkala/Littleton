@@ -11,7 +11,7 @@ struct material
 public:
     material();
 
-    shader::definition_map get_definitions() const;
+    void update_definitions(shader::definition_map& def) const;
     void apply(shader* s);
 
     std::variant<texture*, float> metallic;

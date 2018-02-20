@@ -3,45 +3,72 @@
 
 material::material(): ior(1.0) {}
 
-shader::definition_map material::get_definitions() const
+template<typename T>
+static void update_texture_variant_def(
+    shader::definition_map& def,
+    const T& v,
+    const char* constant_key,
+    const char* texture_key
+){
+    if(v.index() == 0)
+    {
+        def.erase(constant_key);
+        if(std::get<0>(v)) def[texture_key];
+        else def.erase(texture_key);
+    }
+    else
+    {
+        def.erase(texture_key);
+        def[constant_key];
+    }
+}
+
+void material::update_definitions(shader::definition_map& def) const
 {
-    shader::definition_map definitions;
+    update_texture_variant_def(
+        def,
+        metallic,
+        "MATERIAL_METALLIC_CONSTANT",
+        "MATERIAL_METALLIC_TEXTURE"
+    );
 
-    if(metallic.index() == 0)
-    {
-        if(std::get<0>(metallic)) definitions["MATERIAL_METALLIC_TEXTURE"];
-    } else definitions["MATERIAL_METALLIC_CONSTANT"];
+    update_texture_variant_def(
+        def,
+        color,
+        "MATERIAL_COLOR_CONSTANT",
+        "MATERIAL_COLOR_TEXTURE"
+    );
 
-    if(color.index() == 0)
-    {
-        if(std::get<0>(color)) definitions["MATERIAL_COLOR_TEXTURE"];
-    } else definitions["MATERIAL_COLOR_CONSTANT"];
+    update_texture_variant_def(
+        def,
+        roughness,
+        "MATERIAL_ROUGHNESS_CONSTANT",
+        "MATERIAL_ROUGHNESS_TEXTURE"
+    );
 
-    if(roughness.index() == 0)
-    {
-        if(std::get<0>(roughness)) definitions["MATERIAL_ROUGHNESS_TEXTURE"];
-    } else definitions["MATERIAL_ROUGHNESS_CONSTANT"];
+    if(normal) def["MATERIAL_NORMAL_TEXTURE"];
+    else def.erase("MATERIAL_NORMAL_TEXTURE");
 
-    if(normal) definitions["MATERIAL_NORMAL_TEXTURE"];
+    update_texture_variant_def(
+        def,
+        emission,
+        "MATERIAL_EMISSION_CONSTANT",
+        "MATERIAL_EMISSION_TEXTURE"
+    );
 
-    if(emission.index() == 0)
-    {
-        if(std::get<0>(emission)) definitions["MATERIAL_EMISSION_TEXTURE"];
-    } else definitions["MATERIAL_EMISSION_CONSTANT"];
+    update_texture_variant_def(
+        def,
+        subsurface_scattering,
+        "MATERIAL_SUBSURFACE_SCATTERING_CONSTANT",
+        "MATERIAL_SUBSURFACE_SCATTERING_TEXTURE"
+    );
 
-    if(subsurface_scattering.index() == 0)
-    {
-        if(std::get<0>(subsurface_scattering))
-            definitions["MATERIAL_SUBSURFACE_SCATTERING_TEXTURE"];
-    } else definitions["MATERIAL_SUBSURFACE_SCATTERING_CONSTANT"];
-
-    if(roughness.index() == 0)
-    {
-        if(std::get<0>(subsurface_depth))
-            definitions["MATERIAL_SUBSURFACE_DEPTH_TEXTURE"];
-    } else definitions["MATERIAL_SUBSURFACE_DEPTH_CONSTANT"];
-
-    return definitions;
+    update_texture_variant_def(
+        def,
+        subsurface_depth,
+        "MATERIAL_SUBSURFACE_DEPTH_CONSTANT",
+        "MATERIAL_SUBSURFACE_DEPTH_TEXTURE"
+    );
 }
 
 void material::apply(shader* s)

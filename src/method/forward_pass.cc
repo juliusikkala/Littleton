@@ -21,11 +21,12 @@ method::forward_pass::~forward_pass() {}
 template<typename L, typename T>
 static int find_shadow_map_index(
     L* light,
-    std::vector<T*> shadow_maps
+    const std::set<T*>& shadow_maps
 ){
-    for(unsigned i = 0; i < shadow_maps.size(); ++i)
+    int i = 0;
+    for(auto it = shadow_maps.begin(); it != shadow_maps.end(); ++it, ++i)
     {
-        if(shadow_maps[i]->get_light() == light)
+        if((*it)->get_light() == light)
         {
             return i;
         }
@@ -38,7 +39,7 @@ static std::unique_ptr<uniform_block> create_light_block(
     render_scene* scene,
     shader* compatible_shader,
     const glm::mat4& v,
-    const std::vector<directional_shadow_map*>& directional_shadow_maps
+    const std::set<directional_shadow_map*>& directional_shadow_maps
 ){
     std::unique_ptr<uniform_block> light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
@@ -130,14 +131,44 @@ static std::unique_ptr<uniform_block> create_light_block(
 static void set_shadow_map_uniforms(
     shader* s,
     glm::mat4& model,
-    const std::vector<directional_shadow_map*>& directional_shadow_maps
+    const std::set<directional_shadow_map*>& directional_shadow_maps
 ){
+    // Since OpenGL must be used from the main thread, no safety concerns here.
+    struct shadow_map_uniform_keys
+    {
+        std::string map, min_bias, max_bias, mvp;
+    };
+    static std::vector<shadow_map_uniform_keys> key_cache;
+
+    // Fill in the missing keys to key_cache
+    if(key_cache.size() < directional_shadow_maps.size())
+    {
+        unsigned i = key_cache.size();
+        key_cache.resize(directional_shadow_maps.size());
+        for(; i < directional_shadow_maps.size(); ++i)
+        {
+            std::string prefix =
+                "shadows["
+                + std::to_string(i)
+                + "].";
+
+            key_cache[i].map = prefix + "map";
+            key_cache[i].min_bias = prefix + "min_bias";
+            key_cache[i].max_bias = prefix + "max_bias";
+            key_cache[i].mvp = prefix + "mvp";
+        }
+    }
+
     s->set<int>("shadow_map_count", directional_shadow_maps.size());
 
     unsigned i = 0;
-    for(i = 0; i < directional_shadow_maps.size(); ++i)
-    {
-        directional_shadow_map* sm = directional_shadow_maps[i];
+    for(
+        auto it = directional_shadow_maps.begin();
+        it != directional_shadow_maps.end();
+        ++it, ++i
+    ){
+        directional_shadow_map* sm = *it;
+        shadow_map_uniform_keys& keys = key_cache[i];
 
         glm::mat4 lv = sm->get_view();
         glm::mat4 lp = sm->get_projection();
@@ -145,86 +176,43 @@ static void set_shadow_map_uniforms(
 
         glm::vec2 bias = sm->get_bias();
 
-        std::string prefix =
-            "shadows["
-            + std::to_string(i)
-            + "].";
-
-        s->set<int>(
-            prefix + "map",
-            i + SHADOW_MAP_INDEX_OFFSET
-        );
-        s->set(prefix + "min_bias", bias.x);
-        s->set(prefix + "max_bias", bias.y);
-        s->set(
-            prefix + "mvp",
-            lvp
-        );
+        s->set<int>(keys.map, i + SHADOW_MAP_INDEX_OFFSET);
+        s->set(keys.min_bias, bias.x);
+        s->set(keys.max_bias, bias.y);
+        s->set(keys.mvp, lvp);
     }
 }
 
 static void bind_shadow_map_textures(
     context* ctx,
-    const std::vector<directional_shadow_map*>& directional_shadow_maps
+    const std::set<directional_shadow_map*>& directional_shadow_maps
 ){
     unsigned shadow_map_index = SHADOW_MAP_INDEX_OFFSET;
 
     unsigned max_texture_units = (*ctx)[GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS];
 
     for(
-        unsigned i = 0;
-        i < directional_shadow_maps.size() &&
+        auto it = directional_shadow_maps.begin();
+        it != directional_shadow_maps.end() &&
         shadow_map_index < max_texture_units;
-        ++i, ++shadow_map_index
+        ++it, ++shadow_map_index
     ){
-        directional_shadow_map* dsm = directional_shadow_maps[i];
-        dsm->get_depth().bind(shadow_map_index);
+        (*it)->get_depth().bind(shadow_map_index);
     }
 }
 
-static shader::definition_map get_scene_definitions(render_scene* scene)
-{
-    return {
-        {"LIGHTING", ""},
-        {
-            "MAX_POINT_LIGHT_COUNT",
-            std::to_string(next_power_of_two(scene->point_light_count()))
-        },
-        {
-            "MAX_DIRECTIONAL_LIGHT_COUNT",
-            std::to_string(next_power_of_two(scene->directional_light_count()))
-        },
-        {
-            "MAX_SPOTLIGHT_COUNT",
-            std::to_string(next_power_of_two(scene->spotlight_count()))
-        },
-        {
-            "MAX_SHADOW_MAP_COUNT",
-            std::to_string(next_power_of_two(scene->shadow_map_count()))
-        }
-    };
-}
-
-static shader::definition_map get_complete_definitions(
-    render_scene* scene,
-    model::vertex_group& group
+static void update_scene_definitions(
+    shader::definition_map& def,
+    const std::string& max_point_light_count,
+    const std::string& max_directional_light_count,
+    const std::string& max_spotlight_count,
+    const std::string& max_shadow_map_count
 ){
-
-    shader::definition_map definitions = get_scene_definitions(scene);
-    shader::definition_map material_definitions =
-        group.mat->get_definitions();
-    shader::definition_map mesh_definitions =
-        group.mesh->get_definitions();
-
-    definitions.insert(
-        material_definitions.begin(),
-        material_definitions.end()
-    );
-    definitions.insert(
-        mesh_definitions.begin(),
-        mesh_definitions.end()
-    );
-    return definitions;
+    def["LIGHTING"];
+    def["MAX_POINT_LIGHT_COUNT"] = max_point_light_count;
+    def["MAX_DIRECTIONAL_LIGHT_COUNT"] = max_directional_light_count;
+    def["MAX_SPOTLIGHT_COUNT"] = max_spotlight_count;
+    def["MAX_SHADOW_MAP_COUNT"] = max_shadow_map_count;
 }
 
 void method::forward_pass::execute()
@@ -252,12 +240,17 @@ void method::forward_pass::execute()
 
     std::unique_ptr<uniform_block> light_block;
 
-    auto directional_shadow_map_set = scene->get_directional_shadow_maps();
+    const std::set<directional_shadow_map*>& directional_shadow_maps =
+        scene->get_directional_shadow_maps();
 
-    std::vector<directional_shadow_map*> directional_shadow_maps(
-        directional_shadow_map_set.begin(),
-        directional_shadow_map_set.end()
-    );
+    const std::string max_point_light_count = std::to_string(
+        next_power_of_two(scene->point_light_count()));
+    const std::string max_directional_light_count = std::to_string(
+        next_power_of_two(scene->directional_light_count()));
+    const std::string max_spotlight_count = std::to_string(
+        next_power_of_two(scene->spotlight_count()));
+    const std::string max_shadow_map_count = std::to_string(
+        next_power_of_two(scene->shadow_map_count()));
 
     bind_shadow_map_textures(ctx, directional_shadow_maps);
 
@@ -275,9 +268,18 @@ void method::forward_pass::execute()
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader* s = forward_shader->get(
-                get_complete_definitions(scene, group)
+            shader::definition_map& def = definitions_cache[&group];
+            update_scene_definitions(
+                def,
+                max_point_light_count,
+                max_directional_light_count,
+                max_spotlight_count,
+                max_shadow_map_count
             );
+            group.mat->update_definitions(def);
+            group.mesh->update_definitions(def);
+
+            shader* s = forward_shader->get(def);
             s->bind();
 
             if(!light_block && s->block_exists("Lights"))

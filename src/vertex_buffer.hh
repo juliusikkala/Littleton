@@ -28,7 +28,7 @@ public:
     vertex_buffer(vertex_buffer&& other);
     ~vertex_buffer();
 
-    shader::definition_map get_definitions() const;
+    void update_definitions(shader::definition_map& def) const;
 
     GLuint get_vbo() const;
     GLuint get_ibo() const;

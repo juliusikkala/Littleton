@@ -100,31 +100,38 @@ vertex_buffer::~vertex_buffer()
     basic_unload();
 }
 
-shader::definition_map vertex_buffer::get_definitions() const
+void vertex_buffer::update_definitions(shader::definition_map& def) const
 {
     load();
+
     switch(type)
     {
     case vertex_buffer::VERTEX_PN:
-        return {{"VERTEX_POSITION", "0"}, {"VERTEX_NORMAL", "1"}};
+        def["VERTEX_POSITION"] = "0";
+        def["VERTEX_NORMAL"] = "1";
+        def.erase("VERTEX_TANGENT");
+        def.erase("VERTEX_UV");
+        break;
     case vertex_buffer::VERTEX_PNTT:
-        return {
-            {"VERTEX_POSITION", "0"},
-            {"VERTEX_NORMAL", "1"},
-            {"VERTEX_TANGENT", "2"},
-            {"VERTEX_UV", "3"},
-        };
+        def["VERTEX_POSITION"] = "0";
+        def["VERTEX_NORMAL"] = "1";
+        def["VERTEX_TANGENT"] = "2";
+        def["VERTEX_UV"] = "3";
+        break;
     case vertex_buffer::VERTEX_P:
-        return {
-            {"VERTEX_POSITION", "0"}
-        };
+        def["VERTEX_POSITION"] = "0";
+        def.erase("VERTEX_NORMAL");
+        def.erase("VERTEX_TANGENT");
+        def.erase("VERTEX_UV");
+        break;
     case vertex_buffer::VERTEX_PT:
-        return {
-            {"VERTEX_POSITION", "0"},
-            {"VERTEX_UV", "3"}
-        };
+        def["VERTEX_POSITION"] = "0";
+        def.erase("VERTEX_NORMAL");
+        def.erase("VERTEX_TANGENT");
+        def["VERTEX_UV"] = "3";
+        break;
     default:
-        return {};
+        break;
     }
 }
 

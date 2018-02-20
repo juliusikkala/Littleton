@@ -20,7 +20,7 @@ namespace method
         void execute() override;
 
     private:
-        multishader* depth_shader;
+        shader* depth_shader;
         render_scene* scene;
     };
 }

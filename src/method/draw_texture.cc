@@ -6,11 +6,16 @@ method::draw_texture::draw_texture(
     texture* tex
 ): target_method(target),
    quad(vertex_buffer::create_square(target.get_context())),
-   draw_shader(store.get(shader::path{"generic.vert", "draw_texture.frag"},
-               quad.get_definitions())),
    transform(1.0f),
    tex(tex)
 {
+    shader::definition_map def;
+    quad.update_definitions(def);
+
+    draw_shader = store.get(
+        shader::path{"generic.vert", "draw_texture.frag"},
+        def
+    );
 }
 
 method::draw_texture::~draw_texture()

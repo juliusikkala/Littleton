@@ -54,20 +54,9 @@ void method::geometry_pass::execute()
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader::definition_map definitions;
-            shader::definition_map material_definitions =
-                group.mat->get_definitions();
-            shader::definition_map mesh_definitions =
-                group.mesh->get_definitions();
-
-            definitions.insert(
-                material_definitions.begin(),
-                material_definitions.end()
-            );
-            definitions.insert(
-                mesh_definitions.begin(),
-                mesh_definitions.end()
-            );
+            shader::definition_map& definitions = definitions_cache[&group];
+            group.mat->update_definitions(definitions);
+            group.mesh->update_definitions(definitions);
 
             shader* s = geometry_shader->get(definitions);
             s->bind();
