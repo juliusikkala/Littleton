@@ -41,7 +41,9 @@ public:
         GLenum external_format,
         GLint internal_format,
         GLenum type,
-        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0)
+        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
+        GLenum target = GL_TEXTURE_2D,
+        const void* data = nullptr
     );
 
     texture(const texture& other) = delete;
@@ -68,7 +70,10 @@ public:
         GLenum external_format,
         GLint internal_format,
         GLenum type,
-        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0)
+        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
+        GLenum target = GL_TEXTURE_2D,
+        size_t data_size = 0,
+        const void* data = nullptr
     );
 
     // Returns the index
@@ -82,14 +87,17 @@ protected:
         const params& p,
         GLenum target
     ) const;
+
     void basic_load(
         glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type,
         const params& p,
-        GLenum target
+        GLenum target,
+        const void* data = nullptr
     ) const;
+
     void basic_unload() const;
 
     mutable GLuint tex;

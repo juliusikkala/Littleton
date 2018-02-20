@@ -354,6 +354,15 @@ void shader::set_block(
     glUniformBlockBinding(program, it->second.index, bind_point);
 }
 
+static void remove_index_brackets(std::string& name)
+{
+    // Remove [0]
+    if(name.length() > 3 && name.compare(name.length()-3, 3, "[0]") == 0)
+    {
+        name = name.substr(0, name.length()-3);
+    }
+}
+
 void shader::basic_load(const source& src) const
 {
     if(program) return;
@@ -410,9 +419,13 @@ void shader::basic_load(const source& src) const
         );
         char* name = new char[length];
         glGetActiveUniformName(program, i, length, nullptr, name);
+        std::string shortened_name(name);
+
+        remove_index_brackets(shortened_name);
 
         struct uniform_data data;
         data.location = glGetUniformLocation(program, name);
+        delete [] name;
 
         glGetActiveUniformsiv(
             program, 1, &i, GL_UNIFORM_SIZE, (GLint*)&data.size
@@ -421,10 +434,7 @@ void shader::basic_load(const source& src) const
         glGetActiveUniformsiv(
             program, 1, &i, GL_UNIFORM_TYPE, (GLint*)&data.type
         );
-
-        uniforms[name] = data;
-
-        delete [] name;
+        uniforms[shortened_name] = data;
     }
 
     // Read uniform blocks
@@ -476,14 +486,7 @@ void shader::basic_load(const source& src) const
             {
                 shortened_name = shortened_name.substr(name_prefix.length());
             }
-            // Remove [0]
-            if(
-                shortened_name.length() > 3 &&
-                shortened_name.compare(shortened_name.length()-3, 3, "[0]") == 0
-            ){
-                shortened_name =
-                    shortened_name.substr(0, shortened_name.length()-3);
-            }
+            remove_index_brackets(shortened_name);
 
             uniform_block_type::uniform_info data;
 

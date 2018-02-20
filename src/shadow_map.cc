@@ -2,6 +2,7 @@
 #include "helpers.hh"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
 
 directional_shadow_map::directional_shadow_map(
     context& ctx,
@@ -137,4 +138,27 @@ texture& directional_shadow_map::get_depth()
 const texture& directional_shadow_map::get_depth() const
 {
     return depth;
+}
+
+texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)
+{
+    // Just generate sines and cosines to rotate the kernel by.
+    std::vector<glm::vec2> shadow_samples;
+    shadow_samples.resize(size.x * size.y);
+
+    for(unsigned i = 0; i < size.x * size.y; ++i)
+    {
+        shadow_samples[i] = glm::circularRand(1.0f);
+    }
+
+    return new texture(
+        ctx,
+        size,
+        GL_RG,
+        GL_RG8_SNORM,
+        GL_FLOAT,
+        {false, GL_LINEAR, GL_REPEAT, 0},
+        GL_TEXTURE_2D,
+        (float*)shadow_samples.data()
+    );
 }

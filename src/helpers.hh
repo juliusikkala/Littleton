@@ -2,6 +2,7 @@
 #define HELPERS_HH
 #include <string>
 #include <map>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -52,6 +53,34 @@ bool intersect_sphere(
 );
 
 unsigned next_power_of_two(unsigned n);
+
+// Note that this function is very slow. Please save your generated samples.
+// Circular version
+std::vector<glm::vec2> mitchell_best_candidate(
+    float r,
+    unsigned candidate_count,
+    unsigned count
+);
+
+// Rectangular version
+std::vector<glm::vec2> mitchell_best_candidate(
+    float w,
+    float h,
+    unsigned candidate_count,
+    unsigned count
+);
+
+std::vector<glm::vec2> grid_samples(
+    unsigned w,
+    unsigned h,
+    float step
+);
+
+std::vector<glm::vec2> poisson_samples(
+    float w,
+    float h,
+    float mindist
+);
 
 #include "helpers.tcc"
 

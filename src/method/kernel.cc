@@ -60,10 +60,6 @@ void method::kernel::execute()
 
     kernel_shader->bind();
     kernel_shader->set("kernel", k);
-    kernel_shader->set(
-        "pixel_offset",
-        1.0f/glm::vec2(get_target().get_size())
-    );
     kernel_shader->set("in_color", src->bind());
 
     fullscreen_quad.draw();

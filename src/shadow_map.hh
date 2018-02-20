@@ -52,4 +52,6 @@ private:
     float min_bias, max_bias;
 };
 
+texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size);
+
 #endif

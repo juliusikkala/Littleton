@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cmath>
 #include <stdexcept>
+#include <glm/gtc/random.hpp>
 
 std::string read_text_file(const std::string& path)
 {
@@ -172,4 +173,88 @@ unsigned next_power_of_two(unsigned n)
     n |= n >> 16;
     n++;
     return n;
+}
+
+template<class F>
+std::vector<glm::vec2> mitchell_best_candidate(
+    F&& sample_generator,
+    unsigned candidate_count,
+    unsigned count
+){
+    std::vector<glm::vec2> samples;
+    samples.reserve(count);
+
+    while(count--)
+    {
+        glm::vec2 farthest = glm::vec2(0, 0);
+        float farthest_distance = 0;
+
+        for(unsigned i = 0; i < candidate_count; ++i)
+        {
+            glm::vec2 candidate = sample_generator();
+            float candidate_distance = INFINITY;
+
+            for(const glm::vec2& sample: samples)
+            {
+                float dist = glm::distance(candidate, sample);
+                if(dist < candidate_distance) candidate_distance = dist;
+            }
+
+            if(candidate_distance > farthest_distance)
+            {
+                farthest_distance = candidate_distance;
+                farthest = candidate;
+            }
+        }
+
+        samples.push_back(farthest);
+    }
+    return samples;
+}
+
+std::vector<glm::vec2> mitchell_best_candidate(
+    float r,
+    unsigned candidate_count,
+    unsigned count
+){
+    return mitchell_best_candidate(
+        [r](){return glm::diskRand(r);},
+        candidate_count,
+        count
+    );
+}
+
+std::vector<glm::vec2> mitchell_best_candidate(
+    float w,
+    float h,
+    unsigned candidate_count,
+    unsigned count
+){
+    return mitchell_best_candidate(
+        [w, h](){
+            return glm::linearRand(glm::vec2(-w/2, -h/2), glm::vec2(w/2, h/2));
+        },
+        candidate_count,
+        count
+    );
+}
+
+std::vector<glm::vec2> grid_samples(
+    unsigned w,
+    unsigned h,
+    float step
+){
+    std::vector<glm::vec2> samples;
+    samples.resize(w*h);
+
+    glm::vec2 start(
+        (w-1)/-2.0f,
+        (h-1)/-2.0f
+    );
+
+    for(unsigned i = 0; i < h; ++i)
+        for(unsigned j = 0; j < w; ++j)
+            samples[i*w+j] = start + glm::vec2(i, j) * step;
+
+    return samples;
 }

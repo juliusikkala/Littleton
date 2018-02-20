@@ -9,7 +9,13 @@ method::lighting_pass::lighting_pass(
    lighting_shader(store.get(shader::path{"lighting.vert", "lighting.frag"})),
    scene(scene),
    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
-{}
+{
+    shadow_noise.reset(generate_shadow_noise_texture(
+        target.get_context(),
+        glm::uvec2(128)
+    ));
+    set_shadow();
+}
 
 void method::lighting_pass::set_scene(render_scene* scene)
 {
@@ -21,6 +27,20 @@ render_scene* method::lighting_pass::get_scene() const
     return scene;
 }
 
+void method::lighting_pass::set_shadow(unsigned samples, float radius)
+{
+    if(samples == 0) shadow_kernel.clear();
+    else
+    {
+        shadow_kernel = mitchell_best_candidate(
+            radius,
+            20,
+            samples
+        );
+    }
+}
+
+// TODO: Refactor this function into something a bit shorter and clearer.
 void method::lighting_pass::execute()
 {
     target_method::execute();
@@ -40,18 +60,22 @@ void method::lighting_pass::execute()
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
 
-    shader::definition_map point_light_definitions({{"POINT_LIGHT", ""}});
-    shader::definition_map directional_light_definitions(
-        {{"DIRECTIONAL_LIGHT", ""}}
-    );
-    shader::definition_map spotlight_definitions(
-        {{"SPOTLIGHT", ""}}
-    );
+    shader::definition_map default_definitions({
+        {"SHADOW_SAMPLE_COUNT", std::to_string(shadow_kernel.size())}
+    });
+
+    shader::definition_map point_light_definitions(default_definitions);
+    point_light_definitions["POINT_LIGHT"];
+    shader::definition_map directional_light_definitions(default_definitions);
+    directional_light_definitions["DIRECTIONAL_LIGHT"];
+    shader::definition_map spotlight_definitions(default_definitions);
+    spotlight_definitions["SPOTLIGHT"];
 
     buf->get_depth_stencil().bind(0);
     buf->get_color_emission().bind(1);
     buf->get_normal().bind(2);
     buf->get_material().bind(3);
+    shadow_noise->bind(4);
 
     float near, far, fov, aspect;
     decompose_perspective(p, near, far, fov, aspect);
@@ -70,6 +94,12 @@ void method::lighting_pass::execute()
     pls->set("in_color_emission", 1);
     pls->set("in_normal", 2);
     pls->set("in_material", 3);
+    pls->set("shadow_noise", 4);
+    pls->set<glm::vec2>(
+        "shadow_sample_offsets",
+        shadow_kernel.size(),
+        shadow_kernel.data()
+    );
     pls->set("perspective_data", perspective_data);
 
     for(point_light* l: scene->get_point_lights())
@@ -79,6 +109,8 @@ void method::lighting_pass::execute()
             glm::vec3(v * glm::vec4(l->get_global_position(), 1))
         );
         pls->set("light.color", l->get_color());
+
+        pls->set("light.shadow_map_index", -1);
 
         fullscreen_quad.draw();
     }
@@ -91,6 +123,12 @@ void method::lighting_pass::execute()
     sls->set("in_color_emission", 1);
     sls->set("in_normal", 2);
     sls->set("in_material", 3);
+    sls->set("shadow_noise", 4);
+    sls->set<glm::vec2>(
+        "shadow_sample_offsets",
+        shadow_kernel.size(),
+        shadow_kernel.data()
+    );
     sls->set("perspective_data", perspective_data);
 
     for(spotlight* l: scene->get_spotlights())
@@ -114,6 +152,7 @@ void method::lighting_pass::execute()
             "light.exponent",
             l->get_falloff_exponent()
         );
+        sls->set("light.shadow_map_index", -1);
 
         fullscreen_quad.draw();
     }
@@ -130,6 +169,12 @@ void method::lighting_pass::execute()
     dls->set("in_color_emission", 1);
     dls->set("in_normal", 2);
     dls->set("in_material", 3);
+    dls->set("shadow_noise", 4);
+    dls->set<glm::vec2>(
+        "shadow_kernel",
+        shadow_kernel.size(),
+        shadow_kernel.data()
+    );
     dls->set("perspective_data", perspective_data);
 
     for(directional_light* l: scene->get_directional_lights())
@@ -145,7 +190,7 @@ void method::lighting_pass::execute()
             glm::vec2 bias = sm->get_bias();
 
             dls->set("light.shadow_map_index", 0);
-            dls->set("shadow.map", sm->get_depth().bind(4));
+            dls->set("shadow.map", sm->get_depth().bind(5));
             dls->set("shadow.min_bias", bias.x);
             dls->set("shadow.max_bias", bias.y);
             dls->set(

@@ -14,7 +14,14 @@ method::forward_pass::forward_pass(
     render_scene* scene
 ): target_method(target),
    forward_shader(store.get(shader::path{"generic.vert", "forward.frag"})),
-   scene(scene) {}
+   scene(scene)
+{
+    shadow_noise.reset(generate_shadow_noise_texture(
+        target.get_context(),
+        glm::uvec2(128)
+    ));
+    set_shadow();
+}
 
 method::forward_pass::~forward_pass() {}
 
@@ -131,7 +138,8 @@ static std::unique_ptr<uniform_block> create_light_block(
 static void set_shadow_map_uniforms(
     shader* s,
     glm::mat4& model,
-    const std::set<directional_shadow_map*>& directional_shadow_maps
+    const std::set<directional_shadow_map*>& directional_shadow_maps,
+    const std::vector<glm::vec2>& shadow_kernel
 ){
     // Since OpenGL must be used from the main thread, no safety concerns here.
     struct shadow_map_uniform_keys
@@ -160,6 +168,11 @@ static void set_shadow_map_uniforms(
     }
 
     s->set<int>("shadow_map_count", directional_shadow_maps.size());
+    s->set<glm::vec2>(
+        "shadow_kernel",
+        shadow_kernel.size(),
+        shadow_kernel.data()
+    );
 
     unsigned i = 0;
     for(
@@ -181,10 +194,12 @@ static void set_shadow_map_uniforms(
         s->set(keys.max_bias, bias.y);
         s->set(keys.mvp, lvp);
     }
+    s->set<int>("shadow_noise", i + SHADOW_MAP_INDEX_OFFSET);
 }
 
 static void bind_shadow_map_textures(
     context* ctx,
+    texture* shadow_noise,
     const std::set<directional_shadow_map*>& directional_shadow_maps
 ){
     unsigned shadow_map_index = SHADOW_MAP_INDEX_OFFSET;
@@ -199,6 +214,7 @@ static void bind_shadow_map_textures(
     ){
         (*it)->get_depth().bind(shadow_map_index);
     }
+    shadow_noise->bind(shadow_map_index);
 }
 
 static void update_scene_definitions(
@@ -206,13 +222,15 @@ static void update_scene_definitions(
     const std::string& max_point_light_count,
     const std::string& max_directional_light_count,
     const std::string& max_spotlight_count,
-    const std::string& max_shadow_map_count
+    const std::string& max_shadow_map_count,
+    const std::string& shadow_sample_count
 ){
     def["LIGHTING"];
     def["MAX_POINT_LIGHT_COUNT"] = max_point_light_count;
     def["MAX_DIRECTIONAL_LIGHT_COUNT"] = max_directional_light_count;
     def["MAX_SPOTLIGHT_COUNT"] = max_spotlight_count;
     def["MAX_SHADOW_MAP_COUNT"] = max_shadow_map_count;
+    def["SHADOW_SAMPLE_COUNT"] = shadow_sample_count;
 }
 
 void method::forward_pass::execute()
@@ -251,8 +269,11 @@ void method::forward_pass::execute()
         next_power_of_two(scene->spotlight_count()));
     const std::string max_shadow_map_count = std::to_string(
         next_power_of_two(scene->shadow_map_count()));
+    const std::string shadow_sample_count = std::to_string(
+        shadow_kernel.size()
+    );
 
-    bind_shadow_map_textures(ctx, directional_shadow_maps);
+    bind_shadow_map_textures(ctx, shadow_noise.get(), directional_shadow_maps);
 
     for(object* obj: scene->get_objects())
     {
@@ -274,7 +295,8 @@ void method::forward_pass::execute()
                 max_point_light_count,
                 max_directional_light_count,
                 max_spotlight_count,
-                max_shadow_map_count
+                max_shadow_map_count,
+                shadow_sample_count
             );
             group.mat->update_definitions(def);
             group.mesh->update_definitions(def);
@@ -295,7 +317,12 @@ void method::forward_pass::execute()
             }
             if(light_block) s->set_block("Lights", 0);
 
-            set_shadow_map_uniforms(s, m, directional_shadow_maps);
+            set_shadow_map_uniforms(
+                s,
+                m,
+                directional_shadow_maps,
+                shadow_kernel
+            );
 
             s->set("mvp", mvp);
             s->set("m", mv);
@@ -320,3 +347,17 @@ multishader* method::forward_pass::get_shader() const
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }
 render_scene* method::forward_pass::get_scene() const { return scene; }
 
+void method::forward_pass::set_shadow(
+    unsigned samples,
+    float radius
+){
+    if(samples == 0) shadow_kernel.clear();
+    else
+    {
+        shadow_kernel = mitchell_best_candidate(
+            radius,
+            20,
+            samples
+        );
+    }
+}

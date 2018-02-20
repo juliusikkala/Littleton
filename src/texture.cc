@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include "stb_image.h"
 
 static GLint interpolation_without_mipmap(GLint interpolation)
@@ -216,11 +217,13 @@ texture::texture(
     GLenum external_format,
     GLint internal_format,
     GLenum type,
-    const params& p
+    const params& p,
+    GLenum target,
+    const void* data
 ): glresource(ctx), tex(0), internal_format(internal_format),
-   external_format(external_format), target(GL_TEXTURE_2D), type(type)
+   external_format(external_format), target(target), type(type)
 {
-    basic_load(size, external_format, internal_format, type, p, target);
+    basic_load(size, external_format, internal_format, type, p, target, data);
 }
 
 texture::texture(texture&& other)
@@ -324,28 +327,49 @@ texture* texture::create(
     return new file_texture(ctx, path, p, target);
 }
 
-class empty_texture: public texture
+class data_texture: public texture
 {
 public:
-    empty_texture(
+    data_texture(
         context& ctx,
         glm::uvec2 size,
         GLenum external_format,
         GLint internal_format,
         GLenum type,
         const params& p,
-        GLenum target
+        GLenum target,
+        size_t data_size,
+        const void* data
     ): texture(ctx), p(p), size(size)
     {
         this->external_format = external_format;
         this->internal_format = internal_format;
         this->type = type;
         this->target = target;
+
+        if(data)
+        {
+            this->data = new uint8_t[data_size];
+            memcpy(this->data, data, data_size);
+        }
+    }
+
+    ~data_texture()
+    {
+        if(data) delete [] (uint8_t*)data;
     }
 
     void load() const override
     {
-        basic_load(size, external_format, internal_format, type, p, target);
+        basic_load(
+            size,
+            external_format,
+            internal_format,
+            type,
+            p,
+            target,
+            data
+        );
     }
 
     void unload() const override
@@ -356,6 +380,7 @@ public:
 private:
     params p;
     glm::uvec2 size;
+    void* data;
 };
 
 texture* texture::create(
@@ -364,10 +389,14 @@ texture* texture::create(
     GLenum external_format,
     GLint internal_format,
     GLenum type,
-    const params& p
+    const params& p,
+    GLenum target,
+    size_t data_size,
+    const void* data
 ){
-    return new empty_texture(
-        ctx, size, external_format, internal_format, type, p, GL_TEXTURE_2D
+    return new data_texture(
+        ctx, size, external_format, internal_format, type, p, target,
+        data_size, data
     );
 }
 
@@ -402,23 +431,47 @@ void texture::basic_load(
     GLint internal_format,
     GLenum type,
     const params& p,
-    GLenum target
+    GLenum target,
+    const void* data
 ) const {
     if(tex) return;
 
     glGenTextures(1, &tex);
     glBindTexture(target, tex);
-    glTexImage2D(
-        target,
-        0,
-        internal_format,
-        size.x,
-        size.y,
-        0,
-        external_format,
-        type,
-        nullptr
-    );
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    if(target == GL_TEXTURE_2D)
+    {
+        glTexImage2D(
+            target,
+            0,
+            internal_format,
+            size.x,
+            size.y,
+            0,
+            external_format,
+            type,
+            data
+        );
+    }
+    else if(target == GL_TEXTURE_1D)
+    {
+        glTexImage1D(
+            target,
+            0,
+            internal_format,
+            size.x,
+            0,
+            external_format,
+            type,
+            data
+        );
+    }
+    else
+    {
+        throw std::runtime_error("Unknown texture target!");
+    }
 
     apply_params(get_context(), target, external_format, p);
 

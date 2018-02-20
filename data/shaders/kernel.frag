@@ -3,13 +3,13 @@
 
 uniform sampler2D in_color;
 uniform mat3 kernel;
-uniform vec2 pixel_offset;
 in vec2 uv;
 out vec4 out_color;
 
 void main(void)
 {
     vec4 c = vec4(0.0f);
+    vec2 pixel_offset = 1.0f/vec2(textureSize(in_color));
     c += kernel[0][0] * texture(in_color, uv + vec2(-pixel_offset.x, pixel_offset.y));
     c += kernel[1][0] * texture(in_color, uv + vec2(0.0f, pixel_offset.y));
     c += kernel[2][0] * texture(in_color, uv + vec2(pixel_offset.x, pixel_offset.y));

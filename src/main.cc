@@ -205,14 +205,14 @@ int main(int argc, char** argv)
     directional_light fake_sun;
     directional_shadow_map sun_shadow(
         w,
-        glm::uvec2(1024, 1024),
+        glm::uvec2(1024),
         glm::vec3(0),
         glm::vec2(8.0f),
         glm::vec2(-5.0f, 5.0f),
         &fake_sun
     );
     sun_shadow.set_parent(suzanne);
-    sun_shadow.set_bias(0.001, 0.02);
+    sun_shadow.set_bias(0.001, 0.05);
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
