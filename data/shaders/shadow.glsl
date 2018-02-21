@@ -45,12 +45,13 @@ float shadow_coef(
     for(int i = 0; i < SHADOW_SAMPLE_COUNT; ++i)
     {
         vec2 sample_offset = rotation * shadow_kernel[i];
-        shadow += texture(
+        shadow += dot(textureGather(
             shadow_map,
-            vec3(pos.xy + sample_offset * texel, pos.z-bias)
-        );
+            pos.xy + sample_offset * texel,
+            pos.z-bias
+        ), vec4(0.25/SHADOW_SAMPLE_COUNT));
     }
-    shadow /= SHADOW_SAMPLE_COUNT;
+
 #else
     shadow = texture(shadow_map, vec3(pos.xy, pos.z - bias));
 #endif

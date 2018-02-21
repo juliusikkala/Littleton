@@ -16,7 +16,7 @@ directional_shadow_map::directional_shadow_map(
        ctx,
        size,
        GL_DEPTH_COMPONENT,
-       GL_DEPTH_COMPONENT,
+       GL_DEPTH_COMPONENT16,
        GL_FLOAT,
        texture::SHADOW_MAP_PARAMS
    )

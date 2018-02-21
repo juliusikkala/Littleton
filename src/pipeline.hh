@@ -34,7 +34,9 @@ public:
     pipeline(pipeline&& other);
     ~pipeline();
 
+
     void execute();
+    void execute(std::vector<double>& timing);
 
 private:
     std::vector<pipeline_method*> methods;

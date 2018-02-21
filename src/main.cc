@@ -212,7 +212,7 @@ int main(int argc, char** argv)
         &fake_sun
     );
     sun_shadow.set_parent(suzanne);
-    sun_shadow.set_bias(0.001, 0.05);
+    sun_shadow.set_bias(0.001, 0.03);
 
     parrasvalo.set_falloff_exponent(10);
     parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
@@ -243,6 +243,7 @@ int main(int argc, char** argv)
     bool running = true;
     unsigned pipeline_index = 2;
     bool paused = false;
+    bool measure_times = false;
     float time = 0;
     float pitch = 0, yaw = 0;
     float speed = 2;
@@ -267,7 +268,7 @@ int main(int argc, char** argv)
                 if(e.key.keysym.sym == SDLK_2) pipeline_index = 1;
                 if(e.key.keysym.sym == SDLK_3) pipeline_index = 2;
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
-
+                if(e.key.keysym.sym == SDLK_t) measure_times = true;
                 break;
             case SDL_MOUSEMOTION:
                 pitch = std::clamp(pitch-e.motion.yrel*sensitivity, -90.0f, 90.0f);
@@ -313,7 +314,28 @@ int main(int argc, char** argv)
         }
         fake_sun.set_direction(sun.get_direction());
 
-        pipelines[pipeline_index]->execute();
+        if(!measure_times)
+        {
+            pipelines[pipeline_index]->execute();
+        }
+        else
+        {
+            std::vector<double> times;
+            pipelines[pipeline_index]->execute(times);
+            measure_times = false;
+
+            std::cout << "Pipeline stage times: " << std::endl;
+            double total = 0;
+            for(unsigned i = 0; i < times.size(); ++i)
+            {
+                total += times[i];
+                std::cout << "\tStage " << i + 1
+                          << ": "
+                          << times[i] << "ms"
+                          << std::endl;
+            }
+            std::cout << "Total: " << total << std::endl;
+        }
 
         w.present();
     }
