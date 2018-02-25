@@ -84,14 +84,14 @@ float get_material_roughness()
 #ifdef MATERIAL_NORMAL_TEXTURE
 vec3 get_material_normal()
 {
-    return texture(
+    return normalize(texture(
         material.normal,
 #ifdef VERTEX_UV
         f_in.uv
 #else
         vec2(0.0f)
 #endif
-    ).xyz*2.0f-1.0f;
+    ).xyz*2.0f-1.0f);
 }
 #endif
 
