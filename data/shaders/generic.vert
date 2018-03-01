@@ -11,7 +11,6 @@ uniform mat3 n_m;
 #endif
 
 #if MAX_SHADOW_MAP_COUNT > 0
-#include "shadow.glsl"
 uniform int shadow_map_count;
 uniform shadow_map shadows[MAX_SHADOW_MAP_COUNT];
 #endif
@@ -24,7 +23,11 @@ void main(void)
 #if MAX_SHADOW_MAP_COUNT > 0
     for(int i = 0; i < shadow_map_count; ++i)
     {
-        v_out.shadow_pos[i] = shadows[i].mvp * vec4(v_vertex, 1.0f);
+        calculate_shadow_vertex_data(
+            shadows[i],
+            v_out.shadow_data[i],
+            v_vertex
+        );
     }
 #endif
 

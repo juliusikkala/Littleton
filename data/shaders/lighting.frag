@@ -62,15 +62,13 @@ void main(void)
 
     if(light.shadow_map_index == 0)
     {
+        shadow_vertex_data data;
+        calculate_shadow_vertex_data(shadow, data, pos);
         lighting *= shadow_coef(
-            shadow.map,
-            shadow.mvp * vec4(pos, 1.0f),
-            get_shadow_bias(
-                normal,
-                -light.direction,
-                shadow.min_bias,
-                shadow.max_bias
-            )
+            shadow,
+            data,
+            normal,
+            -light.direction
         );
     }
 #endif

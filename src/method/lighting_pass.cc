@@ -61,7 +61,8 @@ void method::lighting_pass::execute()
     glm::mat4 p = cam->get_projection();
 
     shader::definition_map default_definitions({
-        {"SHADOW_SAMPLE_COUNT", std::to_string(shadow_kernel.size())}
+        {"SHADOW_MAP_KERNEL_SIZE", std::to_string(shadow_kernel.size())},
+        {"SHADOW_IMPLEMENTATION", "shadow/pcf.glsl"}
     });
 
     shader::definition_map point_light_definitions(default_definitions);

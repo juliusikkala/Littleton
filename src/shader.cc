@@ -82,19 +82,21 @@ static std::string remove_comments(const std::string& source)
 
 static std::string splice_definitions(
     const std::string& source,
-    const std::string& definitions
+    const shader::definition_map& definitions
 ){
+    std::string definition_src = generate_definition_src(definitions);
+
     size_t offset = source.find("#version");
-    if(offset == std::string::npos) return definitions + source;
+    if(offset == std::string::npos) return definition_src + source;
 
     offset = source.find_first_of('\n', offset) + 1;
 
-    return source.substr(0, offset) + definitions + source.substr(offset);
+    return source.substr(0, offset) + definition_src + source.substr(offset);
 }
 
 static std::string process_source(
     const std::string& source,
-    const std::string& definitions,
+    const shader::definition_map& definitions,
     const std::vector<std::string>& include_path
 ){
     if(source.empty()) return source;
@@ -108,10 +110,39 @@ static std::string process_source(
         std::regex::optimize
     );
 
+    static const std::regex include_define_regex(
+        "#\\s*include\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+        std::regex::optimize
+    );
+
     std::smatch include_match;
-    while(std::regex_search(processed, include_match, include_regex))
+    while(true)
     {
-        std::string include_file = include_match[1];
+        std::string include_file;
+        
+        if(std::regex_search(processed, include_match, include_regex))
+        {
+            include_file = include_match[1];
+        }
+        else if(std::regex_search(
+            processed,
+            include_match,
+            include_define_regex
+        )){
+            std::string name = include_match[1];
+            auto it = definitions.find(name);
+            if(it == definitions.end())
+            {
+                processed.erase(
+                    include_match[0].first,
+                    include_match[0].second
+                );
+                continue;
+            }
+            include_file = it->second;
+        }
+        else break;
+
         if(included.count(include_file))
         {
             processed.erase(include_match[0].first, include_match[0].second);
@@ -193,12 +224,10 @@ shader::shader(
     const std::vector<std::string>& include_path
 ): glresource(ctx), program(0)
 {
-    std::string definition_src = generate_definition_src(definitions);
-
     basic_load({
-        process_source(s.vert, definition_src, include_path),
-        process_source(s.frag, definition_src, include_path),
-        process_source(s.geom, definition_src, include_path)
+        process_source(s.vert, definitions, include_path),
+        process_source(s.frag, definitions, include_path),
+        process_source(s.geom, definitions, include_path)
     });
 }
 
@@ -253,13 +282,13 @@ public:
     src_shader(
         context& ctx,
         const source& s,
-        const std::string& definition_src,
+        const definition_map& definitions,
         const std::vector<std::string>& include_path
     ): shader(ctx),
        src(
-           process_source(s.vert, definition_src, include_path),
-           process_source(s.frag, definition_src, include_path),
-           process_source(s.geom, definition_src, include_path)
+           process_source(s.vert, definitions, include_path),
+           process_source(s.frag, definitions, include_path),
+           process_source(s.geom, definitions, include_path)
        )
     { }
 
@@ -283,8 +312,7 @@ shader* shader::create(
     const definition_map& definitions,
     const std::vector<std::string>& include_path
 ){
-    std::string definition_src = generate_definition_src(definitions);
-    return new src_shader(ctx, s, definition_src, include_path);
+    return new src_shader(ctx, s, definitions, include_path);
 }
 
 shader* shader::create(
@@ -293,7 +321,6 @@ shader* shader::create(
     const definition_map& definitions,
     const std::vector<std::string>& include_path
 ){
-    std::string definition_src = generate_definition_src(definitions);
     std::vector<std::string> extended_include_path = {
         boost::filesystem::path(p.vert).parent_path().string(),
         boost::filesystem::path(p.frag).parent_path().string(),
@@ -307,7 +334,7 @@ shader* shader::create(
     return new src_shader(
         ctx,
         source(p),
-        definition_src,
+        definitions,
         extended_include_path
     );
 }

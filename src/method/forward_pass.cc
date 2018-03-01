@@ -219,18 +219,20 @@ static void bind_shadow_map_textures(
 
 static void update_scene_definitions(
     shader::definition_map& def,
-    const std::string& max_point_light_count,
-    const std::string& max_directional_light_count,
-    const std::string& max_spotlight_count,
-    const std::string& max_shadow_map_count,
-    const std::string& shadow_sample_count
+    render_scene* scene,
+    size_t shadow_kernel_size
 ){
     def["LIGHTING"];
-    def["MAX_POINT_LIGHT_COUNT"] = max_point_light_count;
-    def["MAX_DIRECTIONAL_LIGHT_COUNT"] = max_directional_light_count;
-    def["MAX_SPOTLIGHT_COUNT"] = max_spotlight_count;
-    def["MAX_SHADOW_MAP_COUNT"] = max_shadow_map_count;
-    def["SHADOW_SAMPLE_COUNT"] = shadow_sample_count;
+    def["MAX_POINT_LIGHT_COUNT"] = std::to_string(
+        next_power_of_two(scene->point_light_count()));
+    def["MAX_DIRECTIONAL_LIGHT_COUNT"] = std::to_string(
+        next_power_of_two(scene->directional_light_count()));
+    def["MAX_SPOTLIGHT_COUNT"] = std::to_string(
+        next_power_of_two(scene->spotlight_count()));
+    def["MAX_SHADOW_MAP_COUNT"] = std::to_string(
+        next_power_of_two(scene->shadow_map_count()));
+    def["SHADOW_MAP_KERNEL_SIZE"] = std::to_string(shadow_kernel_size);
+    def["SHADOW_IMPLEMENTATION"] = "shadow/pcf.glsl";
 }
 
 void method::forward_pass::execute()
@@ -261,18 +263,6 @@ void method::forward_pass::execute()
     const std::set<directional_shadow_map*>& directional_shadow_maps =
         scene->get_directional_shadow_maps();
 
-    const std::string max_point_light_count = std::to_string(
-        next_power_of_two(scene->point_light_count()));
-    const std::string max_directional_light_count = std::to_string(
-        next_power_of_two(scene->directional_light_count()));
-    const std::string max_spotlight_count = std::to_string(
-        next_power_of_two(scene->spotlight_count()));
-    const std::string max_shadow_map_count = std::to_string(
-        next_power_of_two(scene->shadow_map_count()));
-    const std::string shadow_sample_count = std::to_string(
-        shadow_kernel.size()
-    );
-
     bind_shadow_map_textures(ctx, shadow_noise.get(), directional_shadow_maps);
 
     for(object* obj: scene->get_objects())
@@ -292,11 +282,8 @@ void method::forward_pass::execute()
             shader::definition_map& def = definitions_cache[&group];
             update_scene_definitions(
                 def,
-                max_point_light_count,
-                max_directional_light_count,
-                max_spotlight_count,
-                max_shadow_map_count,
-                shadow_sample_count
+                scene,
+                shadow_kernel.size()
             );
             group.mat->update_definitions(def);
             group.mesh->update_definitions(def);

@@ -232,8 +232,8 @@ int main(int argc, char** argv)
     dp.sky.set_sun(&sun);
     dp.sky.set_intensity(5);
     fp.sky.set_sun(&sun);
-    fp.sky.set_scaling(4/6.3781e6);
-    fp.sky.set_radius(6.3781e6/4);
+    fp.sky.set_scaling(1/6.3781e6);
+    fp.sky.set_radius(6.3781e6);
     fp.sky.set_samples(12,3);
     fp.sky.set_intensity(1);
     fp.sky.set_parent(earth);

@@ -88,14 +88,10 @@ void main(void)
         if(l.shadow_map_index >= 0)
         {
             c *= shadow_coef(
-                shadows[l.shadow_map_index].map,
-                f_in.shadow_pos[l.shadow_map_index],
-                get_shadow_bias(
-                    normal,
-                    -l.direction,
-                    shadows[l.shadow_map_index].min_bias,
-                    shadows[l.shadow_map_index].max_bias
-                )
+                shadows[l.shadow_map_index],
+                f_in.shadow_data[l.shadow_map_index],
+                normal,
+                -l.direction
             );
         }
 #endif
