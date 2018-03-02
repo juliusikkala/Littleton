@@ -133,11 +133,15 @@ void framebuffer::bind(GLenum target)
         );
         attachments.push_back(GL_COLOR_ATTACHMENT0+i);
     }
+
+    GLenum depth_attachment = GL_DEPTH_STENCIL_ATTACHMENT;
     if(depth_stencil_target)
     {
+        if(depth_stencil_target->get_external_format() != GL_DEPTH_STENCIL)
+            depth_attachment = GL_DEPTH_ATTACHMENT;
         glFramebufferTexture2D(
             target,
-            GL_DEPTH_STENCIL_ATTACHMENT,
+            depth_attachment,
             depth_stencil_target->get_target(),
             depth_stencil_target->get_texture(),
             0
@@ -147,17 +151,26 @@ void framebuffer::bind(GLenum target)
     {
         glFramebufferRenderbuffer(
             target,
-            GL_DEPTH_STENCIL_ATTACHMENT,
+            depth_attachment,
             GL_RENDERBUFFER,
             depth_stencil_rbo
         );
     }
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        throw std::runtime_error("Attempt to bind an incomplete framebuffer!");
 
     if(target == GL_DRAW_FRAMEBUFFER || target == GL_FRAMEBUFFER)
-        glDrawBuffers(attachments.size(), attachments.data());
+    {
+        if(attachments.size() > 0)
+            glDrawBuffers(attachments.size(), attachments.data());
+        else glDrawBuffer(GL_NONE);
+    }
+
 
     if(target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER)
-        glReadBuffer(GL_COLOR_ATTACHMENT0);
+    {
+        if(attachments.size() > 0)
+            glReadBuffer(GL_COLOR_ATTACHMENT0);
+    }
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        throw std::runtime_error("Attempt to bind an incomplete framebuffer!");
 }

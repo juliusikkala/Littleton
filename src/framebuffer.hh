@@ -30,7 +30,7 @@ public:
     void set_depth_target(texture* target);
     void remove_depth_target();
 
-    void bind(GLenum target) override;
+    void bind(GLenum target = GL_FRAMEBUFFER) override;
 
 private:
     std::vector<texture*> color_targets;

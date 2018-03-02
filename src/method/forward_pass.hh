@@ -22,26 +22,11 @@ namespace method
         void set_scene(render_scene* s);
         render_scene* get_scene() const;
 
-        void set_shadow(unsigned samples = 16, float radius = 4.0f);
-        
         void execute() override;
 
     private:
         multishader* forward_shader;
-        render_scene* scene;
-
-        std::unique_ptr<texture> shadow_noise;
-        std::vector<glm::vec2> shadow_kernel;
-
-        // It doesn't matter if a vertex group is reallocated; definitions
-        // will get updated anyways. However, this avoids malloc() calls by
-        // storing the definitions (which _should_ change rarely). Thanks to
-        // update_definitions(), no allocs are actually made if all values are
-        // correct.
-        std::map<
-            model::vertex_group*,
-            shader::definition_map
-        > definitions_cache;
+        render_scene* scene; 
     };
 }
 

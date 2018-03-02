@@ -14,7 +14,10 @@ uniform directional_light light;
 #endif
 
 out vec4 out_color;
+
+#ifdef SHADOW_IMPLEMENTATION
 uniform shadow_map shadow;
+#endif
 
 void main(void)
 {
@@ -60,17 +63,17 @@ void main(void)
         metallic
     );
 
-    if(light.shadow_map_index == 0)
-    {
-        shadow_vertex_data data;
-        calculate_shadow_vertex_data(shadow, data, pos);
-        lighting *= shadow_coef(
-            shadow,
-            data,
-            normal,
-            -light.direction
-        );
-    }
+#ifdef SHADOW_IMPLEMENTATION
+    shadow_vertex_data data;
+    calculate_shadow_vertex_data(shadow, data, pos);
+
+    lighting *= shadow_coef(
+        shadow,
+        data,
+        normal,
+        -light.direction
+    );
+#endif
 #endif
 
     out_color = vec4(lighting, 1.0f);

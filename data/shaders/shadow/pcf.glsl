@@ -3,9 +3,11 @@
 struct shadow_map
 {
     sampler2DShadow map;
-    mat4 mvp;
     float min_bias;
     float max_bias;
+    float radius;
+    mat4 mvp;
+    int samples;
 };
 
 struct shadow_vertex_data
@@ -53,14 +55,14 @@ float shadow_coef(
     vec2 cs = texelFetch(shadow_noise, sample_pos, 0).xy;
     mat2 rotation = mat2(cs.x, cs.y, -cs.y, cs.x);
 
-    for(int i = 0; i < SHADOW_MAP_KERNEL_SIZE; ++i)
+    for(int i = 0; i < sm.samples; ++i)
     {
-        vec2 sample_offset = rotation * shadow_kernel[i];
+        vec2 sample_offset = rotation * shadow_kernel[i] * sm.radius;
         shadow += dot(textureGather(
             sm.map,
             pos.xy + sample_offset * texel,
             pos.z - bias
-        ), vec4(0.25/SHADOW_MAP_KERNEL_SIZE));
+        ), vec4(0.25/sm.samples));
     }
 
 #else

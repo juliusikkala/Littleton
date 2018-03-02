@@ -4,60 +4,30 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
+basic_shadow_map::basic_shadow_map(context& ctx)
+: glresource(ctx) {}
+
+basic_shadow_map::~basic_shadow_map() {}
+
+basic_shadow_map::shared_resources::~shared_resources() {}
+
 directional_shadow_map::directional_shadow_map(
     context& ctx,
-    glm::uvec2 size,
     glm::vec3 offset,
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-): render_target(ctx, size), up(0,1,0), light(light),
-   depth(
-       ctx,
-       size,
-       GL_DEPTH_COMPONENT,
-       GL_DEPTH_COMPONENT16,
-       GL_FLOAT,
-       texture::SHADOW_MAP_PARAMS
-   )
+): basic_shadow_map(ctx), up(0,1,0), light(light)
 {
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        GL_DEPTH_ATTACHMENT,
-        depth.get_target(),
-        depth.get_texture(),
-        0
-    );
-
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        throw std::runtime_error("Shadow map is incomplete!");
-
-    reinstate_current_fbo();
-
     set_volume(area, depth_range);
     target.set_position(offset);
-    set_bias();
 }
 
-directional_shadow_map::directional_shadow_map(directional_shadow_map&& other)
-: render_target(other), target(other.target), up(other.up),
-  projection(other.projection), light(other.light),
-  depth(std::move(other.depth)), min_bias(other.min_bias),
-  max_bias(other.max_bias)
-{
-    other.fbo = 0;
-}
-
-directional_shadow_map::~directional_shadow_map()
-{
-    if(fbo != 0) glDeleteFramebuffers(1, &fbo);
-}
+directional_shadow_map::directional_shadow_map(
+    const directional_shadow_map& other
+): basic_shadow_map(other), target(other.target), up(other.up),
+  projection(other.projection), light(other.light)
+{}
 
 void directional_shadow_map::set_parent(transformable_node* parent)
 {
@@ -117,27 +87,6 @@ void directional_shadow_map::set_light(directional_light* light)
 directional_light* directional_shadow_map::get_light() const
 {
     return light;
-}
-
-void directional_shadow_map::set_bias(float min_bias, float max_bias)
-{
-    this->min_bias = min_bias;
-    this->max_bias = max_bias;
-}
-
-glm::vec2 directional_shadow_map::get_bias() const
-{
-    return glm::vec2(min_bias, max_bias);
-}
-
-texture& directional_shadow_map::get_depth()
-{
-    return depth;
-}
-
-const texture& directional_shadow_map::get_depth() const
-{
-    return depth;
 }
 
 texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)

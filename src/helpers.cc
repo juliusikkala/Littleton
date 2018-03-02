@@ -176,13 +176,16 @@ unsigned next_power_of_two(unsigned n)
 }
 
 template<class F>
-std::vector<glm::vec2> mitchell_best_candidate(
+void mitchell_best_candidate(
+    std::vector<glm::vec2>& samples,
     F&& sample_generator,
     unsigned candidate_count,
     unsigned count
 ){
-    std::vector<glm::vec2> samples;
+    if(count < samples.size()) return;
+
     samples.reserve(count);
+    count -= samples.size();
 
     while(count--)
     {
@@ -209,28 +212,31 @@ std::vector<glm::vec2> mitchell_best_candidate(
 
         samples.push_back(farthest);
     }
-    return samples;
 }
 
-std::vector<glm::vec2> mitchell_best_candidate(
+void mitchell_best_candidate(
+    std::vector<glm::vec2>& samples,
     float r,
     unsigned candidate_count,
     unsigned count
 ){
-    return mitchell_best_candidate(
+    mitchell_best_candidate(
+        samples,
         [r](){return glm::diskRand(r);},
         candidate_count,
         count
     );
 }
 
-std::vector<glm::vec2> mitchell_best_candidate(
+void mitchell_best_candidate(
+    std::vector<glm::vec2>& samples,
     float w,
     float h,
     unsigned candidate_count,
     unsigned count
 ){
-    return mitchell_best_candidate(
+    mitchell_best_candidate(
+        samples,
         [w, h](){
             return glm::linearRand(glm::vec2(-w/2, -h/2), glm::vec2(w/2, h/2));
         },

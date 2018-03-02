@@ -54,7 +54,7 @@ void method::geometry_pass::execute()
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader::definition_map& definitions = definitions_cache[&group];
+            shader::definition_map definitions;
             group.mat->update_definitions(definitions);
             group.mesh->update_definitions(definitions);
 

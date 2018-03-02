@@ -18,6 +18,7 @@
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
 #include "shader_store.hh"
+#include "shadow/directional_shadow_map_pcf.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -203,9 +204,11 @@ int main(int argc, char** argv)
     spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
     directional_light sun(glm::vec3(1,1,1)*5.0f);
     directional_light fake_sun;
-    directional_shadow_map sun_shadow(
+    directional_shadow_map_pcf sun_shadow(
         w,
         glm::uvec2(1024),
+        16,
+        4.0f,
         glm::vec3(0),
         glm::vec2(8.0f),
         glm::vec2(-5.0f, 5.0f),
@@ -231,6 +234,7 @@ int main(int argc, char** argv)
 
     dp.sky.set_sun(&sun);
     dp.sky.set_intensity(5);
+    dp.sky.set_samples(8,2);
     fp.sky.set_sun(&sun);
     fp.sky.set_scaling(1/6.3781e6);
     fp.sky.set_radius(6.3781e6);

@@ -3,11 +3,9 @@
 #include "resources.hh"
 #include "object.hh"
 #include "light.hh"
-#include "shadow_map.hh"
 #include "camera.hh"
+#include "shadow/shadow_scene.hh"
 #include <set>
-#include <unordered_map>
-#include <typeindex>
 
 class camera_scene
 {
@@ -74,6 +72,8 @@ public:
     void set_directional_lights(
         const std::set<directional_light*>& directional_lights
     );
+
+    std::set<light*> get_lights() const;
     const std::set<point_light*>& get_point_lights() const;
     const std::set<spotlight*>& get_spotlights() const;
     const std::set<directional_light*>& get_directional_lights() const;
@@ -82,37 +82,6 @@ private:
     std::set<point_light*> point_lights;
     std::set<spotlight*> spotlights;
     std::set<directional_light*> directional_lights;
-};
-
-class shadow_scene
-{
-public:
-    shadow_scene(
-        std::set<directional_shadow_map*> directional_shadow_maps = {}
-    );
-    ~shadow_scene();
-
-    void add_shadow_map(directional_shadow_map* dsm);
-    void remove_shadow_map(directional_shadow_map* dsm);
-
-    void clear_shadow_maps();
-    void clear_directional_shadow_maps();
-
-    size_t shadow_map_count() const;
-    size_t directional_shadow_map_count() const;
-
-    void set_directional_shadow_maps(
-        const std::set<directional_shadow_map*>& directional_shadow_maps
-    );
-
-    const std::set<directional_shadow_map*>&
-    get_directional_shadow_maps() const;
-
-    std::map<directional_light*, directional_shadow_map*>
-    get_directional_shadow_maps_by_light() const;
-
-private:
-    std::set<directional_shadow_map*> directional_shadow_maps;
 };
 
 class render_scene

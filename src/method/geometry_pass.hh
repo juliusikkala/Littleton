@@ -24,16 +24,6 @@ namespace method
     private:
         multishader* geometry_shader;
         render_scene* scene;
-
-        // It doesn't matter if a vertex group is reallocated; definitions
-        // will get updated anyways. However, this avoids malloc() calls by
-        // storing the definitions (which _should_ change rarely). Thanks to
-        // update_definitions(), no allocs are actually made if all values are
-        // correct.
-        std::map<
-            model::vertex_group*,
-            shader::definition_map
-        > definitions_cache;
     };
 };
 #endif

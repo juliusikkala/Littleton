@@ -37,14 +37,6 @@ const texture::params texture::DEPTH_PARAMS(
     glm::vec4(1)
 );
 
-const texture::params texture::SHADOW_MAP_PARAMS(
-    false,
-    GL_LINEAR,
-    GL_CLAMP_TO_BORDER,
-    0,
-    glm::vec4(1)
-);
-
 static void apply_params(
     context& ctx,
     GLenum target,
