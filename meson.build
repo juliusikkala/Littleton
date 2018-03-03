@@ -31,7 +31,7 @@ src = [
   'src/doublebuffer.cc',
   'src/shadow/shadow_map.cc',
   'src/shadow/shadow_scene.cc',
-  'src/shadow/directional_shadow_map_pcf.cc',
+  'src/shadow/pcf.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',

@@ -23,9 +23,6 @@ void method::render_shadow_maps::execute()
 
     for(auto& pair: scene->get_shadow_maps())
     {
-        for(basic_shadow_map* shadow_map: pair.second)
-        {
-            shadow_map->render(*store, scene, pair.first.get());
-        }
+        pair.first->render(*store, pair.second, scene);
     }
 }

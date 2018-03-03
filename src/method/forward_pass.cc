@@ -205,15 +205,15 @@ void method::forward_pass::execute()
     std::map<light*, basic_shadow_map*> shadows_by_light =
         scene->get_shadow_maps_by_light();
 
-    // Loop through shadow map techniques (separated by shared resources in
-    // pair.first)
+    // Loop through shadow map implementations (separated by shared resources
+    // in pair.first)
     for(auto& pair: shadow_maps)
     {
-        basic_shadow_map::shared_resources* shared = pair.first.get();
+        shadow_map_impl* impl = pair.first.get();
         const std::set<basic_shadow_map*>& shadow_maps = pair.second;
 
         shader::definition_map shadow_map_definitions =
-            shared->get_definitions();
+            impl->get_definitions();
 
         std::unique_ptr<uniform_block> light_block;
 
@@ -259,7 +259,7 @@ void method::forward_pass::execute()
 
                 unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
                 s->set<int>("shadow_map_count", shadow_maps.size());
-                shared->set_uniforms(s, texture_index);
+                impl->set_common_uniforms(s, texture_index);
 
                 unsigned i = 0;
                 for(basic_shadow_map* sm: shadow_maps)
@@ -269,7 +269,13 @@ void method::forward_pass::execute()
                         + std::to_string(i++)
                         + "].";
 
-                    sm->set_uniforms(s, prefix, texture_index, m);
+                    impl->set_shadow_map_uniforms(
+                        s,
+                        texture_index,
+                        sm,
+                        prefix,
+                        m
+                    );
                 }
 
                 s->set("mvp", mvp);

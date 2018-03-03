@@ -8,7 +8,7 @@ class shadow_scene
 {
 public:
     using shadow_map_map = std::map<
-        std::unique_ptr<basic_shadow_map::shared_resources>,
+        std::unique_ptr<shadow_map_impl>,
         std::set<basic_shadow_map*>
     >;
 
@@ -30,7 +30,6 @@ public:
 private:
     void add_shadow_map(basic_shadow_map* sm) const;
     void remove_shadow_map(basic_shadow_map* sm) const;
-    void recalc() const;
 
     mutable shadow_map_map shadow_maps;
 };

@@ -5,60 +5,55 @@
 #include "render_target.hh"
 #include "shader_store.hh"
 
+class basic_shadow_map;
 class render_scene;
+class shadow_map_impl: public glresource
+{
+public:
+    shadow_map_impl(context& ctx);
+    virtual ~shadow_map_impl();
+
+    // Renders the shadow map itself.
+    virtual void render(
+        shader_store& store,
+        const std::set<basic_shadow_map*>& shadow_maps,
+        render_scene* scene
+    ) = 0;
+
+    // Definitions needed when using the shadow maps.
+    virtual shader::definition_map get_definitions() const = 0;
+
+    // Sets the uniforms needed when using this implementation.
+    virtual void set_common_uniforms(shader* s, unsigned& texture_index) = 0;
+
+    // Sets the uniforms needed when using the shadow map.
+    virtual void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        basic_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) = 0;
+};
+
 class basic_shadow_map: public glresource
 {
 public:
     basic_shadow_map(context& ctx);
     virtual ~basic_shadow_map();
 
-    struct shared_resources
-    {
-        virtual ~shared_resources();
-
-        // Definitions needed when using the shadow map
-        virtual shader::definition_map get_definitions() const = 0;
- 
-        // Must set the uniforms needed when using the shadow map
-        virtual void set_uniforms(
-            shader* s,
-            // First available texture index.
-            // Please update this when using an index.
-            unsigned& texture_index
-        ) = 0;
-    };
-
-    // Should render the shadow map itself.
-    virtual void render(
-        shader_store& store,
-        render_scene* scene,
-        shared_resources* resources
-    ) = 0;
-
-    // Return false if the given resources can't be upgraded to be compatible
-    // with the ones required by this shadow map.
-    virtual bool merge_shared_resources(shared_resources* res) const = 0;
-
-    // Must create the minimum-required resources for this shadow map.
-    virtual shared_resources* create_shared_resources() const = 0;
-
-    virtual void set_uniforms(
-        shader* s,
-        const std::string& prefix,
-        // First available texture index.
-        // Please update this when using an index.
-        unsigned& texture_index,
-        const glm::mat4& pos_to_world
-    ) = 0;
+    virtual bool impl_is_compatible(const shadow_map_impl* impl) = 0;
+    virtual shadow_map_impl* create_impl() const = 0;
 
     virtual light* get_light() const = 0;
+    virtual glm::mat4 get_view() const = 0;
+    virtual glm::mat4 get_projection() const = 0;
 };
 
-class directional_shadow_map: public basic_shadow_map
+class directional_shadow_map
 {
 public:
     directional_shadow_map(
-        context& ctx,
         glm::vec3 offset = glm::vec3(0),
         glm::vec2 area = glm::vec2(1.0f),
         glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
@@ -69,7 +64,7 @@ public:
     void set_parent(transformable_node* parent);
 
     void set_light(directional_light* light = nullptr);
-    directional_light* get_light() const override;
+    directional_light* get_light() const;
 
     void set_offset(glm::vec3 offset);
     glm::vec3 get_offset() const;
@@ -85,9 +80,7 @@ private:
     glm::vec3 up;
     glm::mat4 projection;
 
-    directional_light* light;
+    directional_light* l;
 };
-
-texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size);
 
 #endif

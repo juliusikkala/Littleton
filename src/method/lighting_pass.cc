@@ -28,24 +28,9 @@ static void set_point_light(
     point_light* light,
     const glm::mat4& view,
     const glm::vec4& perspective_data,
-    unsigned texture_index,
-    basic_shadow_map* shadow_map = nullptr
+    int shadow_map_index = -1
 ){
-    if(shadow_map)
-    {
-        shadow_map->set_uniforms(
-            s,
-            "shadow.",
-            texture_index,
-            glm::inverse(view)
-        );
-        s->set("light.shadow_map_index", 0);
-    }
-    else
-    {
-        s->set("light.shadow_map_index", -1);
-    }
-
+    s->set("light.shadow_map_index", shadow_map_index);
     s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
@@ -65,23 +50,9 @@ static void set_spotlight(
     spotlight* light,
     const glm::mat4& view,
     const glm::vec4& perspective_data,
-    unsigned texture_index,
-    basic_shadow_map* shadow_map = nullptr
+    int shadow_map_index = -1
 ){
-    if(shadow_map)
-    {
-        shadow_map->set_uniforms(
-            s,
-            "shadow.",
-            texture_index,
-            glm::inverse(view)
-        );
-        s->set("light.shadow_map_index", 0);
-    }
-    else
-    {
-        s->set("light.shadow_map_index", -1);
-    }
+    s->set("light.shadow_map_index", shadow_map_index);
 
     s->set(
         "light.position",
@@ -119,23 +90,9 @@ static void set_directional_light(
     directional_light* light,
     const glm::mat4& view,
     const glm::vec4& perspective_data,
-    unsigned texture_index,
-    basic_shadow_map* shadow_map = nullptr
+    int shadow_map_index = -1
 ){
-    if(shadow_map)
-    {
-        shadow_map->set_uniforms(
-            s,
-            "shadow.",
-            texture_index,
-            glm::inverse(view)
-        );
-        s->set("light.shadow_map_index", 0);
-    }
-    else
-    {
-        s->set("light.shadow_map_index", -1);
-    }
+    s->set("light.shadow_map_index", shadow_map_index);
     s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
@@ -162,37 +119,45 @@ static std::set<light*> render_shadowed_lights(
         shader::definition_map default_definitions(
             pair.first->get_definitions()
         );
+
         for(basic_shadow_map* sm: pair.second)
         {
             directional_shadow_map* dsm =
                 dynamic_cast<directional_shadow_map*>(sm);
 
+            shader::definition_map definitions(default_definitions);
             unsigned texture_index = 4;
+
+            if(dsm) definitions["DIRECTIONAL_LIGHT"];
+
+            shader* s = lighting_shader->get(definitions);
+            s->bind();
+
+            pair.first->set_common_uniforms(s, texture_index);
+            pair.first->set_shadow_map_uniforms(
+                s,
+                texture_index,
+                sm,
+                "shadow.",
+                glm::inverse(view)
+            );
 
             if(dsm)
             {
                 directional_light* l = dsm->get_light();
                 if(scene->get_directional_lights().count(l) == 0) continue;
 
-                shader::definition_map definitions(default_definitions);
-                definitions["DIRECTIONAL_LIGHT"];
-
-                shader* s = lighting_shader->get(definitions);
-                s->bind();
-                pair.first->set_uniforms(s, texture_index);
-
                 set_directional_light(
                     s,
                     l,
                     view,
                     perspective_data,
-                    texture_index,
-                    sm
+                    0
                 );
-
-                fullscreen_quad.draw();
                 shadowed_lights.insert(l);
             }
+
+            fullscreen_quad.draw();
         }
     }
     return shadowed_lights;
@@ -254,7 +219,7 @@ void method::lighting_pass::execute()
     for(point_light* l: scene->get_point_lights())
     {
         if(shadowed_lights.count(l)) continue;
-        set_point_light(pls, l, v, perspective_data, 4);
+        set_point_light(pls, l, v, perspective_data);
         fullscreen_quad.draw();
     }
 
@@ -265,7 +230,7 @@ void method::lighting_pass::execute()
     for(spotlight* l: scene->get_spotlights())
     {
         if(shadowed_lights.count(l)) continue;
-        set_spotlight(sls, l, v, perspective_data, 4);
+        set_spotlight(sls, l, v, perspective_data);
         fullscreen_quad.draw();
     }
 
@@ -276,7 +241,7 @@ void method::lighting_pass::execute()
     for(directional_light* l: scene->get_directional_lights())
     {
         if(shadowed_lights.count(l)) continue;
-        set_directional_light(dls, l, v, perspective_data, 4);
+        set_directional_light(dls, l, v, perspective_data);
         fullscreen_quad.draw();
     }
 }

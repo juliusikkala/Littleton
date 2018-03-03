@@ -23,10 +23,8 @@ void calculate_shadow_vertex_data(
     data.light_space_pos = sm.mvp * vec4(vertex_pos, 1.0f);
 }
 
-#if SHADOW_MAP_KERNEL_SIZE > 0
-uniform vec2 shadow_kernel[SHADOW_MAP_KERNEL_SIZE];
+uniform sampler1D shadow_kernel;
 uniform sampler2D shadow_noise;
-#endif
 
 float shadow_coef(
     in shadow_map sm,
@@ -44,7 +42,6 @@ float shadow_coef(
         sm.min_bias
     );
 
-#if SHADOW_MAP_KERNEL_SIZE > 0
     ivec2 tex_size = textureSize(sm.map, 0);
     ivec2 noise_size = textureSize(shadow_noise, 0);
     vec2 texel = 1.0f/vec2(tex_size);
@@ -57,17 +54,15 @@ float shadow_coef(
 
     for(int i = 0; i < sm.samples; ++i)
     {
-        vec2 sample_offset = rotation * shadow_kernel[i] * sm.radius;
+        vec2 sample_offset =
+            rotation * texelFetch(shadow_kernel, i, 0).xy * sm.radius;
+
         shadow += dot(textureGather(
             sm.map,
             pos.xy + sample_offset * texel,
             pos.z - bias
         ), vec4(0.25/sm.samples));
     }
-
-#else
-    shadow = texture(sm.map, vec3(pos.xy, pos.z - bias));
-#endif
 
     return shadow;
 }

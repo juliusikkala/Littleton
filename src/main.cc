@@ -18,7 +18,7 @@
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
 #include "shader_store.hh"
-#include "shadow/directional_shadow_map_pcf.hh"
+#include "shadow/pcf.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
