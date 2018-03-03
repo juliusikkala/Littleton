@@ -221,22 +221,24 @@ shader::shader(
     context& ctx,
     const source& s,
     const definition_map& definitions,
-    const std::vector<std::string>& include_path
+    const std::vector<std::string>& include_path,
+    const std::string& binary_path
 ): glresource(ctx), program(0)
 {
     basic_load({
         process_source(s.vert, definitions, include_path),
         process_source(s.frag, definitions, include_path),
         process_source(s.geom, definitions, include_path)
-    });
+    }, binary_path);
 }
 
 shader::shader(
     context& ctx,
     const path& p,
     const definition_map& definitions,
-    const std::vector<std::string>& include_path
-): shader(ctx, source(p), definitions, include_path) {}
+    const std::vector<std::string>& include_path,
+    const std::string& binary_path
+): shader(ctx, source(p), definitions, include_path, binary_path) {}
 
 shader::shader(shader&& other)
 : glresource(other.get_context())
@@ -275,6 +277,27 @@ void shader::unbind()
     current_program = 0;
 }
 
+void shader::write_binary(const std::string& path) const
+{
+    load();
+    GLint length = 0;
+    glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
+
+    if(!length) return;
+
+    uint8_t* binary = new uint8_t[length + sizeof(GLenum)];
+    uint8_t* binary_data = binary + sizeof(GLenum);
+    GLenum* binary_format = (GLenum*)binary;
+
+    glGetProgramBinary(program, length, nullptr, binary_format, binary_data);
+
+    boost::filesystem::path p(path);
+    boost::filesystem::create_directories(p.parent_path());
+
+    write_binary_file(path, binary, length + sizeof(GLenum));
+
+    delete [] binary;
+}
 
 class src_shader: public shader
 {
@@ -283,18 +306,20 @@ public:
         context& ctx,
         const source& s,
         const definition_map& definitions,
-        const std::vector<std::string>& include_path
+        const std::vector<std::string>& include_path,
+        const std::string& binary_path
     ): shader(ctx),
        src(
            process_source(s.vert, definitions, include_path),
            process_source(s.frag, definitions, include_path),
            process_source(s.geom, definitions, include_path)
-       )
+       ),
+       binary_path(binary_path)
     { }
 
     void load() const override
     {
-        basic_load(src);
+        basic_load(src, binary_path);
     }
 
     void unload() const override
@@ -304,22 +329,25 @@ public:
 
 private:
     source src;
+    std::string binary_path;
 };
 
 shader* shader::create(
     context& ctx,
     const source& s,
     const definition_map& definitions,
-    const std::vector<std::string>& include_path
+    const std::vector<std::string>& include_path,
+    const std::string& binary_path
 ){
-    return new src_shader(ctx, s, definitions, include_path);
+    return new src_shader(ctx, s, definitions, include_path, binary_path);
 }
 
 shader* shader::create(
     context& ctx,
     const path& p,
     const definition_map& definitions,
-    const std::vector<std::string>& include_path
+    const std::vector<std::string>& include_path,
+    const std::string& binary_path
 ){
     std::vector<std::string> extended_include_path = {
         boost::filesystem::path(p.vert).parent_path().string(),
@@ -335,7 +363,8 @@ shader* shader::create(
         ctx,
         source(p),
         definitions,
-        extended_include_path
+        extended_include_path,
+        binary_path
     );
 }
 
@@ -390,43 +419,95 @@ static void remove_index_brackets(std::string& name)
     }
 }
 
-void shader::basic_load(const source& src) const
+void shader::basic_load(
+    const source& src,
+    const std::string& binary_path
+) const
 {
     if(program) return;
 
     program = glCreateProgram();
 
-    const char* vsrc = src.vert.c_str();
-    GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vshader, 1, &vsrc, NULL);
-    glCompileShader(vshader);
-    throw_shader_error(vshader, "Vertex shader", src.vert);
-    glAttachShader(program, vshader);
-    glDeleteShader(vshader);
+    bool load_from_source = true;
 
-    const char* fsrc = src.frag.c_str();
-    GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fshader, 1, &fsrc, NULL);
-    glCompileShader(fshader);
-    throw_shader_error(fshader, "Fragment shader", src.frag);
-    glAttachShader(program, fshader);
-    glDeleteShader(fshader);
-    
-    if(!src.geom.empty())
+    // Attempt to load the binary
+    if(!binary_path.empty())
     {
-        const char* gsrc = src.geom.c_str();
-        GLuint gshader = glCreateShader(GL_GEOMETRY_SHADER);
-        glShaderSource(gshader, 1, &gsrc, NULL);
-        glCompileShader(gshader);
-        throw_shader_error(gshader, "Geometry shader", src.geom);
-        glAttachShader(program, gshader);
-        glDeleteShader(gshader);
+        uint8_t* binary;
+        size_t length;
+
+        if(read_binary_file(binary_path, binary, length))
+        {
+            uint8_t* binary_data = binary + sizeof(GLenum);
+            GLenum binary_format = *(GLenum*)binary;
+            length -= sizeof(GLenum);
+
+            glProgramBinary(
+                program,
+                binary_format,
+                binary_data,
+                length
+            );
+
+            delete [] binary;
+
+            if(glGetError() == GL_NO_ERROR)
+            {
+                GLint status = GL_FALSE;
+                glGetProgramiv(program, GL_LINK_STATUS, &status);
+                if(status == GL_TRUE)
+                {
+                    load_from_source = false;
+                }
+            }
+
+            if(load_from_source) std::remove(binary_path.c_str());
+        }
     }
 
-    glLinkProgram(program);
-    throw_program_error(program, "Shader program");
+    if(load_from_source)
+    {
+        const char* vsrc = src.vert.c_str();
+        GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vshader, 1, &vsrc, NULL);
+        glCompileShader(vshader);
+        throw_shader_error(vshader, "Vertex shader", src.vert);
+        glAttachShader(program, vshader);
+        glDeleteShader(vshader);
 
-    // Populate uniforms
+        const char* fsrc = src.frag.c_str();
+        GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fshader, 1, &fsrc, NULL);
+        glCompileShader(fshader);
+        throw_shader_error(fshader, "Fragment shader", src.frag);
+        glAttachShader(program, fshader);
+        glDeleteShader(fshader);
+        
+        if(!src.geom.empty())
+        {
+            const char* gsrc = src.geom.c_str();
+            GLuint gshader = glCreateShader(GL_GEOMETRY_SHADER);
+            glShaderSource(gshader, 1, &gsrc, NULL);
+            glCompileShader(gshader);
+            throw_shader_error(gshader, "Geometry shader", src.geom);
+            glAttachShader(program, gshader);
+            glDeleteShader(gshader);
+        }
+
+        glLinkProgram(program);
+        throw_program_error(program, "Shader program");
+
+        if(!binary_path.empty())
+        {
+            write_binary(binary_path);
+        }
+    }
+
+    populate_uniforms();
+}
+
+void shader::populate_uniforms() const
+{
     GLuint uniform_count = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, (GLint*)&uniform_count);
 

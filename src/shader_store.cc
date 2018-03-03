@@ -16,11 +16,18 @@ static std::string find_file(
     }
     throw std::runtime_error("Unable to find shader source " + suffix);
 }
-
 shader_store::shader_store(
     context& ctx,
     const std::vector<std::string>& shader_path
-): ctx(&ctx), shader_path(shader_path) {}
+): ctx(&ctx), shader_path(shader_path)
+{}
+
+shader_store::shader_store(
+    context& ctx,
+    const std::vector<std::string>& shader_path,
+    const std::string& shader_binary_path
+): ctx(&ctx), shader_path(shader_path), shader_binary_path(shader_binary_path)
+{}
 
 shader_store::~shader_store()
 {
@@ -40,7 +47,19 @@ multishader* shader_store::add(const shader::path& path)
         find_file(shader_path, path.frag),
         path.geom.empty() ? "" : find_file(shader_path, path.geom)
     };
-    multishader* s = new multishader(*ctx, full_path, shader_path); 
+
+    multishader* s;
+    if(shader_binary_path)
+    {
+        s = new multishader(
+            *ctx,
+            full_path,
+            shader_path,
+            append_hash_to_path(shader_binary_path.value(), full_path)
+        ); 
+    }
+    else s = new multishader(*ctx, full_path, shader_path); 
+
     shaders[path] = std::unique_ptr<multishader>(s);
     return s;
 }
@@ -48,6 +67,22 @@ multishader* shader_store::add(const shader::path& path)
 void shader_store::remove(const shader::path& path)
 {
     shaders.erase(path);
+}
+
+void shader_store::delete_binaries()
+{
+    if(shader_binary_path)
+    {
+        boost::filesystem::remove_all(shader_binary_path.value());
+    }
+}
+
+void shader_store::unload_all()
+{
+    for(auto& pair: shaders)
+    {
+        pair.second->unload();
+    }
 }
 
 multishader* shader_store::get(const shader::path& path)

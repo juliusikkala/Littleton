@@ -31,13 +31,15 @@ pipeline::~pipeline() {}
 
 void pipeline::execute()
 {
-    for(pipeline_method* method: methods)
+    for(unsigned i = 0; i < methods.size(); ++i)
     {
+        pipeline_method* method = methods[i];
         method->execute();
         if(glGetError() != GL_NO_ERROR)
             throw std::runtime_error(
                 "Error in pipeline method "
                 + std::string(typeid(method).name())
+                + " index " + std::to_string(i)
             );
     }
 }

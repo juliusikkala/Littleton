@@ -43,13 +43,15 @@ public:
         context& ctx,
         const source& s,
         const definition_map& definitions = {},
-        const std::vector<std::string>& include_path = {}
+        const std::vector<std::string>& include_path = {},
+        const std::string& binary_path = ""
     );
     shader(
         context& ctx,
         const path& s,
         const definition_map& definitions = {},
-        const std::vector<std::string>& include_path = {}
+        const std::vector<std::string>& include_path = {},
+        const std::string& binary_path = ""
     );
     shader(shader&& other);
     ~shader();
@@ -60,18 +62,22 @@ public:
         context& ctx,
         const source& s,
         const definition_map& definitions = {},
-        const std::vector<std::string>& include_path = {}
+        const std::vector<std::string>& include_path = {},
+        const std::string& binary_path = ""
     );
 
     static shader* create(
         context& ctx,
         const path& p,
         const definition_map& definitions = {},
-        const std::vector<std::string>& include_path = {}
+        const std::vector<std::string>& include_path = {},
+        const std::string& binary_path = ""
     );
 
     void bind() const;
     static void unbind();
+
+    void write_binary(const std::string& path) const;
 
     template<typename T>
     bool is_compatible(const std::string& name, size_t count = 1) const;
@@ -100,7 +106,14 @@ public:
     );
 
 protected:
-    void basic_load(const source& src) const;
+    // Attempts to load the binary, but if that fails, falls back to the
+    // source.
+    void basic_load(
+        const source& src,
+        const std::string& binary = ""
+    ) const;
+
+    void populate_uniforms() const;
 
     void basic_unload() const;
 

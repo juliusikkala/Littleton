@@ -30,6 +30,40 @@ std::string read_text_file(const std::string& path)
     return ret;
 }
 
+bool read_binary_file(const std::string& path, uint8_t*& data, size_t& bytes)
+{
+    FILE* f = fopen(path.c_str(), "rb");
+
+    if(!f) return false;
+
+    fseek(f, 0, SEEK_END);
+    bytes = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    data = new uint8_t[bytes];
+    if(fread(data, 1, bytes, f) != bytes)
+    {
+        delete [] data;
+        bytes = 0;
+        return false;
+    }
+    fclose(f);
+
+    return true;
+}
+
+bool write_binary_file(const std::string& path, uint8_t* data, size_t bytes)
+{
+    FILE* f = fopen(path.c_str(), "wb");
+
+    if(!f) return false;
+
+    if(fwrite(data, 1, bytes, f) != bytes) return false;
+    fclose(f);
+
+    return true;
+}
+
 void decompose_matrix(
     const glm::mat4& transform,
     glm::vec3& translation,

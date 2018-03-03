@@ -5,6 +5,7 @@ dna.txt
 *.blend1
 *.blend2
 lib/external
+data/shaders/bin
 *~
 *.filters
 *.dll

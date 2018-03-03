@@ -3,10 +3,14 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <boost/functional/hash.hpp>
 
 std::string read_text_file(const std::string& path);
+bool read_binary_file(const std::string& path, uint8_t*& data, size_t& bytes);
+bool write_binary_file(const std::string& path, uint8_t* data, size_t bytes);
 
 void decompose_matrix(
     const glm::mat4& transform,
@@ -84,6 +88,13 @@ std::vector<glm::vec2> poisson_samples(
     float w,
     float h,
     float mindist
+);
+
+template<typename T, typename Hash = boost::hash<T>>
+std::string append_hash_to_path(
+    const std::string& prefix,
+    const T& hashable,
+    const std::string& suffix = ""
 );
 
 #include "helpers.tcc"

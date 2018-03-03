@@ -178,7 +178,7 @@ int main(int argc, char** argv)
     resources.add_dfo("data/test_scene.dfo", "data");
     resources.add_dfo("data/earth.dfo", "data");
 
-    shader_store shaders(w, {"data/shaders/"});
+    shader_store shaders(w, {"data/shaders/"}, "data/shaders/bin/");
 
     object* suzanne = resources.get<object>("Suzanne");
     object* earth = resources.get<object>("Earth");
@@ -273,6 +273,11 @@ int main(int argc, char** argv)
                 if(e.key.keysym.sym == SDLK_3) pipeline_index = 2;
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;
+                if(e.key.keysym.sym == SDLK_r)
+                {
+                    shaders.delete_binaries();
+                    shaders.unload_all();
+                }
                 break;
             case SDL_MOUSEMOTION:
                 pitch = std::clamp(pitch-e.motion.yrel*sensitivity, -90.0f, 90.0f);
