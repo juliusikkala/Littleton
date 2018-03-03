@@ -1,4 +1,6 @@
 #include "shader_store.hh"
+#include "multishader.hh"
+#include "helpers.hh"
 #include <boost/filesystem.hpp>
 
 static std::string find_file(

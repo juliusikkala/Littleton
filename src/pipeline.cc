@@ -1,5 +1,7 @@
 #include "pipeline.hh"
+#include "render_target.hh"
 #include <utility>
+#include <stdexcept>
 
 pipeline_method::~pipeline_method() {}
 

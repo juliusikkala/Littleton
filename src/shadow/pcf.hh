@@ -2,6 +2,8 @@
 #define SHADOW_PCF_HH
 #include "shadow_map.hh"
 #include "framebuffer.hh"
+#include "texture.hh"
+#include <memory>
 
 class pcf_impl: public shadow_map_impl
 {

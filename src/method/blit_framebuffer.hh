@@ -2,7 +2,6 @@
 #define METHOD_BLIT_FRAMEBUFFER_HH
 #include "pipeline.hh"
 #include "render_target.hh"
-#include "scene.hh"
 
 namespace method
 {
@@ -24,7 +23,7 @@ namespace method
         blit_framebuffer(
             render_target& dst,
             render_target& src,
-            blit_type = ALL
+            blit_type type = ALL
         );
 
         void set_blit_type(blit_type type);

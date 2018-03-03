@@ -1,9 +1,13 @@
 #ifndef METHOD_SKY_HH
 #define METHOD_SKY_HH
 #include "pipeline.hh"
-#include "shader_store.hh"
+#include "transformable.hh"
 #include "vertex_buffer.hh"
-#include "scene.hh"
+
+class texture;
+class shader_store;
+class render_scene;
+class directional_light;
 
 namespace method
 {

@@ -1,9 +1,11 @@
 #ifndef METHOD_GEOMETRY_PASS_HH
 #define METHOD_GEOMETRY_PASS_HH
 #include "pipeline.hh"
-#include "gbuffer.hh"
-#include "shader_store.hh"
-#include "scene.hh"
+
+class gbuffer;
+class shader_store;
+class render_scene;
+class multishader;
 
 namespace method
 {

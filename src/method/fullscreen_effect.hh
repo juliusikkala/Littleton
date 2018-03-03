@@ -2,10 +2,11 @@
 #define METHOD_FULLSCREEN_EFFECT_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
-#include "shader.hh"
-#include "texture.hh"
 #include <map>
 #include <string>
+
+class texture;
+class shader;
 
 namespace method
 {

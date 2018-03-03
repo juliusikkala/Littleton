@@ -1,5 +1,6 @@
 #include "material.hh"
 #include "texture.hh"
+#include "shader.hh"
 
 material::material(): ior(1.0) {}
 

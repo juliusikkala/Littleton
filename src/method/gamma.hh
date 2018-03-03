@@ -1,9 +1,10 @@
 #ifndef METHOD_GAMMA_HH
 #define METHOD_GAMMA_HH
 #include "pipeline.hh"
-#include "texture.hh"
-#include "shader_store.hh"
 #include "vertex_buffer.hh"
+
+class shader_store;
+class texture;
 
 namespace method
 {

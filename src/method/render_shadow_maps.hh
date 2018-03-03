@@ -1,8 +1,9 @@
 #ifndef METHOD_RENDER_SHADOW_MAPS_HH
 #define METHOD_RENDER_SHADOW_MAPS_HH
 #include "pipeline.hh"
-#include "shader_store.hh"
-#include "scene.hh"
+
+class shader_store;
+class render_scene;
 
 namespace method
 {

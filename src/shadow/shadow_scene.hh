@@ -1,6 +1,7 @@
 #ifndef SHADOW_SCENE_HH
 #define SHADOW_SCENE_HH
 #include "shadow_map.hh"
+#include <memory>
 #include <map>
 #include <set>
 

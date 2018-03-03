@@ -1,4 +1,6 @@
 #include "render_shadow_maps.hh"
+#include "shader_store.hh"
+#include "scene.hh"
 #include "shadow/shadow_map.hh"
 
 method::render_shadow_maps::render_shadow_maps(

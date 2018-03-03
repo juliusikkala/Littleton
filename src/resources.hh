@@ -8,27 +8,7 @@
 #include <iterator>
 #include <memory>
 
-// Not every resource in resource_store has to derive from this; only if they
-// provide (optional) lazy loading is this resource class required.
-class resource
-{
-public:
-    virtual ~resource();
-
-    virtual void load() const;
-    virtual void unload() const;
-};
-
 class context;
-class glresource
-{
-public:
-    glresource(context& ctx);
-
-    context& get_context() const;
-private:
-    context* ctx;
-};
 
 // TODO: Break this thing up, this 'everything-container' is kinda smelly
 // Maybe type-specific stores like object_store, shader_store and so on,

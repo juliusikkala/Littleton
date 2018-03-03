@@ -1,6 +1,4 @@
 #include "resources.hh"
-#include <stdexcept>
-#include <memory>
 #include "dfo.h"
 #include "vertex_buffer.hh"
 #include "texture.hh"
@@ -8,14 +6,9 @@
 #include "model.hh"
 #include "object.hh"
 #include <glm/gtc/type_ptr.hpp>
+#include <stdexcept>
+#include <memory>
 #include <map>
-
-resource::~resource() {}
-void resource::load() const {}
-void resource::unload() const {}
-
-glresource::glresource(context& ctx): ctx(&ctx) {}
-context& glresource::get_context() const { return *ctx; }
 
 resource_store::container::~container() {};
 

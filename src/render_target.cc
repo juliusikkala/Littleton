@@ -1,4 +1,5 @@
 #include "render_target.hh"
+#include <stdexcept>
 
 GLint render_target::current_read_fbo = -1;
 GLint render_target::current_write_fbo = -1;

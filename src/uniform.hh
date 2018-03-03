@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <string>
-#include <memory>
 
 template<typename T>
 bool uniform_is_compatible(GLenum type, GLint size, size_t count = 1);

@@ -1,10 +1,12 @@
 #ifndef METHOD_VISUALIZE_GBUFFER_HH
 #define METHOD_VISUALIZE_GBUFFER_HH
 #include "pipeline.hh"
-#include "gbuffer.hh"
-#include "shader_store.hh"
 #include "vertex_buffer.hh"
-#include "scene.hh"
+
+class gbuffer;
+class shader_store;
+class render_scene;
+class multishader;
 
 namespace method
 {

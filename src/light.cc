@@ -1,5 +1,4 @@
 #include "light.hh"
-#include <glm/gtx/quaternion.hpp>
 
 light::light(glm::vec3 color)
 : color(color) {}

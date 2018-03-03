@@ -1,8 +1,10 @@
 #ifndef METHOD_FORWARD_PASS_HH
 #define METHOD_FORWARD_PASS_HH
 #include "pipeline.hh"
-#include "shader_store.hh"
-#include "scene.hh"
+
+class render_scene;
+class shader_store;
+class multishader;
 
 namespace method
 {

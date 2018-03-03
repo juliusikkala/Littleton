@@ -1,6 +1,10 @@
 #include "pcf.hh"
 #include "object.hh"
+#include "model.hh"
+#include "vertex_buffer.hh"
 #include "scene.hh"
+#include "helpers.hh"
+#include "shader_store.hh"
 #include <glm/gtc/random.hpp>
 
 static texture* generate_shadow_kernel(context& ctx, unsigned size)

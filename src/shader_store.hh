@@ -1,12 +1,14 @@
 #ifndef SHADER_STORE_HH
 #define SHADER_STORE_HH
-#include "multishader.hh"
+#include "shader.hh"
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <boost/functional/hash.hpp>
 
+class multishader;
 class shader_store
 {
 private:

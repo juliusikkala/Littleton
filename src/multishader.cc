@@ -1,5 +1,6 @@
 #include "multishader.hh"
 #include "helpers.hh"
+#include "shader.hh"
 #include <boost/filesystem.hpp>
 
 multishader::multishader(

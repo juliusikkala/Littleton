@@ -1,8 +1,7 @@
 #ifndef VERTEX_BUFFER_HH
 #define VERTEX_BUFFER_HH
-#include <memory>
 #include "glheaders.hh"
-#include "resources.hh"
+#include "resource.hh"
 #include "shader.hh"
 
 class vertex_buffer: public resource, public glresource

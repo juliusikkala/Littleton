@@ -1,4 +1,5 @@
 #include "gbuffer.hh"
+#include <stdexcept>
 
 gbuffer::gbuffer(context& ctx, glm::uvec2 size)
 : render_target(ctx, size),

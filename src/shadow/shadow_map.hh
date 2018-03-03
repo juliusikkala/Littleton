@@ -1,12 +1,14 @@
 #ifndef SHADOW_MAP_HH
 #define SHADOW_MAP_HH
-#include "texture.hh"
 #include "light.hh"
-#include "render_target.hh"
-#include "shader_store.hh"
+#include "resource.hh"
+#include "shader.hh"
+#include <set>
 
 class basic_shadow_map;
 class render_scene;
+class shader_store;
+
 class shadow_map_impl: public glresource
 {
 public:

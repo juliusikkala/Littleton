@@ -1,11 +1,13 @@
 #ifndef SCENE_HH
 #define SCENE_HH
-#include "resources.hh"
-#include "object.hh"
-#include "light.hh"
-#include "camera.hh"
 #include "shadow/shadow_scene.hh"
 #include <set>
+
+class object;
+class camera;
+class directional_light;
+class point_light;
+class spotlight;
 
 class camera_scene
 {

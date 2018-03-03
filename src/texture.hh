@@ -1,7 +1,7 @@
 #ifndef TEXTURE_HH
 #define TEXTURE_HH
 #include "glheaders.hh"
-#include "resources.hh"
+#include "resource.hh"
 #include <string>
 #include <glm/glm.hpp>
 

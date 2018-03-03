@@ -1,7 +1,6 @@
 #ifndef HELPERS_HH
 #define HELPERS_HH
 #include <string>
-#include <map>
 #include <vector>
 #include <functional>
 #include <glm/glm.hpp>

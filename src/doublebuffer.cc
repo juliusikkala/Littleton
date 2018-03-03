@@ -1,4 +1,5 @@
 #include "doublebuffer.hh"
+#include <stdexcept>
 
 doublebuffer::doublebuffer(
     context& ctx,

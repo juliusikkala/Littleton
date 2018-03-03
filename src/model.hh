@@ -1,9 +1,9 @@
 #ifndef MODEL_HH
 #define MODEL_HH
-#include "material.hh"
-#include "vertex_buffer.hh"
 #include <vector>
 
+class material;
+class vertex_buffer;
 struct model
 {
 public:

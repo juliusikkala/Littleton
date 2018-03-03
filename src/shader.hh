@@ -1,7 +1,7 @@
 #ifndef SHADER_HH
 #define SHADER_HH
-#include "resources.hh"
 #include "glheaders.hh"
+#include "resource.hh"
 #include "uniform.hh"
 #include <map>
 #include <vector>

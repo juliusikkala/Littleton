@@ -1,6 +1,6 @@
 #ifndef DOUBLEBUFFER_HH
 #define DOUBLEBUFFER_HH
-#include "resources.hh"
+#include "resource.hh"
 #include "render_target.hh"
 #include "texture.hh"
 

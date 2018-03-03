@@ -1,4 +1,7 @@
 #include "tonemap.hh"
+#include "render_target.hh"
+#include "texture.hh"
+#include "shader_store.hh"
 
 method::tonemap::tonemap(
     render_target& target,

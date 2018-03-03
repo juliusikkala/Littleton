@@ -2,9 +2,7 @@
 #define CONTEXT_HH
 #include "glheaders.hh"
 #include <unordered_map>
-#include <vector>
 #include <string>
-#include <memory>
 #include <glm/glm.hpp>
 
 class context

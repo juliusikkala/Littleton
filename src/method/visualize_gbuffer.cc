@@ -1,4 +1,10 @@
 #include "visualize_gbuffer.hh"
+#include "multishader.hh"
+#include "camera.hh"
+#include "helpers.hh"
+#include "gbuffer.hh"
+#include "shader_store.hh"
+#include "scene.hh"
 
 method::visualize_gbuffer::visualize_gbuffer(
     render_target& target,

@@ -1,4 +1,10 @@
 #include "lighting_pass.hh"
+#include "multishader.hh"
+#include "camera.hh"
+#include "helpers.hh"
+#include "gbuffer.hh"
+#include "shader_store.hh"
+#include "scene.hh"
 #include "shadow/shadow_map.hh"
 
 method::lighting_pass::lighting_pass(

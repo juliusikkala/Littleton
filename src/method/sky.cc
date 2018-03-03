@@ -1,5 +1,12 @@
 #include "sky.hh"
 #include "texture.hh"
+#include "helpers.hh"
+#include "camera.hh"
+#include "texture.hh"
+#include "render_target.hh"
+#include "shader_store.hh"
+#include "light.hh"
+#include "scene.hh"
 #include <glm/gtc/constants.hpp>
 
 static struct sky_defaults

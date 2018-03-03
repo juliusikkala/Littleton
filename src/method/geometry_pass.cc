@@ -1,4 +1,13 @@
 #include "geometry_pass.hh"
+#include "camera.hh"
+#include "model.hh"
+#include "object.hh"
+#include "material.hh"
+#include "vertex_buffer.hh"
+#include "multishader.hh"
+#include "gbuffer.hh"
+#include "shader_store.hh"
+#include "scene.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 

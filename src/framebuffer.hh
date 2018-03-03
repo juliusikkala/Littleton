@@ -1,7 +1,6 @@
 #ifndef FRAMEBUFFER_HH
 #define FRAMEBUFFER_HH
 #include "render_target.hh"
-#include "resources.hh"
 #include <vector>
 
 class texture;

@@ -1,4 +1,8 @@
 #include "kernel.hh"
+#include "render_target.hh"
+#include "texture.hh"
+#include "shader_store.hh"
+
 const glm::mat3 method::kernel::SHARPEN = glm::mat3(
      0, -1, 0,
     -1, 5, -1,

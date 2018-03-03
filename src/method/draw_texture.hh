@@ -2,10 +2,9 @@
 #define METHOD_DRAW_TEXTURE_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
-#include "shader_store.hh"
-#include "texture.hh"
-#include <map>
-#include <string>
+
+class texture;
+class shader_store;
 
 namespace method
 {

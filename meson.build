@@ -9,6 +9,7 @@ src = [
   'src/main.cc',
   'src/window.cc',
   'src/resources.cc',
+  'src/resource.cc',
   'src/vertex_buffer.cc',
   'src/shader.cc',
   'src/texture.cc',

@@ -1,8 +1,6 @@
 #ifndef PIPELINE_HH
 #define PIPELINE_HH
 #include <vector>
-#include <memory>
-#include "render_target.hh"
 
 class pipeline_method
 {
@@ -12,6 +10,7 @@ public:
     virtual void execute() = 0;
 };
 
+class render_target;
 class target_method: public pipeline_method
 {
 public:

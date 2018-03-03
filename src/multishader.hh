@@ -1,8 +1,7 @@
 #ifndef MULTISHADER_HH
 #define MULTISHADER_HH
+#include "resource.hh"
 #include "shader.hh"
-#include "helpers.hh"
-#include <map>
 #include <unordered_map>
 #include <memory>
 #include <optional>

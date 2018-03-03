@@ -1,4 +1,7 @@
 #include "draw_texture.hh"
+#include "render_target.hh"
+#include "texture.hh"
+#include "shader_store.hh"
 
 method::draw_texture::draw_texture(
     render_target& target,

@@ -1,7 +1,6 @@
 #ifndef WINDOW_HH
 #define WINDOW_HH
 #include "render_target.hh"
-#include "resources.hh"
 #include "context.hh"
 #include <SDL.h>
 #include <glm/glm.hpp>

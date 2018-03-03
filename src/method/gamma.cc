@@ -1,4 +1,7 @@
 #include "gamma.hh"
+#include "render_target.hh"
+#include "texture.hh"
+#include "shader_store.hh"
 
 method::gamma::gamma(
     render_target& target,

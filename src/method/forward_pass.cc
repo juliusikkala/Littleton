@@ -1,5 +1,14 @@
 #include "forward_pass.hh"
 #include "context.hh"
+#include "camera.hh"
+#include "model.hh"
+#include "object.hh"
+#include "material.hh"
+#include "helpers.hh"
+#include "multishader.hh"
+#include "shader_store.hh"
+#include "scene.hh"
+#include "vertex_buffer.hh"
 #include "shadow/shadow_map.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>

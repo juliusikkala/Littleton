@@ -1,9 +1,10 @@
 #ifndef METHOD_TONEMAP_HH
 #define METHOD_TONEMAP_HH
 #include "pipeline.hh"
-#include "texture.hh"
-#include "shader_store.hh"
 #include "vertex_buffer.hh"
+
+class texture;
+class shader_store;
 
 namespace method
 {

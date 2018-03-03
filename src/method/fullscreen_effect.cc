@@ -1,5 +1,8 @@
 #include "fullscreen_effect.hh"
 #include "helpers.hh"
+#include "render_target.hh"
+#include "shader.hh"
+#include "texture.hh"
 
 method::fullscreen_effect::fullscreen_effect(
     render_target& target,

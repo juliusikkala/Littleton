@@ -1,7 +1,7 @@
 #ifndef RENDER_TARGET_HH
 #define RENDER_TARGET_HH
 #include "glheaders.hh"
-#include "resources.hh"
+#include "resource.hh"
 #include <glm/glm.hpp>
 
 class render_target: public glresource

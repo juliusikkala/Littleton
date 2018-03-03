@@ -2,7 +2,6 @@
 #include "context.hh"
 #include <glm/glm.hpp>
 #include <algorithm>
-#include <cmath>
 #include <cstring>
 #include "stb_image.h"
 

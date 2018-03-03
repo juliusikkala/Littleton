@@ -2,6 +2,8 @@
 #include "resources.hh"
 #include "texture.hh"
 #include "object.hh"
+#include "camera.hh"
+#include "scene.hh"
 #include "pipeline.hh"
 #include "framebuffer.hh"
 #include "method/clear.hh"

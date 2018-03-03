@@ -1,9 +1,9 @@
 #ifndef OBJECT_HH
 #define OBJECT_HH
-#include "model.hh"
 #include "transformable.hh"
 #include <glm/glm.hpp>
 
+class model;
 class object: public transformable_node
 {
 public:
