@@ -4,7 +4,7 @@
 
 class material;
 class vertex_buffer;
-struct model
+class model
 {
 public:
     struct vertex_group

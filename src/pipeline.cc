@@ -2,6 +2,8 @@
 #include "render_target.hh"
 #include <utility>
 #include <stdexcept>
+#include <typeinfo>
+#include <string>
 
 pipeline_method::~pipeline_method() {}
 

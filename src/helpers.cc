@@ -52,7 +52,7 @@ bool read_binary_file(const std::string& path, uint8_t*& data, size_t& bytes)
     return true;
 }
 
-bool write_binary_file(const std::string& path, uint8_t* data, size_t bytes)
+bool write_binary_file(const std::string& path, const uint8_t* data, size_t bytes)
 {
     FILE* f = fopen(path.c_str(), "wb");
 

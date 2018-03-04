@@ -168,111 +168,128 @@ using deferred_pipeline = custom_pipeline<deferred_data>;
 using visualizer_pipeline = custom_pipeline<visualizer_data>;
 using forward_pipeline = custom_pipeline<forward_data>;
 
-int main(int argc, char** argv)
-{ 
-    window w({"dflowers", {1280, 720}, true, true, false});
-    w.set_framerate_limit(120);
-    std::cout << "GPU Vendor: " << w.get_vendor_name() << std::endl
-              << "Renderer:   " << w.get_renderer() << std::endl;
-
-    w.grab_mouse();
-    resource_store resources(w);
-    resources.add_dfo("data/test_scene.dfo", "data");
-    resources.add_dfo("data/earth.dfo", "data");
-
-    shader_store shaders(w, {"data/shaders/"}, "data/shaders/bin/");
-
-    object* suzanne = resources.get<object>("Suzanne");
-    object* earth = resources.get<object>("Earth");
-    earth->set_position(glm::vec3(0, 2, -6));
-    earth->scale(2);
-
-    camera cam;
-    cam.translate(glm::vec3(0.0,2.0,1.0));
-    cam.lookat(suzanne);
-    render_scene main_scene(&cam);
-
-    for(
-        auto it = resources.begin<object>();
-        it != resources.end<object>();
-        ++it
-    ){
-        object* o = *it;
-        if(o->get_model()) main_scene.add_object(o);
+class game
+{
+public:
+    game()
+        : win({ "dflowers", {1280, 720}, true, true, false }),
+        resources(win),
+        shaders(win, { "data/shaders/" }, "data/shaders/bin/"),
+        main_scene(&cam)
+    {
+        win.set_framerate_limit(200);
+        win.grab_mouse();
+        std::cout << "GPU Vendor: " << win.get_vendor_name() << std::endl
+            << "Renderer:   " << win.get_renderer() << std::endl;
     }
 
-    point_light l1(glm::vec3(1,0.5,0.5) * 3.0f);
-    point_light l2(glm::vec3(0.5,0.5,1) * 3.0f);
-    spotlight parrasvalo(glm::vec3(1,1,1)*3.0f);
-    directional_light sun(glm::vec3(1,1,1)*5.0f);
-    directional_light fake_sun;
-    directional_shadow_map_pcf sun_shadow(
-        w,
-        glm::uvec2(1024),
-        16,
-        4.0f,
-        glm::vec3(0),
-        glm::vec2(8.0f),
-        glm::vec2(-5.0f, 5.0f),
-        &fake_sun
-    );
-    sun_shadow.set_parent(suzanne);
-    sun_shadow.set_bias(0.001, 0.03);
-
-    parrasvalo.set_falloff_exponent(10);
-    parrasvalo.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
-
-    main_scene.add_light(&l1);
-    main_scene.add_light(&l2);
-    main_scene.add_light(&parrasvalo);
-    main_scene.add_light(&fake_sun);
-    main_scene.add_shadow_map(&sun_shadow);
-
-    glm::uvec2 render_resolution = w.get_size();
-
-    deferred_pipeline dp(w, render_resolution, shaders, &main_scene);
-    visualizer_pipeline vp(w, render_resolution, shaders, &main_scene);
-    forward_pipeline fp(w, render_resolution, shaders, &main_scene);
-
-    dp.sky.set_sun(&sun);
-    dp.sky.set_intensity(5);
-    dp.sky.set_samples(8,2);
-    fp.sky.set_sun(&sun);
-    fp.sky.set_scaling(1/6.3781e6);
-    fp.sky.set_radius(6.3781e6);
-    fp.sky.set_samples(12,3);
-    fp.sky.set_intensity(1);
-    fp.sky.set_parent(earth);
-
-    pipeline* pipelines[] = {&dp, &vp, &fp};
-
-    bool running = true;
-    unsigned pipeline_index = 2;
-    bool paused = false;
-    bool measure_times = false;
-    float time = 0;
-    float pitch = 0, yaw = 0;
-    float speed = 2;
-    float sensitivity = 0.2;
-    float fov = 90;
-    SDL_Event e;
-
-    while(running)
+    ~game()
     {
-        while(w.poll(e))
+    }
+
+    void load()
+    {
+        resources.add_dfo("data/test_scene.dfo", "data");
+        resources.add_dfo("data/earth.dfo", "data");
+
+        sun_shadow.reset(
+            new directional_shadow_map_pcf(
+                win,
+                glm::uvec2(1024),
+                16,
+                4.0f,
+                glm::vec3(0),
+                glm::vec2(8.0f),
+                glm::vec2(-5.0f, 5.0f),
+                &fake_sun
+            )
+        );
+
+        glm::uvec2 render_resolution = win.get_size();
+
+        dp.reset(new deferred_pipeline(win, render_resolution, shaders, &main_scene));
+        vp.reset(new visualizer_pipeline(win, render_resolution, shaders, &main_scene));
+        fp.reset(new forward_pipeline(win, render_resolution, shaders, &main_scene));
+
+        current_pipeline = fp.get();
+    }
+
+    void setup_scene()
+    {
+        object* suzanne = resources.get<object>("Suzanne");
+        object* earth = resources.get<object>("Earth");
+        earth->set_position(glm::vec3(0, 2, -6));
+        earth->scale(2);
+
+        cam.translate(glm::vec3(0.0,2.0,1.0));
+        cam.lookat(suzanne);
+
+        sun_shadow->set_parent(suzanne);
+        sun_shadow->set_bias(0.001, 0.03);
+
+        // Add all loaded objects to the scene
+        for(
+            auto it = resources.begin<object>();
+            it != resources.end<object>();
+            ++it
+        ){
+            object* o = *it;
+            if(o->get_model()) main_scene.add_object(o);
+        }
+
+        l1.set_color(glm::vec3(1,0.5,0.5) * 3.0f);
+        l2.set_color(glm::vec3(0.5,0.5,1) * 3.0f);
+
+        spot.set_color(glm::vec3(1,1,1) * 3.0f);
+        spot.set_falloff_exponent(10);
+        spot.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
+
+        sun.set_color(glm::vec3(1,1,1) * 5.0f);
+
+        main_scene.add_light(&l1);
+        main_scene.add_light(&l2);
+        main_scene.add_light(&spot);
+        main_scene.add_light(&fake_sun);
+        main_scene.add_shadow_map(sun_shadow.get());
+
+        dp->sky.set_sun(&sun);
+        dp->sky.set_intensity(5);
+        dp->sky.set_samples(8,2);
+        fp->sky.set_sun(&sun);
+        fp->sky.set_scaling(1/6.3781e6);
+        fp->sky.set_radius(6.3781e6);
+        fp->sky.set_samples(12,3);
+        fp->sky.set_intensity(1);
+        fp->sky.set_parent(earth);
+
+        paused = false;
+        measure_times = false;
+        time = 0;
+        pitch = 0;
+        yaw = 0;
+        speed = 2;
+        sensitivity = 0.2;
+        fov = 90;
+    }
+
+    // Return false if the program should quit.
+    bool update()
+    {
+        SDL_Event e;
+
+        while(win.poll(e))
         {
             switch(e.type)
             {
             case SDL_QUIT:
-                running = false;
-                break;
+                return false;
             case SDL_KEYDOWN:
-                if(e.key.keysym.sym == SDLK_ESCAPE) running = false;
+                if(e.key.keysym.sym == SDLK_ESCAPE) return false;
                 if(e.key.keysym.sym == SDLK_PLUS) speed *= 1.1;
                 if(e.key.keysym.sym == SDLK_MINUS) speed /= 1.1;
-                if(e.key.keysym.sym == SDLK_1) pipeline_index = 0;
-                if(e.key.keysym.sym == SDLK_2) pipeline_index = 1;
-                if(e.key.keysym.sym == SDLK_3) pipeline_index = 2;
+                if(e.key.keysym.sym == SDLK_1) current_pipeline = dp.get();
+                if(e.key.keysym.sym == SDLK_2) current_pipeline = vp.get();
+                if(e.key.keysym.sym == SDLK_3) current_pipeline = fp.get();
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;
                 if(e.key.keysym.sym == SDLK_r)
@@ -289,7 +306,7 @@ int main(int argc, char** argv)
                 break;
             };
         }
-        float delta = w.get_delta();
+        float delta = win.get_delta();
         const uint8_t* state = SDL_GetKeyboardState(NULL);
         if(state[SDL_SCANCODE_W]) cam.translate_local(glm::vec3(0,0,-1)*delta*speed);
         if(state[SDL_SCANCODE_S]) cam.translate_local(glm::vec3(0,0,1)*delta*speed);
@@ -299,25 +316,27 @@ int main(int argc, char** argv)
         if(state[SDL_SCANCODE_SPACE]) cam.translate_local(glm::vec3(0,1,0)*delta*speed);
         if(state[SDL_SCANCODE_Z]) fov -= delta*30;
         if(state[SDL_SCANCODE_X]) fov += delta*30;
-        cam.perspective(fov, w.get_aspect(), 0.1, 20);
+        cam.perspective(fov, win.get_aspect(), 0.1, 20);
         cam.set_orientation(pitch, yaw);
+
+        object* suzanne = resources.get<object>("Suzanne");
+        object* earth = resources.get<object>("Earth");
 
         if(!paused)
         {
-            time += w.get_delta();
-            suzanne->rotate_local(w.get_delta()*60, glm::vec3(0,1,0));
+            time += delta;
+            suzanne->rotate_local(delta*60, glm::vec3(0,1,0));
             l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
             l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
-            parrasvalo.set_orientation(time*50, glm::vec3(1,0,0));
-            parrasvalo.set_cutoff_angle(sin(time)*45+45);
-            earth->rotate(w.get_delta()*60, glm::vec3(0,1,0));
+            spot.set_orientation(time*50, glm::vec3(1,0,0));
+            spot.set_cutoff_angle(sin(time)*45+45);
+            earth->rotate(delta*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
-        if(pipeline_index == 0)
+
+        if(current_pipeline == dp.get())
         {
-            fake_sun.set_color(
-                dp.sky.get_attenuated_sun_color(cam.get_global_position())
-            );
+            fake_sun.set_color(dp->sky.get_attenuated_sun_color(cam.get_global_position()));
         }
         else
         {
@@ -325,31 +344,100 @@ int main(int argc, char** argv)
         }
         fake_sun.set_direction(sun.get_direction());
 
-        if(!measure_times)
-        {
-            pipelines[pipeline_index]->execute();
-        }
-        else
-        {
-            std::vector<double> times;
-            pipelines[pipeline_index]->execute(times);
-            measure_times = false;
-
-            std::cout << "Pipeline stage times: " << std::endl;
-            double total = 0;
-            for(unsigned i = 0; i < times.size(); ++i)
-            {
-                total += times[i];
-                std::cout << "\tStage " << i + 1
-                          << ": "
-                          << times[i] << "ms"
-                          << std::endl;
-            }
-            std::cout << "Total: " << total << std::endl;
-        }
-
-        w.present();
+        return true;
     }
 
+    void render()
+    {
+        if(current_pipeline)
+        {
+            if(!measure_times)
+            {
+                current_pipeline->execute();
+            }
+            else
+            {
+                std::vector<double> times;
+                current_pipeline->execute(times);
+                measure_times = false;
+
+                std::cout << "Pipeline stage times: " << std::endl;
+                double total = 0;
+                for(unsigned i = 0; i < times.size(); ++i)
+                {
+                    total += times[i];
+                    std::cout << "\tStage " << i + 1
+                              << ": "
+                              << times[i] << "ms"
+                              << std::endl;
+                }
+                std::cout << "Total: " << total << std::endl;
+            }
+
+            win.present();
+        }
+    }
+
+private:
+    window win;
+    resource_store resources;
+    shader_store shaders;
+    camera cam;
+    render_scene main_scene;
+
+    point_light l1;
+    point_light l2;
+    spotlight spot;
+    directional_light sun;
+    // This is a copy of 'sun' approximately colored by the atmosphere
+    directional_light fake_sun;
+
+    std::unique_ptr<directional_shadow_map_pcf> sun_shadow;
+    std::unique_ptr<deferred_pipeline> dp;
+    std::unique_ptr<visualizer_pipeline> vp;
+    std::unique_ptr<forward_pipeline> fp;
+
+    pipeline* current_pipeline;
+
+    bool paused;
+    bool measure_times;
+    float time;
+    float pitch, yaw;
+    float speed;
+    float sensitivity;
+    float fov;
+};
+
+int main(int argc, char** argv)
+{ 
+    try
+    {
+        game g;
+
+        g.load();
+        g.setup_scene();
+
+        while(g.update())
+        {
+            g.render();
+        }
+    }
+    catch(const std::runtime_error& err)
+    {
+        std::string what = err.what();
+
+        std::cout << "Runtime error: " << std::endl
+                  << what;
+
+        write_binary_file("error.txt", (const uint8_t*)what.c_str(), what.length());
+
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR,
+            "Runtime error",
+            "Error report written to error.txt",
+            nullptr
+        );
+        return 1;
+    }
     return 0;
 }

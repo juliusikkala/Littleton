@@ -6,7 +6,7 @@
 
 class texture;
 
-struct material
+class material
 {
 public:
     material();
