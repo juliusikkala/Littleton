@@ -33,6 +33,7 @@ src = [
   'src/shadow/shadow_map.cc',
   'src/shadow/shadow_scene.cc',
   'src/shadow/pcf.cc',
+  'src/shadow/msm.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',

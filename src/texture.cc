@@ -23,9 +23,10 @@ texture::params::params(
     GLint interpolation,
     GLint extension,
     unsigned anisotropy,
-    glm::vec4 border_color
+    glm::vec4 border_color,
+    unsigned samples
 ): srgb(srgb), interpolation(interpolation), extension(extension),
-   anisotropy(anisotropy), border_color(border_color)
+   anisotropy(anisotropy), border_color(border_color), samples(samples)
 {}
 
 const texture::params texture::DEPTH_PARAMS(
@@ -43,18 +44,31 @@ static void apply_params(
     const texture::params& p,
     bool has_mipmaps = false
 ){
-    glTexParameteri(
-        target,
-        GL_TEXTURE_MIN_FILTER,
-        has_mipmaps ?
-            p.interpolation :
+    if(target != GL_TEXTURE_2D_MULTISAMPLE)
+    {
+        glTexParameteri(
+            target,
+            GL_TEXTURE_MIN_FILTER,
+            has_mipmaps ?
+                p.interpolation :
+                interpolation_without_mipmap(p.interpolation)
+        );
+
+        glTexParameteri(
+            target,
+            GL_TEXTURE_MAG_FILTER,
             interpolation_without_mipmap(p.interpolation)
-    );
-    glTexParameteri(
-        target,
-        GL_TEXTURE_MAG_FILTER,
-        interpolation_without_mipmap(p.interpolation)
-    );
+        );
+
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
+
+        glTexParameterfv(
+            target,
+            GL_TEXTURE_BORDER_COLOR,
+            (float*)&p.border_color
+        );
+    }
 
     if(external_format == GL_DEPTH_COMPONENT && p.interpolation == GL_LINEAR)
     {
@@ -64,11 +78,6 @@ static void apply_params(
             GL_COMPARE_REF_TO_TEXTURE
         );
     }
-
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
-
-    glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, (float*)&p.border_color);
 
     if(p.anisotropy != 0 && GLEW_EXT_texture_filter_anisotropic)
     {
@@ -432,8 +441,9 @@ void texture::basic_load(
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    if(target == GL_TEXTURE_2D)
+    switch(target)
     {
+    case GL_TEXTURE_2D:
         glTexImage2D(
             target,
             0,
@@ -445,9 +455,8 @@ void texture::basic_load(
             type,
             data
         );
-    }
-    else if(target == GL_TEXTURE_1D)
-    {
+        break;
+    case GL_TEXTURE_1D:
         glTexImage1D(
             target,
             0,
@@ -458,9 +467,18 @@ void texture::basic_load(
             type,
             data
         );
-    }
-    else
-    {
+        break;
+    case GL_TEXTURE_2D_MULTISAMPLE:
+        glTexImage2DMultisample(
+            target,
+            p.samples,
+            internal_format,
+            size.x,
+            size.y,
+            true
+        );
+        break;
+    default:
         throw std::runtime_error("Unknown texture target!");
     }
 

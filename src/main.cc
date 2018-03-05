@@ -21,6 +21,7 @@
 #include "doublebuffer.hh"
 #include "shader_store.hh"
 #include "shadow/pcf.hh"
+#include "shadow/msm.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -174,7 +175,7 @@ public:
     game()
         : win({ "dflowers", {1280, 720}, true, true, false }),
         resources(win),
-        shaders(win, { "data/shaders/" }, "data/shaders/bin/"),
+        shaders(win, { "data/shaders/" }),
         main_scene(&cam)
     {
         win.set_framerate_limit(200);
@@ -193,11 +194,11 @@ public:
         resources.add_dfo("data/earth.dfo", "data");
 
         sun_shadow.reset(
-            new directional_shadow_map_pcf(
+            new directional_shadow_map_msm(
                 win,
                 glm::uvec2(1024),
-                16,
-                4.0f,
+                4,
+                4,
                 glm::vec3(0),
                 glm::vec2(8.0f),
                 glm::vec2(-5.0f, 5.0f),
@@ -231,7 +232,6 @@ public:
         cam.lookat(suzanne);
 
         sun_shadow->set_parent(suzanne);
-        sun_shadow->set_bias(0.001, 0.03);
 
         // Add all loaded objects to the scene
         for(
@@ -252,9 +252,9 @@ public:
 
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        main_scene.add_light(&l1);
+        /*main_scene.add_light(&l1);
         main_scene.add_light(&l2);
-        main_scene.add_light(&spot);
+        main_scene.add_light(&spot);*/
         main_scene.add_light(&fake_sun);
         main_scene.add_shadow_map(sun_shadow.get());
 
@@ -415,7 +415,7 @@ private:
     // This is a copy of 'sun' approximately colored by the atmosphere
     directional_light fake_sun;
 
-    std::unique_ptr<directional_shadow_map_pcf> sun_shadow;
+    std::unique_ptr<directional_shadow_map_msm> sun_shadow;
     std::unique_ptr<deferred_pipeline> dp;
     std::unique_ptr<visualizer_pipeline> vp;
     std::unique_ptr<forward_pipeline> fp;
@@ -450,7 +450,7 @@ int main(int argc, char** argv)
         std::string what = err.what();
 
         std::cout << "Runtime error: " << std::endl
-                  << what;
+                  << what << std::endl;
 
         write_binary_file(
             "error.txt",

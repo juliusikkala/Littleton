@@ -11,7 +11,8 @@ public:
         context& ctx,
         glm::uvec2 size,
         std::vector<texture*>&& targets = {},
-        GLenum depth_stencil_format = 0
+        GLenum depth_stencil_format = 0,
+        unsigned render_buffer_samples = 0
     );
 
     framebuffer(
@@ -35,6 +36,7 @@ private:
     std::vector<texture*> color_targets;
     texture* depth_stencil_target;
     GLuint depth_stencil_rbo;
+    GLenum depth_stencil_attachment;
 };
 
 #endif

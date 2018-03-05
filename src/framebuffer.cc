@@ -8,7 +8,8 @@ framebuffer::framebuffer(
     context& ctx,
     glm::uvec2 size,
     std::vector<texture*>&& targets,
-    GLenum depth_stencil_format
+    GLenum depth_stencil_format,
+    unsigned render_buffer_samples
 ): render_target(ctx, size), color_targets(std::move(targets)),
    depth_stencil_target(nullptr)
 {
@@ -19,12 +20,42 @@ framebuffer::framebuffer(
     {
         glGenRenderbuffers(1, &depth_stencil_rbo);
         glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_rbo);
-        glRenderbufferStorage(
-            GL_RENDERBUFFER,
-            depth_stencil_format,
-            size.x,
-            size.y
-        );
+
+        switch(depth_stencil_format)
+        {
+        case GL_DEPTH_COMPONENT16:
+        case GL_DEPTH_COMPONENT24:
+        case GL_DEPTH_COMPONENT32:
+        case GL_DEPTH_COMPONENT32F:
+            depth_stencil_attachment = GL_DEPTH_ATTACHMENT;
+            break;
+        default:
+            depth_stencil_attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+            break;
+        }
+
+        if(render_buffer_samples)
+        {
+            glRenderbufferStorageMultisample(
+                GL_RENDERBUFFER,
+                render_buffer_samples,
+                depth_stencil_format,
+                size.x,
+                size.y
+            );
+        }
+        else
+        {
+            glRenderbufferStorage(
+                GL_RENDERBUFFER,
+                depth_stencil_format,
+                size.x,
+                size.y
+            );
+        }
+
+        if(glGetError() != GL_NO_ERROR)
+            throw std::runtime_error("Failed to create render buffer");
     }
     else depth_stencil_rbo = 0;
 
@@ -42,15 +73,16 @@ framebuffer::framebuffer(
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    this->depth_stencil_target = depth_stencil_target;
-
     reinstate_current_fbo();
+
+    set_depth_target(depth_stencil_target);
 }
 
 framebuffer::framebuffer(framebuffer&& f)
 : render_target(f), color_targets(std::move(f.color_targets)),
   depth_stencil_target(f.depth_stencil_target),
-  depth_stencil_rbo(f.depth_stencil_rbo)
+  depth_stencil_rbo(f.depth_stencil_rbo),
+  depth_stencil_attachment(f.depth_stencil_attachment)
 {
     f.fbo = 0;
     f.depth_stencil_rbo = 0;
@@ -110,6 +142,9 @@ void framebuffer::set_depth_target(texture* target)
         );
 
     depth_stencil_target = target;
+    depth_stencil_attachment = 
+        target->get_external_format() == GL_DEPTH_STENCIL ?
+            GL_DEPTH_ATTACHMENT : GL_DEPTH_STENCIL_ATTACHMENT;
 }
 
 void framebuffer::remove_depth_target()
@@ -134,14 +169,11 @@ void framebuffer::bind(GLenum target)
         attachments.push_back(GL_COLOR_ATTACHMENT0+i);
     }
 
-    GLenum depth_attachment = GL_DEPTH_STENCIL_ATTACHMENT;
     if(depth_stencil_target)
     {
-        if(depth_stencil_target->get_external_format() != GL_DEPTH_STENCIL)
-            depth_attachment = GL_DEPTH_ATTACHMENT;
         glFramebufferTexture2D(
             target,
-            depth_attachment,
+            depth_stencil_attachment,
             depth_stencil_target->get_target(),
             depth_stencil_target->get_texture(),
             0
@@ -151,7 +183,7 @@ void framebuffer::bind(GLenum target)
     {
         glFramebufferRenderbuffer(
             target,
-            depth_attachment,
+            depth_stencil_attachment,
             GL_RENDERBUFFER,
             depth_stencil_rbo
         );
@@ -163,7 +195,6 @@ void framebuffer::bind(GLenum target)
             glDrawBuffers(attachments.size(), attachments.data());
         else glDrawBuffer(GL_NONE);
     }
-
 
     if(target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER)
     {

@@ -108,40 +108,37 @@ static std::string process_source(
     std::set<std::string> included;
 
     static const std::regex include_regex(
-        "#\\s*include\\s*\"(.*)\"",
-        std::regex::optimize
-    );
-
-    static const std::regex include_define_regex(
-        "#\\s*include\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+        "#\\s*include\\s*(\"(.*)\"|([_a-zA-Z][_a-zA-Z0-9]*))",
         std::regex::optimize
     );
 
     std::smatch include_match;
+    std::smatch include_define_match;
     while(true)
     {
         std::string include_file;
         
         if(std::regex_search(processed, include_match, include_regex))
         {
-            include_file = include_match[1];
-        }
-        else if(std::regex_search(
-            processed,
-            include_match,
-            include_define_regex
-        )){
-            std::string name = include_match[1];
-            auto it = definitions.find(name);
-            if(it == definitions.end())
+            if(include_match[2].length())
             {
-                processed.erase(
-                    include_match[0].first,
-                    include_match[0].second
-                );
-                continue;
+                include_file = include_match[2];
             }
-            include_file = it->second;
+            else if(include_match[3].length())
+            {
+                std::string name = include_match[3];
+                auto it = definitions.find(name);
+                if(it == definitions.end())
+                {
+                    processed.erase(
+                        include_match[0].first,
+                        include_match[0].second
+                    );
+                    continue;
+                }
+                include_file = it->second;
+            }
+            else break;
         }
         else break;
 

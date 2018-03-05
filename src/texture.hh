@@ -15,7 +15,8 @@ public:
             GLint interpolation = GL_LINEAR_MIPMAP_LINEAR,
             GLint extension = GL_REPEAT,
             unsigned anisotropy = 16,
-            glm::vec4 border_color = glm::vec4(0,0,0,0)
+            glm::vec4 border_color = glm::vec4(0,0,0,0),
+            unsigned samples = 0
         );
 
         bool srgb;
@@ -23,6 +24,7 @@ public:
         GLint extension;
         unsigned anisotropy;
         glm::vec4 border_color;
+        unsigned samples;
     };
 
     static const params DEPTH_PARAMS;

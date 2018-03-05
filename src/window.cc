@@ -85,6 +85,7 @@ window::window(const params& p)
 
     context::init();
     if(p.srgb) glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_MULTISAMPLE);
 }
 
 window::~window()
