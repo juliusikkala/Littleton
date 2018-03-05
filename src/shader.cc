@@ -23,7 +23,9 @@ static void throw_shader_error(
         glGetShaderInfoLog(shader, length+1, &length, err);
         std::string err_str(err);
         delete [] err;
-        throw std::runtime_error(name + ": " + err_str + "\n" + src);
+        throw std::runtime_error(
+            name + ": " + err_str + "\n" + add_line_numbers(src)
+        );
     }
 }
 

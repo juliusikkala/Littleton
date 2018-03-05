@@ -28,3 +28,8 @@ void method::render_shadow_maps::execute()
         pair.first->render(*store, pair.second, scene);
     }
 }
+
+std::string method::render_shadow_maps::get_name() const
+{
+    return "render_shadow_maps";
+}

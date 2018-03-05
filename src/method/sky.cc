@@ -227,3 +227,8 @@ void method::sky::execute()
     sky_shader->set("perspective_data", perspective_data);
     fullscreen_quad.draw();
 }
+
+std::string method::sky::get_name() const
+{
+    return "sky";
+}

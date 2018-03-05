@@ -252,3 +252,7 @@ void method::lighting_pass::execute()
     }
 }
 
+std::string method::lighting_pass::get_name() const
+{
+    return "lighting_pass";
+}

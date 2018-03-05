@@ -207,9 +207,15 @@ public:
 
         glm::uvec2 render_resolution = win.get_size();
 
-        dp.reset(new deferred_pipeline(win, render_resolution, shaders, &main_scene));
-        vp.reset(new visualizer_pipeline(win, render_resolution, shaders, &main_scene));
-        fp.reset(new forward_pipeline(win, render_resolution, shaders, &main_scene));
+        dp.reset(new deferred_pipeline(
+            win, render_resolution, shaders, &main_scene
+        ));
+        vp.reset(new visualizer_pipeline(
+            win, render_resolution, shaders, &main_scene
+        ));
+        fp.reset(new forward_pipeline(
+            win, render_resolution, shaders, &main_scene
+        ));
 
         current_pipeline = fp.get();
     }
@@ -299,7 +305,9 @@ public:
                 }
                 break;
             case SDL_MOUSEMOTION:
-                pitch = std::clamp(pitch-e.motion.yrel*sensitivity, -90.0f, 90.0f);
+                pitch = std::clamp(
+                    pitch-e.motion.yrel*sensitivity, -90.0f, 90.0f
+                );
                 yaw -= e.motion.xrel*sensitivity;
                 break;
             default:
@@ -308,14 +316,22 @@ public:
         }
         float delta = win.get_delta();
         const uint8_t* state = SDL_GetKeyboardState(NULL);
-        if(state[SDL_SCANCODE_W]) cam.translate_local(glm::vec3(0,0,-1)*delta*speed);
-        if(state[SDL_SCANCODE_S]) cam.translate_local(glm::vec3(0,0,1)*delta*speed);
-        if(state[SDL_SCANCODE_A]) cam.translate_local(glm::vec3(-1,0,0)*delta*speed);
-        if(state[SDL_SCANCODE_D]) cam.translate_local(glm::vec3(1,0,0)*delta*speed);
-        if(state[SDL_SCANCODE_LSHIFT]) cam.translate_local(glm::vec3(0,-1,0)*delta*speed);
-        if(state[SDL_SCANCODE_SPACE]) cam.translate_local(glm::vec3(0,1,0)*delta*speed);
-        if(state[SDL_SCANCODE_Z]) fov -= delta*30;
-        if(state[SDL_SCANCODE_X]) fov += delta*30;
+        if(state[SDL_SCANCODE_W])
+            cam.translate_local(glm::vec3(0,0,-1)*delta*speed);
+        if(state[SDL_SCANCODE_S])
+            cam.translate_local(glm::vec3(0,0,1)*delta*speed);
+        if(state[SDL_SCANCODE_A])
+            cam.translate_local(glm::vec3(-1,0,0)*delta*speed);
+        if(state[SDL_SCANCODE_D])
+            cam.translate_local(glm::vec3(1,0,0)*delta*speed);
+        if(state[SDL_SCANCODE_LSHIFT])
+            cam.translate_local(glm::vec3(0,-1,0)*delta*speed);
+        if(state[SDL_SCANCODE_SPACE])
+            cam.translate_local(glm::vec3(0,1,0)*delta*speed);
+        if(state[SDL_SCANCODE_Z])
+            fov -= delta*30;
+        if(state[SDL_SCANCODE_X])
+            fov += delta*30;
         cam.perspective(fov, win.get_aspect(), 0.1, 20);
         cam.set_orientation(pitch, yaw);
 
@@ -327,7 +343,11 @@ public:
             time += delta;
             suzanne->rotate_local(delta*60, glm::vec3(0,1,0));
             l1.set_position(glm::vec3(sin(time*2),2+sin(time*5),cos(time*2)));
-            l2.set_position(glm::vec3(sin(time*2+M_PI),2-sin(time*5),cos(time*2+M_PI)));
+            l2.set_position(glm::vec3(
+                sin(time*2+M_PI),
+                2-sin(time*5),
+                cos(time*2+M_PI)
+            ));
             spot.set_orientation(time*50, glm::vec3(1,0,0));
             spot.set_cutoff_angle(sin(time)*45+45);
             earth->rotate(delta*60, glm::vec3(0,1,0));
@@ -336,7 +356,9 @@ public:
 
         if(current_pipeline == dp.get())
         {
-            fake_sun.set_color(dp->sky.get_attenuated_sun_color(cam.get_global_position()));
+            fake_sun.set_color(dp->sky.get_attenuated_sun_color(
+                cam.get_global_position()
+            ));
         }
         else
         {
@@ -367,6 +389,7 @@ public:
                 {
                     total += times[i];
                     std::cout << "\tStage " << i + 1
+                              << " (" << current_pipeline->get_name(i) << ")"
                               << ": "
                               << times[i] << "ms"
                               << std::endl;
@@ -429,7 +452,11 @@ int main(int argc, char** argv)
         std::cout << "Runtime error: " << std::endl
                   << what;
 
-        write_binary_file("error.txt", (const uint8_t*)what.c_str(), what.length());
+        write_binary_file(
+            "error.txt",
+            (const uint8_t*)what.c_str(),
+            what.length()
+        );
 
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_ERROR,

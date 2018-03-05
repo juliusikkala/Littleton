@@ -25,6 +25,8 @@ namespace method
 
         void execute() override;
 
+        std::string get_name() const override;
+
     private:
         gbuffer* buf;
 

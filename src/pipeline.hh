@@ -1,6 +1,7 @@
 #ifndef PIPELINE_HH
 #define PIPELINE_HH
 #include <vector>
+#include <string>
 
 class pipeline_method
 {
@@ -8,6 +9,7 @@ public:
     virtual ~pipeline_method();
 
     virtual void execute() = 0;
+    virtual std::string get_name() const;
 };
 
 class render_target;
@@ -37,6 +39,8 @@ public:
     void execute();
     void execute(std::vector<double>& timing);
 
+    std::string get_name(size_t i) const;
+    virtual std::string get_name() const;
 private:
     std::vector<pipeline_method*> methods;
 };

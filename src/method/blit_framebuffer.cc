@@ -35,3 +35,8 @@ void method::blit_framebuffer::execute()
         type == COLOR_ONLY ? GL_LINEAR : GL_NEAREST
     );
 }
+
+std::string method::blit_framebuffer::get_name() const
+{
+    return "blit_framebuffer";
+}

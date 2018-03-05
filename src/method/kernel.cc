@@ -68,3 +68,8 @@ void method::kernel::execute()
 
     fullscreen_quad.draw();
 }
+
+std::string method::kernel::get_name() const
+{
+    return "kernel";
+}

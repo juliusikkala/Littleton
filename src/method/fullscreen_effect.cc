@@ -62,3 +62,8 @@ void method::fullscreen_effect::clear_textures()
 {
     textures.clear();
 }
+
+std::string method::fullscreen_effect::get_name() const
+{
+    return "fullscreen_effect";
+}

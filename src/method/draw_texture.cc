@@ -51,3 +51,8 @@ void method::draw_texture::execute()
 
     quad.draw();
 }
+
+std::string method::draw_texture::get_name() const
+{
+    return "draw_texture";
+}

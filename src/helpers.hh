@@ -96,6 +96,10 @@ std::string append_hash_to_path(
     const std::string& suffix = ""
 );
 
+size_t count_lines(const std::string& str);
+
+std::string add_line_numbers(const std::string& src);
+
 #include "helpers.tcc"
 
 #endif

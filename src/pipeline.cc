@@ -6,6 +6,10 @@
 #include <string>
 
 pipeline_method::~pipeline_method() {}
+std::string pipeline_method::get_name() const
+{
+    return std::string(typeid(this).name());
+}
 
 target_method::target_method(render_target& target): target(&target) {}
 
@@ -42,8 +46,7 @@ void pipeline::execute()
         if(glGetError() != GL_NO_ERROR)
             throw std::runtime_error(
                 "Error in pipeline method "
-                + std::string(typeid(method).name())
-                + " index " + std::to_string(i)
+                + method->get_name() + " index " + std::to_string(i)
             );
     }
 }
@@ -65,7 +68,7 @@ void pipeline::execute(std::vector<double>& timing)
         if(glGetError() != GL_NO_ERROR)
             throw std::runtime_error(
                 "Error in pipeline method "
-                + std::string(typeid(method).name())
+                + method->get_name() + " index " + std::to_string(i)
             );
     }
 
@@ -77,4 +80,14 @@ void pipeline::execute(std::vector<double>& timing)
         timing[i] = time / 1000000.0f;
     }
     glDeleteQueries(methods.size(), queries.data());
+}
+
+std::string pipeline::get_name(size_t i) const
+{
+    return methods[i]->get_name();
+}
+
+std::string pipeline::get_name() const
+{
+    return "pipeline";
 }

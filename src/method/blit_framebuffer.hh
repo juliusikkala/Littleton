@@ -31,6 +31,8 @@ namespace method
 
         void execute() override;
 
+        std::string get_name() const override;
+
     private:
         render_target* src;
         blit_type type;

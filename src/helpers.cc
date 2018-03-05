@@ -3,6 +3,9 @@
 #include <cmath>
 #include <stdexcept>
 #include <glm/gtc/random.hpp>
+#include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 std::string read_text_file(const std::string& path)
 {
@@ -297,4 +300,29 @@ std::vector<glm::vec2> grid_samples(
             samples[i*w+j] = start + glm::vec2(i, j) * step;
 
     return samples;
+}
+
+size_t count_lines(const std::string& str)
+{
+    return 1 + std::count(str.begin(), str.end(), '\n');
+}
+
+std::string add_line_numbers(const std::string& src)
+{
+    std::stringstream in(src);
+    std::stringstream out;
+    size_t line_count = count_lines(src);
+    size_t number_width = 1 + floor(log10(line_count));
+    std::string line;
+
+    unsigned line_number = 1;
+    while(std::getline(in, line, '\n'))
+    {
+        out << "| " << std::setw(number_width) << line_number << " |"
+            << line << std::endl;
+
+        line_number++;
+    }
+
+    return out.str();
 }

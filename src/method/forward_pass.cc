@@ -313,3 +313,8 @@ multishader* method::forward_pass::get_shader() const
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }
 render_scene* method::forward_pass::get_scene() const { return scene; }
+
+std::string method::forward_pass::get_name() const
+{
+    return "forward_pass";
+}

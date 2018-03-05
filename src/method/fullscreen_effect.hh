@@ -31,6 +31,8 @@ namespace method
         texture* get_texture(const std::string& name) const;
         void clear_textures();
 
+        std::string get_name() const override;
+
     private:
         shader* effect;
         std::map<std::string, texture*> textures;

@@ -64,6 +64,8 @@ namespace method
 
         void execute() override;
 
+        std::string get_name() const override;
+
     private:
         shader* sky_shader;
         render_scene* scene;

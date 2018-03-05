@@ -41,3 +41,8 @@ void method::gamma::execute()
 
     fullscreen_quad.draw();
 }
+
+std::string method::gamma::get_name() const
+{
+    return "gamma";
+}

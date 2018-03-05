@@ -44,3 +44,8 @@ void method::tonemap::execute()
 
     fullscreen_quad.draw();
 }
+
+std::string method::tonemap::get_name() const
+{
+    return "tonemap";
+}

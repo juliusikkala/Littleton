@@ -163,3 +163,8 @@ void method::visualize_gbuffer::execute()
         glViewport(0, 0, size.x, size.y);
     }
 }
+
+std::string method::visualize_gbuffer::get_name() const
+{
+    return "visualize_gbuffer";
+}

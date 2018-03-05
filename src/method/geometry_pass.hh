@@ -23,6 +23,8 @@ namespace method
 
         void execute() override;
 
+        std::string get_name() const override;
+
     private:
         multishader* geometry_shader;
         render_scene* scene;

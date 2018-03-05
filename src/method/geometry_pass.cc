@@ -79,3 +79,8 @@ void method::geometry_pass::execute()
         }
     }
 }
+
+std::string method::geometry_pass::get_name() const
+{
+    return "geometry_pass";
+}
