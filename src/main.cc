@@ -197,7 +197,7 @@ public:
             new directional_shadow_map_msm(
                 win,
                 glm::uvec2(1024),
-                4,
+                0,
                 4,
                 glm::vec3(0),
                 glm::vec2(8.0f),
@@ -252,9 +252,9 @@ public:
 
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        /*main_scene.add_light(&l1);
+        main_scene.add_light(&l1);
         main_scene.add_light(&l2);
-        main_scene.add_light(&spot);*/
+        main_scene.add_light(&spot);
         main_scene.add_light(&fake_sun);
         main_scene.add_shadow_map(sun_shadow.get());
 

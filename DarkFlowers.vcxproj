@@ -169,6 +169,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClCompile Include="src\scene.cc" />
     <ClCompile Include="src\shader.cc" />
     <ClCompile Include="src\shader_store.cc" />
+    <ClCompile Include="src\shadow\msm.cc" />
     <ClCompile Include="src\shadow\pcf.cc" />
     <ClCompile Include="src\shadow\shadow_map.cc" />
     <ClCompile Include="src\shadow\shadow_scene.cc" />
@@ -212,6 +213,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClInclude Include="src\scene.hh" />
     <ClInclude Include="src\shader.hh" />
     <ClInclude Include="src\shader_store.hh" />
+    <ClInclude Include="src\shadow\msm.hh" />
     <ClInclude Include="src\shadow\pcf.hh" />
     <ClInclude Include="src\shadow\shadow_map.hh" />
     <ClInclude Include="src\shadow\shadow_scene.hh" />
