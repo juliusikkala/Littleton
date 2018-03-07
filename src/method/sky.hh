@@ -3,6 +3,7 @@
 #include "pipeline.hh"
 #include "transformable.hh"
 #include "vertex_buffer.hh"
+#include "sampler.hh"
 
 class texture;
 class shader_pool;
@@ -70,6 +71,7 @@ namespace method
         shader* sky_shader;
         render_scene* scene;
         texture* depth_buffer;
+        sampler depth_sampler;
         vertex_buffer fullscreen_quad;
 
         transformable_node origin_node;

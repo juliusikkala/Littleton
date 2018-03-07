@@ -23,7 +23,7 @@ static texture* generate_shadow_kernel(context& ctx, unsigned size)
         glm::uvec2(size),
         GL_RG8_SNORM,
         GL_FLOAT,
-        {false, GL_NEAREST, GL_REPEAT, 0},
+        0,
         GL_TEXTURE_1D,
         (float*)kernel.data()
     );
@@ -45,7 +45,7 @@ static texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)
         size,
         GL_RG8_SNORM,
         GL_FLOAT,
-        {false, GL_LINEAR, GL_REPEAT, 0},
+        0,
         GL_TEXTURE_2D,
         (float*)shadow_samples.data()
     );
@@ -54,7 +54,17 @@ static texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)
 pcf_impl::pcf_impl(context& ctx)
 :   shadow_map_impl(ctx),
     shadow_noise(generate_shadow_noise_texture(ctx, glm::uvec2(512))),
-    kernel(generate_shadow_kernel(ctx, 256))
+    kernel(generate_shadow_kernel(ctx, 256)),
+    shadow_sampler(
+        ctx,
+        GL_LINEAR,
+        GL_LINEAR,
+        GL_CLAMP_TO_BORDER,
+        0,
+        glm::vec4(1),
+        GL_COMPARE_REF_TO_TEXTURE
+    ),
+    noise_sampler(ctx, GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
 }
 
@@ -111,8 +121,11 @@ shader::definition_map pcf_impl::get_definitions() const
 
 void pcf_impl::set_common_uniforms(shader* s, unsigned& texture_index)
 {
-    s->set("shadow_noise", shadow_noise->bind(texture_index++));
-    s->set("shadow_kernel", kernel->bind(texture_index++));
+    s->set(
+        "shadow_noise",
+        noise_sampler.bind(shadow_noise->bind(texture_index++))
+    );
+    s->set("shadow_kernel", noise_sampler.bind(kernel->bind(texture_index++)));
 }
 
 void pcf_impl::set_shadow_map_uniforms(
@@ -127,7 +140,10 @@ void pcf_impl::set_shadow_map_uniforms(
 
     glm::mat4 lvp = shadow_map->get_projection() * shadow_map->get_view();
 
-    s->set(prefix + "map", pcf->depth.bind(texture_index++));
+    s->set(
+        prefix + "map",
+        shadow_sampler.bind(pcf->depth.bind(texture_index++))
+    );
     s->set(prefix + "min_bias", pcf->min_bias);
     s->set(prefix + "max_bias", pcf->max_bias);
     s->set(prefix + "radius", pcf->radius);
@@ -144,8 +160,7 @@ pcf_shadow_map::pcf_shadow_map(
        ctx,
        size,
        GL_DEPTH_COMPONENT16,
-       GL_FLOAT,
-       texture::params(false, GL_LINEAR, GL_CLAMP_TO_BORDER, 0, glm::vec4(1))
+       GL_FLOAT
     ),
     depth_buffer(ctx, size, {{GL_DEPTH_ATTACHMENT, {&depth}}}),
     radius(radius), samples(samples)

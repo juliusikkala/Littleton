@@ -2,6 +2,7 @@
 #define METHOD_TONEMAP_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
+#include "sampler.hh"
 
 class texture;
 class shader_pool;
@@ -29,6 +30,7 @@ namespace method
         texture* src;
         shader* tonemap_shader;
         vertex_buffer fullscreen_quad;
+        sampler color_sampler;
 
         float exposure;
     };

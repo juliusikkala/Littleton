@@ -8,12 +8,18 @@ method::tonemap::tonemap(
     texture& src,
     shader_pool& store,
     float exposure
-): target_method(target), src(&src),
-   tonemap_shader(
+):  target_method(target), src(&src),
+    tonemap_shader(
         store.get(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
-   ),
-   fullscreen_quad(vertex_buffer::create_square(target.get_context())),
-   exposure(exposure)
+    ),
+    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
+    color_sampler(
+        target.get_context(),
+        GL_NEAREST,
+        GL_NEAREST,
+        GL_CLAMP_TO_EDGE
+    ),
+    exposure(exposure)
 {
 }
 
@@ -40,7 +46,7 @@ void method::tonemap::execute()
 
     tonemap_shader->bind();
     tonemap_shader->set<float>("exposure", exposure);
-    tonemap_shader->set("in_color", src->bind());
+    tonemap_shader->set("in_color", color_sampler.bind(src->bind()));
 
     fullscreen_quad.draw();
 }

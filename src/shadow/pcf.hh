@@ -3,6 +3,7 @@
 #include "shadow_map.hh"
 #include "framebuffer.hh"
 #include "texture.hh"
+#include "sampler.hh"
 #include <memory>
 
 class pcf_impl: public shadow_map_impl
@@ -31,6 +32,7 @@ public:
 private:
     std::unique_ptr<texture> shadow_noise;
     std::unique_ptr<texture> kernel;
+    sampler shadow_sampler, noise_sampler;
 };
 
 class pcf_shadow_map

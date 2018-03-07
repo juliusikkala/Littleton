@@ -7,8 +7,7 @@ gbuffer::gbuffer(context& ctx, glm::uvec2 size)
     ctx,
     size,
     GL_DEPTH24_STENCIL8,
-    GL_UNSIGNED_INT_24_8,
-    texture::DEPTH_PARAMS
+    GL_UNSIGNED_INT_24_8
   ),
   color_emission(ctx, size, GL_RGBA8, GL_UNSIGNED_BYTE),
   normal(ctx, size, GL_RG16_SNORM, GL_UNSIGNED_BYTE),

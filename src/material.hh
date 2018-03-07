@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <variant>
 #include "shader.hh"
+#include "sampler.hh"
 
 class texture;
 
@@ -14,14 +15,16 @@ public:
     void update_definitions(shader::definition_map& def) const;
     void apply(shader* s);
 
-    std::variant<texture*, float> metallic;
-    std::variant<texture*, glm::vec4> color;
-    std::variant<texture*, float> roughness;
+    using sampler_tex = std::pair<sampler*, texture*>;
+
+    std::variant<sampler_tex, float> metallic;
+    std::variant<sampler_tex, glm::vec4> color;
+    std::variant<sampler_tex, float> roughness;
     float ior;
-    texture* normal;
-    std::variant<texture*, float> emission;
-    std::variant<texture*, glm::vec4> subsurface_scattering;
-    std::variant<texture*, float> subsurface_depth;
+    sampler_tex normal;
+    std::variant<sampler_tex, float> emission;
+    std::variant<sampler_tex, glm::vec4> subsurface_scattering;
+    std::variant<sampler_tex, float> subsurface_depth;
 };
 
 #endif

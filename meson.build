@@ -28,6 +28,7 @@ src = [
   'src/framebuffer.cc',
   'src/context.cc',
   'src/gbuffer.cc',
+  'src/sampler.cc',
   'src/shader_pool.cc',
   'src/doublebuffer.cc',
   'src/shadow/shadow_map.cc',

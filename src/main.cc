@@ -22,6 +22,7 @@
 #include "shader_pool.hh"
 #include "shadow/pcf.hh"
 #include "shadow/msm.hh"
+#include "shadow/pcf.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -117,8 +118,7 @@ struct forward_data
         w,
         resolution,
         GL_DEPTH24_STENCIL8,
-        GL_UNSIGNED_INT_24_8,
-        texture::DEPTH_PARAMS
+        GL_UNSIGNED_INT_24_8
       ),
       screen(w, resolution, {
         {GL_COLOR_ATTACHMENT0, {&color_buffer}},
@@ -199,7 +199,7 @@ public:
             new directional_shadow_map_msm(
                 win,
                 glm::uvec2(1024),
-                0,
+                4,
                 4,
                 glm::vec3(0),
                 glm::vec2(8.0f),

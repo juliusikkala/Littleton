@@ -11,13 +11,19 @@ method::visualize_gbuffer::visualize_gbuffer(
     gbuffer& buf,
     shader_pool& store,
     render_scene* scene
-): target_method(target), buf(&buf),
-   visualize_shader(store.get(
+):  target_method(target), buf(&buf),
+    visualize_shader(store.get(
         shader::path{"fullscreen.vert", "visualize.frag"}
-   )),
-   scene(scene),
-   fullscreen_quad(vertex_buffer::create_square(target.get_context())),
-   visualizers({POSITION, NORMAL, COLOR, MATERIAL})
+    )),
+    scene(scene),
+    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
+    gbuf_sampler(
+        target.get_context(),
+        GL_NEAREST,
+        GL_NEAREST,
+        GL_CLAMP_TO_EDGE
+    ),
+    visualizers({POSITION, NORMAL, COLOR, MATERIAL})
 {
 }
 
@@ -113,10 +119,10 @@ void method::visualize_gbuffer::execute()
         far
     );
 
-    buf->get_depth_stencil().bind(0);
-    buf->get_color_emission().bind(1);
-    buf->get_normal().bind(2);
-    buf->get_material().bind(3);
+    gbuf_sampler.bind(buf->get_depth_stencil().bind(0));
+    gbuf_sampler.bind(buf->get_color_emission().bind(1));
+    gbuf_sampler.bind(buf->get_normal().bind(2));
+    gbuf_sampler.bind(buf->get_material().bind(3));
 
     if(visualizers.size() == 1)
     {

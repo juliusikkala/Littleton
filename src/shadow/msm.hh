@@ -3,6 +3,7 @@
 #include "shadow_map.hh"
 #include "framebuffer.hh"
 #include "texture.hh"
+#include "sampler.hh"
 #include "vertex_buffer.hh"
 #include <memory>
 
@@ -43,6 +44,7 @@ private:
     std::unique_ptr<pp_render_target> pp_rt;
 
     vertex_buffer quad;
+    sampler moment_sampler;
 };
 
 class msm_shadow_map

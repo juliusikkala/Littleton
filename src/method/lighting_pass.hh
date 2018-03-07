@@ -2,6 +2,7 @@
 #define METHOD_LIGHTING_PASS_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
+#include "sampler.hh"
 
 class gbuffer;
 class shader_pool;
@@ -34,6 +35,7 @@ namespace method
         render_scene* scene;
 
         vertex_buffer fullscreen_quad;
+        sampler gbuf_sampler;
     };
 }
 

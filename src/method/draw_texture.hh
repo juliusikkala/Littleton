@@ -2,6 +2,7 @@
 #define METHOD_DRAW_TEXTURE_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
+#include "sampler.hh"
 
 class texture;
 class shader_pool;
@@ -28,6 +29,7 @@ namespace method
 
     private:
         vertex_buffer quad;
+        sampler color_sampler;
 
         shader* draw_shader;
         glm::mat4 transform;

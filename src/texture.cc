@@ -6,91 +6,6 @@
 #include <algorithm>
 #include <cstring>
 
-static GLint interpolation_without_mipmap(GLint interpolation)
-{
-    if(
-        interpolation == GL_LINEAR_MIPMAP_LINEAR ||
-        interpolation == GL_LINEAR_MIPMAP_NEAREST
-    ) return GL_LINEAR; 
-    else if(
-        interpolation == GL_NEAREST_MIPMAP_NEAREST ||
-        interpolation == GL_NEAREST_MIPMAP_LINEAR
-    ) return GL_NEAREST; 
-    else return interpolation;
-}
-
-texture::params::params(
-    bool srgb,
-    GLint interpolation,
-    GLint extension,
-    unsigned anisotropy,
-    glm::vec4 border_color,
-    unsigned samples
-): srgb(srgb), interpolation(interpolation), extension(extension),
-   anisotropy(anisotropy), border_color(border_color), samples(samples)
-{}
-
-const texture::params texture::DEPTH_PARAMS(
-    false,
-    GL_NEAREST,
-    GL_CLAMP_TO_BORDER,
-    0,
-    glm::vec4(1)
-);
-
-static void apply_params(
-    context& ctx,
-    GLenum target,
-    GLenum external_format,
-    const texture::params& p,
-    bool has_mipmaps = false
-){
-    if(target != GL_TEXTURE_2D_MULTISAMPLE)
-    {
-        glTexParameteri(
-            target,
-            GL_TEXTURE_MIN_FILTER,
-            has_mipmaps ?
-                p.interpolation :
-                interpolation_without_mipmap(p.interpolation)
-        );
-
-        glTexParameteri(
-            target,
-            GL_TEXTURE_MAG_FILTER,
-            interpolation_without_mipmap(p.interpolation)
-        );
-
-        glTexParameteri(target, GL_TEXTURE_WRAP_S, p.extension);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, p.extension);
-
-        glTexParameterfv(
-            target,
-            GL_TEXTURE_BORDER_COLOR,
-            (float*)&p.border_color
-        );
-    }
-
-    if(external_format == GL_DEPTH_COMPONENT && p.interpolation == GL_LINEAR)
-    {
-        glTexParameteri(
-            target,
-            GL_TEXTURE_COMPARE_MODE,
-            GL_COMPARE_REF_TO_TEXTURE
-        );
-    }
-
-    if(p.anisotropy != 0 && GLEW_EXT_texture_filter_anisotropic)
-    {
-        unsigned max_anisotropy = ctx[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
-        glTexParameterf(
-            target,
-            GL_TEXTURE_MAX_ANISOTROPY_EXT,
-            std::min(p.anisotropy, max_anisotropy)
-        );
-    }
-}
-
 static unsigned choose_alignment(unsigned line_bytes)
 {
     if((line_bytes & 7) == 0) return 8;
@@ -102,7 +17,7 @@ static unsigned choose_alignment(unsigned line_bytes)
 static GLuint load_texture(
     context& ctx,
     const std::string& path,
-    const texture::params& p,
+    bool srgb,
     GLenum target,
     GLint& internal_format,
     GLenum& type,
@@ -149,11 +64,11 @@ static GLuint load_texture(
         internal_format = hdr ? GL_RG16 : GL_RG8;
         break;
     case 3:
-        if(p.srgb) internal_format = GL_SRGB8;
+        if(srgb) internal_format = GL_SRGB8;
         else internal_format = hdr ? GL_RGB16 : GL_RGB8;
         break;
     case 4:
-        if(p.srgb) internal_format = GL_SRGB8_ALPHA8;
+        if(srgb) internal_format = GL_SRGB8_ALPHA8;
         else internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
         break;
     }
@@ -185,8 +100,6 @@ static GLuint load_texture(
     );
     glGenerateMipmap(target);
 
-    apply_params(ctx, target, external_format, p, true);
-
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
     if(glGetError() != GL_NO_ERROR)
@@ -202,11 +115,11 @@ texture::texture(context& ctx)
 texture::texture(
     context& ctx,
     const std::string& path,
-    const params& p,
+    bool srgb,
     GLenum target
 ): glresource(ctx), tex(0), target(target)
 {
-    basic_load(path, p, target);
+    basic_load(path, srgb, target);
 }
 
 texture::texture(
@@ -214,13 +127,13 @@ texture::texture(
     glm::uvec2 size,
     GLint internal_format,
     GLenum type,
-    const params& p,
+    unsigned samples,
     GLenum target,
     const void* data
 ): glresource(ctx), tex(0), internal_format(internal_format), target(target),
    type(type)
 {
-    basic_load(size, internal_format, type, p, target, data);
+    basic_load(size, internal_format, type, samples, target, data);
 }
 
 texture::texture(texture&& other)
@@ -292,16 +205,16 @@ public:
     file_texture(
         context& ctx,
         const std::string& path,
-        const params& p,
+        bool srgb,
         GLenum target
-    ): texture(ctx), p(p), path(path)
+    ): texture(ctx), srgb(srgb), path(path)
     {
         this->target = target;
     }
 
     void load() const override
     {
-        basic_load(path, p, target);
+        basic_load(path, srgb, target);
     }
 
     void unload() const override
@@ -310,17 +223,17 @@ public:
     }
 
 private:
-    params p;
+    bool srgb;
     std::string path;
 };
 
 texture* texture::create(
     context& ctx,
     const std::string& path,
-    const params& p,
+    bool srgb,
     GLenum target
 ){
-    return new file_texture(ctx, path, p, target);
+    return new file_texture(ctx, path, srgb, target);
 }
 
 class data_texture: public texture
@@ -331,11 +244,11 @@ public:
         glm::uvec2 size,
         GLint internal_format,
         GLenum type,
-        const params& p,
+        unsigned samples,
         GLenum target,
         size_t data_size,
         const void* data
-    ): texture(ctx), p(p), size(size)
+    ): texture(ctx), samples(samples), size(size)
     {
         this->internal_format = internal_format;
         this->type = type;
@@ -359,7 +272,7 @@ public:
             size,
             internal_format,
             type,
-            p,
+            samples,
             target,
             data
         );
@@ -371,7 +284,7 @@ public:
     }
 
 private:
-    params p;
+    unsigned samples;
     glm::uvec2 size;
     void* data;
 };
@@ -381,20 +294,20 @@ texture* texture::create(
     glm::uvec2 size,
     GLint internal_format,
     GLenum type,
-    const params& p,
+    unsigned samples,
     GLenum target,
     size_t data_size,
     const void* data
 ){
     return new data_texture(
-        ctx, size, internal_format, type, p, target,
+        ctx, size, internal_format, type, samples, target,
         data_size, data
     );
 }
 
 void texture::basic_load(
     const std::string& path,
-    const params& p,
+    bool srgb,
     GLenum target
 ) const
 {
@@ -403,7 +316,7 @@ void texture::basic_load(
     tex = load_texture(
         get_context(),
         path,
-        p,
+        srgb,
         target,
         internal_format,
         type,
@@ -420,7 +333,7 @@ void texture::basic_load(
     glm::uvec2 size,
     GLint internal_format,
     GLenum type,
-    const params& p,
+    unsigned samples,
     GLenum target,
     const void* data
 ) const {
@@ -463,7 +376,7 @@ void texture::basic_load(
     case GL_TEXTURE_2D_MULTISAMPLE:
         glTexImage2DMultisample(
             target,
-            p.samples,
+            samples,
             internal_format,
             size.x,
             size.y,
@@ -473,8 +386,6 @@ void texture::basic_load(
     default:
         throw std::runtime_error("Unknown texture target!");
     }
-
-    apply_params(get_context(), target, external_format, p);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create empty texture");

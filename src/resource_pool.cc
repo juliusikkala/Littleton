@@ -166,27 +166,40 @@ void resource_pool::add_dfo(
     }
 
     // Add all textures
-    std::map<dfo_texture*, texture*> textures;
+    std::map<dfo_texture*, material::sampler_tex> textures;
 
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
         if(ignore_duplicates && contains<texture>(tex->name)) continue;
 
-        textures[tex] = add<texture>(
-            tex->name,
-            texture::create(
-                *ctx,
-                data_prefix.empty() ? 
-                    tex->path :
-                    data_prefix + "/" + tex->path,
-                {
-                    tex->type == DFO_TEX_SRGB_COLOR,
-                    dfo_interpolation_to_gl(tex->interpolation),
-                    dfo_extension_to_gl(tex->extension)
-                }
+        GLint interpolation = dfo_interpolation_to_gl(tex->interpolation);
+        GLint extension = dfo_extension_to_gl(tex->extension);
+
+        material::sampler_tex sampler_texture(
+            add<sampler>(
+                std::string(tex->name) + "_sampler",
+                new sampler(
+                    *ctx,
+                    interpolation,
+                    interpolation,
+                    extension
+                )
+            ),
+            add<texture>(
+                tex->name,
+                texture::create(
+                    *ctx,
+                    data_prefix.empty() ? 
+                        tex->path :
+                        data_prefix + "/" + tex->path,
+                    tex->type == DFO_TEX_SRGB_COLOR
+                )
             )
         );
+
+        textures[tex] = sampler_texture;
+
     }
 
     // Add all materials

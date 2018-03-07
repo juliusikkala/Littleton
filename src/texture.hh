@@ -8,31 +8,10 @@
 class texture: public resource, public glresource
 {
 public:
-    struct params
-    {
-        params(
-            bool srgb = false,
-            GLint interpolation = GL_LINEAR_MIPMAP_LINEAR,
-            GLint extension = GL_REPEAT,
-            unsigned anisotropy = 16,
-            glm::vec4 border_color = glm::vec4(0,0,0,0),
-            unsigned samples = 0
-        );
-
-        bool srgb;
-        GLint interpolation;
-        GLint extension;
-        unsigned anisotropy;
-        glm::vec4 border_color;
-        unsigned samples;
-    };
-
-    static const params DEPTH_PARAMS;
-
     texture(
         context& ctx,
         const std::string& path,
-        const params& p = params(),
+        bool srgb = false,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -41,7 +20,7 @@ public:
         glm::uvec2 size,
         GLint format,
         GLenum type,
-        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
+        unsigned samples = 0,
         GLenum target = GL_TEXTURE_2D,
         const void* data = nullptr
     );
@@ -60,7 +39,7 @@ public:
     static texture* create(
         context& ctx,
         const std::string& path,
-        const params& p = params(),
+        bool srgb = false,
         GLenum target = GL_TEXTURE_2D
     );
 
@@ -69,7 +48,7 @@ public:
         glm::uvec2 size,
         GLint internal_format,
         GLenum type,
-        const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
+        unsigned samples = 0,
         GLenum target = GL_TEXTURE_2D,
         size_t data_size = 0,
         const void* data = nullptr
@@ -83,7 +62,7 @@ protected:
 
     void basic_load(
         const std::string& path,
-        const params& p,
+        bool srgb,
         GLenum target
     ) const;
 
@@ -91,7 +70,7 @@ protected:
         glm::uvec2 size,
         GLint internal_format,
         GLenum type,
-        const params& p,
+        unsigned samples,
         GLenum target,
         const void* data = nullptr
     ) const;

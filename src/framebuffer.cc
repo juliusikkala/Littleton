@@ -55,16 +55,8 @@ framebuffer::framebuffer(
                     size,
                     spec.format,
                     GL_UNSIGNED_BYTE,
-                    // TODO: Introduce samplers so that irrelevant stuff is not
-                    // set here.
-                    texture::params(
-                        false,
-                        GL_LINEAR,
-                        GL_CLAMP_TO_EDGE,
-                        0,
-                        glm::vec4(0),
-                        samples
-                    )
+                    samples,
+                    samples ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D
                 );
                 owned_textures.emplace_back(tex);
             }

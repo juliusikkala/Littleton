@@ -2,6 +2,8 @@
 #define METHOD_VISUALIZE_GBUFFER_HH
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
+#include "shader.hh"
+#include "sampler.hh"
 
 class gbuffer;
 class shader_pool;
@@ -53,6 +55,7 @@ namespace method
         multishader* visualize_shader;
         render_scene* scene;
         vertex_buffer fullscreen_quad;
+        sampler gbuf_sampler;        
 
         std::vector<visualizer> visualizers;
     };

@@ -7,14 +7,6 @@
 #include "shader_pool.hh"
 #include "render_target.hh"
 
-static const texture::params moment_params(
-    false,
-    GL_LINEAR,
-    GL_CLAMP_TO_BORDER,
-    0,
-    glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
-);
-
 class ms_render_target: public render_target
 {
 public:
@@ -86,7 +78,7 @@ class pp_render_target: public render_target
 public:
     pp_render_target(context& ctx, glm::uvec2 size)
     : render_target(ctx, size),
-      color(ctx, size, GL_RGBA16, GL_FLOAT, moment_params)
+      color(ctx, size, GL_RGBA16, GL_FLOAT)
     {
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -144,7 +136,15 @@ private:
 
 msm_impl::msm_impl(context& ctx)
 : shadow_map_impl(ctx),
-  quad(vertex_buffer::create_square(ctx))
+  quad(vertex_buffer::create_square(ctx)),
+  moment_sampler(
+    ctx,
+    GL_LINEAR,
+    GL_LINEAR,
+    GL_CLAMP_TO_BORDER,
+    0,
+    glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
+  )
 {
 }
 
@@ -235,12 +235,18 @@ void msm_impl::render(
 
         pp_rt->bind();
         glViewport(0, 0, target_size.x, target_size.y);
-        vertical_blur_shader->set("tex", msm->moments.bind(0));
+        vertical_blur_shader->set(
+            "tex",
+            moment_sampler.bind(msm->moments.bind(0))
+        );
         vertical_blur_shader->set("samples", (int)(2 * radius + 1));
         quad.draw();
 
         msm->moments_buffer.bind();
-        horizontal_blur_shader->set("tex", pp_rt->get_color().bind(0));
+        horizontal_blur_shader->set(
+            "tex",
+            moment_sampler.bind(pp_rt->get_color().bind(0))
+        );
         horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
         quad.draw();
     }
@@ -267,7 +273,10 @@ void msm_impl::set_shadow_map_uniforms(
 
     glm::mat4 lvp = shadow_map->get_projection() * shadow_map->get_view();
 
-    s->set(prefix + "map", msm->moments.bind(texture_index++));
+    s->set(
+        prefix + "map",
+        moment_sampler.bind(msm->moments.bind(texture_index++))
+    );
     s->set(prefix + "mvp", lvp * pos_to_world);
 }
 
@@ -322,7 +331,7 @@ msm_shadow_map::msm_shadow_map(
     glm::uvec2 size,
     unsigned samples,
     unsigned radius
-):  moments(ctx, size, GL_RGBA16, GL_FLOAT, moment_params),
+):  moments(ctx, size, GL_RGBA16, GL_FLOAT),
     moments_buffer(ctx, size, {{GL_COLOR_ATTACHMENT0, {&moments}}}),
     samples(samples),
     radius(radius)

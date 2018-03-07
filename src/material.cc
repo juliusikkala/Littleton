@@ -14,7 +14,8 @@ static void update_texture_variant_def(
     if(v.index() == 0)
     {
         def.erase(constant_key);
-        if(std::get<0>(v)) def[texture_key];
+        material::sampler_tex tex = std::get<0>(v);
+        if(tex.first && tex.second) def[texture_key];
         else def.erase(texture_key);
     }
     else
@@ -47,7 +48,7 @@ void material::update_definitions(shader::definition_map& def) const
         "MATERIAL_ROUGHNESS_TEXTURE"
     );
 
-    if(normal) def["MATERIAL_NORMAL_TEXTURE"];
+    if(normal.first && normal.second) def["MATERIAL_NORMAL_TEXTURE"];
     else def.erase("MATERIAL_NORMAL_TEXTURE");
 
     update_texture_variant_def(
@@ -76,59 +77,56 @@ void material::apply(shader* s)
 {
     if(metallic.index() == 0)
     {
-        texture* tex = std::get<0>(metallic);
-        if(tex)
+        sampler_tex tex = std::get<0>(metallic);
+        if(tex.first && tex.second)
         {
-            tex->bind(0);
-            s->set("material.metallic", 0);
+            s->set("material.metallic", tex.first->bind(tex.second->bind(0)));
         }
     } else s->set("material.metallic", std::get<1>(metallic));
 
     if(color.index() == 0)
     {
-        texture* tex = std::get<0>(color);
-        if(tex)
+        sampler_tex tex = std::get<0>(color);
+        if(tex.first && tex.second)
         {
-            tex->bind(1);
-            s->set("material.color", 1);
+            s->set("material.color", tex.first->bind(tex.second->bind(1)));
         }
     } else s->set("material.color", std::get<1>(color));
 
     if(roughness.index() == 0)
     {
-        texture* tex = std::get<0>(roughness);
-        if(tex)
+        sampler_tex tex = std::get<0>(roughness);
+        if(tex.first && tex.second)
         {
-            tex->bind(2);
-            s->set("material.roughness", 2);
+            s->set("material.roughness", tex.first->bind(tex.second->bind(2)));
         }
     } else s->set("material.roughness", std::get<1>(roughness));
 
-    if(normal)
+    if(normal.first && normal.second)
     {
-        normal->bind(3);
-        s->set("material.normal", 3);
+        s->set("material.normal", normal.first->bind(normal.second->bind(3)));
     }
 
     s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
 
     if(emission.index() == 0)
     {
-        texture* tex = std::get<0>(emission);
-        if(tex)
+        sampler_tex tex = std::get<0>(emission);
+        if(tex.first && tex.second)
         {
-            tex->bind(4);
-            s->set("material.emission", 4);
+            s->set("material.emission", tex.first->bind(tex.second->bind(4)));
         }
     } else s->set("material.emission", std::get<1>(emission));
 
     if(subsurface_scattering.index() == 0)
     {
-        texture* tex = std::get<0>(subsurface_scattering);
-        if(tex)
+        sampler_tex tex = std::get<0>(subsurface_scattering);
+        if(tex.first && tex.second)
         {
-            tex->bind(5);
-            s->set("material.subsurface_scattering", 5);
+            s->set(
+                "material.subsurface_scattering",
+                tex.first->bind(tex.second->bind(5))
+            );
         }
     } else s->set(
         "material.subsurface_scattering",
@@ -137,11 +135,13 @@ void material::apply(shader* s)
 
     if(subsurface_depth.index() == 0)
     {
-        texture* tex = std::get<0>(subsurface_depth);
-        if(tex)
+        sampler_tex tex = std::get<0>(subsurface_depth);
+        if(tex.first && tex.second)
         {
-            tex->bind(6);
-            s->set("material.subsurface_depth", 6);
+            s->set(
+                "material.subsurface_depth",
+                tex.first->bind(tex.second->bind(6))
+            );
         }
     } else s->set(
         "material.subsurface_depth",

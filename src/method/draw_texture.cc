@@ -7,10 +7,16 @@ method::draw_texture::draw_texture(
     render_target& target,
     shader_pool& store,
     texture* tex
-): target_method(target),
-   quad(vertex_buffer::create_square(target.get_context())),
-   transform(1.0f),
-   tex(tex)
+):  target_method(target),
+    quad(vertex_buffer::create_square(target.get_context())),
+    color_sampler(
+        target.get_context(),
+        GL_NEAREST,
+        GL_NEAREST,
+        GL_CLAMP_TO_EDGE
+    ),
+    transform(1.0f),
+    tex(tex)
 {
     shader::definition_map def;
     quad.update_definitions(def);
@@ -47,7 +53,7 @@ void method::draw_texture::execute()
     draw_shader->bind();
 
     draw_shader->set("mvp", transform);
-    draw_shader->set("tex", tex->bind(0));
+    draw_shader->set("tex", color_sampler.bind(tex->bind(0)));
 
     quad.draw();
 }
