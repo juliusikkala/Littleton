@@ -21,7 +21,6 @@ static texture* generate_shadow_kernel(context& ctx, unsigned size)
     return new texture(
         ctx,
         glm::uvec2(size),
-        GL_RG,
         GL_RG8_SNORM,
         GL_FLOAT,
         {false, GL_NEAREST, GL_REPEAT, 0},
@@ -44,7 +43,6 @@ static texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)
     return new texture(
         ctx,
         size,
-        GL_RG,
         GL_RG8_SNORM,
         GL_FLOAT,
         {false, GL_LINEAR, GL_REPEAT, 0},
@@ -145,7 +143,6 @@ pcf_shadow_map::pcf_shadow_map(
 ):  depth(
        ctx,
        size,
-       GL_DEPTH_COMPONENT,
        GL_DEPTH_COMPONENT16,
        GL_FLOAT,
        texture::params(false, GL_LINEAR, GL_CLAMP_TO_BORDER, 0, glm::vec4(1))

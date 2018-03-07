@@ -33,7 +33,7 @@ struct deferred_data
         glm::uvec2 resolution,
         shader_pool& shaders,
         render_scene* main_scene
-    ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+    ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
       sm(shaders, main_scene),
       clear_buf(buf),
@@ -81,7 +81,7 @@ struct visualizer_data
         glm::uvec2 resolution,
         shader_pool& shaders,
         render_scene* main_scene
-    ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+    ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
       clear_buf(buf),
       clear_screen(screen.input(0)),
@@ -112,17 +112,16 @@ struct forward_data
         glm::uvec2 resolution,
         shader_pool& shaders,
         render_scene* main_scene
-    ):color_buffer(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+    ):color_buffer(w, resolution, GL_RGB16F, GL_FLOAT),
       depth_buffer(
         w,
         resolution,
-        GL_DEPTH_STENCIL,
         GL_DEPTH24_STENCIL8,
         GL_UNSIGNED_INT_24_8,
         texture::DEPTH_PARAMS
       ),
       screen(w, resolution, {&color_buffer}, &depth_buffer),
-      postprocess(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
+      postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
       sm(shaders, main_scene),
       clear_screen(screen),
       fp(screen, shaders, main_scene),

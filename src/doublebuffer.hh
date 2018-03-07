@@ -10,7 +10,6 @@ public:
     doublebuffer(
         context& ctx,
         glm::uvec2 size,
-        GLenum external_format,
         GLint internal_format,
         GLenum type
     );

@@ -39,8 +39,7 @@ public:
     texture(
         context& ctx,
         glm::uvec2 size,
-        GLenum external_format,
-        GLint internal_format,
+        GLint format,
         GLenum type,
         const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
         GLenum target = GL_TEXTURE_2D,
@@ -68,7 +67,6 @@ public:
     static texture* create(
         context& ctx,
         glm::uvec2 size,
-        GLenum external_format,
         GLint internal_format,
         GLenum type,
         const params& p = params(false, GL_LINEAR, GL_CLAMP_TO_EDGE, 0),
@@ -91,7 +89,6 @@ protected:
 
     void basic_load(
         glm::uvec2 size,
-        GLenum external_format,
         GLint internal_format,
         GLenum type,
         const params& p,
@@ -103,7 +100,8 @@ protected:
 
     mutable GLuint tex;
     mutable GLint internal_format;
-    mutable GLenum external_format, target, type;
+    mutable GLint target;
+    mutable GLenum type;
     mutable glm::uvec2 size;
 };
 

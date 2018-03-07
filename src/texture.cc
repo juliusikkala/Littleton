@@ -1,9 +1,10 @@
 #include "texture.hh"
 #include "context.hh"
+#include "helpers.hh"
+#include "stb_image.h"
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <cstring>
-#include "stb_image.h"
 
 static GLint interpolation_without_mipmap(GLint interpolation)
 {
@@ -40,7 +41,7 @@ const texture::params texture::DEPTH_PARAMS(
 static void apply_params(
     context& ctx,
     GLenum target,
-    GLenum& external_format,
+    GLenum external_format,
     const texture::params& p,
     bool has_mipmaps = false
 ){
@@ -104,7 +105,6 @@ static GLuint load_texture(
     const texture::params& p,
     GLenum target,
     GLint& internal_format,
-    GLenum& external_format,
     GLenum& type,
     glm::uvec2& size
 ){
@@ -144,25 +144,23 @@ static GLuint load_texture(
     {
     case 1:
         internal_format = hdr ? GL_R16 : GL_R8;
-        external_format = GL_RED;
         break;
     case 2:
         internal_format = hdr ? GL_RG16 : GL_RG8;
-        external_format = GL_RG;
         break;
     case 3:
         if(p.srgb) internal_format = GL_SRGB8;
         else internal_format = hdr ? GL_RGB16 : GL_RGB8;
-        external_format = GL_RGB;
         break;
     case 4:
         if(p.srgb) internal_format = GL_SRGB8_ALPHA8;
         else internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
-        external_format = GL_RGBA;
         break;
     }
 
     unsigned mipmap_count = floor(log2(std::max(w, h)))+1;
+
+    GLint external_format = internal_format_to_external_format(internal_format);
 
     GLuint tex = 0;
     glGenTextures(1, &tex);
@@ -214,16 +212,15 @@ texture::texture(
 texture::texture(
     context& ctx,
     glm::uvec2 size,
-    GLenum external_format,
     GLint internal_format,
     GLenum type,
     const params& p,
     GLenum target,
     const void* data
-): glresource(ctx), tex(0), internal_format(internal_format),
-   external_format(external_format), target(target), type(type)
+): glresource(ctx), tex(0), internal_format(internal_format), target(target),
+   type(type)
 {
-    basic_load(size, external_format, internal_format, type, p, target, data);
+    basic_load(size, internal_format, type, p, target, data);
 }
 
 texture::texture(texture&& other)
@@ -233,7 +230,6 @@ texture::texture(texture&& other)
 
     tex = other.tex;
     internal_format = other.internal_format;
-    external_format = other.external_format;
     target = other.target;
     type = other.type;
     size = other.size;
@@ -261,7 +257,7 @@ GLint texture::get_internal_format() const
 GLenum texture::get_external_format() const
 {
     load();
-    return external_format;
+    return internal_format_to_external_format(internal_format);
 }
 
 GLenum texture::get_target() const
@@ -333,7 +329,6 @@ public:
     data_texture(
         context& ctx,
         glm::uvec2 size,
-        GLenum external_format,
         GLint internal_format,
         GLenum type,
         const params& p,
@@ -342,7 +337,6 @@ public:
         const void* data
     ): texture(ctx), p(p), size(size)
     {
-        this->external_format = external_format;
         this->internal_format = internal_format;
         this->type = type;
         this->target = target;
@@ -363,7 +357,6 @@ public:
     {
         basic_load(
             size,
-            external_format,
             internal_format,
             type,
             p,
@@ -386,7 +379,6 @@ private:
 texture* texture::create(
     context& ctx,
     glm::uvec2 size,
-    GLenum external_format,
     GLint internal_format,
     GLenum type,
     const params& p,
@@ -395,7 +387,7 @@ texture* texture::create(
     const void* data
 ){
     return new data_texture(
-        ctx, size, external_format, internal_format, type, p, target,
+        ctx, size, internal_format, type, p, target,
         data_size, data
     );
 }
@@ -414,7 +406,6 @@ void texture::basic_load(
         p,
         target,
         internal_format,
-        external_format,
         type,
         size
     );
@@ -427,7 +418,6 @@ void texture::basic_load(
 
 void texture::basic_load(
     glm::uvec2 size,
-    GLenum external_format,
     GLint internal_format,
     GLenum type,
     const params& p,
@@ -435,6 +425,8 @@ void texture::basic_load(
     const void* data
 ) const {
     if(tex) return;
+
+    GLint external_format = internal_format_to_external_format(internal_format);
 
     glGenTextures(1, &tex);
     glBindTexture(target, tex);
@@ -487,7 +479,6 @@ void texture::basic_load(
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create empty texture");
 
-    this->external_format = external_format;
     this->internal_format = internal_format;
     this->type = type;
     this->target = target;

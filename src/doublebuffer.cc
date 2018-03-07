@@ -4,13 +4,12 @@
 doublebuffer::doublebuffer(
     context& ctx,
     glm::uvec2 size,
-    GLenum external_format,
     GLint internal_format,
     GLenum type
 ): glresource(ctx), cur_index(0),
    buffers{
-    texture(ctx, size, external_format, internal_format, type),
-    texture(ctx, size, external_format, internal_format, type)
+    texture(ctx, size, internal_format, type),
+    texture(ctx, size, internal_format, type)
    },
    targets{target(ctx, buffers[0]), target(ctx, buffers[1])}
 {

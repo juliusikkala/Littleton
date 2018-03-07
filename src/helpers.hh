@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <boost/functional/hash.hpp>
+#include "glheaders.hh"
 
 std::string read_text_file(const std::string& path);
 bool read_binary_file(const std::string& path, uint8_t*& data, size_t& bytes);
@@ -99,6 +100,8 @@ std::string append_hash_to_path(
 size_t count_lines(const std::string& str);
 
 std::string add_line_numbers(const std::string& src);
+
+GLint internal_format_to_external_format(GLint internal_format);
 
 #include "helpers.tcc"
 

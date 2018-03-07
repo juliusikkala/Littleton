@@ -86,7 +86,7 @@ class pp_render_target: public render_target
 public:
     pp_render_target(context& ctx, glm::uvec2 size)
     : render_target(ctx, size),
-      color(ctx, size, GL_RGBA, GL_RGBA16, GL_FLOAT, moment_params)
+      color(ctx, size, GL_RGBA16, GL_FLOAT, moment_params)
     {
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -322,7 +322,7 @@ msm_shadow_map::msm_shadow_map(
     glm::uvec2 size,
     unsigned samples,
     unsigned radius
-):  moments(ctx, size, GL_RGBA, GL_RGBA16, GL_FLOAT, moment_params),
+):  moments(ctx, size, GL_RGBA16, GL_FLOAT, moment_params),
     moments_buffer(ctx, size, {&moments}),
     samples(samples),
     radius(radius)
