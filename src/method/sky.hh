@@ -5,7 +5,7 @@
 #include "vertex_buffer.hh"
 
 class texture;
-class shader_store;
+class shader_pool;
 class render_scene;
 class directional_light;
 
@@ -16,7 +16,7 @@ namespace method
     public:
         sky(
             render_target& target,
-            shader_store& shaders,
+            shader_pool& shaders,
             render_scene* scene = nullptr,
             texture* depth_buffer = nullptr,
             directional_light* sun = nullptr

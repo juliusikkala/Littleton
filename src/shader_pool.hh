@@ -1,5 +1,5 @@
-#ifndef SHADER_STORE_HH
-#define SHADER_STORE_HH
+#ifndef SHADER_POOL_HH
+#define SHADER_POOL_HH
 #include "shader.hh"
 #include <memory>
 #include <string>
@@ -9,7 +9,7 @@
 #include <boost/functional/hash.hpp>
 
 class multishader;
-class shader_store
+class shader_pool
 {
 private:
     using map_type = std::unordered_map<
@@ -22,18 +22,18 @@ public:
     using iterator = map_type::iterator;
     using const_iterator = map_type::const_iterator;
 
-    shader_store(
+    shader_pool(
         context& ctx,
         const std::vector<std::string>& shader_path = {}
     );
-    shader_store(
+    shader_pool(
         context& ctx,
         const std::vector<std::string>& shader_path,
         const std::string& shader_binary_path
     );
-    shader_store(const shader_store& other) = delete;
-    shader_store(shader_store& other) = delete;
-    ~shader_store();
+    shader_pool(const shader_pool& other) = delete;
+    shader_pool(shader_pool& other) = delete;
+    ~shader_pool();
 
     multishader* add(const shader::path& path);
 

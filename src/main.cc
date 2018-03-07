@@ -1,5 +1,5 @@
 #include "window.hh"
-#include "resources.hh"
+#include "resource_pool.hh"
 #include "texture.hh"
 #include "object.hh"
 #include "camera.hh"
@@ -19,7 +19,7 @@
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "shadow/pcf.hh"
 #include "shadow/msm.hh"
 #include <iostream>
@@ -31,7 +31,7 @@ struct deferred_data
     deferred_data(
         window& w,
         glm::uvec2 resolution,
-        shader_store& shaders,
+        shader_pool& shaders,
         render_scene* main_scene
     ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
@@ -79,7 +79,7 @@ struct visualizer_data
     visualizer_data(
         window& w,
         glm::uvec2 resolution,
-        shader_store& shaders,
+        shader_pool& shaders,
         render_scene* main_scene
     ):screen(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
@@ -110,7 +110,7 @@ struct forward_data
     forward_data(
         window& w,
         glm::uvec2 resolution,
-        shader_store& shaders,
+        shader_pool& shaders,
         render_scene* main_scene
     ):color_buffer(w, resolution, GL_RGB, GL_RGB16F, GL_FLOAT),
       depth_buffer(
@@ -160,7 +160,7 @@ public:
     custom_pipeline(
         window& w,
         glm::uvec2 resolution,
-        shader_store& shaders,
+        shader_pool& shaders,
         render_scene* main_scene
     ): T(w, resolution, shaders, main_scene), pipeline(T::get_methods()) {}
 };
@@ -403,8 +403,8 @@ public:
 
 private:
     window win;
-    resource_store resources;
-    shader_store shaders;
+    resource_pool resources;
+    shader_pool shaders;
     camera cam;
     render_scene main_scene;
 

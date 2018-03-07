@@ -6,14 +6,14 @@
 #include "vertex_buffer.hh"
 #include "multishader.hh"
 #include "gbuffer.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "scene.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene
 ): target_method(buf),
    geometry_shader(store.get(shader::path{"generic.vert", "geometry.frag"})),

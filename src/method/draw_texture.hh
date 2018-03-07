@@ -4,7 +4,7 @@
 #include "vertex_buffer.hh"
 
 class texture;
-class shader_store;
+class shader_pool;
 
 namespace method
 {
@@ -13,7 +13,7 @@ namespace method
     public:
         draw_texture(
             render_target& target,
-            shader_store& shaders,
+            shader_pool& shaders,
             texture* tex = nullptr
         );
         ~draw_texture();

@@ -4,7 +4,7 @@
 #include "vertex_buffer.hh"
 
 class gbuffer;
-class shader_store;
+class shader_pool;
 class render_scene;
 class multishader;
 
@@ -16,7 +16,7 @@ namespace method
         visualize_gbuffer(
             render_target& target,
             gbuffer& buf,
-            shader_store& store,
+            shader_pool& store,
             render_scene* scene
         );
 

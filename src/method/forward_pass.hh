@@ -3,7 +3,7 @@
 #include "pipeline.hh"
 
 class render_scene;
-class shader_store;
+class shader_pool;
 class multishader;
 
 namespace method
@@ -13,7 +13,7 @@ namespace method
     public:
         forward_pass(
             render_target& target,
-            shader_store& shaders,
+            shader_pool& shaders,
             render_scene* scene = nullptr
         );
         ~forward_pass();

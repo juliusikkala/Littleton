@@ -3,7 +3,7 @@
 #include "pipeline.hh"
 
 class gbuffer;
-class shader_store;
+class shader_pool;
 class render_scene;
 class multishader;
 
@@ -14,7 +14,7 @@ namespace method
     public:
         geometry_pass(
             gbuffer& buf,
-            shader_store& store,
+            shader_pool& store,
             render_scene* scene
         );
 

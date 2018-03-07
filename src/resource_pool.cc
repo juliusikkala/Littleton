@@ -1,4 +1,4 @@
-#include "resources.hh"
+#include "resource_pool.hh"
 #include "dfo.h"
 #include "vertex_buffer.hh"
 #include "texture.hh"
@@ -10,10 +10,10 @@
 #include <memory>
 #include <map>
 
-resource_store::container::~container() {};
+resource_pool::container::~container() {};
 
-resource_store::resource_store(context& ctx): ctx(&ctx) { }
-resource_store::~resource_store() { }
+resource_pool::resource_pool(context& ctx): ctx(&ctx) { }
+resource_pool::~resource_pool() { }
 
 class dfo_file_wrapper
 {
@@ -144,7 +144,7 @@ static GLint dfo_extension_to_gl(dfo_extension_type extension)
     }
 }
 
-void resource_store::add_dfo(
+void resource_pool::add_dfo(
     const std::string& dfo_path,
     const std::string& data_prefix,
     bool ignore_duplicates

@@ -4,7 +4,7 @@
 #include "vertex_buffer.hh"
 
 class texture;
-class shader_store;
+class shader_pool;
 
 namespace method
 {
@@ -19,7 +19,7 @@ namespace method
         kernel(
             render_target& target,
             texture& src,
-            shader_store& store,
+            shader_pool& store,
             const glm::mat3& k = SHARPEN
         );
 

@@ -1,5 +1,5 @@
-#ifndef RESOURCES_HH
-#define RESOURCES_HH
+#ifndef RESOURCE_POOL_HH
+#define RESOURCE_POOL_HH
 #include <unordered_map>
 #include <string>
 #include <typeinfo>
@@ -11,11 +11,11 @@
 class context;
 
 // TODO: Break this thing up, this 'everything-container' is kinda smelly
-// Maybe type-specific stores like object_store, shader_store and so on,
+// Maybe type-specific stores like object_store, shader_pool and so on,
 // add_dfo would become a separate function taking the necessary stores as
-// dependencies. resource_store could be a 'master' store, either through
+// dependencies. resource_pool could be a 'master' store, either through
 // deriving every other store type or containing them.
-class resource_store
+class resource_pool
 {
 private:
     struct container
@@ -76,7 +76,7 @@ public:
         template<typename U>
         friend class const_iterable;
 
-        friend class resource_store;
+        friend class resource_pool;
 
         explicit resource_iterator(I it);
         I it;
@@ -89,10 +89,10 @@ public:
     using const_iterator =
         resource_iterator<const T, inner_map::const_iterator>;
 
-    resource_store(context& ctx);
-    resource_store(const resource_store& other) = delete;
-    resource_store(resource_store& other) = delete;
-    ~resource_store();
+    resource_pool(context& ctx);
+    resource_pool(const resource_pool& other) = delete;
+    resource_pool(resource_pool& other) = delete;
+    ~resource_pool();
 
     // Takes ownership of the pointer.
     template<typename T>
@@ -139,7 +139,7 @@ public:
         iterator<T> begin();
         iterator<T> end();
     private:
-        friend class resource_store;
+        friend class resource_pool;
         iterable(inner_map& m);
 
         inner_map& m;
@@ -152,7 +152,7 @@ public:
         const_iterator<T> cbegin() const;
         const_iterator<T> cend() const;
     private:
-        friend class resource_store;
+        friend class resource_pool;
         const_iterable(const inner_map& m);
 
         const inner_map& m;
@@ -165,5 +165,5 @@ public:
     const_iterable<T> get_const_iterable() const;
 };
 
-#include "resources.tcc"
+#include "resource_pool.tcc"
 #endif

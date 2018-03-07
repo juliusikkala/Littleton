@@ -4,7 +4,7 @@
 #include "camera.hh"
 #include "texture.hh"
 #include "render_target.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "light.hh"
 #include "scene.hh"
 #include <glm/gtc/constants.hpp>
@@ -21,7 +21,7 @@ static struct sky_defaults
 
 method::sky::sky(
     render_target& target,
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene,
     texture* depth_buffer,
     directional_light* sun

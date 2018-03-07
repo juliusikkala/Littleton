@@ -1,12 +1,12 @@
 #include "tonemap.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 
 method::tonemap::tonemap(
     render_target& target,
     texture& src,
-    shader_store& store,
+    shader_pool& store,
     float exposure
 ): target_method(target), src(&src),
    tonemap_shader(

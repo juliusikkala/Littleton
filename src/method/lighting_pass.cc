@@ -3,14 +3,14 @@
 #include "camera.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "scene.hh"
 #include "shadow/shadow_map.hh"
 
 method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene
 ): target_method(target), buf(&buf),
    lighting_shader(store.get(shader::path{"lighting.vert", "lighting.frag"})),

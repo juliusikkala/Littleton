@@ -3,7 +3,7 @@
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
 
-class shader_store;
+class shader_pool;
 class texture;
 
 namespace method
@@ -14,7 +14,7 @@ namespace method
         gamma(
             render_target& target,
             texture& src,
-            shader_store& store,
+            shader_pool& store,
             float gamma = 2.2
         );
 

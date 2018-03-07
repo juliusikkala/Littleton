@@ -1,7 +1,7 @@
 #include "kernel.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 
 const glm::mat3 method::kernel::SHARPEN = glm::mat3(
      0, -1, 0,
@@ -30,7 +30,7 @@ const glm::mat3 method::kernel::BOX_BLUR = glm::mat3(
 method::kernel::kernel(
     render_target& target,
     texture& src,
-    shader_store& store,
+    shader_pool& store,
     const glm::mat3& k
 ): target_method(target), src(&src),
    kernel_shader(

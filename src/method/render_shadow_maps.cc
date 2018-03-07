@@ -1,10 +1,10 @@
 #include "render_shadow_maps.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "scene.hh"
 #include "shadow/shadow_map.hh"
 
 method::render_shadow_maps::render_shadow_maps(
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene
 ): store(&store), scene(scene)
 {}

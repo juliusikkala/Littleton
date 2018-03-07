@@ -1,11 +1,11 @@
 #include "draw_texture.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 
 method::draw_texture::draw_texture(
     render_target& target,
-    shader_store& store,
+    shader_pool& store,
     texture* tex
 ): target_method(target),
    quad(vertex_buffer::create_square(target.get_context())),

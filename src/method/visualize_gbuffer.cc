@@ -3,13 +3,13 @@
 #include "camera.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "scene.hh"
 
 method::visualize_gbuffer::visualize_gbuffer(
     render_target& target,
     gbuffer& buf,
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene
 ): target_method(target), buf(&buf),
    visualize_shader(store.get(

@@ -1,4 +1,4 @@
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "multishader.hh"
 #include "helpers.hh"
 #include <boost/filesystem.hpp>
@@ -18,24 +18,24 @@ static std::string find_file(
     }
     throw std::runtime_error("Unable to find shader source " + suffix);
 }
-shader_store::shader_store(
+shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path
 ): ctx(&ctx), shader_path(shader_path)
 {}
 
-shader_store::shader_store(
+shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
     const std::string& shader_binary_path
 ): ctx(&ctx), shader_path(shader_path), shader_binary_path(shader_binary_path)
 {}
 
-shader_store::~shader_store()
+shader_pool::~shader_pool()
 {
 }
 
-multishader* shader_store::add(const shader::path& path)
+multishader* shader_pool::add(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it != shaders.end())
@@ -66,12 +66,12 @@ multishader* shader_store::add(const shader::path& path)
     return s;
 }
 
-void shader_store::remove(const shader::path& path)
+void shader_pool::remove(const shader::path& path)
 {
     shaders.erase(path);
 }
 
-void shader_store::delete_binaries()
+void shader_pool::delete_binaries()
 {
     if(shader_binary_path)
     {
@@ -79,7 +79,7 @@ void shader_store::delete_binaries()
     }
 }
 
-void shader_store::unload_all()
+void shader_pool::unload_all()
 {
     for(auto& pair: shaders)
     {
@@ -87,7 +87,7 @@ void shader_store::unload_all()
     }
 }
 
-multishader* shader_store::get(const shader::path& path)
+multishader* shader_pool::get(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it == shaders.end())
@@ -95,24 +95,24 @@ multishader* shader_store::get(const shader::path& path)
     return it->second.get();
 }
 
-shader* shader_store::get(
+shader* shader_pool::get(
     const shader::path& path,
     const shader::definition_map& definitions
 ){
     return get(path)->get(definitions);
 }
 
-size_t shader_store::size() const { return shaders.size(); }
+size_t shader_pool::size() const { return shaders.size(); }
 
-shader_store::iterator shader_store::begin() { return shaders.begin(); }
-shader_store::iterator shader_store::end() { return shaders.end(); }
+shader_pool::iterator shader_pool::begin() { return shaders.begin(); }
+shader_pool::iterator shader_pool::end() { return shaders.end(); }
 
-shader_store::const_iterator shader_store::cbegin() const
+shader_pool::const_iterator shader_pool::cbegin() const
 {
     return shaders.cbegin(); 
 }
 
-shader_store::const_iterator shader_store::cend() const
+shader_pool::const_iterator shader_pool::cend() const
 {
     return shaders.cend();
 }

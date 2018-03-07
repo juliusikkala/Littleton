@@ -6,7 +6,7 @@
 #include "material.hh"
 #include "helpers.hh"
 #include "multishader.hh"
-#include "shader_store.hh"
+#include "shader_pool.hh"
 #include "scene.hh"
 #include "vertex_buffer.hh"
 #include "shadow/shadow_map.hh"
@@ -20,7 +20,7 @@ static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 
 method::forward_pass::forward_pass(
     render_target& target,
-    shader_store& store,
+    shader_pool& store,
     render_scene* scene
 ): target_method(target),
    forward_shader(store.get(shader::path{"generic.vert", "forward.frag"})),

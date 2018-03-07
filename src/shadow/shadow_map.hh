@@ -7,7 +7,7 @@
 
 class basic_shadow_map;
 class render_scene;
-class shader_store;
+class shader_pool;
 
 class shadow_map_impl: public glresource
 {
@@ -17,7 +17,7 @@ public:
 
     // Renders the shadow map itself.
     virtual void render(
-        shader_store& store,
+        shader_pool& store,
         const std::set<basic_shadow_map*>& shadow_maps,
         render_scene* scene
     ) = 0;
