@@ -147,10 +147,9 @@ pcf_shadow_map::pcf_shadow_map(
        GL_FLOAT,
        texture::params(false, GL_LINEAR, GL_CLAMP_TO_BORDER, 0, glm::vec4(1))
     ),
-    depth_buffer(ctx, size),
+    depth_buffer(ctx, size, {{GL_DEPTH_ATTACHMENT, {&depth}}}),
     radius(radius), samples(samples)
 {
-    depth_buffer.set_depth_target(&depth);
     set_bias();
 }
 

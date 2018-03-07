@@ -4,204 +4,174 @@
 #include <stdexcept>
 #include <string>
 
+framebuffer::target_specifier::target_specifier(
+    GLint format,
+    bool as_texture
+): format(format), as_texture(as_texture), use_texture(nullptr)
+{
+}
+
+framebuffer::target_specifier::target_specifier(texture* use_texture)
+: format(use_texture->get_internal_format()),
+  as_texture(true), use_texture(use_texture)
+{
+}
+
 framebuffer::framebuffer(
     context& ctx,
     glm::uvec2 size,
-    std::vector<texture*>&& targets,
-    GLenum depth_stencil_format,
-    unsigned render_buffer_samples
-): render_target(ctx, size), color_targets(std::move(targets)),
-   depth_stencil_target(nullptr)
+    const target_specification_map& target_specifications,
+    unsigned samples
+): render_target(ctx, size), target_specifications(target_specifications)
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    if(depth_stencil_format)
+    std::vector<GLenum> attachments;
+
+    for(auto& pair: target_specifications)
     {
-        glGenRenderbuffers(1, &depth_stencil_rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_rbo);
+        GLenum attachment = pair.first;
+        const target_specifier& spec = pair.second;
 
-        switch(depth_stencil_format)
+        if(spec.as_texture)
         {
-        case GL_DEPTH_COMPONENT16:
-        case GL_DEPTH_COMPONENT24:
-        case GL_DEPTH_COMPONENT32:
-        case GL_DEPTH_COMPONENT32F:
-            depth_stencil_attachment = GL_DEPTH_ATTACHMENT;
-            break;
-        default:
-            depth_stencil_attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-            break;
-        }
+            texture* tex;
 
-        if(render_buffer_samples)
-        {
-            glRenderbufferStorageMultisample(
-                GL_RENDERBUFFER,
-                render_buffer_samples,
-                depth_stencil_format,
-                size.x,
-                size.y
+            if(spec.use_texture)
+            {
+                tex = spec.use_texture;
+                if(tex->get_size() != size)
+                {
+                    throw std::runtime_error(
+                        "Texture size does not match framebuffer size!"
+                    );
+                }
+            }
+            else
+            {
+                tex = new texture(
+                    ctx,
+                    size,
+                    spec.format,
+                    GL_UNSIGNED_BYTE,
+                    // TODO: Introduce samplers so that irrelevant stuff is not
+                    // set here.
+                    texture::params(
+                        false,
+                        GL_LINEAR,
+                        GL_CLAMP_TO_EDGE,
+                        0,
+                        glm::vec4(0),
+                        samples
+                    )
+                );
+                owned_textures.emplace_back(tex);
+            }
+
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER,
+                attachment,
+                tex->get_target(),
+                tex->get_texture(),
+                0
             );
+
+            targets.emplace(attachment, tex);
         }
         else
         {
-            glRenderbufferStorage(
+            GLuint rbo;
+            glGenRenderbuffers(1, &rbo);
+            glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+            if(samples)
+            {
+                glRenderbufferStorageMultisample(
+                    GL_RENDERBUFFER,
+                    samples,
+                    spec.format,
+                    size.x,
+                    size.y
+                );
+            }
+            else
+            {
+                glRenderbufferStorage(
+                    GL_RENDERBUFFER,
+                    spec.format,
+                    size.x,
+                    size.y
+                );
+            }
+
+            if(glGetError() != GL_NO_ERROR)
+                throw std::runtime_error("Failed to create render buffer");
+
+            glFramebufferRenderbuffer(
+                GL_FRAMEBUFFER,
+                attachment,
                 GL_RENDERBUFFER,
-                depth_stencil_format,
-                size.x,
-                size.y
+                rbo
             );
+
+            targets.emplace(attachment, rbo);
         }
 
-        if(glGetError() != GL_NO_ERROR)
-            throw std::runtime_error("Failed to create render buffer");
+        if(
+            attachment != GL_DEPTH_ATTACHMENT &&
+            attachment != GL_DEPTH_STENCIL_ATTACHMENT
+        ) attachments.push_back(attachment);
     }
-    else depth_stencil_rbo = 0;
+
+    glDrawBuffers(attachments.size(), attachments.data());
+
+    if(glGetError() != GL_NO_ERROR)
+        throw std::runtime_error("Failed to create framebuffer");
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        throw std::runtime_error("Created framebuffer is incomplete!");
 
     reinstate_current_fbo();
-}
-
-framebuffer::framebuffer(
-    context& ctx,
-    glm::uvec2 size,
-    std::vector<texture*>&& targets,
-    texture* depth_stencil_target
-): render_target(ctx, size), color_targets(std::move(targets)),
-   depth_stencil_rbo(0)
-{
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    reinstate_current_fbo();
-
-    set_depth_target(depth_stencil_target);
 }
 
 framebuffer::framebuffer(framebuffer&& f)
-: render_target(f), color_targets(std::move(f.color_targets)),
-  depth_stencil_target(f.depth_stencil_target),
-  depth_stencil_rbo(f.depth_stencil_rbo),
-  depth_stencil_attachment(f.depth_stencil_attachment)
+: render_target(f), target_specifications(std::move(f.target_specifications)),
+  owned_textures(std::move(f.owned_textures)), targets(std::move(f.targets))
 {
     f.fbo = 0;
-    f.depth_stencil_rbo = 0;
+    f.targets.clear();
 }
 
 framebuffer::~framebuffer()
 {
-    if(depth_stencil_rbo != 0) glDeleteRenderbuffers(1, &depth_stencil_rbo);
+    for(const auto& pair: targets)
+    {
+        if(auto rbo = std::get_if<GLuint>(&pair.second))
+        {
+            if(*rbo != 0) glDeleteRenderbuffers(1, rbo);
+        }
+    }
+
     if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
 
-void framebuffer::set_target(texture* target, unsigned index)
+texture* framebuffer::get_texture_target(GLenum attachment) const
 {
-    unsigned max_attachments = get_context()[GL_MAX_COLOR_ATTACHMENTS];
-    if(index >= max_attachments)
+    auto it = targets.find(attachment);
+    if(it == targets.end())
+    {
         throw std::runtime_error(
-            "Unable to set framebuffer target at index "
-            + std::to_string(index) + ", maximum is "
-            + std::to_string(max_attachments-1)
+            "Framebuffer does not contain requested attachment!"
         );
-
-    if(target->get_size() != size)
-        throw std::runtime_error(
-            "Can't bind texture of size "
-            + std::to_string(target->get_size().x) + ", "
-            + std::to_string(target->get_size().y) + " to framebuffer of size "
-            + std::to_string(size.x) + ", "
-            + std::to_string(size.y) + "."
-        );
-
-    if(color_targets.size() <= index)
-    {
-        color_targets.resize(index + 1, nullptr);
     }
-    color_targets[index] = target;
+
+    if(auto tex = std::get_if<texture*>(&it->second))
+    {
+        return *tex;
+    }
+    throw std::runtime_error(
+        "Requested attachment is a render buffer object, not a texture"
+    );
 }
 
-void framebuffer::remove_target(unsigned index)
-{
-    if(color_targets.size() > index)
-    {
-        color_targets[index] = nullptr;
-        while(color_targets.size() && color_targets.back() == nullptr)
-            color_targets.pop_back();
-    }
-}
-
-void framebuffer::set_depth_target(texture* target)
-{
-    if(target->get_size() != size)
-        throw std::runtime_error(
-            "Can't bind texture of size "
-            + std::to_string(target->get_size().x) + ", "
-            + std::to_string(target->get_size().y) + " to framebuffer of size "
-            + std::to_string(size.x) + ", "
-            + std::to_string(size.y) + "."
-        );
-
-    depth_stencil_target = target;
-    depth_stencil_attachment = 
-        target->get_external_format() == GL_DEPTH_STENCIL ?
-            GL_DEPTH_ATTACHMENT : GL_DEPTH_STENCIL_ATTACHMENT;
-}
-
-void framebuffer::remove_depth_target()
-{
-    depth_stencil_target = nullptr;
-}
-
-void framebuffer::bind(GLenum target)
-{
-    render_target::bind(target);
-    std::vector<unsigned> attachments;
-    for(unsigned i = 0; i < color_targets.size(); ++i)
-    {
-        texture* t = color_targets[i];
-        glFramebufferTexture2D(
-            target,
-            GL_COLOR_ATTACHMENT0+i,
-            t->get_target(),
-            t->get_texture(),
-            0
-        );
-        attachments.push_back(GL_COLOR_ATTACHMENT0+i);
-    }
-
-    if(depth_stencil_target)
-    {
-        glFramebufferTexture2D(
-            target,
-            depth_stencil_attachment,
-            depth_stencil_target->get_target(),
-            depth_stencil_target->get_texture(),
-            0
-        );
-    }
-    else if(depth_stencil_rbo)
-    {
-        glFramebufferRenderbuffer(
-            target,
-            depth_stencil_attachment,
-            GL_RENDERBUFFER,
-            depth_stencil_rbo
-        );
-    }
-
-    if(target == GL_DRAW_FRAMEBUFFER || target == GL_FRAMEBUFFER)
-    {
-        if(attachments.size() > 0)
-            glDrawBuffers(attachments.size(), attachments.data());
-        else glDrawBuffer(GL_NONE);
-    }
-
-    if(target == GL_READ_FRAMEBUFFER || target == GL_FRAMEBUFFER)
-    {
-        if(attachments.size() > 0)
-            glReadBuffer(GL_COLOR_ATTACHMENT0);
-    }
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        throw std::runtime_error("Attempt to bind an incomplete framebuffer!");
-}

@@ -2,41 +2,47 @@
 #define FRAMEBUFFER_HH
 #include "render_target.hh"
 #include <vector>
+#include <map>
+#include <memory>
+#include <variant>
 
 class texture;
 class framebuffer: public render_target
 {
 public:
-    framebuffer(
-        context& ctx,
-        glm::uvec2 size,
-        std::vector<texture*>&& targets = {},
-        GLenum depth_stencil_format = 0,
-        unsigned render_buffer_samples = 0
-    );
+    struct target_specifier
+    {
+        target_specifier(
+            GLint format = GL_RGBA,
+            bool as_texture = false
+        );
+
+        target_specifier(texture* use_texture);
+
+        GLint format;
+        bool as_texture;
+        texture* use_texture;
+    };
+
+    using target_specification_map = std::map<GLenum, target_specifier>;
 
     framebuffer(
         context& ctx,
         glm::uvec2 size,
-        std::vector<texture*>&& targets,
-        texture* depth_stencil_target
+        const target_specification_map& target_specifications = {},
+        unsigned samples = 0
     );
+
     framebuffer(framebuffer&& f);
     ~framebuffer();
 
-    void set_target(texture* target, unsigned index = 0);
-    void remove_target(unsigned index = 0);
-
-    void set_depth_target(texture* target);
-    void remove_depth_target();
-
-    void bind(GLenum target = GL_FRAMEBUFFER) override;
+    texture* get_texture_target(GLenum attachment) const;
 
 private:
-    std::vector<texture*> color_targets;
-    texture* depth_stencil_target;
-    GLuint depth_stencil_rbo;
-    GLenum depth_stencil_attachment;
+    target_specification_map target_specifications;
+    std::vector<std::unique_ptr<texture>> owned_textures;
+
+    std::map<GLenum, std::variant<texture*, GLuint>> targets;
 };
 
 #endif

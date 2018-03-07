@@ -120,7 +120,10 @@ struct forward_data
         GL_UNSIGNED_INT_24_8,
         texture::DEPTH_PARAMS
       ),
-      screen(w, resolution, {&color_buffer}, &depth_buffer),
+      screen(w, resolution, {
+        {GL_COLOR_ATTACHMENT0, {&color_buffer}},
+        {GL_DEPTH_ATTACHMENT, {&depth_buffer}}
+      }),
       postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
       sm(shaders, main_scene),
       clear_screen(screen),

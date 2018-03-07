@@ -323,7 +323,7 @@ msm_shadow_map::msm_shadow_map(
     unsigned samples,
     unsigned radius
 ):  moments(ctx, size, GL_RGBA16, GL_FLOAT, moment_params),
-    moments_buffer(ctx, size, {&moments}),
+    moments_buffer(ctx, size, {{GL_COLOR_ATTACHMENT0, {&moments}}}),
     samples(samples),
     radius(radius)
 {
