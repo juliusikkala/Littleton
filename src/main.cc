@@ -5,6 +5,7 @@
 #include "object.hh"
 #include "camera.hh"
 #include "scene.hh"
+#include "scene_graph.hh"
 #include "pipeline.hh"
 #include "framebuffer.hh"
 #include "method/clear.hh"
@@ -177,8 +178,7 @@ class game
 public:
     game()
         : win({ "dflowers", {1280, 720}, true, true, false }),
-        resources(win, { "data/shaders/" }),
-        main_scene(&cam)
+        resources(win, { "data/shaders/" })
     {
         win.set_framerate_limit(200);
         win.grab_mouse();
@@ -192,8 +192,8 @@ public:
 
     void load()
     {
-        load_dfo(resources, "data/test_scene.dfo", "data");
-        load_dfo(resources, "data/earth.dfo", "data");
+        load_dfo(resources, graph, "data/test_scene.dfo", "data");
+        load_dfo(resources, graph, "data/earth.dfo", "data");
 
         sun_shadow.reset(
             new directional_shadow_map_msm(
@@ -225,25 +225,18 @@ public:
 
     void setup_scene()
     {
-        object* suzanne = resources.get<object>("Suzanne");
-        object* earth = resources.get<object>("Earth");
+        object* suzanne = graph.get_object("Suzanne");
+        object* earth = graph.get_object("Earth");
         earth->set_position(glm::vec3(0, 2, -6));
         earth->scale(2);
 
         cam.translate(glm::vec3(0.0,2.0,1.0));
         cam.lookat(suzanne);
+        main_scene.set_camera(&cam);
 
         sun_shadow->set_parent(suzanne);
 
-        // Add all loaded objects to the scene
-        for(
-            auto it = resources.begin<object>();
-            it != resources.end<object>();
-            ++it
-        ){
-            object* o = *it;
-            if(o->get_model()) main_scene.add_object(o);
-        }
+        graph.add_to_scene(&main_scene);
 
         l1.set_color(glm::vec3(1,0.5,0.5) * 3.0f);
         l2.set_color(glm::vec3(0.5,0.5,1) * 3.0f);
@@ -337,8 +330,8 @@ public:
         cam.perspective(fov, win.get_aspect(), 0.1, 20);
         cam.set_orientation(pitch, yaw);
 
-        object* suzanne = resources.get<object>("Suzanne");
-        object* earth = resources.get<object>("Earth");
+        object* suzanne = graph.get_object("Suzanne");
+        object* earth = graph.get_object("Earth");
 
         if(!paused)
         {
@@ -406,6 +399,7 @@ public:
 private:
     window win;
     resource_pool resources;
+    scene_graph graph;
     camera cam;
     render_scene main_scene;
 

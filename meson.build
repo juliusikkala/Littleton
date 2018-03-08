@@ -19,6 +19,7 @@ src = [
   'src/object.cc',
   'src/pipeline.cc',
   'src/scene.cc',
+  'src/scene_graph.cc',
   'src/camera.cc',
   'src/transformable.cc',
   'src/helpers.cc',

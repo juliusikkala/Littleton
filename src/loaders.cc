@@ -1,5 +1,6 @@
 #include "loaders.hh"
 #include "resource_pool.hh"
+#include "scene_graph.hh"
 #include "dfo.h"
 #include "vertex_buffer.hh"
 #include "texture.hh"
@@ -142,6 +143,7 @@ static GLint dfo_extension_to_gl(dfo_extension_type extension)
 
 void load_dfo(
     resource_pool& pool,
+    scene_graph& graph,
     const std::string& dfo_path,
     const std::string& data_prefix,
     bool ignore_duplicates
@@ -157,7 +159,7 @@ void load_dfo(
     for(uint32_t i = 0; i < file->buffer_count; ++i)
     {
         dfo_buffer* buf = file->buffer_table[i];
-        vertex_buffers[buf] = pool.add<vertex_buffer>(
+        vertex_buffers[buf] = pool.add_vertex_buffer(
             dfo_path + "/buffer_" + std::to_string(i),
             new vertex_buffer_dfo(ctx, res, buf)
         );
@@ -169,13 +171,13 @@ void load_dfo(
     for(uint32_t i = 0; i < file->texture_count; ++i)
     {
         dfo_texture* tex = file->texture_table[i];
-        if(ignore_duplicates && pool.contains<texture>(tex->name)) continue;
+        if(ignore_duplicates && pool.contains_texture(tex->name)) continue;
 
         GLint interpolation = dfo_interpolation_to_gl(tex->interpolation);
         GLint extension = dfo_extension_to_gl(tex->extension);
 
         material::sampler_tex sampler_texture(
-            pool.add<sampler>(
+            pool.add_sampler(
                 std::string(tex->name) + "_sampler",
                 new sampler(
                     ctx,
@@ -206,7 +208,7 @@ void load_dfo(
     for(uint32_t i = 0; i < file->material_count; ++i)
     {
         dfo_material* mat = file->material_table[i];
-        if(ignore_duplicates && pool.contains<material>(mat->name)) continue;
+        if(ignore_duplicates && pool.contains_material(mat->name)) continue;
 
         material* m = new material;
 
@@ -245,7 +247,7 @@ void load_dfo(
         else if(mat->subsurface_depth.tex)
             m->subsurface_depth = textures.at(mat->subsurface_depth.tex);
 
-        materials[mat] = pool.add<material>(mat->name, m);
+        materials[mat] = pool.add_material(mat->name, m);
     }
 
     // Add all models.
@@ -265,7 +267,7 @@ void load_dfo(
             );
         }
 
-        models[mod] = pool.add<model>(mod->name, m);
+        models[mod] = pool.add_model(mod->name, m);
     }
 
     // Add objects.
@@ -274,11 +276,11 @@ void load_dfo(
     {
         dfo_object* obj = file->object_table[i];
 
-        object* o = new object;
-        if(obj->parent) o->set_parent(objects.at(obj->parent));
-        if(obj->model) o->set_model(models.at(obj->model));
-        o->set_transform(glm::make_mat4(obj->transform));
+        object o;
+        if(obj->parent) o.set_parent(objects.at(obj->parent));
+        if(obj->model) o.set_model(models.at(obj->model));
+        o.set_transform(glm::make_mat4(obj->transform));
 
-        objects[obj] = pool.add<object>(obj->name, o);
+        objects[obj] = graph.add_object(obj->name, std::move(o));
     }
 }

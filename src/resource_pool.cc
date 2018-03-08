@@ -1,17 +1,12 @@
 #include "resource_pool.hh"
 
-legacy_resource_pool::container::~container() {};
-
-legacy_resource_pool::legacy_resource_pool(context& ctx): glresource(ctx) { }
-legacy_resource_pool::~legacy_resource_pool() { }
-
 resource_pool::resource_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
     const std::optional<std::string>& shader_binary_path
-):  glresource(ctx), legacy_resource_pool(ctx),
-    shader_pool(ctx, shader_path, shader_binary_path),
-    texture_pool(ctx)
+):  glresource(ctx), shader_pool(ctx, shader_path, shader_binary_path),
+    texture_pool(ctx), vertex_buffer_pool(ctx), sampler_pool(ctx),
+    material_pool(ctx), model_pool(ctx)
 {
 }
 resource_pool::~resource_pool() {}
@@ -38,34 +33,28 @@ shader* resource_pool::get_shader(
     return shader_pool::get(path, definitions);
 }
 
-texture* resource_pool::add_texture(const std::string& name, texture* t)
-{
-    return texture_pool::add(name, t);
-}
+#define generic_resource_alias_impl(type, base) \
+type* resource_pool::add_ ## type (const std::string& name, type* t) \
+{ return base ::add(name, t); } \
+type* resource_pool::add_ ## type (const std::string& name, type&& t) \
+{ return base ::add(name, std::move(t)); } \
+void resource_pool::remove_ ## type(const std::string& name) \
+{ base ::remove(name); } \
+const type* resource_pool::get_ ## type(const std::string& name) \
+{ return base ::get(name); } \
+bool resource_pool::contains_ ## type(const std::string& name) \
+{ return base ::contains(name); }
 
-texture* resource_pool::add_texture(const std::string& name, texture&& t)
-{
-    return texture_pool::add(name, std::move(t));
-}
-
-void resource_pool::remove_texture(const std::string& name)
-{
-    texture_pool::remove(name);
-}
-
-const texture* resource_pool::get_texture(const std::string& name)
-{
-    return texture_pool::get(name);
-}
-
-bool resource_pool::contains_texture(const std::string& name)
-{
-    return texture_pool::contains(name);
-}
+generic_resource_alias_impl(texture, texture_pool);
+generic_resource_alias_impl(vertex_buffer, vertex_buffer_pool);
+generic_resource_alias_impl(sampler, sampler_pool);
+generic_resource_alias_impl(material, material_pool);
+generic_resource_alias_impl(model, model_pool);
 
 void resource_pool::unload_all()
 {
     shader_pool::unload_all();
     texture_pool::unload_all();
+    vertex_buffer_pool::unload_all();
 }
 

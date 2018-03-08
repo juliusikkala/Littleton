@@ -12,7 +12,7 @@ class spotlight;
 class camera_scene
 {
 public:
-    camera_scene(camera* cam);
+    camera_scene(camera* cam = nullptr);
     ~camera_scene();
 
     void set_camera(camera* cam);
@@ -91,7 +91,7 @@ class render_scene
   public shadow_scene
 {
 public:
-    render_scene(camera* cam);
+    render_scene();
 };
 
 #endif

@@ -170,5 +170,4 @@ const std::set<directional_light*>& light_scene::get_directional_lights() const
     return directional_lights;
 }
 
-render_scene::render_scene(camera* cam)
-: camera_scene(cam) {}
+render_scene::render_scene() {}
