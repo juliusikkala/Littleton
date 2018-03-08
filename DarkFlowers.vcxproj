@@ -138,12 +138,14 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
   <ItemGroup>
     <ClCompile Include="lib\stb_image.c" />
     <ClCompile Include="src\camera.cc" />
+    <ClCompile Include="src\common_resources.cc" />
     <ClCompile Include="src\context.cc" />
     <ClCompile Include="src\doublebuffer.cc" />
     <ClCompile Include="src\framebuffer.cc" />
     <ClCompile Include="src\gbuffer.cc" />
     <ClCompile Include="src\helpers.cc" />
     <ClCompile Include="src\light.cc" />
+    <ClCompile Include="src\loaders.cc" />
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\material.cc" />
     <ClCompile Include="src\method\blit_framebuffer.cc" />
@@ -165,10 +167,12 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClCompile Include="src\pipeline.cc" />
     <ClCompile Include="src\render_target.cc" />
     <ClCompile Include="src\resource.cc" />
-    <ClCompile Include="src\resources.cc" />
+    <ClCompile Include="src\resource_pool.cc" />
+    <ClCompile Include="src\sampler.cc" />
     <ClCompile Include="src\scene.cc" />
+    <ClCompile Include="src\scene_graph.cc" />
     <ClCompile Include="src\shader.cc" />
-    <ClCompile Include="src\shader_store.cc" />
+    <ClCompile Include="src\shader_pool.cc" />
     <ClCompile Include="src\shadow\msm.cc" />
     <ClCompile Include="src\shadow\pcf.cc" />
     <ClCompile Include="src\shadow\shadow_map.cc" />
@@ -182,6 +186,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
   <ItemGroup>
     <ClInclude Include="lib\stb_image.h" />
     <ClInclude Include="src\camera.hh" />
+    <ClInclude Include="src\common_resources.hh" />
     <ClInclude Include="src\context.hh" />
     <ClInclude Include="src\doublebuffer.hh" />
     <ClInclude Include="src\framebuffer.hh" />
@@ -189,6 +194,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClInclude Include="src\glheaders.hh" />
     <ClInclude Include="src\helpers.hh" />
     <ClInclude Include="src\light.hh" />
+    <ClInclude Include="src\loaders.hh" />
     <ClInclude Include="src\material.hh" />
     <ClInclude Include="src\method\blit_framebuffer.hh" />
     <ClInclude Include="src\method\clear.hh" />
@@ -210,8 +216,12 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
     <ClInclude Include="src\render_target.hh" />
     <ClInclude Include="src\resource.hh" />
     <ClInclude Include="src\resources.hh" />
+    <ClInclude Include="src\resource_pool.hh" />
+    <ClInclude Include="src\sampler.hh" />
     <ClInclude Include="src\scene.hh" />
+    <ClInclude Include="src\scene_graph.hh" />
     <ClInclude Include="src\shader.hh" />
+    <ClInclude Include="src\shader_pool.hh" />
     <ClInclude Include="src\shader_store.hh" />
     <ClInclude Include="src\shadow\msm.hh" />
     <ClInclude Include="src\shadow\pcf.hh" />
@@ -226,6 +236,7 @@ xcopy /y /d "lib\external\glew-2.1.0\bin\Release\x64\glew32.dll" "$(OutDir)"</Co
   <ItemGroup>
     <None Include="src\helpers.tcc" />
     <None Include="src\resources.tcc" />
+    <None Include="src\resource_pool.tcc" />
     <None Include="src\shader.tcc" />
     <None Include="src\uniform.tcc" />
   </ItemGroup>
