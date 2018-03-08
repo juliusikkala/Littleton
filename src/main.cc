@@ -1,5 +1,6 @@
 #include "window.hh"
 #include "resource_pool.hh"
+#include "loaders.hh"
 #include "texture.hh"
 #include "object.hh"
 #include "camera.hh"
@@ -192,8 +193,8 @@ public:
 
     void load()
     {
-        resources.add_dfo("data/test_scene.dfo", "data");
-        resources.add_dfo("data/earth.dfo", "data");
+        load_dfo(resources, "data/test_scene.dfo", "data");
+        load_dfo(resources, "data/earth.dfo", "data");
 
         sun_shadow.reset(
             new directional_shadow_map_msm(

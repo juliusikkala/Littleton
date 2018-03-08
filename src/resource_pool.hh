@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <iterator>
 #include <memory>
+#include "resource.hh"
 
 class context;
 
@@ -15,7 +16,7 @@ class context;
 // add_dfo would become a separate function taking the necessary stores as
 // dependencies. resource_pool could be a 'master' store, either through
 // deriving every other store type or containing them.
-class resource_pool
+class resource_pool: public glresource
 {
 private:
     struct container
@@ -39,7 +40,6 @@ private:
     >;
     using internal_map = std::unordered_map<std::type_index, inner_map>;
     mutable internal_map resources;
-    context* ctx;
 
 public:
 
@@ -103,12 +103,6 @@ public:
 
     template<typename T>
     bool contains(const std::string& name) const;
-
-    void add_dfo(
-        const std::string& path,
-        const std::string& data_prefix = "",
-        bool ignore_duplicates = true
-    );
 
     // Unsafe, deletes the pointer to the resource.
     template<typename T>

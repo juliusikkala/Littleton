@@ -31,6 +31,7 @@ src = [
   'src/sampler.cc',
   'src/shader_pool.cc',
   'src/doublebuffer.cc',
+  'src/loaders.cc',
   'src/shadow/shadow_map.cc',
   'src/shadow/shadow_scene.cc',
   'src/shadow/pcf.cc',
