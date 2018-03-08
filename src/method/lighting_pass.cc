@@ -13,7 +13,7 @@ method::lighting_pass::lighting_pass(
     shader_pool& pool,
     render_scene* scene
 ):  target_method(target), buf(&buf),
-    lighting_shader(pool.get_shader(
+    lighting_shader(pool.get(
         shader::path{"lighting.vert", "lighting.frag"})
     ),
     scene(scene),

@@ -21,7 +21,7 @@ method::draw_texture::draw_texture(
     shader::definition_map def;
     quad.update_definitions(def);
 
-    draw_shader = pool.get_shader(
+    draw_shader = pool.get(
         shader::path{"generic.vert", "draw_texture.frag"},
         def
     );

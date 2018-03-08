@@ -31,7 +31,7 @@ shader_pool::~shader_pool()
 {
 }
 
-multishader* shader_pool::add_shader(const shader::path& path)
+multishader* shader_pool::add(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it != shaders.end())
@@ -62,7 +62,7 @@ multishader* shader_pool::add_shader(const shader::path& path)
     return s;
 }
 
-void shader_pool::remove_shader(const shader::path& path)
+void shader_pool::remove(const shader::path& path)
 {
     shaders.erase(path);
 }
@@ -83,19 +83,19 @@ void shader_pool::unload_all()
     }
 }
 
-multishader* shader_pool::get_shader(const shader::path& path)
+multishader* shader_pool::get(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it == shaders.end())
-        return add_shader(path);
+        return add(path);
     return it->second.get();
 }
 
-shader* shader_pool::get_shader(
+shader* shader_pool::get(
     const shader::path& path,
     const shader::definition_map& definitions
 ){
-    return get_shader(path)->get(definitions);
+    return get(path)->get(definitions);
 }
 
 shader_pool::iterator shader_pool::begin() { return shaders.begin(); }

@@ -16,7 +16,7 @@ method::geometry_pass::geometry_pass(
     shader_pool& pool,
     render_scene* scene
 ):  target_method(buf),
-    geometry_shader(pool.get_shader(
+    geometry_shader(pool.get(
         shader::path{"generic.vert", "geometry.frag"})
     ),
     scene(scene)

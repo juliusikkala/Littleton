@@ -32,11 +32,11 @@ public:
     shader_pool(shader_pool& other) = delete;
     ~shader_pool();
 
-    multishader* add_shader(const shader::path& path);
+    multishader* add(const shader::path& path);
 
     // Unsafe, deletes the pointer to the resource. Make sure there are no
     // references to it left. You are probably looking for shader::unload().
-    void remove_shader(const shader::path& path);
+    void remove(const shader::path& path);
 
     // This deletes all binaries in shader_binary_path
     void delete_binaries();
@@ -44,8 +44,8 @@ public:
     // Unloads all shaders in this pool.
     void unload_all();
 
-    multishader* get_shader(const shader::path& path);
-    shader* get_shader(
+    multishader* get(const shader::path& path);
+    shader* get(
         const shader::path& path,
         const shader::definition_map& definitions
     );

@@ -8,7 +8,7 @@
 #include <iterator>
 #include "resource.hh"
 #include "shader_pool.hh"
-#include "texture_pool.hh"
+#include "texture.hh"
 
 class context;
 
@@ -160,6 +160,46 @@ public:
     const_iterable<T> get_const_iterable() const;
 };
 
+template<typename T>
+class generic_resource_pool: public virtual glresource
+{
+private:
+    using map_type = std::unordered_map<
+        std::string /* name */,
+        std::unique_ptr<T>
+    >;
+
+public:
+    using iterator = typename map_type::iterator;
+    using const_iterator = typename map_type::const_iterator;
+
+    generic_resource_pool(context& ctx);
+    generic_resource_pool(const generic_resource_pool& other) = delete;
+    generic_resource_pool(generic_resource_pool& other) = delete;
+    ~generic_resource_pool();
+
+    T* add(const std::string& name, T* t);
+    T* add(const std::string& name, T&& t);
+    // Unsafe, deletes the pointer to the resource. Make sure there are no
+    // references to it left. You are probably looking for resource::unload().
+    void remove(const std::string& name);
+    const T* get(const std::string& name);
+
+    bool contains(const std::string& name);
+
+    // Unloads all textures in this pool.
+    void unload_all();
+
+    const_iterator cbegin() const;
+    const_iterator cend() const;
+
+private:
+    map_type resources;
+};
+
+using texture_pool = generic_resource_pool<texture>;
+
+
 class resource_pool
 : public virtual glresource, public legacy_resource_pool, public shader_pool,
   public texture_pool
@@ -174,13 +214,28 @@ public:
     resource_pool(resource_pool& other) = delete;
     ~resource_pool();
 
+    multishader* add_shader(const shader::path& path);
+    void remove_shader(const shader::path& path);
+    multishader* get_shader(const shader::path& path);
+    shader* get_shader(
+        const shader::path& path,
+        const shader::definition_map& definitions
+    );
+
+    texture* add_texture(const std::string& name, texture* t);
+    texture* add_texture(const std::string& name, texture&& t);
+    void remove_texture(const std::string& name);
+    const texture* get_texture(const std::string& name);
+    bool contains_texture(const std::string& name);
+
     void unload_all();
 
+    using legacy_resource_pool::add;
+    using legacy_resource_pool::get;
+    using legacy_resource_pool::remove;
+    using legacy_resource_pool::contains;
     using legacy_resource_pool::begin;
-    using shader_pool::begin;
-
     using legacy_resource_pool::end;
-    using shader_pool::end;
 };
 
 #include "resource_pool.tcc"

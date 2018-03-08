@@ -18,9 +18,6 @@ namespace method
         );
         ~forward_pass();
 
-        void set_shader(multishader* s);
-        multishader* get_shader() const;
-
         void set_scene(render_scene* s);
         render_scene* get_scene() const;
 

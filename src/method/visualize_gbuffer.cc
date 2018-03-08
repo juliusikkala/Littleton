@@ -12,7 +12,7 @@ method::visualize_gbuffer::visualize_gbuffer(
     shader_pool& pool,
     render_scene* scene
 ):  target_method(target), buf(&buf),
-    visualize_shader(pool.get_shader(
+    visualize_shader(pool.get(
         shader::path{"fullscreen.vert", "visualize.frag"}
     )),
     scene(scene),

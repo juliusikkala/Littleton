@@ -34,7 +34,7 @@ method::kernel::kernel(
     const glm::mat3& k
 ):  target_method(target), src(&src),
     kernel_shader(
-        pool.get_shader(shader::path{"fullscreen.vert", "kernel.frag"}, {})
+        pool.get(shader::path{"fullscreen.vert", "kernel.frag"}, {})
     ),
     fullscreen_quad(vertex_buffer::create_square(target.get_context())),
     k(k) 

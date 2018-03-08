@@ -9,7 +9,7 @@ method::gamma::gamma(
     shader_pool& pool,
     float g
 ):  target_method(target), src(&src), g(g),
-    gamma_shader(pool.get_shader(
+    gamma_shader(pool.get(
         shader::path{"fullscreen.vert", "gamma.frag"}, {})
     ),
     fullscreen_quad(vertex_buffer::create_square(target.get_context()))

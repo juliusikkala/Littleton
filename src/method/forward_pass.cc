@@ -23,7 +23,7 @@ method::forward_pass::forward_pass(
     shader_pool& pool,
     render_scene* scene
 ):  target_method(target),
-    forward_shader(pool.get_shader(
+    forward_shader(pool.get(
         shader::path{"generic.vert", "forward.frag"})
     ),
     scene(scene)
@@ -301,16 +301,6 @@ void method::forward_pass::execute()
         // The rest of the passes should be added on top of the current one.
         glEnable(GL_BLEND);
     }
-}
-
-void method::forward_pass::set_shader(multishader* s)
-{
-    forward_shader = s;
-}
-
-multishader* method::forward_pass::get_shader() const
-{
-    return forward_shader;
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }

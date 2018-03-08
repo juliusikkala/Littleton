@@ -78,7 +78,7 @@ void pcf_impl::render(
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
-    shader* depth_shader = pool.get_shader(
+    shader* depth_shader = pool.get(
         shader::path{"generic.vert", "empty.frag"},
         {{"VERTEX_POSITION", "0"}}
     );
