@@ -199,10 +199,10 @@ void method::lighting_pass::execute()
     };
     shader::definition_map spotlight_definitions{{"SPOTLIGHT", ""}};
 
-    fb_sampler.bind(buf->get_depth_stencil().bind(0));
-    fb_sampler.bind(buf->get_color_emission().bind(1));
-    fb_sampler.bind(buf->get_normal().bind(2));
-    fb_sampler.bind(buf->get_material().bind(3));
+    fb_sampler.bind(buf->get_depth_stencil(), 0);
+    fb_sampler.bind(buf->get_color_emission(), 1);
+    fb_sampler.bind(buf->get_normal(), 2);
+    fb_sampler.bind(buf->get_material(), 3);
 
     float near, far, fov, aspect;
     decompose_perspective(p, near, far, fov, aspect);

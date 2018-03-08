@@ -237,7 +237,7 @@ void msm_impl::render(
         glViewport(0, 0, target_size.x, target_size.y);
         vertical_blur_shader->set(
             "tex",
-            moment_sampler.bind(msm->moments.bind(0))
+            moment_sampler.bind(msm->moments, 0)
         );
         vertical_blur_shader->set("samples", (int)(2 * radius + 1));
         quad.draw();
@@ -245,7 +245,7 @@ void msm_impl::render(
         msm->moments_buffer.bind();
         horizontal_blur_shader->set(
             "tex",
-            moment_sampler.bind(pp_rt->get_color().bind(0))
+            moment_sampler.bind(pp_rt->get_color(), 0)
         );
         horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
         quad.draw();
@@ -275,7 +275,7 @@ void msm_impl::set_shadow_map_uniforms(
 
     s->set(
         prefix + "map",
-        moment_sampler.bind(msm->moments.bind(texture_index++))
+        moment_sampler.bind(msm->moments, texture_index++)
     );
     s->set(prefix + "mvp", lvp * pos_to_world);
 }

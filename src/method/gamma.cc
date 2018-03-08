@@ -42,7 +42,7 @@ void method::gamma::execute()
 
     gamma_shader->bind();
     gamma_shader->set("gamma", 1.0f/g);
-    gamma_shader->set("in_color", fb_sampler.bind(src->bind()));
+    gamma_shader->set("in_color", fb_sampler.bind(*src));
 
     quad.draw();
 }

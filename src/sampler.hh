@@ -2,6 +2,7 @@
 #define SAMPLER_HH
 #include "glheaders.hh"
 #include "resource.hh"
+#include "texture.hh"
 #include <glm/glm.hpp>
 
 class sampler: public glresource
@@ -28,7 +29,7 @@ public:
     void set_comparison_mode(GLint comparison_mode);
 
     // Returns the index
-    GLint bind(unsigned index = 0) const;
+    GLint bind(const texture& tex, unsigned index = 0) const;
 
 private:
     GLuint sampler_object;

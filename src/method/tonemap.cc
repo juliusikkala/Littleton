@@ -42,7 +42,7 @@ void method::tonemap::execute()
 
     tonemap_shader->bind();
     tonemap_shader->set<float>("exposure", exposure);
-    tonemap_shader->set("in_color", fb_sampler.bind(src->bind()));
+    tonemap_shader->set("in_color", fb_sampler.bind(*src));
 
     quad.draw();
 }

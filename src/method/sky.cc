@@ -224,7 +224,7 @@ void method::sky::execute()
         "atmosphere_radius2",
         pow(scale*(ground_radius + atmosphere_height), 2)
     );
-    sky_shader->set("in_depth", depth_sampler.bind(depth_buffer->bind()));
+    sky_shader->set("in_depth", depth_sampler.bind(*depth_buffer));
     sky_shader->set("sun_direction", -sun_direction);
     sky_shader->set("sun_color", intensity * sun_color);
     sky_shader->set("ip", glm::inverse(p));

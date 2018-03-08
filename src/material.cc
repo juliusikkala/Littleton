@@ -80,7 +80,7 @@ void material::apply(shader* s)
         sampler_tex tex = std::get<0>(metallic);
         if(tex.first && tex.second)
         {
-            s->set("material.metallic", tex.first->bind(tex.second->bind(0)));
+            s->set("material.metallic", tex.first->bind(*tex.second, 0));
         }
     } else s->set("material.metallic", std::get<1>(metallic));
 
@@ -89,7 +89,7 @@ void material::apply(shader* s)
         sampler_tex tex = std::get<0>(color);
         if(tex.first && tex.second)
         {
-            s->set("material.color", tex.first->bind(tex.second->bind(1)));
+            s->set("material.color", tex.first->bind(*tex.second, 1));
         }
     } else s->set("material.color", std::get<1>(color));
 
@@ -98,13 +98,13 @@ void material::apply(shader* s)
         sampler_tex tex = std::get<0>(roughness);
         if(tex.first && tex.second)
         {
-            s->set("material.roughness", tex.first->bind(tex.second->bind(2)));
+            s->set("material.roughness", tex.first->bind(*tex.second, 2));
         }
     } else s->set("material.roughness", std::get<1>(roughness));
 
     if(normal.first && normal.second)
     {
-        s->set("material.normal", normal.first->bind(normal.second->bind(3)));
+        s->set("material.normal", normal.first->bind(*normal.second, 3));
     }
 
     s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
@@ -114,7 +114,7 @@ void material::apply(shader* s)
         sampler_tex tex = std::get<0>(emission);
         if(tex.first && tex.second)
         {
-            s->set("material.emission", tex.first->bind(tex.second->bind(4)));
+            s->set("material.emission", tex.first->bind(*tex.second, 4));
         }
     } else s->set("material.emission", std::get<1>(emission));
 
@@ -125,7 +125,7 @@ void material::apply(shader* s)
         {
             s->set(
                 "material.subsurface_scattering",
-                tex.first->bind(tex.second->bind(5))
+                tex.first->bind(*tex.second, 5)
             );
         }
     } else s->set(
@@ -140,7 +140,7 @@ void material::apply(shader* s)
         {
             s->set(
                 "material.subsurface_depth",
-                tex.first->bind(tex.second->bind(6))
+                tex.first->bind(*tex.second, 6)
             );
         }
     } else s->set(

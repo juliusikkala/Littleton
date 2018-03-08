@@ -54,7 +54,7 @@ void method::draw_texture::execute()
     draw_shader->bind();
 
     draw_shader->set("mvp", transform);
-    draw_shader->set("tex", color_sampler.bind(tex->bind(0)));
+    draw_shader->set("tex", color_sampler.bind(*tex, 0));
 
     quad.draw();
 }

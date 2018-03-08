@@ -12,15 +12,13 @@ class resource_pool;
 namespace method
 {
     // Assumes the vertex shader is data/shaders/fullscreen.vert
-    // Textures will be passed by their map key as the uniform name.
     class fullscreen_effect: public target_method
     {
     public:
         fullscreen_effect(
             render_target& target,
             resource_pool& pool,
-            shader* effect = nullptr,
-            std::map<std::string, texture*>&& textures = {}
+            shader* effect = nullptr
         );
         ~fullscreen_effect();
 
@@ -29,15 +27,10 @@ namespace method
         void set_shader(shader* effect);
         shader* get_shader() const;
 
-        void set_texture(const std::string& name, texture* tex = nullptr);
-        texture* get_texture(const std::string& name) const;
-        void clear_textures();
-
         std::string get_name() const override;
 
     private:
         shader* effect;
-        std::map<std::string, texture*> textures;
         const vertex_buffer& quad;
     };
 }

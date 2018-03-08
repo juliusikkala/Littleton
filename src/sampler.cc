@@ -95,8 +95,11 @@ void sampler::set_comparison_mode(GLint comparison_mode)
     );
 }
 
-GLint sampler::bind(unsigned index) const
+GLint sampler::bind(const texture& tex, unsigned index) const
 {
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(tex.get_target(), tex.get_texture());
     glBindSampler(index, sampler_object);
     return index;
 }
+

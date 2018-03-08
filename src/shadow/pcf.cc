@@ -123,9 +123,9 @@ void pcf_impl::set_common_uniforms(shader* s, unsigned& texture_index)
 {
     s->set(
         "shadow_noise",
-        noise_sampler.bind(shadow_noise->bind(texture_index++))
+        noise_sampler.bind(*shadow_noise, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(kernel->bind(texture_index++)));
+    s->set("shadow_kernel", noise_sampler.bind(*kernel, texture_index++));
 }
 
 void pcf_impl::set_shadow_map_uniforms(
@@ -142,7 +142,7 @@ void pcf_impl::set_shadow_map_uniforms(
 
     s->set(
         prefix + "map",
-        shadow_sampler.bind(pcf->depth.bind(texture_index++))
+        shadow_sampler.bind(pcf->depth, texture_index++)
     );
     s->set(prefix + "min_bias", pcf->min_bias);
     s->set(prefix + "max_bias", pcf->max_bias);

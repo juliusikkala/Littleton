@@ -67,7 +67,7 @@ void method::kernel::execute()
 
     kernel_shader->bind();
     kernel_shader->set("kernel", k);
-    kernel_shader->set("in_color", fb_sampler.bind(src->bind()));
+    kernel_shader->set("in_color", fb_sampler.bind(*src));
 
     quad.draw();
 }

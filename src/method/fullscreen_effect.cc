@@ -8,9 +8,8 @@
 method::fullscreen_effect::fullscreen_effect(
     render_target& target,
     resource_pool& pool,
-    shader* effect,
-    std::map<std::string, texture*>&& textures
-): target_method(target), effect(effect), textures(std::move(textures)),
+    shader* effect
+): target_method(target), effect(effect),
    quad(common::ensure_quad_vertex_buffer(pool))
 {}
 
@@ -27,13 +26,6 @@ void method::fullscreen_effect::execute()
     glDisable(GL_STENCIL_TEST);
     effect->bind();
 
-    int i = 0;
-    for(auto& pair: textures)
-    {
-        pair.second->bind(i);
-        effect->set(pair.first, i);
-    }
-
     quad.draw();
 }
 
@@ -45,25 +37,6 @@ void method::fullscreen_effect::set_shader(shader* effect)
 shader* method::fullscreen_effect::get_shader() const
 {
     return effect;
-}
-
-void method::fullscreen_effect::set_texture(
-    const std::string& name, texture* tex
-){
-    if(tex) textures[name] = tex;
-    else textures.erase(name);
-}
-
-texture* method::fullscreen_effect::get_texture(const std::string& name) const
-{
-    auto it = textures.find(name);
-    if(it == textures.end()) return nullptr;
-    return it->second;
-}
-
-void method::fullscreen_effect::clear_textures()
-{
-    textures.clear();
 }
 
 std::string method::fullscreen_effect::get_name() const

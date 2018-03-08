@@ -54,9 +54,6 @@ public:
         const void* data = nullptr
     );
 
-    // Returns the index
-    GLint bind(unsigned index = 0) const;
-
 protected:
     texture(context& ctx);
 
