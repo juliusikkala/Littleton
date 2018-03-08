@@ -383,8 +383,7 @@ public:
                 {
                     total += times[i];
                     std::cout << "\tStage " << i + 1
-                              << " (" << current_pipeline->get_name(i) << ")"
-                              << ": "
+                              << " (" << current_pipeline->get_name(i) << "): "
                               << times[i] << "ms"
                               << std::endl;
                 }

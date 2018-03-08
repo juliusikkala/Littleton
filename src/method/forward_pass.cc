@@ -185,8 +185,101 @@ static void update_scene_definitions(
         next_power_of_two(scene->directional_light_count()));
     def["MAX_SPOTLIGHT_COUNT"] = std::to_string(
         next_power_of_two(scene->spotlight_count()));
-    def["MAX_SHADOW_MAP_COUNT"] = std::to_string(
-        next_power_of_two(shadow_map_count));
+
+    if(shadow_map_count > 0)
+    {
+        def["MAX_SHADOW_MAP_COUNT"] = std::to_string(
+            next_power_of_two(shadow_map_count));
+    }
+}
+
+static void render_pass(
+    multishader* forward_shader,
+    render_scene* scene,
+    std::set<light*>& unhandled_lights,
+    const glm::mat4& v,
+    const glm::mat4& p,
+    shadow_map_impl* impl = nullptr,
+    const std::set<basic_shadow_map*>& shadow_maps = {},
+    const std::map<light*, basic_shadow_map*>& shadows_by_light = {}
+){
+    shader::definition_map shadow_map_definitions;
+    if(impl) shadow_map_definitions = impl->get_definitions();
+
+    std::unique_ptr<uniform_block> light_block;
+
+    for(object* obj: scene->get_objects())
+    {
+        model* mod = obj->get_model();
+        if(!mod) continue;
+
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mv = v * m;
+        glm::mat3 n_mv(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
+
+        for(model::vertex_group& group: *mod)
+        {
+            if(!group.mat || !group.mesh) continue;
+
+            shader::definition_map def = shadow_map_definitions;
+            update_scene_definitions(def, scene, shadow_maps.size());
+            group.mat->update_definitions(def);
+            group.mesh->update_definitions(def);
+
+            shader* s = forward_shader->get(def);
+            s->bind();
+
+            // Generate the light block when the first shader containing it
+            // exists (the structure of the light block can't be known
+            // beforehand)
+            if(!light_block && s->block_exists("Lights"))
+            {
+                light_block = create_light_block(
+                    "Lights",
+                    scene,
+                    s,
+                    v,
+                    shadow_maps,
+                    shadows_by_light,
+                    unhandled_lights
+                );
+                light_block->bind(0);
+            }
+            if(light_block) s->set_block("Lights", 0);
+
+            if(impl)
+            {
+                unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
+                s->set<int>("shadow_map_count", shadow_maps.size());
+                impl->set_common_uniforms(s, texture_index);
+
+                unsigned i = 0;
+                for(basic_shadow_map* sm: shadow_maps)
+                {
+                    std::string prefix =
+                        "shadows["
+                        + std::to_string(i++)
+                        + "].";
+
+                    impl->set_shadow_map_uniforms(
+                        s,
+                        texture_index,
+                        sm,
+                        prefix,
+                        m
+                    );
+                }
+            }
+
+            s->set("mvp", mvp);
+            s->set("m", mv);
+            s->set("n_m", n_mv);
+
+            group.mat->apply(s);
+            group.mesh->draw();
+        }
+    }
 }
 
 void method::forward_pass::execute()
@@ -221,86 +314,24 @@ void method::forward_pass::execute()
     for(auto& pair: shadow_maps)
     {
         shadow_map_impl* impl = pair.first.get();
-        const std::set<basic_shadow_map*>& shadow_maps = pair.second;
 
-        shader::definition_map shadow_map_definitions =
-            impl->get_definitions();
-
-        std::unique_ptr<uniform_block> light_block;
-
-        for(object* obj: scene->get_objects())
-        {
-            model* mod = obj->get_model();
-            if(!mod) continue;
-
-            glm::mat4 m = obj->get_global_transform();
-            glm::mat4 mv = v * m;
-            glm::mat3 n_mv(glm::inverseTranspose(mv));
-            glm::mat4 mvp = p * mv;
-
-            for(model::vertex_group& group: *mod)
-            {
-                if(!group.mat || !group.mesh) continue;
-
-                shader::definition_map def = shadow_map_definitions;
-                update_scene_definitions(def, scene, shadow_maps.size());
-                group.mat->update_definitions(def);
-                group.mesh->update_definitions(def);
-
-                shader* s = forward_shader->get(def);
-                s->bind();
-
-                // Generate the light block when the first shader containing it
-                // exists (the structure of the light block can't be known
-                // beforehand)
-                if(!light_block && s->block_exists("Lights"))
-                {
-                    light_block = create_light_block(
-                        "Lights",
-                        scene,
-                        s,
-                        v,
-                        shadow_maps,
-                        shadows_by_light,
-                        unhandled_lights
-                    );
-                    light_block->bind(0);
-                }
-                if(light_block) s->set_block("Lights", 0);
-
-                unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
-                s->set<int>("shadow_map_count", shadow_maps.size());
-                impl->set_common_uniforms(s, texture_index);
-
-                unsigned i = 0;
-                for(basic_shadow_map* sm: shadow_maps)
-                {
-                    std::string prefix =
-                        "shadows["
-                        + std::to_string(i++)
-                        + "].";
-
-                    impl->set_shadow_map_uniforms(
-                        s,
-                        texture_index,
-                        sm,
-                        prefix,
-                        m
-                    );
-                }
-
-                s->set("mvp", mvp);
-                s->set("m", mv);
-                s->set("n_m", n_mv);
-
-                group.mat->apply(s);
-                group.mesh->draw();
-            }
-        }
+        render_pass(
+            forward_shader,
+            scene,
+            unhandled_lights,
+            v, p,
+            impl,
+            pair.second,
+            shadows_by_light
+        );
 
         // The rest of the passes should be added on top of the current one.
         glEnable(GL_BLEND);
     }
+
+    // Make sure at least one pass was made
+    if(shadow_maps.size() == 0)
+        render_pass(forward_shader, scene, unhandled_lights, v, p);
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }
