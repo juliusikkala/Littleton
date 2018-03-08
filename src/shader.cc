@@ -199,6 +199,12 @@ size_t boost::hash_value(const shader::path& p)
     return seed;
 }
 
+shader::path::path(
+    const std::string& vert,
+    const std::string& frag,
+    const std::string& geom
+): vert(vert), frag(frag), geom(geom) {}
+
 shader::source::source(
     const std::string& vert,
     const std::string& frag,

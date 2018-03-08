@@ -18,16 +18,11 @@ static std::string find_file(
     }
     throw std::runtime_error("Unable to find shader source " + suffix);
 }
-shader_pool::shader_pool(
-    context& ctx,
-    const std::vector<std::string>& shader_path
-): ctx(&ctx), shader_path(shader_path)
-{}
 
 shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
-    const std::string& shader_binary_path
+    const std::optional<std::string>& shader_binary_path
 ): ctx(&ctx), shader_path(shader_path), shader_binary_path(shader_binary_path)
 {}
 

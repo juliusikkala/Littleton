@@ -191,7 +191,7 @@ glm::uvec2 texture::get_size() const
     return size;
 }
 
-GLint texture::bind(unsigned index)
+GLint texture::bind(unsigned index) const
 {
     load();
     glActiveTexture(GL_TEXTURE0 + index);

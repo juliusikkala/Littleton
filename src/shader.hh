@@ -16,6 +16,13 @@ public:
 
     struct path
     {
+        path() = default;
+        path(
+            const std::string& vert,
+            const std::string& frag,
+            const std::string& geom = ""
+        );
+
         std::string vert;
         std::string frag;
         std::string geom;
@@ -29,7 +36,7 @@ public:
         source(
             const std::string& vert,
             const std::string& frag,
-            const std::string& geom
+            const std::string& geom = ""
         );
         source(const path& p);
 

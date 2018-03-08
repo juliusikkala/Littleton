@@ -24,12 +24,8 @@ public:
 
     shader_pool(
         context& ctx,
-        const std::vector<std::string>& shader_path = {}
-    );
-    shader_pool(
-        context& ctx,
-        const std::vector<std::string>& shader_path,
-        const std::string& shader_binary_path
+        const std::vector<std::string>& shader_path = {},
+        const std::optional<std::string>& shader_binary_path = {}
     );
     shader_pool(const shader_pool& other) = delete;
     shader_pool(shader_pool& other) = delete;

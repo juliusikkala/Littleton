@@ -6,8 +6,8 @@
 #include <typeindex>
 #include <type_traits>
 #include <iterator>
-#include <memory>
 #include "resource.hh"
+#include "shader_pool.hh"
 
 class context;
 
@@ -16,7 +16,7 @@ class context;
 // add_dfo would become a separate function taking the necessary stores as
 // dependencies. resource_pool could be a 'master' store, either through
 // deriving every other store type or containing them.
-class resource_pool: public glresource
+class legacy_resource_pool: public glresource
 {
 private:
     struct container
@@ -76,7 +76,7 @@ public:
         template<typename U>
         friend class const_iterable;
 
-        friend class resource_pool;
+        friend class legacy_resource_pool;
 
         explicit resource_iterator(I it);
         I it;
@@ -89,10 +89,10 @@ public:
     using const_iterator =
         resource_iterator<const T, inner_map::const_iterator>;
 
-    resource_pool(context& ctx);
-    resource_pool(const resource_pool& other) = delete;
-    resource_pool(resource_pool& other) = delete;
-    ~resource_pool();
+    legacy_resource_pool(context& ctx);
+    legacy_resource_pool(const legacy_resource_pool& other) = delete;
+    legacy_resource_pool(legacy_resource_pool& other) = delete;
+    ~legacy_resource_pool();
 
     // Takes ownership of the pointer.
     template<typename T>
@@ -157,6 +157,31 @@ public:
 
     template<typename T>
     const_iterable<T> get_const_iterable() const;
+};
+
+class resource_pool: public legacy_resource_pool, public shader_pool
+{
+public:
+    resource_pool(
+        context& ctx,
+        const std::vector<std::string>& shader_path = {},
+        const std::optional<std::string>& shader_binary_path = {}
+    );
+    resource_pool(const resource_pool& other) = delete;
+    resource_pool(resource_pool& other) = delete;
+    ~resource_pool();
+
+    using legacy_resource_pool::add;
+    using shader_pool::add;
+
+    using legacy_resource_pool::get;
+    using shader_pool::get;
+
+    using legacy_resource_pool::begin;
+    using shader_pool::begin;
+
+    using legacy_resource_pool::end;
+    using shader_pool::end;
 };
 
 #include "resource_pool.tcc"

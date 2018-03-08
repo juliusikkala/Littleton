@@ -177,8 +177,7 @@ class game
 public:
     game()
         : win({ "dflowers", {1280, 720}, true, true, false }),
-        resources(win),
-        shaders(win, { "data/shaders/" }),
+        resources(win, { "data/shaders/" }),
         main_scene(&cam)
     {
         win.set_framerate_limit(200);
@@ -212,13 +211,13 @@ public:
         glm::uvec2 render_resolution = win.get_size();
 
         dp.reset(new deferred_pipeline(
-            win, render_resolution, shaders, &main_scene
+            win, render_resolution, resources, &main_scene
         ));
         vp.reset(new visualizer_pipeline(
-            win, render_resolution, shaders, &main_scene
+            win, render_resolution, resources, &main_scene
         ));
         fp.reset(new forward_pipeline(
-            win, render_resolution, shaders, &main_scene
+            win, render_resolution, resources, &main_scene
         ));
 
         current_pipeline = fp.get();
@@ -303,8 +302,8 @@ public:
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;
                 if(e.key.keysym.sym == SDLK_r)
                 {
-                    shaders.delete_binaries();
-                    shaders.unload_all();
+                    resources.delete_binaries();
+                    resources.unload_all();
                 }
                 break;
             case SDL_MOUSEMOTION:
@@ -407,7 +406,6 @@ public:
 private:
     window win;
     resource_pool resources;
-    shader_pool shaders;
     camera cam;
     render_scene main_scene;
 
