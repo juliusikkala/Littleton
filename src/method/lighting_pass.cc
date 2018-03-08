@@ -3,27 +3,23 @@
 #include "camera.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
-#include "shader_pool.hh"
+#include "resource_pool.hh"
 #include "scene.hh"
+#include "common_resources.hh"
 #include "shadow/shadow_map.hh"
 
 method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene
 ):  target_method(target), buf(&buf),
-    lighting_shader(pool.get(
+    lighting_shader(pool.get_shader(
         shader::path{"lighting.vert", "lighting.frag"})
     ),
     scene(scene),
-    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
-    gbuf_sampler(
-        target.get_context(),
-        GL_NEAREST,
-        GL_NEAREST,
-        GL_CLAMP_TO_EDGE
-    )
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
 
@@ -125,7 +121,7 @@ static std::set<light*> render_shadowed_lights(
     render_scene* scene,
     const glm::mat4& view,
     const glm::vec4& perspective_data,
-    vertex_buffer& fullscreen_quad
+    const vertex_buffer& quad
 ){
     std::set<light*> shadowed_lights;
     for(auto& pair: scene->get_shadow_maps())
@@ -171,7 +167,7 @@ static std::set<light*> render_shadowed_lights(
                 shadowed_lights.insert(l);
             }
 
-            fullscreen_quad.draw();
+            quad.draw();
         }
     }
     return shadowed_lights;
@@ -203,10 +199,10 @@ void method::lighting_pass::execute()
     };
     shader::definition_map spotlight_definitions{{"SPOTLIGHT", ""}};
 
-    gbuf_sampler.bind(buf->get_depth_stencil().bind(0));
-    gbuf_sampler.bind(buf->get_color_emission().bind(1));
-    gbuf_sampler.bind(buf->get_normal().bind(2));
-    gbuf_sampler.bind(buf->get_material().bind(3));
+    fb_sampler.bind(buf->get_depth_stencil().bind(0));
+    fb_sampler.bind(buf->get_color_emission().bind(1));
+    fb_sampler.bind(buf->get_normal().bind(2));
+    fb_sampler.bind(buf->get_material().bind(3));
 
     float near, far, fov, aspect;
     decompose_perspective(p, near, far, fov, aspect);
@@ -223,7 +219,7 @@ void method::lighting_pass::execute()
         scene,
         v,
         perspective_data,
-        fullscreen_quad
+        quad
     );
 
     // Render point lights
@@ -234,7 +230,7 @@ void method::lighting_pass::execute()
     {
         if(shadowed_lights.count(l)) continue;
         set_point_light(pls, l, v, perspective_data);
-        fullscreen_quad.draw();
+        quad.draw();
     }
 
     // Render spotlights
@@ -245,7 +241,7 @@ void method::lighting_pass::execute()
     {
         if(shadowed_lights.count(l)) continue;
         set_spotlight(sls, l, v, perspective_data);
-        fullscreen_quad.draw();
+        quad.draw();
     }
 
     // Render directional lights
@@ -256,7 +252,7 @@ void method::lighting_pass::execute()
     {
         if(shadowed_lights.count(l)) continue;
         set_directional_light(dls, l, v, perspective_data);
-        fullscreen_quad.draw();
+        quad.draw();
     }
 }
 

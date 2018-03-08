@@ -1,18 +1,19 @@
 #include "draw_texture.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_pool.hh"
+#include "resource_pool.hh"
+#include "common_resources.hh"
 
 method::draw_texture::draw_texture(
     render_target& target,
-    shader_pool& pool,
+    resource_pool& pool,
     texture* tex
 ):  target_method(target),
-    quad(vertex_buffer::create_square(target.get_context())),
+    quad(common::ensure_quad_vertex_buffer(pool)),
     color_sampler(
         target.get_context(),
-        GL_NEAREST,
-        GL_NEAREST,
+        GL_LINEAR,
+        GL_LINEAR,
         GL_CLAMP_TO_EDGE
     ),
     transform(1.0f),
@@ -21,7 +22,7 @@ method::draw_texture::draw_texture(
     shader::definition_map def;
     quad.update_definitions(def);
 
-    draw_shader = pool.get(
+    draw_shader = pool.get_shader(
         shader::path{"generic.vert", "draw_texture.frag"},
         def
     );

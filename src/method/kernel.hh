@@ -4,7 +4,8 @@
 #include "vertex_buffer.hh"
 
 class texture;
-class shader_pool;
+class resource_pool;
+class sampler;
 
 namespace method
 {
@@ -19,7 +20,7 @@ namespace method
         kernel(
             render_target& target,
             texture& src,
-            shader_pool& store,
+            resource_pool& store,
             const glm::mat3& k = SHARPEN
         );
 
@@ -33,7 +34,8 @@ namespace method
     private:
         texture* src;
         shader* kernel_shader;
-        vertex_buffer fullscreen_quad;
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;
         glm::mat3 k;
     };
 }

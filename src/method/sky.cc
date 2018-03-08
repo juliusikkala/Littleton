@@ -4,7 +4,8 @@
 #include "camera.hh"
 #include "texture.hh"
 #include "render_target.hh"
-#include "shader_pool.hh"
+#include "resource_pool.hh"
+#include "common_resources.hh"
 #include "light.hh"
 #include "scene.hh"
 #include <glm/gtc/constants.hpp>
@@ -21,22 +22,16 @@ static struct sky_defaults
 
 method::sky::sky(
     render_target& target,
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene,
     texture* depth_buffer,
     directional_light* sun
 ):  target_method(target),
-    sky_shader(pool.get(shader::path{"sky.vert", "sky.frag"}, {})),
+    sky_shader(pool.get_shader(shader::path{"sky.vert", "sky.frag"}, {})),
     scene(scene),
     depth_buffer(depth_buffer),
-    depth_sampler(
-        target.get_context(),
-        GL_NEAREST, GL_NEAREST,
-        GL_CLAMP_TO_BORDER,
-        0,
-        glm::vec4(1)
-    ),
-    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
+    depth_sampler(common::ensure_depth_sampler(pool)),
+    quad(common::ensure_quad_vertex_buffer(pool)),
     sun(sun)
 {
     set_parent(&defaults.parent);
@@ -235,7 +230,7 @@ void method::sky::execute()
     sky_shader->set("ip", glm::inverse(p));
     sky_shader->set("origin", origin);
     sky_shader->set("perspective_data", perspective_data);
-    fullscreen_quad.draw();
+    quad.draw();
 }
 
 std::string method::sky::get_name() const

@@ -2,7 +2,7 @@
 #define METHOD_RENDER_SHADOW_MAPS_HH
 #include "pipeline.hh"
 
-class shader_pool;
+class resource_pool;
 class render_scene;
 
 namespace method
@@ -11,7 +11,7 @@ namespace method
     {
     public:
         render_shadow_maps(
-            shader_pool& pool,
+            resource_pool& pool,
             render_scene* scene = nullptr
         );
 
@@ -23,7 +23,7 @@ namespace method
         std::string get_name() const override;
 
     private:
-        shader_pool* pool;
+        resource_pool* pool;
         render_scene* scene;
     };
 }

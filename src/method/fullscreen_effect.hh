@@ -7,6 +7,7 @@
 
 class texture;
 class shader;
+class resource_pool;
 
 namespace method
 {
@@ -17,6 +18,7 @@ namespace method
     public:
         fullscreen_effect(
             render_target& target,
+            resource_pool& pool,
             shader* effect = nullptr,
             std::map<std::string, texture*>&& textures = {}
         );
@@ -36,7 +38,7 @@ namespace method
     private:
         shader* effect;
         std::map<std::string, texture*> textures;
-        vertex_buffer fullscreen_quad;
+        const vertex_buffer& quad;
     };
 }
 

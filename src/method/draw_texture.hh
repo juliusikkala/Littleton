@@ -5,7 +5,7 @@
 #include "sampler.hh"
 
 class texture;
-class shader_pool;
+class resource_pool;
 
 namespace method
 {
@@ -14,7 +14,7 @@ namespace method
     public:
         draw_texture(
             render_target& target,
-            shader_pool& shaders,
+            resource_pool& shaders,
             texture* tex = nullptr
         );
         ~draw_texture();
@@ -28,7 +28,7 @@ namespace method
         std::string get_name() const override;
 
     private:
-        vertex_buffer quad;
+        const vertex_buffer& quad;
         sampler color_sampler;
 
         shader* draw_shader;

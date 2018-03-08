@@ -6,7 +6,7 @@
 #include "sampler.hh"
 
 class gbuffer;
-class shader_pool;
+class resource_pool;
 class render_scene;
 class multishader;
 
@@ -18,7 +18,7 @@ namespace method
         visualize_gbuffer(
             render_target& target,
             gbuffer& buf,
-            shader_pool& store,
+            resource_pool& pool,
             render_scene* scene
         );
 
@@ -54,8 +54,8 @@ namespace method
 
         multishader* visualize_shader;
         render_scene* scene;
-        vertex_buffer fullscreen_quad;
-        sampler gbuf_sampler;        
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;        
 
         std::vector<visualizer> visualizers;
     };

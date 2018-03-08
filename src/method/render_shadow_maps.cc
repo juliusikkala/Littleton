@@ -1,10 +1,10 @@
 #include "render_shadow_maps.hh"
-#include "shader_pool.hh"
 #include "scene.hh"
+#include "resource_pool.hh"
 #include "shadow/shadow_map.hh"
 
 method::render_shadow_maps::render_shadow_maps(
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene
 ): pool(&pool), scene(scene)
 {}

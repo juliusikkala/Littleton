@@ -1,18 +1,21 @@
 #include "gamma.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_pool.hh"
+#include "sampler.hh"
+#include "resource_pool.hh"
+#include "common_resources.hh"
 
 method::gamma::gamma(
     render_target& target,
     texture& src,
-    shader_pool& pool,
+    resource_pool& pool,
     float g
 ):  target_method(target), src(&src), g(g),
-    gamma_shader(pool.get(
+    gamma_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "gamma.frag"}, {})
     ),
-    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
 
@@ -39,9 +42,9 @@ void method::gamma::execute()
 
     gamma_shader->bind();
     gamma_shader->set("gamma", 1.0f/g);
-    gamma_shader->set("in_color", src->bind());
+    gamma_shader->set("in_color", fb_sampler.bind(src->bind()));
 
-    fullscreen_quad.draw();
+    quad.draw();
 }
 
 std::string method::gamma::get_name() const

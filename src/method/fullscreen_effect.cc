@@ -3,13 +3,16 @@
 #include "render_target.hh"
 #include "shader.hh"
 #include "texture.hh"
+#include "common_resources.hh"
 
 method::fullscreen_effect::fullscreen_effect(
     render_target& target,
+    resource_pool& pool,
     shader* effect,
     std::map<std::string, texture*>&& textures
 ): target_method(target), effect(effect), textures(std::move(textures)),
-   fullscreen_quad(vertex_buffer::create_square(target.get_context())){}
+   quad(common::ensure_quad_vertex_buffer(pool))
+{}
 
 method::fullscreen_effect::~fullscreen_effect() { }
 
@@ -31,7 +34,7 @@ void method::fullscreen_effect::execute()
         effect->set(pair.first, i);
     }
 
-    fullscreen_quad.draw();
+    quad.draw();
 }
 
 void method::fullscreen_effect::set_shader(shader* effect)

@@ -5,7 +5,7 @@
 #include "sampler.hh"
 
 class texture;
-class shader_pool;
+class resource_pool;
 
 namespace method
 {
@@ -15,7 +15,7 @@ namespace method
         tonemap(
             render_target& target,
             texture& src,
-            shader_pool& store,
+            resource_pool& pool,
             float exposure = 1.0f
         );
 
@@ -29,8 +29,8 @@ namespace method
     private:
         texture* src;
         shader* tonemap_shader;
-        vertex_buffer fullscreen_quad;
-        sampler color_sampler;
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;
 
         float exposure;
     };

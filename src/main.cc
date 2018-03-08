@@ -21,7 +21,6 @@
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
-#include "shader_pool.hh"
 #include "shadow/pcf.hh"
 #include "shadow/msm.hh"
 #include "shadow/pcf.hh"
@@ -34,17 +33,17 @@ struct deferred_data
     deferred_data(
         window& w,
         glm::uvec2 resolution,
-        shader_pool& shaders,
+        resource_pool& pool,
         render_scene* main_scene
     ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
-      sm(shaders, main_scene),
+      sm(pool, main_scene),
       clear_buf(buf),
       clear_screen(screen.input(0)),
-      gp(buf, shaders, main_scene),
-      lp(screen.input(0), buf, shaders, main_scene),
-      sky(screen.input(0), shaders, main_scene, &buf.get_depth_stencil()),
-      tm(screen.input(1), screen.output(1), shaders),
+      gp(buf, pool, main_scene),
+      lp(screen.input(0), buf, pool, main_scene),
+      sky(screen.input(0), pool, main_scene, &buf.get_depth_stencil()),
+      tm(screen.input(1), screen.output(1), pool),
       screen_to_window(w, screen.input(1), method::blit_framebuffer::COLOR_ONLY)
     {
         screen.set_depth_stencil(0, &buf.get_depth_stencil());
@@ -82,14 +81,14 @@ struct visualizer_data
     visualizer_data(
         window& w,
         glm::uvec2 resolution,
-        shader_pool& shaders,
+        resource_pool& pool,
         render_scene* main_scene
     ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
       buf(w, resolution),
       clear_buf(buf),
       clear_screen(screen.input(0)),
-      gp(buf, shaders, main_scene),
-      visualizer(screen.input(0), buf, shaders, main_scene),
+      gp(buf, pool, main_scene),
+      visualizer(screen.input(0), buf, pool, main_scene),
       screen_to_window(w, screen.input(0), method::blit_framebuffer::COLOR_ONLY)
     {}
 
@@ -113,7 +112,7 @@ struct forward_data
     forward_data(
         window& w,
         glm::uvec2 resolution,
-        shader_pool& shaders,
+        resource_pool& pool,
         render_scene* main_scene
     ):color_buffer(w, resolution, GL_RGB16F, GL_FLOAT),
       depth_buffer(
@@ -127,11 +126,11 @@ struct forward_data
         {GL_DEPTH_ATTACHMENT, {&depth_buffer}}
       }),
       postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
-      sm(shaders, main_scene),
+      sm(pool, main_scene),
       clear_screen(screen),
-      fp(screen, shaders, main_scene),
-      sky(screen, shaders, main_scene, &depth_buffer),
-      tm(postprocess.input(0), color_buffer, shaders),
+      fp(screen, pool, main_scene),
+      sky(screen, pool, main_scene, &depth_buffer),
+      tm(postprocess.input(0), color_buffer, pool),
       postprocess_to_window(
         w,
         postprocess.input(0),
@@ -164,9 +163,9 @@ public:
     custom_pipeline(
         window& w,
         glm::uvec2 resolution,
-        shader_pool& shaders,
+        resource_pool& pool,
         render_scene* main_scene
-    ): T(w, resolution, shaders, main_scene), pipeline(T::get_methods()) {}
+    ): T(w, resolution, pool, main_scene), pipeline(T::get_methods()) {}
 };
 
 using deferred_pipeline = custom_pipeline<deferred_data>;

@@ -1,24 +1,20 @@
 #include "tonemap.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_pool.hh"
+#include "resource_pool.hh"
+#include "common_resources.hh"
 
 method::tonemap::tonemap(
     render_target& target,
     texture& src,
-    shader_pool& pool,
+    resource_pool& pool,
     float exposure
 ):  target_method(target), src(&src),
     tonemap_shader(
-        pool.get(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
+        pool.get_shader(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
     ),
-    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
-    color_sampler(
-        target.get_context(),
-        GL_NEAREST,
-        GL_NEAREST,
-        GL_CLAMP_TO_EDGE
-    ),
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool)),
     exposure(exposure)
 {
 }
@@ -46,9 +42,9 @@ void method::tonemap::execute()
 
     tonemap_shader->bind();
     tonemap_shader->set<float>("exposure", exposure);
-    tonemap_shader->set("in_color", color_sampler.bind(src->bind()));
+    tonemap_shader->set("in_color", fb_sampler.bind(src->bind()));
 
-    fullscreen_quad.draw();
+    quad.draw();
 }
 
 std::string method::tonemap::get_name() const

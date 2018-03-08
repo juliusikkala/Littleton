@@ -6,7 +6,7 @@
 #include "sampler.hh"
 
 class texture;
-class shader_pool;
+class resource_pool;
 class render_scene;
 class directional_light;
 
@@ -17,7 +17,7 @@ namespace method
     public:
         sky(
             render_target& target,
-            shader_pool& shaders,
+            resource_pool& pool,
             render_scene* scene = nullptr,
             texture* depth_buffer = nullptr,
             directional_light* sun = nullptr
@@ -71,8 +71,8 @@ namespace method
         shader* sky_shader;
         render_scene* scene;
         texture* depth_buffer;
-        sampler depth_sampler;
-        vertex_buffer fullscreen_quad;
+        const sampler& depth_sampler;
+        const vertex_buffer& quad;
 
         transformable_node origin_node;
         unsigned view_samples, light_samples;

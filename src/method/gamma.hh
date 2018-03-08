@@ -5,6 +5,8 @@
 
 class shader_pool;
 class texture;
+class resource_pool;
+class sampler;
 
 namespace method
 {
@@ -14,7 +16,7 @@ namespace method
         gamma(
             render_target& target,
             texture& src,
-            shader_pool& store,
+            resource_pool& pool,
             float gamma = 2.2
         );
 
@@ -30,7 +32,9 @@ namespace method
 
         float g;
         shader* gamma_shader;
-        vertex_buffer fullscreen_quad;
+
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;
     };
 }
 #endif

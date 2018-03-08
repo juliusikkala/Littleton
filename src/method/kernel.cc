@@ -1,7 +1,9 @@
 #include "kernel.hh"
 #include "render_target.hh"
 #include "texture.hh"
-#include "shader_pool.hh"
+#include "sampler.hh"
+#include "resource_pool.hh"
+#include "common_resources.hh"
 
 const glm::mat3 method::kernel::SHARPEN = glm::mat3(
      0, -1, 0,
@@ -30,13 +32,14 @@ const glm::mat3 method::kernel::BOX_BLUR = glm::mat3(
 method::kernel::kernel(
     render_target& target,
     texture& src,
-    shader_pool& pool,
+    resource_pool& pool,
     const glm::mat3& k
 ):  target_method(target), src(&src),
     kernel_shader(
-        pool.get(shader::path{"fullscreen.vert", "kernel.frag"}, {})
+        pool.get_shader(shader::path{"fullscreen.vert", "kernel.frag"}, {})
     ),
-    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool)),
     k(k) 
 {
 }
@@ -64,9 +67,9 @@ void method::kernel::execute()
 
     kernel_shader->bind();
     kernel_shader->set("kernel", k);
-    kernel_shader->set("in_color", src->bind());
+    kernel_shader->set("in_color", fb_sampler.bind(src->bind()));
 
-    fullscreen_quad.draw();
+    quad.draw();
 }
 
 std::string method::kernel::get_name() const
