@@ -21,12 +21,12 @@ static struct sky_defaults
 
 method::sky::sky(
     render_target& target,
-    shader_pool& store,
+    shader_pool& pool,
     render_scene* scene,
     texture* depth_buffer,
     directional_light* sun
 ):  target_method(target),
-    sky_shader(store.get(shader::path{"sky.vert", "sky.frag"}, {})),
+    sky_shader(pool.get_shader(shader::path{"sky.vert", "sky.frag"}, {})),
     scene(scene),
     depth_buffer(depth_buffer),
     depth_sampler(

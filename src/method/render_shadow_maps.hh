@@ -11,7 +11,7 @@ namespace method
     {
     public:
         render_shadow_maps(
-            shader_pool& shaders,
+            shader_pool& pool,
             render_scene* scene = nullptr
         );
 
@@ -23,7 +23,7 @@ namespace method
         std::string get_name() const override;
 
     private:
-        shader_pool* store;
+        shader_pool* pool;
         render_scene* scene;
     };
 }

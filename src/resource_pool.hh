@@ -8,6 +8,7 @@
 #include <iterator>
 #include "resource.hh"
 #include "shader_pool.hh"
+#include "texture_pool.hh"
 
 class context;
 
@@ -16,7 +17,7 @@ class context;
 // add_dfo would become a separate function taking the necessary stores as
 // dependencies. resource_pool could be a 'master' store, either through
 // deriving every other store type or containing them.
-class legacy_resource_pool: public glresource
+class legacy_resource_pool: public virtual glresource
 {
 private:
     struct container
@@ -159,7 +160,9 @@ public:
     const_iterable<T> get_const_iterable() const;
 };
 
-class resource_pool: public legacy_resource_pool, public shader_pool
+class resource_pool
+: public virtual glresource, public legacy_resource_pool, public shader_pool,
+  public texture_pool
 {
 public:
     resource_pool(
@@ -171,11 +174,7 @@ public:
     resource_pool(resource_pool& other) = delete;
     ~resource_pool();
 
-    using legacy_resource_pool::add;
-    using shader_pool::add;
-
-    using legacy_resource_pool::get;
-    using shader_pool::get;
+    void unload_all();
 
     using legacy_resource_pool::begin;
     using shader_pool::begin;

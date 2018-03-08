@@ -184,7 +184,7 @@ void load_dfo(
                     extension
                 )
             ),
-            pool.add<texture>(
+            pool.add_texture(
                 tex->name,
                 texture::create(
                     ctx,

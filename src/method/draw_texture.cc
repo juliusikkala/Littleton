@@ -5,7 +5,7 @@
 
 method::draw_texture::draw_texture(
     render_target& target,
-    shader_pool& store,
+    shader_pool& pool,
     texture* tex
 ):  target_method(target),
     quad(vertex_buffer::create_square(target.get_context())),
@@ -21,7 +21,7 @@ method::draw_texture::draw_texture(
     shader::definition_map def;
     quad.update_definitions(def);
 
-    draw_shader = store.get(
+    draw_shader = pool.get_shader(
         shader::path{"generic.vert", "draw_texture.frag"},
         def
     );

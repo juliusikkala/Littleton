@@ -30,14 +30,14 @@ const glm::mat3 method::kernel::BOX_BLUR = glm::mat3(
 method::kernel::kernel(
     render_target& target,
     texture& src,
-    shader_pool& store,
+    shader_pool& pool,
     const glm::mat3& k
-): target_method(target), src(&src),
-   kernel_shader(
-        store.get(shader::path{"fullscreen.vert", "kernel.frag"}, {})
-   ),
-   fullscreen_quad(vertex_buffer::create_square(target.get_context())),
-   k(k) 
+):  target_method(target), src(&src),
+    kernel_shader(
+        pool.get_shader(shader::path{"fullscreen.vert", "kernel.frag"}, {})
+    ),
+    fullscreen_quad(vertex_buffer::create_square(target.get_context())),
+    k(k) 
 {
 }
 

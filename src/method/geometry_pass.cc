@@ -13,11 +13,14 @@
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,
-    shader_pool& store,
+    shader_pool& pool,
     render_scene* scene
-): target_method(buf),
-   geometry_shader(store.get(shader::path{"generic.vert", "geometry.frag"})),
-   scene(scene) {}
+):  target_method(buf),
+    geometry_shader(pool.get_shader(
+        shader::path{"generic.vert", "geometry.frag"})
+    ),
+    scene(scene)
+{}
 
 void method::geometry_pass::set_scene(render_scene* scene)
 {

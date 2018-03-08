@@ -10,10 +10,12 @@
 method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
-    shader_pool& store,
+    shader_pool& pool,
     render_scene* scene
 ):  target_method(target), buf(&buf),
-    lighting_shader(store.get(shader::path{"lighting.vert", "lighting.frag"})),
+    lighting_shader(pool.get_shader(
+        shader::path{"lighting.vert", "lighting.frag"})
+    ),
     scene(scene),
     fullscreen_quad(vertex_buffer::create_square(target.get_context())),
     gbuf_sampler(

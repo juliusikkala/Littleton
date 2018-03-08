@@ -149,7 +149,7 @@ msm_impl::msm_impl(context& ctx)
 }
 
 void msm_impl::render(
-    shader_pool& store,
+    shader_pool& pool,
     const std::set<basic_shadow_map*>& shadow_maps,
     render_scene* scene
 ){
@@ -160,17 +160,17 @@ void msm_impl::render(
 
     ensure_render_targets(shadow_maps);
 
-    shader* depth_shader = store.get(
+    shader* depth_shader = pool.get_shader(
         shader::path{"generic.vert", "shadow/msm.frag"},
         {{"VERTEX_POSITION", "0"}}
     );
 
-    shader* vertical_blur_shader = store.get(
+    shader* vertical_blur_shader = pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"},
         {{"VERTICAL", ""}}
     );
 
-    shader* horizontal_blur_shader = store.get(
+    shader* horizontal_blur_shader = pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"},
         {{"HORIZONTAL", ""}}
     );

@@ -20,11 +20,13 @@ static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 
 method::forward_pass::forward_pass(
     render_target& target,
-    shader_pool& store,
+    shader_pool& pool,
     render_scene* scene
-): target_method(target),
-   forward_shader(store.get(shader::path{"generic.vert", "forward.frag"})),
-   scene(scene)
+):  target_method(target),
+    forward_shader(pool.get_shader(
+        shader::path{"generic.vert", "forward.frag"})
+    ),
+    scene(scene)
 {
 }
 

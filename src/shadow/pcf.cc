@@ -69,7 +69,7 @@ pcf_impl::pcf_impl(context& ctx)
 }
 
 void pcf_impl::render(
-    shader_pool& store,
+    shader_pool& pool,
     const std::set<basic_shadow_map*>& shadow_maps,
     render_scene* scene
 ){
@@ -78,7 +78,7 @@ void pcf_impl::render(
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
-    shader* depth_shader = store.get(
+    shader* depth_shader = pool.get_shader(
         shader::path{"generic.vert", "empty.frag"},
         {{"VERTEX_POSITION", "0"}}
     );

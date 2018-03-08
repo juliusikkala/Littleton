@@ -6,11 +6,11 @@
 method::tonemap::tonemap(
     render_target& target,
     texture& src,
-    shader_pool& store,
+    shader_pool& pool,
     float exposure
 ):  target_method(target), src(&src),
     tonemap_shader(
-        store.get(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
+        pool.get_shader(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
     ),
     fullscreen_quad(vertex_buffer::create_square(target.get_context())),
     color_sampler(

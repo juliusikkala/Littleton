@@ -6,11 +6,13 @@
 method::gamma::gamma(
     render_target& target,
     texture& src,
-    shader_pool& store,
+    shader_pool& pool,
     float g
-): target_method(target), src(&src), g(g),
-   gamma_shader(store.get(shader::path{"fullscreen.vert", "gamma.frag"}, {})),
-   fullscreen_quad(vertex_buffer::create_square(target.get_context()))
+):  target_method(target), src(&src), g(g),
+    gamma_shader(pool.get_shader(
+        shader::path{"fullscreen.vert", "gamma.frag"}, {})
+    ),
+    fullscreen_quad(vertex_buffer::create_square(target.get_context()))
 {
 }
 

@@ -23,14 +23,15 @@ shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
     const std::optional<std::string>& shader_binary_path
-): ctx(&ctx), shader_path(shader_path), shader_binary_path(shader_binary_path)
+):  glresource(ctx), shader_path(shader_path),
+    shader_binary_path(shader_binary_path)
 {}
 
 shader_pool::~shader_pool()
 {
 }
 
-multishader* shader_pool::add(const shader::path& path)
+multishader* shader_pool::add_shader(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it != shaders.end())
@@ -49,19 +50,19 @@ multishader* shader_pool::add(const shader::path& path)
     if(shader_binary_path)
     {
         s = new multishader(
-            *ctx,
+            get_context(),
             full_path,
             shader_path,
             append_hash_to_path(shader_binary_path.value(), full_path)
         ); 
     }
-    else s = new multishader(*ctx, full_path, shader_path); 
+    else s = new multishader(get_context(), full_path, shader_path); 
 
     shaders[path] = std::unique_ptr<multishader>(s);
     return s;
 }
 
-void shader_pool::remove(const shader::path& path)
+void shader_pool::remove_shader(const shader::path& path)
 {
     shaders.erase(path);
 }
@@ -82,22 +83,20 @@ void shader_pool::unload_all()
     }
 }
 
-multishader* shader_pool::get(const shader::path& path)
+multishader* shader_pool::get_shader(const shader::path& path)
 {
     auto it = shaders.find(path);
     if(it == shaders.end())
-        return add(path);
+        return add_shader(path);
     return it->second.get();
 }
 
-shader* shader_pool::get(
+shader* shader_pool::get_shader(
     const shader::path& path,
     const shader::definition_map& definitions
 ){
-    return get(path)->get(definitions);
+    return get_shader(path)->get(definitions);
 }
-
-size_t shader_pool::size() const { return shaders.size(); }
 
 shader_pool::iterator shader_pool::begin() { return shaders.begin(); }
 shader_pool::iterator shader_pool::end() { return shaders.end(); }
