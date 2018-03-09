@@ -35,16 +35,19 @@ struct deferred_data
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
-      buf(w, resolution),
-      sm(pool, main_scene),
-      clear_buf(buf),
-      clear_screen(screen.input(0)),
-      gp(buf, pool, main_scene),
-      lp(screen.input(0), buf, pool, main_scene),
-      sky(screen.input(0), pool, main_scene, &buf.get_depth_stencil()),
-      tm(screen.input(1), screen.output(1), pool),
-      screen_to_window(w, screen.input(1), method::blit_framebuffer::COLOR_ONLY)
+    ):  screen(w, resolution, GL_RGB16F, GL_FLOAT),
+        buf(w, resolution),
+        sm(pool, main_scene),
+        clear_buf(buf),
+        clear_screen(screen.input(0)),
+        gp(buf, pool, main_scene),
+        lp(screen.input(0), buf, pool, main_scene),
+        sky(screen.input(0), pool, main_scene, &buf.get_depth_stencil()),
+        tm(screen.input(1), pool, &screen.output(1)),
+        screen_to_window(
+            w, screen.input(1),
+            method::blit_framebuffer::COLOR_ONLY
+        )
     {
         screen.set_depth_stencil(0, &buf.get_depth_stencil());
     }
@@ -83,13 +86,17 @@ struct visualizer_data
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):screen(w, resolution, GL_RGB16F, GL_FLOAT),
-      buf(w, resolution),
-      clear_buf(buf),
-      clear_screen(screen.input(0)),
-      gp(buf, pool, main_scene),
-      visualizer(screen.input(0), buf, pool, main_scene),
-      screen_to_window(w, screen.input(0), method::blit_framebuffer::COLOR_ONLY)
+    ): screen(w, resolution, GL_RGB16F, GL_FLOAT),
+       buf(w, resolution),
+       clear_buf(buf),
+       clear_screen(screen.input(0)),
+       gp(buf, pool, main_scene),
+       visualizer(screen.input(0), buf, pool, main_scene),
+       screen_to_window(
+            w,
+            screen.input(0),
+            method::blit_framebuffer::COLOR_ONLY
+        )
     {}
 
     const std::vector<pipeline_method*> get_methods()
@@ -114,27 +121,30 @@ struct forward_data
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):color_buffer(w, resolution, GL_RGB16F, GL_FLOAT),
-      depth_buffer(
-        w,
-        resolution,
-        GL_DEPTH24_STENCIL8,
-        GL_UNSIGNED_INT_24_8
-      ),
-      screen(w, resolution, {
-        {GL_COLOR_ATTACHMENT0, {&color_buffer}},
-        {GL_DEPTH_ATTACHMENT, {&depth_buffer}}
-      }),
-      postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
-      sm(pool, main_scene),
-      clear_screen(screen),
-      fp(screen, pool, main_scene),
-      sky(screen, pool, main_scene, &depth_buffer),
-      tm(postprocess.input(0), color_buffer, pool),
-      postprocess_to_window(
-        w,
-        postprocess.input(0),
-        method::blit_framebuffer::COLOR_ONLY)
+    ):  screen(w, resolution, {
+            {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}},
+            {GL_DEPTH_ATTACHMENT, {GL_DEPTH24_STENCIL8, true}}
+        }),
+        postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
+        sm(pool, main_scene),
+        clear_screen(screen),
+        fp(screen, pool, main_scene),
+        sky(
+            screen,
+            pool,
+            main_scene,
+            screen.get_texture_target(GL_DEPTH_ATTACHMENT)
+        ),
+        tm(
+            postprocess.input(0),
+            pool,
+            screen.get_texture_target(GL_COLOR_ATTACHMENT0)
+        ),
+        postprocess_to_window(
+          w,
+          postprocess.input(0),
+          method::blit_framebuffer::COLOR_ONLY
+        )
     {}
 
 
@@ -143,8 +153,6 @@ struct forward_data
         return {&sm, &clear_screen, &fp, &sky, &tm, &postprocess_to_window};
     }
 
-    texture color_buffer;
-    texture depth_buffer;
     framebuffer screen;
     doublebuffer postprocess;
 

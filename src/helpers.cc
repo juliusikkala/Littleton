@@ -453,3 +453,9 @@ GLint internal_format_to_external_format(GLint internal_format)
         );
     }
 }
+
+GLint internal_format_compatible_type(GLint internal_format)
+{
+    if(internal_format == GL_DEPTH24_STENCIL8) return GL_UNSIGNED_INT_24_8;
+    return GL_UNSIGNED_BYTE;
+}

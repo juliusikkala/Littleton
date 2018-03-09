@@ -1,14 +1,24 @@
 #include "framebuffer.hh"
 #include "texture.hh"
 #include "context.hh"
+#include "helpers.hh"
 #include <stdexcept>
 #include <string>
+#include <boost/functional/hash.hpp>
 
 framebuffer::target_specifier::target_specifier(
     GLint format,
     bool as_texture
 ): format(format), as_texture(as_texture), use_texture(nullptr)
 {
+}
+
+bool framebuffer::target_specifier::operator==(
+    const target_specifier& other
+) const
+{
+    return other.format == format && other.as_texture == as_texture
+        && other.use_texture == use_texture;
 }
 
 framebuffer::target_specifier::target_specifier(texture* use_texture)
@@ -22,7 +32,8 @@ framebuffer::framebuffer(
     glm::uvec2 size,
     const target_specification_map& target_specifications,
     unsigned samples
-): render_target(ctx, size), target_specifications(target_specifications)
+):  render_target(ctx, size), target_specifications(target_specifications),
+    samples(samples)
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -54,7 +65,7 @@ framebuffer::framebuffer(
                     ctx,
                     size,
                     spec.format,
-                    GL_UNSIGNED_BYTE,
+                    internal_format_compatible_type(spec.format),
                     samples,
                     samples ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D
                 );
@@ -129,7 +140,8 @@ framebuffer::framebuffer(
 
 framebuffer::framebuffer(framebuffer&& f)
 : render_target(f), target_specifications(std::move(f.target_specifications)),
-  owned_textures(std::move(f.owned_textures)), targets(std::move(f.targets))
+  samples(f.samples), owned_textures(std::move(f.owned_textures)),
+  targets(std::move(f.targets))
 {
     f.fbo = 0;
     f.targets.clear();
@@ -147,6 +159,13 @@ framebuffer::~framebuffer()
 
     if(fbo != 0) glDeleteFramebuffers(1, &fbo);
 }
+
+const framebuffer::target_specification_map&
+framebuffer::get_target_specifications() const
+{
+    return target_specifications;
+}
+unsigned framebuffer::get_samples() const { return samples; }
 
 texture* framebuffer::get_texture_target(GLenum attachment) const
 {
@@ -167,3 +186,12 @@ texture* framebuffer::get_texture_target(GLenum attachment) const
     );
 }
 
+
+size_t boost::hash_value(const framebuffer::target_specifier& t)
+{
+    std::size_t seed = 0;
+    boost::hash_combine(seed, t.format);
+    boost::hash_combine(seed, t.as_texture);
+    boost::hash_combine(seed, t.use_texture);
+    return seed;
+}

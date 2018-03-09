@@ -11,6 +11,7 @@ src = [
   'src/resource.cc',
   'src/resource_pool.cc',
   'src/shader_pool.cc',
+  'src/framebuffer_pool.cc',
   'src/vertex_buffer.cc',
   'src/shader.cc',
   'src/texture.cc',

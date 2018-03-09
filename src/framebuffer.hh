@@ -22,6 +22,8 @@ public:
         GLint format;
         bool as_texture;
         texture* use_texture;
+
+        bool operator==(const target_specifier& other) const;
     };
 
     using target_specification_map = std::map<GLenum, target_specifier>;
@@ -36,13 +38,23 @@ public:
     framebuffer(framebuffer&& f);
     ~framebuffer();
 
+    const target_specification_map& get_target_specifications() const;
+    unsigned get_samples() const;
+
     texture* get_texture_target(GLenum attachment) const;
 
 private:
     target_specification_map target_specifications;
+    unsigned samples;
+
     std::vector<std::unique_ptr<texture>> owned_textures;
 
     std::map<GLenum, std::variant<texture*, GLuint>> targets;
 };
+
+namespace boost
+{
+    size_t hash_value(const framebuffer::target_specifier& t);
+}
 
 #endif

@@ -14,8 +14,8 @@ namespace method
     public:
         tonemap(
             render_target& target,
-            texture& src,
             resource_pool& pool,
+            texture* src,
             float exposure = 1.0f
         );
 

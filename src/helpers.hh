@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <boost/functional/hash.hpp>
@@ -102,6 +103,23 @@ size_t count_lines(const std::string& str);
 std::string add_line_numbers(const std::string& src);
 
 GLint internal_format_to_external_format(GLint internal_format);
+GLint internal_format_compatible_type(GLint internal_format);
+
+template<typename Resource, typename Pool>
+class loan_returner
+{
+public:
+    loan_returner(Pool& return_target);
+
+    void operator()(Resource* res);
+
+private:
+    Pool& return_target;
+};
+
+
+template<typename Resource, typename Pool>
+using loaner = std::unique_ptr<Resource, loan_returner<Resource, Pool>>;
 
 #include "helpers.tcc"
 

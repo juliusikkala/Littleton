@@ -1,13 +1,6 @@
 #include <sstream>
 #include <boost/filesystem.hpp>
 
-template<typename T>
-void hash_combine(std::size_t& seed, const T& v)
-{
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
 template<typename T, typename Hash>
 std::string append_hash_to_path(
     const std::string& prefix,
@@ -22,4 +15,14 @@ std::string append_hash_to_path(
     boost::filesystem::path hash_path(ss.str() + suffix);
     boost::filesystem::path prefix_path(prefix);
     return (prefix_path/hash_path).string();
+}
+
+template<typename Resource, typename Pool>
+loan_returner<Resource, Pool>::loan_returner(Pool& return_target)
+: return_target(return_target) { }
+
+template<typename Resource, typename Pool>
+void loan_returner<Resource, Pool>::operator()(Resource* res)
+{
+    return_target.give(res);
 }
