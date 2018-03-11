@@ -5,58 +5,20 @@
 #include "scene.hh"
 #include "helpers.hh"
 #include "shader_pool.hh"
+#include "common_resources.hh"
+#include "resource_pool.hh"
 #include <glm/gtc/random.hpp>
 
-static texture* generate_shadow_kernel(context& ctx, unsigned size)
-{
-    std::vector<glm::vec2> kernel;
-
-    mitchell_best_candidate(
-        kernel,
-        1.0f,
-        20,
-        size
-    );
-
-    return new texture(
-        ctx,
-        glm::uvec2(size),
-        GL_RG8_SNORM,
-        GL_FLOAT,
-        0,
-        GL_TEXTURE_1D,
-        (float*)kernel.data()
-    );
-}
-
-static texture* generate_shadow_noise_texture(context& ctx, glm::uvec2 size)
-{
-    // Just generate sines and cosines to rotate the kernel by.
-    std::vector<glm::vec2> shadow_samples;
-    shadow_samples.resize(size.x * size.y);
-
-    for(unsigned i = 0; i < size.x * size.y; ++i)
-    {
-        shadow_samples[i] = glm::circularRand(1.0f);
-    }
-
-    return new texture(
-        ctx,
-        size,
-        GL_RG8_SNORM,
-        GL_FLOAT,
-        0,
-        GL_TEXTURE_2D,
-        (float*)shadow_samples.data()
-    );
-}
-
-directional_pcf_impl::directional_pcf_impl(context& ctx)
-:   directional_shadow_map_impl(ctx),
-    shadow_noise(generate_shadow_noise_texture(ctx, glm::uvec2(512))),
-    kernel(generate_shadow_kernel(ctx, 256)),
+directional_pcf_impl::directional_pcf_impl(resource_pool& pool)
+:   directional_shadow_map_impl(pool.get_context()),
+    depth_shader(pool.get_shader(
+        shader::path{"generic.vert", "empty.frag"},
+        {{"VERTEX_POSITION", "0"}}
+    )),
+    shadow_noise(common::ensure_circular_random_texture(pool, glm::uvec2(512))),
+    kernel(common::ensure_circular_poisson_texture(pool, 256)),
     shadow_sampler(
-        ctx,
+        pool.get_context(),
         GL_LINEAR,
         GL_LINEAR,
         GL_CLAMP_TO_BORDER,
@@ -64,12 +26,11 @@ directional_pcf_impl::directional_pcf_impl(context& ctx)
         glm::vec4(1),
         GL_COMPARE_REF_TO_TEXTURE
     ),
-    noise_sampler(ctx, GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
+    noise_sampler(pool.get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
 }
 
 void directional_pcf_impl::render(
-    shader_pool& pool,
     const std::vector<directional_shadow_map*>& shadow_maps,
     render_scene* scene
 ){
@@ -77,11 +38,6 @@ void directional_pcf_impl::render(
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
-
-    shader* depth_shader = pool.get(
-        shader::path{"generic.vert", "empty.frag"},
-        {{"VERTEX_POSITION", "0"}}
-    );
 
     depth_shader->bind();
 
@@ -128,9 +84,9 @@ void directional_pcf_impl::set_common_uniforms(
 ){
     s->set(
         "shadow_noise",
-        noise_sampler.bind(*shadow_noise, texture_index++)
+        noise_sampler.bind(shadow_noise, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(*kernel, texture_index++));
+    s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
 void directional_pcf_impl::set_shadow_map_uniforms(
@@ -235,7 +191,9 @@ bool directional_shadow_map_pcf::impl_is_compatible(
     return dynamic_cast<const directional_pcf_impl*>(impl) != nullptr;
 }
 
-directional_pcf_impl* directional_shadow_map_pcf::create_impl() const
+directional_pcf_impl* directional_shadow_map_pcf::create_impl(
+    resource_pool& pool
+) const
 {
-    return new directional_pcf_impl(depth.get_context());
+    return new directional_pcf_impl(pool);
 }

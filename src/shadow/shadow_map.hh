@@ -18,7 +18,6 @@ public:
 
     // Renders the shadow map itself.
     virtual void render(
-        shader_pool& store,
         const std::vector<L*>& shadow_maps,
         render_scene* scene
     ) = 0;
@@ -49,6 +48,7 @@ public:
     virtual ~basic_shadow_map();
 };
 
+class resource_pool;
 class directional_shadow_map: public basic_shadow_map
 {
 public:
@@ -78,7 +78,9 @@ public:
     virtual bool impl_is_compatible(
         const directional_shadow_map_impl* impl
     ) = 0;
-    virtual directional_shadow_map_impl* create_impl() const = 0;
+    virtual directional_shadow_map_impl* create_impl(
+        resource_pool& pool
+    ) const = 0;
 
 private:
     transformable_node target;

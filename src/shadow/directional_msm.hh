@@ -12,10 +12,9 @@ class pp_render_target;
 class directional_msm_impl: public directional_shadow_map_impl
 {
 public:
-    directional_msm_impl(context& ctx);
+    directional_msm_impl(resource_pool& pool);
 
     void render(
-        shader_pool& store,
         const std::vector<directional_shadow_map*>& shadow_maps,
         render_scene* scene
     ) override;
@@ -42,6 +41,10 @@ private:
 
     // Postprocessing render target
     std::unique_ptr<pp_render_target> pp_rt;
+
+    shader* depth_shader;
+    shader* vertical_blur_shader;
+    shader* horizontal_blur_shader;
 
     vertex_buffer quad;
     sampler moment_sampler;
@@ -73,7 +76,7 @@ public:
     const texture& get_moments() const;
 
     bool impl_is_compatible(const directional_shadow_map_impl* impl);
-    directional_msm_impl* create_impl() const;
+    directional_msm_impl* create_impl(resource_pool& pool) const;
 
 private:
     texture moments;

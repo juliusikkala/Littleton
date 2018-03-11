@@ -6,8 +6,10 @@ shadow_scene::shadow_scene() {}
 
 shadow_scene::~shadow_scene() {}
 
-void shadow_scene::add_shadow_map(directional_shadow_map* sm)
-{
+void shadow_scene::add_shadow_map(
+    directional_shadow_map* sm,
+    resource_pool& pool
+){
     for(auto& pair: directional_shadow_maps)
     {
         if(sm->impl_is_compatible(pair.first.get()))
@@ -18,7 +20,7 @@ void shadow_scene::add_shadow_map(directional_shadow_map* sm)
     }
 
     directional_shadow_maps.emplace(
-        sm->create_impl(),
+        sm->create_impl(pool),
         std::vector<directional_shadow_map*>{sm}
     );
 }
@@ -31,8 +33,6 @@ void shadow_scene::remove_shadow_map(directional_shadow_map* sm)
     {
         if(sorted_erase(it->second, sm))
         {
-            if(it->second.empty())
-                directional_shadow_maps.erase(it);
             break;
         }
     }

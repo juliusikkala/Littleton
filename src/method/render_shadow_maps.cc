@@ -4,9 +4,8 @@
 #include "shadow/shadow_map.hh"
 
 method::render_shadow_maps::render_shadow_maps(
-    resource_pool& pool,
     render_scene* scene
-): pool(&pool), scene(scene)
+): scene(scene)
 {}
 
 void method::render_shadow_maps::set_scene(render_scene* s)
@@ -21,11 +20,11 @@ render_scene* method::render_shadow_maps::get_scene() const
 
 void method::render_shadow_maps::execute()
 {
-    if(!pool || !scene) return;
+    if(!scene) return;
 
     for(auto& pair: scene->get_directional_shadow_maps())
     {
-        pair.first->render(*pool, pair.second, scene);
+        pair.first->render(pair.second, scene);
     }
 }
 

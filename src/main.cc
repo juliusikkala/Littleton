@@ -36,7 +36,7 @@ struct deferred_data
         render_scene* main_scene
     ):  screen(w, resolution, GL_RGB16F, GL_FLOAT),
         buf(w, resolution),
-        sm(pool, main_scene),
+        sm(main_scene),
         clear_buf(buf),
         clear_screen(screen.input(0)),
         gp(buf, pool, main_scene),
@@ -125,7 +125,7 @@ struct forward_data
             {GL_DEPTH_ATTACHMENT, {GL_DEPTH24_STENCIL8, true}}
         }),
         postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
-        sm(pool, main_scene),
+        sm(main_scene),
         clear_screen(screen),
         fp(screen, pool, main_scene),
         sky(
@@ -202,14 +202,14 @@ public:
         load_dfo(resources, graph, "data/earth.dfo", "data");
 
         sun_shadow.reset(
-            new directional_shadow_map_msm(
+            new directional_shadow_map_pcf(
                 win,
                 glm::uvec2(1024),
-                4,
+                16,
                 4,
                 glm::vec3(0),
                 glm::vec2(8.0f),
-                glm::vec2(-5.0f, 5.0f),
+                glm::vec2(-20.0f, 20.0f),
                 &fake_sun
             )
         );
@@ -257,7 +257,7 @@ public:
         main_scene.add_light(&l2);
         main_scene.add_light(&spot);
         main_scene.add_light(&fake_sun);
-        main_scene.add_shadow_map(sun_shadow.get());
+        main_scene.add_shadow_map(sun_shadow.get(), resources);
 
         dp->sky.set_sun(&sun);
         dp->sky.set_intensity(5);
@@ -415,7 +415,7 @@ private:
     // This is a copy of 'sun' approximately colored by the atmosphere
     directional_light fake_sun;
 
-    std::unique_ptr<directional_shadow_map_msm> sun_shadow;
+    std::unique_ptr<directional_shadow_map_pcf> sun_shadow;
     std::unique_ptr<deferred_pipeline> dp;
     std::unique_ptr<visualizer_pipeline> vp;
     std::unique_ptr<forward_pipeline> fp;

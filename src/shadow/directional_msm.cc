@@ -6,6 +6,7 @@
 #include "helpers.hh"
 #include "shader_pool.hh"
 #include "render_target.hh"
+#include "resource_pool.hh"
 
 class ms_render_target: public render_target
 {
@@ -134,22 +135,32 @@ private:
     GLuint depth_rbo;
 };
 
-directional_msm_impl::directional_msm_impl(context& ctx)
-: directional_shadow_map_impl(ctx),
-  quad(vertex_buffer::create_square(ctx)),
-  moment_sampler(
-    ctx,
-    GL_LINEAR,
-    GL_LINEAR,
-    GL_CLAMP_TO_BORDER,
-    0,
-    glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
-  )
-{
-}
+directional_msm_impl::directional_msm_impl(resource_pool& pool)
+:   directional_shadow_map_impl(pool.get_context()),
+    quad(vertex_buffer::create_square(pool.get_context())),
+    moment_sampler(
+       pool.get_context(),
+       GL_LINEAR,
+       GL_LINEAR,
+       GL_CLAMP_TO_BORDER,
+       0,
+       glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
+    ),
+    depth_shader(pool.get_shader(
+        shader::path{"generic.vert", "shadow/msm.frag"},
+        {{"VERTEX_POSITION", "0"}}
+    )),
+    vertical_blur_shader(pool.get_shader(
+        shader::path{"fullscreen.vert", "blur.frag"},
+        {{"VERTICAL", ""}}
+    )),
+    horizontal_blur_shader(pool.get_shader(
+        shader::path{"fullscreen.vert", "blur.frag"},
+        {{"HORIZONTAL", ""}}
+    ))
+{}
 
 void directional_msm_impl::render(
-    shader_pool& pool,
     const std::vector<directional_shadow_map*>& shadow_maps,
     render_scene* scene
 ){
@@ -159,21 +170,6 @@ void directional_msm_impl::render(
     glDisable(GL_STENCIL_TEST);
 
     ensure_render_targets(shadow_maps);
-
-    shader* depth_shader = pool.get(
-        shader::path{"generic.vert", "shadow/msm.frag"},
-        {{"VERTEX_POSITION", "0"}}
-    );
-
-    shader* vertical_blur_shader = pool.get(
-        shader::path{"fullscreen.vert", "blur.frag"},
-        {{"VERTICAL", ""}}
-    );
-
-    shader* horizontal_blur_shader = pool.get(
-        shader::path{"fullscreen.vert", "blur.frag"},
-        {{"HORIZONTAL", ""}}
-    );
 
     for(directional_shadow_map* shadow_map: shadow_maps)
     {
@@ -340,7 +336,6 @@ directional_shadow_map_msm::directional_shadow_map_msm(
     moments_buffer(ctx, size, {{GL_COLOR_ATTACHMENT0, {&moments}}}),
     samples(samples),
     radius(radius)
-
 {}
 
 directional_shadow_map_msm::directional_shadow_map_msm(directional_shadow_map_msm&& other)
@@ -383,7 +378,9 @@ bool directional_shadow_map_msm::impl_is_compatible(
     return dynamic_cast<const directional_msm_impl*>(impl) != nullptr;
 }
 
-directional_msm_impl* directional_shadow_map_msm::create_impl() const
+directional_msm_impl* directional_shadow_map_msm::create_impl(
+    resource_pool& pool
+) const
 {
-    return new directional_msm_impl(moments.get_context());
+    return new directional_msm_impl(pool);
 }

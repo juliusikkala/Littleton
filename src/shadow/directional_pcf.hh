@@ -9,10 +9,9 @@
 class directional_pcf_impl: public directional_shadow_map_impl
 {
 public:
-    directional_pcf_impl(context& ctx);
+    directional_pcf_impl(resource_pool& pool);
 
     void render(
-        shader_pool& store,
         const std::vector<directional_shadow_map*>& shadow_maps,
         render_scene* scene
     ) override;
@@ -30,8 +29,9 @@ public:
     ) override;
 
 private:
-    std::unique_ptr<texture> shadow_noise;
-    std::unique_ptr<texture> kernel;
+    shader* depth_shader;
+    const texture& shadow_noise;
+    const texture& kernel;
     sampler shadow_sampler, noise_sampler;
 };
 
@@ -68,7 +68,7 @@ public:
     const texture& get_depth() const;
 
     bool impl_is_compatible(const directional_shadow_map_impl* impl);
-    directional_pcf_impl* create_impl() const;
+    directional_pcf_impl* create_impl(resource_pool& pool) const;
 
 private:
     texture depth;

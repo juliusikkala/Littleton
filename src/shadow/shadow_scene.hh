@@ -16,7 +16,7 @@ public:
     shadow_scene();
     ~shadow_scene();
 
-    void add_shadow_map(directional_shadow_map* sm);
+    void add_shadow_map(directional_shadow_map* sm, resource_pool& pool);
     void remove_shadow_map(directional_shadow_map* sm);
 
     void clear_shadow_maps();

@@ -63,8 +63,8 @@ float shadow_coef(
         0.0f, 1.0f, 0.0f, 1.0f
     );
     vec4 m = q * (texture(sm.map, pos.xy) - vec4(0.5f, 0.0f, 0.5f, 0.0f));
-    float alpha = 6.1e-5;
-    vec4 b = mix(m, vec4(0.0f, 0.63f, 0.0f, 0.63f), alpha);
+    float alpha = 6e-5;
+    vec4 b = mix(m, vec4(0.0f, 0.628f, 0.0f, 0.628f), alpha);
 
     return 1.0f - msm_shadow_intensity(b, pos.z);
 }
