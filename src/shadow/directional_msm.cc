@@ -7,145 +7,10 @@
 #include "shader_pool.hh"
 #include "render_target.hh"
 #include "resource_pool.hh"
-
-class ms_render_target: public render_target
-{
-public:
-    ms_render_target(context& ctx, glm::uvec2 size, unsigned samples)
-    : render_target(ctx, size)
-    {
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-        glGenRenderbuffers(1, &depth_rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_rbo);
-
-        glRenderbufferStorageMultisample(
-            GL_RENDERBUFFER,
-            samples,
-            GL_DEPTH_COMPONENT16,
-            size.x,
-            size.y
-        );
-
-        glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER,
-            GL_DEPTH_ATTACHMENT,
-            GL_RENDERBUFFER,
-            depth_rbo
-        );
-
-        glGenRenderbuffers(1, &color_rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, color_rbo);
-
-        glRenderbufferStorageMultisample(
-            GL_RENDERBUFFER,
-            samples,
-            GL_RGBA16,
-            size.x,
-            size.y
-        );
-
-        glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            GL_RENDERBUFFER,
-            color_rbo
-        );
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            throw std::runtime_error(
-                "Failed to create a multisample render target for MSM"
-            );
-
-        reinstate_current_fbo();
-    }
-
-    ~ms_render_target()
-    {
-        if(depth_rbo != 0) glDeleteRenderbuffers(1, &depth_rbo);
-        if(color_rbo != 0) glDeleteRenderbuffers(1, &color_rbo);
-        if(fbo != 0) glDeleteFramebuffers(1, &fbo);
-    }
-
-private:
-    GLuint depth_rbo, color_rbo;
-};
-
-class pp_render_target: public render_target
-{
-public:
-    pp_render_target(context& ctx, glm::uvec2 size)
-    : render_target(ctx, size),
-      color(ctx, size, GL_RGBA16, GL_FLOAT)
-    {
-        glGenFramebuffers(1, &fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-        glGenRenderbuffers(1, &depth_rbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_rbo);
-
-        glRenderbufferStorage(
-            GL_RENDERBUFFER,
-            GL_DEPTH_COMPONENT16,
-            size.x,
-            size.y
-        );
-
-        glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER,
-            GL_DEPTH_ATTACHMENT,
-            GL_RENDERBUFFER,
-            depth_rbo
-        );
-
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER,
-            GL_COLOR_ATTACHMENT0,
-            color.get_target(),
-            color.get_texture(),
-            0
-        );
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            throw std::runtime_error(
-                "Failed to create a postprocess render target for MSM"
-            );
-
-        reinstate_current_fbo();
-    }
-
-    ~pp_render_target()
-    {
-        if(depth_rbo != 0) glDeleteRenderbuffers(1, &depth_rbo);
-        if(fbo != 0) glDeleteFramebuffers(1, &fbo);
-    }
-
-    texture& get_color()
-    {
-        return color;
-    }
-
-private:
-    texture color;
-    GLuint depth_rbo;
-};
+#include "common_resources.hh"
 
 directional_msm_impl::directional_msm_impl(resource_pool& pool)
 :   directional_shadow_map_impl(pool.get_context()),
-    quad(vertex_buffer::create_square(pool.get_context())),
-    moment_sampler(
-       pool.get_context(),
-       GL_LINEAR,
-       GL_LINEAR,
-       GL_CLAMP_TO_BORDER,
-       0,
-       glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
-    ),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/msm.frag"},
         {{"VERTEX_POSITION", "0"}}
@@ -157,7 +22,16 @@ directional_msm_impl::directional_msm_impl(resource_pool& pool)
     horizontal_blur_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"},
         {{"HORIZONTAL", ""}}
-    ))
+    )),
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    moment_sampler(
+       pool.get_context(),
+       GL_LINEAR,
+       GL_LINEAR,
+       GL_CLAMP_TO_BORDER,
+       0,
+       glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
+    )
 {}
 
 void directional_msm_impl::render(
@@ -241,7 +115,9 @@ void directional_msm_impl::render(
         msm->moments_buffer.bind();
         horizontal_blur_shader->set(
             "tex",
-            moment_sampler.bind(pp_rt->get_color(), 0)
+            moment_sampler.bind(
+                *pp_rt->get_texture_target(GL_COLOR_ATTACHMENT0), 0
+            )
         );
         horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
         quad.draw();
@@ -294,16 +170,18 @@ void directional_msm_impl::ensure_render_targets(
 
     for(auto& pair: ms)
     {
-        std::unique_ptr<ms_render_target>& cur = ms_rt[pair.first];
+        std::unique_ptr<framebuffer>& cur = ms_rt[pair.first];
 
         glm::uvec2 ms_size = cur ? cur->get_size() : glm::uvec2(0);
 
         if(ms_size.x < pair.second.x || ms_size.y < pair.second.y)
         {
             cur.reset(
-                new ms_render_target(
+                new framebuffer(
                     get_context(),
                     glm::max(pair.second, ms_size),
+                    {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+                     {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
                     pair.first
                 )
             );
@@ -314,9 +192,11 @@ void directional_msm_impl::ensure_render_targets(
     if(pp_size.x < pp.x || pp_size.y < pp.y)
     {
         pp_rt.reset(
-            new pp_render_target(
+            new framebuffer(
                 get_context(),
-                glm::max(pp, pp_size)
+                glm::max(pp, pp_size),
+                {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+                 {GL_COLOR_ATTACHMENT0, {GL_RGBA16, true}}}
             )
         );
     }

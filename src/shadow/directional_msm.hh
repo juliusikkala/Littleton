@@ -7,8 +7,6 @@
 #include "vertex_buffer.hh"
 #include <memory>
 
-class ms_render_target;
-class pp_render_target;
 class directional_msm_impl: public directional_shadow_map_impl
 {
 public:
@@ -37,16 +35,16 @@ private:
     );
 
     // Multisampling render targets by sample count.
-    std::map<unsigned, std::unique_ptr<ms_render_target>> ms_rt;
+    std::map<unsigned, std::unique_ptr<framebuffer>> ms_rt;
 
     // Postprocessing render target
-    std::unique_ptr<pp_render_target> pp_rt;
+    std::unique_ptr<framebuffer> pp_rt;
 
     shader* depth_shader;
     shader* vertical_blur_shader;
     shader* horizontal_blur_shader;
 
-    vertex_buffer quad;
+    const vertex_buffer& quad;
     sampler moment_sampler;
 };
 

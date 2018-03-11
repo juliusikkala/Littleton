@@ -202,14 +202,14 @@ public:
         load_dfo(resources, graph, "data/earth.dfo", "data");
 
         sun_shadow.reset(
-            new directional_shadow_map_pcf(
+            new directional_shadow_map_msm(
                 win,
                 glm::uvec2(1024),
-                16,
+                4,
                 4,
                 glm::vec3(0),
                 glm::vec2(8.0f),
-                glm::vec2(-20.0f, 20.0f),
+                glm::vec2(-5.0f, 5.0f),
                 &fake_sun
             )
         );
@@ -415,7 +415,7 @@ private:
     // This is a copy of 'sun' approximately colored by the atmosphere
     directional_light fake_sun;
 
-    std::unique_ptr<directional_shadow_map_pcf> sun_shadow;
+    std::unique_ptr<directional_shadow_map_msm> sun_shadow;
     std::unique_ptr<deferred_pipeline> dp;
     std::unique_ptr<visualizer_pipeline> vp;
     std::unique_ptr<forward_pipeline> fp;
