@@ -3,18 +3,12 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-basic_shadow_map::basic_shadow_map(context& ctx)
-: glresource(ctx) {}
-
-basic_shadow_map::~basic_shadow_map() {}
-
 directional_shadow_map::directional_shadow_map(
-    context& ctx,
     glm::vec3 offset,
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-): basic_shadow_map(ctx), up(0,1,0), l(light)
+): up(0,1,0), l(light)
 {
     set_volume(area, depth_range);
     target.set_position(offset);
@@ -22,8 +16,7 @@ directional_shadow_map::directional_shadow_map(
 
 directional_shadow_map::directional_shadow_map(
     const directional_shadow_map& other
-):  basic_shadow_map(other),
-    target(other.target), up(other.up), projection(other.projection), l(other.l)
+): target(other.target), up(other.up), projection(other.projection), l(other.l)
 {}
 
 void directional_shadow_map::set_parent(transformable_node* parent)

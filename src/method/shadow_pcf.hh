@@ -1,0 +1,99 @@
+#ifndef METHOD_SHADOW_PCF_HH
+#define METHOD_SHADOW_PCF_HH
+#include "pipeline.hh"
+#include "render_target.hh"
+#include "shadow_method.hh"
+#include "texture.hh"
+#include "framebuffer.hh"
+#include "sampler.hh"
+
+class directional_shadow_map_pcf;
+class resource_pool;
+class shader;
+class vertex_buffer;
+namespace method { class shadow_pcf; }
+
+class directional_shadow_map_pcf: public directional_shadow_map
+{
+friend class method::shadow_pcf;
+public:
+    directional_shadow_map_pcf(
+        context& ctx,
+        glm::uvec2 size,
+        unsigned samples = 16,
+        float radius = 4.0f,
+        glm::vec3 offset = glm::vec3(0),
+        glm::vec2 area = glm::vec2(1.0f),
+        glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
+        directional_light* light = nullptr
+    );
+    directional_shadow_map_pcf(directional_shadow_map_pcf&& other);
+
+    void set_bias(
+        float min_bias = 0.001,
+        float max_bias = 0.02
+    );
+
+    glm::vec2 get_bias() const;
+
+    void set_samples(unsigned samples);
+    unsigned get_samples() const;
+
+    void set_radius(float radius);
+    float set_radius() const;
+
+    texture& get_depth();
+    const texture& get_depth() const;
+
+private:
+    texture depth;
+    framebuffer depth_buffer;
+    float min_bias, max_bias;
+    float radius;
+    unsigned samples;
+};
+
+namespace method
+{
+    class shadow_pcf: public shadow_method
+    {
+    public:
+        shadow_pcf(resource_pool& pool, render_scene* scene);
+
+        void add(directional_shadow_map_pcf* shadow_map);
+        void remove(directional_shadow_map_pcf* shadow_map);
+        void clear();
+
+        void set_directional_uniforms(
+            shader* s,
+            unsigned& texture_index
+        ) override;
+        shader::definition_map get_directional_definitions() const override;
+
+        size_t get_directional_shadow_map_count() const override;
+
+        directional_shadow_map_pcf*
+        get_directional_shadow_map(unsigned i) const override;
+
+        void set_directional_shadow_map_uniforms(
+            shader* s,
+            unsigned& texture_index,
+            unsigned i,
+            const std::string& prefix,
+            const glm::mat4& pos_to_world
+        ) override;
+
+        void execute() override;
+
+        std::string get_name() const override;
+
+    private:
+        shader* depth_shader;
+        const texture& shadow_noise;
+        const texture& kernel;
+        sampler shadow_sampler, noise_sampler;
+
+        std::vector<directional_shadow_map_pcf*> directional_shadow_maps;
+    };
+};
+#endif

@@ -1,10 +1,10 @@
 #ifndef SCENE_HH
 #define SCENE_HH
-#include "shadow/shadow_scene.hh"
-#include <set>
+#include <vector>
 
 class object;
 class camera;
+class light;
 class directional_light;
 class point_light;
 class spotlight;
@@ -85,8 +85,7 @@ private:
 
 
 class render_scene
-: public camera_scene, public object_scene, public light_scene,
-  public shadow_scene
+: public camera_scene, public object_scene, public light_scene
 {
 public:
     render_scene();

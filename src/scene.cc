@@ -1,5 +1,6 @@
 #include "scene.hh"
 #include "helpers.hh"
+#include "light.hh"
 
 camera_scene::camera_scene(camera* cam)
 : cam(cam) {}

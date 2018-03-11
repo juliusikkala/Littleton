@@ -35,10 +35,7 @@ src = [
   'src/doublebuffer.cc',
   'src/loaders.cc',
   'src/common_resources.cc',
-  'src/shadow/shadow_map.cc',
-  'src/shadow/shadow_scene.cc',
-  'src/shadow/directional_pcf.cc',
-  'src/shadow/directional_msm.cc',
+  'src/shadow_map.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',
@@ -50,8 +47,10 @@ src = [
   'src/method/kernel.cc',
   'src/method/tonemap.cc',
   'src/method/sky.cc',
-  'src/method/render_shadow_maps.cc',
   'src/method/draw_texture.cc',
+  'src/method/shadow_method.cc',
+  'src/method/shadow_pcf.cc',
+  'src/method/shadow_msm.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

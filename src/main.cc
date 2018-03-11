@@ -16,13 +16,12 @@
 #include "method/visualize_gbuffer.hh"
 #include "method/tonemap.hh"
 #include "method/sky.hh"
-#include "method/render_shadow_maps.hh"
+#include "method/shadow_pcf.hh"
+#include "method/shadow_msm.hh"
 #include "method/draw_texture.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
-#include "shadow/directional_pcf.hh"
-#include "shadow/directional_msm.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -36,11 +35,12 @@ struct deferred_data
         render_scene* main_scene
     ):  screen(w, resolution, GL_RGB16F, GL_FLOAT),
         buf(w, resolution),
-        sm(main_scene),
+        pcf(pool, main_scene),
+        msm(pool, main_scene),
         clear_buf(buf),
         clear_screen(screen.input(0)),
         gp(buf, pool, main_scene),
-        lp(screen.input(0), buf, pool, main_scene),
+        lp(screen.input(0), buf, pool, main_scene, {&pcf, &msm}),
         sky(screen.input(0), pool, main_scene, &buf.get_depth_stencil()),
         tm(screen.input(1), pool, &screen.output(1)),
         screen_to_window(
@@ -54,7 +54,8 @@ struct deferred_data
     const std::vector<pipeline_method*> get_methods()
     {
         return {
-            &sm,
+            &pcf,
+            &msm,
             &clear_buf,
             &clear_screen,
             &gp,
@@ -68,7 +69,8 @@ struct deferred_data
     doublebuffer screen;
     gbuffer buf;
 
-    method::render_shadow_maps sm;
+    method::shadow_pcf pcf;
+    method::shadow_msm msm;
     method::clear clear_buf;
     method::clear clear_screen;
     method::geometry_pass gp;
@@ -125,9 +127,10 @@ struct forward_data
             {GL_DEPTH_ATTACHMENT, {GL_DEPTH24_STENCIL8, true}}
         }),
         postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
-        sm(main_scene),
+        pcf(pool, main_scene),
+        msm(pool, main_scene),
         clear_screen(screen),
-        fp(screen, pool, main_scene),
+        fp(screen, pool, main_scene, {&pcf, &msm}),
         sky(
             screen,
             pool,
@@ -149,13 +152,22 @@ struct forward_data
 
     const std::vector<pipeline_method*> get_methods()
     {
-        return {&sm, &clear_screen, &fp, &sky, &tm, &postprocess_to_window};
+        return {
+            &pcf,
+            &msm,
+            &clear_screen,
+            &fp,
+            &sky,
+            &tm,
+            &postprocess_to_window
+        };
     }
 
     framebuffer screen;
     doublebuffer postprocess;
 
-    method::render_shadow_maps sm;
+    method::shadow_pcf pcf;
+    method::shadow_msm msm;
     method::clear clear_screen;
     method::forward_pass fp;
     method::sky sky;
@@ -201,7 +213,20 @@ public:
         load_dfo(resources, graph, "data/test_scene.dfo", "data");
         load_dfo(resources, graph, "data/earth.dfo", "data");
 
-        sun_shadow.reset(
+        sun_shadow_pcf.reset(
+            new directional_shadow_map_pcf(
+                win,
+                glm::uvec2(1024),
+                4,
+                4,
+                glm::vec3(0),
+                glm::vec2(8.0f),
+                glm::vec2(-5.0f, 5.0f),
+                &fake_sun
+            )
+        );
+
+        sun_shadow_msm.reset(
             new directional_shadow_map_msm(
                 win,
                 glm::uvec2(1024),
@@ -240,7 +265,8 @@ public:
         cam.lookat(suzanne);
         main_scene.set_camera(&cam);
 
-        sun_shadow->set_parent(suzanne);
+        sun_shadow_pcf->set_parent(suzanne);
+        sun_shadow_msm->set_parent(suzanne);
 
         graph.add_to_scene(&main_scene);
 
@@ -257,7 +283,11 @@ public:
         main_scene.add_light(&l2);
         main_scene.add_light(&spot);
         main_scene.add_light(&fake_sun);
-        main_scene.add_shadow_map(sun_shadow.get(), resources);
+
+        dp->msm.add(sun_shadow_msm.get());
+        //dp->pcf.add(sun_shadow_pcf.get());
+        fp->msm.add(sun_shadow_msm.get());
+        //fp->pcf.add(sun_shadow_pcf.get());
 
         dp->sky.set_sun(&sun);
         dp->sky.set_intensity(5);
@@ -415,7 +445,8 @@ private:
     // This is a copy of 'sun' approximately colored by the atmosphere
     directional_light fake_sun;
 
-    std::unique_ptr<directional_shadow_map_msm> sun_shadow;
+    std::unique_ptr<directional_shadow_map_pcf> sun_shadow_pcf;
+    std::unique_ptr<directional_shadow_map_msm> sun_shadow_msm;
     std::unique_ptr<deferred_pipeline> dp;
     std::unique_ptr<visualizer_pipeline> vp;
     std::unique_ptr<forward_pipeline> fp;

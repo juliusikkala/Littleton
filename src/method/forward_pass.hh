@@ -8,13 +8,15 @@ class multishader;
 
 namespace method
 {
+    class shadow_method;
     class forward_pass: public target_method
     {
     public:
         forward_pass(
             render_target& target,
             shader_pool& shaders,
-            render_scene* scene = nullptr
+            render_scene* scene,
+            std::vector<shadow_method*>&& shadows = {}
         );
         ~forward_pass();
 
@@ -29,6 +31,7 @@ namespace method
         multishader* forward_shader;
         multishader* depth_shader;
         render_scene* scene; 
+        std::vector<shadow_method*> shadows;
     };
 }
 

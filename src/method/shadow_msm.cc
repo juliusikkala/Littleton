@@ -1,16 +1,14 @@
-#include "directional_msm.hh"
-#include "object.hh"
-#include "model.hh"
-#include "vertex_buffer.hh"
-#include "scene.hh"
-#include "helpers.hh"
-#include "shader_pool.hh"
-#include "render_target.hh"
+#include "shadow_msm.hh"
 #include "resource_pool.hh"
+#include "helpers.hh"
+#include "object.hh"
+#include "camera.hh"
+#include "scene.hh"
 #include "common_resources.hh"
 
-directional_msm_impl::directional_msm_impl(resource_pool& pool)
-:   directional_shadow_map_impl(pool.get_context()),
+method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
+:   glresource(pool.get_context()),
+    shadow_method(scene),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/msm.frag"},
         {{"VERTEX_POSITION", "0"}}
@@ -34,23 +32,66 @@ directional_msm_impl::directional_msm_impl(resource_pool& pool)
     )
 {}
 
-void directional_msm_impl::render(
-    const std::vector<directional_shadow_map*>& shadow_maps,
-    render_scene* scene
+void method::shadow_msm::add(directional_shadow_map_msm* shadow_map)
+{
+    sorted_insert(directional_shadow_maps, shadow_map);
+}
+
+void method::shadow_msm::remove(directional_shadow_map_msm* shadow_map)
+{
+    sorted_erase(directional_shadow_maps, shadow_map);
+}
+
+void method::shadow_msm::clear()
+{
+    directional_shadow_maps.clear();
+}
+
+shader::definition_map method::shadow_msm::get_directional_definitions() const
+{
+    return {{"SHADOW_MAPPING", "shadow/directional_msm.glsl"}};
+}
+
+size_t method::shadow_msm::get_directional_shadow_map_count() const
+{
+    return directional_shadow_maps.size();
+}
+
+directional_shadow_map_msm*
+method::shadow_msm::get_directional_shadow_map(unsigned i) const
+{
+    return directional_shadow_maps[i];
+}
+
+void method::shadow_msm::set_directional_shadow_map_uniforms(
+    shader* s,
+    unsigned& texture_index,
+    unsigned i,
+    const std::string& prefix,
+    const glm::mat4& pos_to_world
 ){
+    directional_shadow_map_msm* sm = directional_shadow_maps[i];
+
+    glm::mat4 lvp = sm->get_projection() * sm->get_view();
+
+    s->set(
+        prefix + "map",
+        moment_sampler.bind(sm->moments, texture_index++)
+    );
+    s->set(prefix + "mvp", lvp * pos_to_world);
+}
+
+void method::shadow_msm::execute()
+{
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
-    ensure_render_targets(shadow_maps);
+    ensure_render_targets();
 
-    for(directional_shadow_map* shadow_map: shadow_maps)
+    for(directional_shadow_map_msm* msm: directional_shadow_maps)
     {
-        directional_shadow_map_msm* msm =
-            dynamic_cast<directional_shadow_map_msm*>(shadow_map);
-        if(!msm) continue;
-
         // Render depth data
         depth_shader->bind();
 
@@ -124,48 +165,21 @@ void directional_msm_impl::render(
     }
 }
 
-shader::definition_map directional_msm_impl::get_definitions() const
+std::string method::shadow_msm::get_name() const
 {
-    return {{"SHADOW_MAPPING", "shadow/directional_msm.glsl"}};
+    return "shadow_msm";
 }
 
-void directional_msm_impl::set_common_uniforms(shader*, unsigned&) { }
-
-void directional_msm_impl::set_shadow_map_uniforms(
-    shader* s,
-    unsigned& texture_index,
-    directional_shadow_map* shadow_map,
-    const std::string& prefix,
-    const glm::mat4& pos_to_world
-){
-    directional_shadow_map_msm* msm =
-        dynamic_cast<directional_shadow_map_msm*>(shadow_map);
-    if(!msm) return;
-
-    glm::mat4 lvp = msm->get_projection() * msm->get_view();
-
-    s->set(
-        prefix + "map",
-        moment_sampler.bind(msm->moments, texture_index++)
-    );
-    s->set(prefix + "mvp", lvp * pos_to_world);
-}
-
-void directional_msm_impl::ensure_render_targets(
-    const std::vector<directional_shadow_map*>& shadow_maps
-){
+void method::shadow_msm::ensure_render_targets()
+{
     std::map<unsigned, glm::uvec2> ms;
     glm::uvec2 pp;
 
-    for(directional_shadow_map* sm: shadow_maps)
+    for(directional_shadow_map_msm* sm: directional_shadow_maps)
     {
-        directional_shadow_map_msm* msm =
-            dynamic_cast<directional_shadow_map_msm*>(sm);
-        if(!msm) return;
-
-        glm::uvec2& ms_size = ms[msm->get_samples()];
-        ms_size = glm::max(msm->moments.get_size(), ms_size);
-        pp = glm::max(msm->moments.get_size(), pp);
+        glm::uvec2& ms_size = ms[sm->get_samples()];
+        ms_size = glm::max(sm->moments.get_size(), ms_size);
+        pp = glm::max(sm->moments.get_size(), pp);
     }
 
     for(auto& pair: ms)
@@ -211,7 +225,7 @@ directional_shadow_map_msm::directional_shadow_map_msm(
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-):  directional_shadow_map(ctx, offset, area, depth_range, light),
+):  directional_shadow_map(offset, area, depth_range, light),
     moments(ctx, size, GL_RGBA16, GL_FLOAT),
     moments_buffer(ctx, size, {{GL_COLOR_ATTACHMENT0, {&moments}}}),
     samples(samples),
@@ -250,17 +264,4 @@ texture& directional_shadow_map_msm::get_moments()
 const texture& directional_shadow_map_msm::get_moments() const
 {
     return moments;
-}
-
-bool directional_shadow_map_msm::impl_is_compatible(
-    const directional_shadow_map_impl* impl
-){
-    return dynamic_cast<const directional_msm_impl*>(impl) != nullptr;
-}
-
-directional_msm_impl* directional_shadow_map_msm::create_impl(
-    resource_pool& pool
-) const
-{
-    return new directional_msm_impl(pool);
 }
