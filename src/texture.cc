@@ -204,12 +204,13 @@ public:
         this->target = target;
     }
 
-    void load() const override
+protected:
+    void load_impl() const override
     {
         basic_load(path, srgb, target);
     }
 
-    void unload() const override
+    void unload_impl() const override
     {
         basic_unload();
     }
@@ -258,7 +259,8 @@ public:
         if(data) delete [] (uint8_t*)data;
     }
 
-    void load() const override
+protected:
+    void load_impl() const override
     {
         basic_load(
             size,
@@ -270,7 +272,7 @@ public:
         );
     }
 
-    void unload() const override
+    void unload_impl() const override
     {
         basic_unload();
     }

@@ -5,14 +5,12 @@ struct point_light
 {
     vec3 color;
     vec3 position;
-    int shadow_map_index; // negative for no shadow map
 };
 
 struct directional_light
 {
     vec3 color;
     vec3 direction;
-    int shadow_map_index; // negative for no shadow map
 };
 
 struct spotlight
@@ -22,7 +20,6 @@ struct spotlight
     vec3 direction;
     float cutoff;
     float exponent;
-    int shadow_map_index; // negative for no shadow map
 };
 
 vec3 calc_point_light(

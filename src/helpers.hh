@@ -121,6 +121,18 @@ private:
 template<typename Resource, typename Pool>
 using loaner = std::unique_ptr<Resource, loan_returner<Resource, Pool>>;
 
+template<typename T>
+void sorted_insert(
+    std::vector<T>& vec,
+    const T& value
+);
+
+template<typename T>
+bool sorted_erase(
+    std::vector<T>& vec,
+    const T& value
+);
+
 #include "helpers.tcc"
 
 #endif

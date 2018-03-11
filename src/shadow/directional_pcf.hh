@@ -1,19 +1,19 @@
-#ifndef SHADOW_PCF_HH
-#define SHADOW_PCF_HH
+#ifndef SHADOW_DIRECTIONAL_PCF_HH
+#define SHADOW_DIRECTIONAL_PCF_HH
 #include "shadow_map.hh"
 #include "framebuffer.hh"
 #include "texture.hh"
 #include "sampler.hh"
 #include <memory>
 
-class pcf_impl: public shadow_map_impl
+class directional_pcf_impl: public directional_shadow_map_impl
 {
 public:
-    pcf_impl(context& ctx);
+    directional_pcf_impl(context& ctx);
 
     void render(
         shader_pool& store,
-        const std::set<basic_shadow_map*>& shadow_maps,
+        const std::vector<directional_shadow_map*>& shadow_maps,
         render_scene* scene
     ) override;
 
@@ -24,7 +24,7 @@ public:
     void set_shadow_map_uniforms(
         shader* s,
         unsigned& texture_index,
-        basic_shadow_map* shadow_map,
+        directional_shadow_map* shadow_map,
         const std::string& prefix,
         const glm::mat4& pos_to_world
     ) override;
@@ -35,17 +35,21 @@ private:
     sampler shadow_sampler, noise_sampler;
 };
 
-class pcf_shadow_map
+class directional_shadow_map_pcf: public directional_shadow_map
 {
-friend class pcf_impl;
+friend class directional_pcf_impl;
 public:
-    pcf_shadow_map(
+    directional_shadow_map_pcf(
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
-        float radius = 4.0f
+        float radius = 4.0f,
+        glm::vec3 offset = glm::vec3(0),
+        glm::vec2 area = glm::vec2(1.0f),
+        glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
+        directional_light* light = nullptr
     );
-    pcf_shadow_map(pcf_shadow_map&& other);
+    directional_shadow_map_pcf(directional_shadow_map_pcf&& other);
 
     void set_bias(
         float min_bias = 0.001,
@@ -63,8 +67,8 @@ public:
     texture& get_depth();
     const texture& get_depth() const;
 
-    bool impl_is_compatible(const shadow_map_impl* impl);
-    pcf_impl* create_impl() const;
+    bool impl_is_compatible(const directional_shadow_map_impl* impl);
+    directional_pcf_impl* create_impl() const;
 
 private:
     texture depth;
@@ -72,29 +76,6 @@ private:
     float min_bias, max_bias;
     float radius;
     unsigned samples;
-};
-
-class directional_shadow_map_pcf
-: public basic_shadow_map, public pcf_shadow_map, public directional_shadow_map
-{
-public:
-    directional_shadow_map_pcf(
-        context& ctx,
-        glm::uvec2 size,
-        unsigned samples = 16,
-        float radius = 4.0f,
-        glm::vec3 offset = glm::vec3(0),
-        glm::vec2 area = glm::vec2(1.0f),
-        glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
-        directional_light* light = nullptr
-    );
-
-    bool impl_is_compatible(const shadow_map_impl* impl) override;
-    pcf_impl* create_impl() const override;
-
-    light* get_light() const override;
-    glm::mat4 get_view() const override;
-    glm::mat4 get_projection() const override;
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include <sstream>
 #include <boost/filesystem.hpp>
+#include <algorithm>
 
 template<typename T, typename Hash>
 std::string append_hash_to_path(
@@ -25,4 +26,27 @@ template<typename Resource, typename Pool>
 void loan_returner<Resource, Pool>::operator()(Resource* res)
 {
     return_target.give(res);
+}
+
+template<typename T>
+void sorted_insert(
+    std::vector<T>& vec,
+    const T& value
+){
+    auto it = std::lower_bound(vec.begin(), vec.end(), value);
+    if(it == vec.end() || *it != value) vec.insert(it, value);
+}
+
+template<typename T>
+bool sorted_erase(
+    std::vector<T>& vec,
+    const T& value
+){
+    auto it = std::lower_bound(vec.begin(), vec.end(), value);
+    if(it != vec.end() && *it == value)
+    {
+        vec.erase(it);
+        return true;
+    }
+    return false;
 }

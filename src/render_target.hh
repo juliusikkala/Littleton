@@ -13,8 +13,8 @@ public:
     );
     virtual ~render_target();
 
-    virtual void bind(GLenum target = GL_FRAMEBUFFER);
-    virtual void unbind();
+    void bind(GLenum target = GL_FRAMEBUFFER);
+    void unbind();
     bool is_bound(GLenum target = GL_FRAMEBUFFER) const;
 
     glm::uvec2 get_size() const;

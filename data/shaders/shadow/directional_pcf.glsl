@@ -10,29 +10,16 @@ struct shadow_map
     int samples;
 };
 
-struct shadow_vertex_data
-{
-    vec4 light_space_pos;
-};
-
-void calculate_shadow_vertex_data(
-    in shadow_map sm,
-    out shadow_vertex_data data,
-    vec3 vertex_pos
-){
-    data.light_space_pos = sm.mvp * vec4(vertex_pos, 1.0f);
-}
-
 uniform sampler1D shadow_kernel;
 uniform sampler2D shadow_noise;
 
 float shadow_coef(
     in shadow_map sm,
-    in shadow_vertex_data data,
+    vec4 light_space_pos,
     vec3 normal,
     vec3 light_dir
 ){
-    vec3 pos = data.light_space_pos.xyz / data.light_space_pos.w;
+    vec3 pos = light_space_pos.xyz / light_space_pos.w;
     pos = pos * 0.5f + 0.5f;
     if(pos.z > 1.0f) return 1.0f;
 

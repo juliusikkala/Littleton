@@ -10,9 +10,9 @@ uniform mat4 m;
 uniform mat3 n_m;
 #endif
 
-#if MAX_SHADOW_MAP_COUNT > 0
-uniform int shadow_map_count;
-uniform shadow_map shadows[MAX_SHADOW_MAP_COUNT];
+#ifdef SHADOW_MAPPING
+#include "shadow.glsl"
+uniform shadow_map shadow;
 #endif
 
 void main(void)
@@ -20,15 +20,8 @@ void main(void)
     v_out.position = vec3(m * vec4(v_vertex, 1.0f));
     gl_Position = mvp * vec4(v_vertex, 1.0f);
 
-#if MAX_SHADOW_MAP_COUNT > 0
-    for(int i = 0; i < shadow_map_count; ++i)
-    {
-        calculate_shadow_vertex_data(
-            shadows[i],
-            v_out.shadow_data[i],
-            v_vertex
-        );
-    }
+#ifdef SHADOW_MAPPING
+    v_out.light_space_pos = shadow.mvp * vec4(v_vertex, 1.0f);
 #endif
 
 #ifdef VERTEX_NORMAL

@@ -5,10 +5,20 @@
 class resource
 {
 public:
+    resource();
     virtual ~resource();
 
-    virtual void load() const;
-    virtual void unload() const;
+    void load() const;
+    void unload() const;
+
+    bool is_loaded() const;
+
+protected:
+    virtual void load_impl() const;
+    virtual void unload_impl() const;
+
+private:
+    mutable bool loaded;
 };
 
 class context;

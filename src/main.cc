@@ -21,9 +21,8 @@
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
-#include "shadow/pcf.hh"
-#include "shadow/msm.hh"
-#include "shadow/pcf.hh"
+#include "shadow/directional_pcf.hh"
+#include "shadow/directional_msm.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>

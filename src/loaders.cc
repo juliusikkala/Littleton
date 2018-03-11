@@ -45,7 +45,8 @@ public:
         dfo_buffer* buf
     ): vertex_buffer(ctx), res(res), buf(buf) {}
 
-    void load() const override
+protected:
+    void load_impl() const override
     {
         if(vao) return;
 
@@ -98,7 +99,7 @@ public:
         delete [] indices;
     }
 
-    void unload() const override
+    void unload_impl() const override
     {
         basic_unload();
     }

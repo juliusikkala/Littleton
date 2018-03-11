@@ -16,6 +16,8 @@
 // Make sure that the shadow maps are not overridden by material textures.
 // The last texture index set by 'material' is 6, so start shadow maps
 // from 7.
+// TODO: Make material report the number of used texture indices like shadow
+// maps do.
 static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 
 method::forward_pass::forward_pass(
@@ -26,34 +28,153 @@ method::forward_pass::forward_pass(
     forward_shader(pool.get(
         shader::path{"generic.vert", "forward.frag"})
     ),
+    depth_shader(pool.get(shader::path{"generic.vert", "depth.frag"})),
     scene(scene)
-{
-}
+{}
 
 method::forward_pass::~forward_pass() {}
 
-static bool handle_light_in_this_pass(
-    light* l,
-    const std::set<basic_shadow_map*>& shadow_maps,
-    const std::map<light*, basic_shadow_map*>& shadows_by_light,
-    std::set<light*>& unhandled_lights,
-    int& shadow_map_index
+static void set_light(
+    shader* s,
+    point_light* light,
+    const glm::mat4& view
 ){
-    // Has the light been handled already?
-    if(unhandled_lights.count(l) == 0) return false;
+    s->set(
+        "light.position",
+        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
+    );
+    s->set("light.color", light->get_color());
+}
 
-    // Is the light shadowed by a shadow map that is not handled in this pass?
-    auto shadow_it = shadows_by_light.find(l);
-    if(shadow_it != shadows_by_light.end())
+static void set_light(
+    shader* s,
+    spotlight* light,
+    const glm::mat4& view
+){
+    s->set(
+        "light.position",
+        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
+    );
+    s->set("light.color", light->get_color());
+
+    s->set(
+        "light.direction",
+        glm::normalize(
+            glm::vec3(
+                view * glm::vec4(light->get_global_direction(), 0)
+            )
+        )
+    );
+    s->set<float>(
+        "light.cutoff",
+        cos(glm::radians(light->get_cutoff_angle()))
+    );
+    s->set(
+        "light.exponent",
+        light->get_falloff_exponent()
+    );
+}
+
+static void set_light(
+    shader* s,
+    directional_light* light,
+    const glm::mat4& view
+){
+    s->set("light.color", light->get_color());
+    s->set(
+        "light.direction",
+        glm::normalize(glm::vec3(view * glm::vec4(light->get_direction(), 0)))
+    );
+}
+
+static void update_scene_definitions(
+    shader::definition_map& def,
+    render_scene* scene,
+    directional_light* light
+){
+    def["SINGLE_LIGHT"];
+    def["DIRECTIONAL_LIGHT"];
+}
+
+template<typename I, typename S>
+void render_shadowed_light(
+    multishader* forward_shader,
+    S* shadow_map,
+    I* impl,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::mat4& p
+){
+    shader::definition_map scene_definitions = impl->get_definitions();
+    update_scene_definitions(scene_definitions, scene, shadow_map->get_light());
+
+    for(object* obj: scene->get_objects())
     {
-        auto map_it = shadow_maps.find(shadow_it->second);
-        if(map_it == shadow_maps.end()) return false;
-        shadow_map_index = std::distance(shadow_maps.begin(), map_it);
-    }
-    else shadow_map_index = -1;
+        model* mod = obj->get_model();
+        if(!mod) continue;
 
-    unhandled_lights.erase(l);
-    return true;
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mv = v * m;
+        glm::mat3 n_mv(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
+
+        for(model::vertex_group& group: *mod)
+        {
+            if(!group.mat || !group.mesh) continue;
+
+            shader::definition_map def = scene_definitions;
+            group.mat->update_definitions(def);
+            group.mesh->update_definitions(def);
+
+            shader* s = forward_shader->get(def);
+            s->bind();
+
+            unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
+
+            impl->set_common_uniforms(s, texture_index);
+            impl->set_shadow_map_uniforms(
+                s,
+                texture_index,
+                shadow_map,
+                "shadow.",
+                m
+            );
+            set_light(s, shadow_map->get_light(), v);
+
+            s->set("mvp", mvp);
+            s->set("m", mv);
+            s->set("n_m", n_mv);
+
+            group.mat->apply(s);
+            group.mesh->draw();
+        }
+    }
+}
+
+template<typename L, typename S>
+void render_shadowed_lights(
+    multishader* forward_shader,
+    const std::vector<L*>& lights,
+    std::vector<bool>& handled_lights,
+    const S& shadow_maps,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::mat4& p
+){
+    for(const auto& pair: shadow_maps)
+    {
+        for(auto* sm: pair.second)
+        {
+            L* light = sm->get_light();
+            auto it = std::lower_bound(lights.begin(), lights.end(), light);
+            if(it == lights.end() || *it != light) continue;
+            handled_lights[it - lights.begin()] = true;
+
+            render_shadowed_light(
+                forward_shader, sm, pair.first.get(), scene, v, p
+            );
+        }
+    }
 }
 
 static std::unique_ptr<uniform_block> create_light_block(
@@ -61,9 +182,9 @@ static std::unique_ptr<uniform_block> create_light_block(
     render_scene* scene,
     shader* compatible_shader,
     const glm::mat4& v,
-    const std::set<basic_shadow_map*>& shadow_maps,
-    const std::map<light*, basic_shadow_map*>& shadows_by_light,
-    std::set<light*>& unhandled_lights
+    const std::vector<bool>& handled_point_lights,
+    const std::vector<bool>& handled_spotlights,
+    const std::vector<bool>& handled_directional_lights
 ){
     unsigned point_light_count = 0;
     unsigned spotlight_count = 0;
@@ -73,17 +194,11 @@ static std::unique_ptr<uniform_block> create_light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
 
-    unsigned i = 0;
-    for(point_light* l: scene->get_point_lights())
+    const std::vector<point_light*>& point_lights = scene->get_point_lights();
+    for(unsigned i = 0; i < point_lights.size(); ++i)
     {
-        int shadow_map_index = -1;
-        if(handle_light_in_this_pass(
-            l,
-            shadow_maps,
-            shadows_by_light,
-            unhandled_lights,
-            shadow_map_index
-        ) == false) continue;
+        if(handled_point_lights[i]) continue;
+        point_light* l = point_lights[i];
 
         point_light_count++;
         std::string prefix = "point["+std::to_string(i)+"].";
@@ -95,47 +210,13 @@ static std::unique_ptr<uniform_block> create_light_block(
             prefix + "position",
             glm::vec3(v * glm::vec4(l->get_global_position(), 1))
         );
-        light_block->set(prefix + "shadow_map_index", shadow_map_index);
-        ++i;
     }
 
-    i = 0;
-    for(directional_light* l: scene->get_directional_lights())
+    const std::vector<spotlight*>& spotlights = scene->get_spotlights();
+    for(unsigned i = 0; i < spotlights.size(); ++i)
     {
-        int shadow_map_index = -1;
-        if(handle_light_in_this_pass(
-            l,
-            shadow_maps,
-            shadows_by_light,
-            unhandled_lights,
-            shadow_map_index
-        ) == false) continue;
-
-        directional_light_count++;
-        std::string prefix = "directional["+std::to_string(i)+"].";
-        light_block->set(
-            prefix + "color",
-            l->get_color()
-        );
-        light_block->set(
-            prefix + "direction",
-            glm::normalize(glm::vec3(v * glm::vec4(l->get_direction(), 0)))
-        );
-        light_block->set(prefix + "shadow_map_index", shadow_map_index);
-        ++i;
-    }
-
-    i = 0;
-    for(spotlight* l: scene->get_spotlights())
-    {
-        int shadow_map_index = -1;
-        if(handle_light_in_this_pass(
-            l,
-            shadow_maps,
-            shadows_by_light,
-            unhandled_lights,
-            shadow_map_index
-        ) == false) continue;
+        if(handled_spotlights[i]) continue;
+        spotlight* l = spotlights[i];
 
         spotlight_count++;
         std::string prefix = "spot["+std::to_string(i)+"].";
@@ -160,8 +241,26 @@ static std::unique_ptr<uniform_block> create_light_block(
             prefix + "exponent",
             l->get_falloff_exponent()
         );
-        light_block->set(prefix + "shadow_map_index", shadow_map_index);
-        ++i;
+    }
+
+    const std::vector<directional_light*>& directional_lights =
+        scene->get_directional_lights();
+
+    for(unsigned i = 0; i < directional_lights.size(); ++i)
+    {
+        if(handled_directional_lights[i]) continue;
+        directional_light* l = directional_lights[i];
+
+        directional_light_count++;
+        std::string prefix = "directional["+std::to_string(i)+"].";
+        light_block->set(
+            prefix + "color",
+            l->get_color()
+        );
+        light_block->set(
+            prefix + "direction",
+            glm::normalize(glm::vec3(v * glm::vec4(l->get_direction(), 0)))
+        );
     }
 
     light_block->set<int>("point_light_count", point_light_count);
@@ -173,38 +272,31 @@ static std::unique_ptr<uniform_block> create_light_block(
     return light_block;
 }
 
+
 static void update_scene_definitions(
     shader::definition_map& def,
-    render_scene* scene,
-    size_t shadow_map_count
+    render_scene* scene
 ){
-    def["LIGHTING"];
+    def["MULTIPLE_LIGHTS"];
     def["MAX_POINT_LIGHT_COUNT"] = std::to_string(
         next_power_of_two(scene->point_light_count()));
     def["MAX_DIRECTIONAL_LIGHT_COUNT"] = std::to_string(
         next_power_of_two(scene->directional_light_count()));
     def["MAX_SPOTLIGHT_COUNT"] = std::to_string(
         next_power_of_two(scene->spotlight_count()));
-
-    if(shadow_map_count > 0)
-    {
-        def["MAX_SHADOW_MAP_COUNT"] = std::to_string(
-            next_power_of_two(shadow_map_count));
-    }
 }
 
-static void render_pass(
+void render_unshadowed_lights(
     multishader* forward_shader,
+    const std::vector<bool>& handled_point_lights,
+    const std::vector<bool>& handled_spotlights,
+    const std::vector<bool>& handled_directional_lights,
     render_scene* scene,
-    std::set<light*>& unhandled_lights,
     const glm::mat4& v,
-    const glm::mat4& p,
-    shadow_map_impl* impl = nullptr,
-    const std::set<basic_shadow_map*>& shadow_maps = {},
-    const std::map<light*, basic_shadow_map*>& shadows_by_light = {}
+    const glm::mat4& p
 ){
-    shader::definition_map shadow_map_definitions;
-    if(impl) shadow_map_definitions = impl->get_definitions();
+    shader::definition_map scene_definitions;
+    update_scene_definitions(scene_definitions, scene);
 
     std::unique_ptr<uniform_block> light_block;
 
@@ -222,8 +314,7 @@ static void render_pass(
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader::definition_map def = shadow_map_definitions;
-            update_scene_definitions(def, scene, shadow_maps.size());
+            shader::definition_map def = scene_definitions;
             group.mat->update_definitions(def);
             group.mesh->update_definitions(def);
 
@@ -240,37 +331,50 @@ static void render_pass(
                     scene,
                     s,
                     v,
-                    shadow_maps,
-                    shadows_by_light,
-                    unhandled_lights
+                    handled_point_lights,
+                    handled_spotlights,
+                    handled_directional_lights
                 );
                 light_block->bind(0);
             }
             if(light_block) s->set_block("Lights", 0);
 
-            if(impl)
-            {
-                unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
-                s->set<int>("shadow_map_count", shadow_maps.size());
-                impl->set_common_uniforms(s, texture_index);
+            s->set("mvp", mvp);
+            s->set("m", mv);
+            s->set("n_m", n_mv);
 
-                unsigned i = 0;
-                for(basic_shadow_map* sm: shadow_maps)
-                {
-                    std::string prefix =
-                        "shadows["
-                        + std::to_string(i++)
-                        + "].";
+            group.mat->apply(s);
+            group.mesh->draw();
+        }
+    }
+}
 
-                    impl->set_shadow_map_uniforms(
-                        s,
-                        texture_index,
-                        sm,
-                        prefix,
-                        m
-                    );
-                }
-            }
+static void depth_pass(
+    multishader* depth_shader,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::mat4& p
+){
+    for(object* obj: scene->get_objects())
+    {
+        model* mod = obj->get_model();
+        if(!mod) continue;
+
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mv = v * m;
+        glm::mat3 n_mv(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
+
+        for(model::vertex_group& group: *mod)
+        {
+            if(!group.mat || !group.mesh) continue;
+
+            shader::definition_map def({{"DISCARD_ALPHA", "0.5"}});
+            group.mat->update_definitions(def);
+            group.mesh->update_definitions(def);
+
+            shader* s = depth_shader->get(def);
+            s->bind();
 
             s->set("mvp", mvp);
             s->set("m", mv);
@@ -290,8 +394,6 @@ void method::forward_pass::execute()
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -303,35 +405,41 @@ void method::forward_pass::execute()
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
 
-    const shadow_scene::shadow_map_map& shadow_maps = scene->get_shadow_maps();
+    const std::vector<point_light*>& point_lights = scene->get_point_lights();
+    std::vector<bool> handled_point_lights(point_lights.size(), false);
 
-    std::set<light*> unhandled_lights = scene->get_lights();
-    std::map<light*, basic_shadow_map*> shadows_by_light =
-        scene->get_shadow_maps_by_light();
+    const std::vector<spotlight*>& spotlights = scene->get_spotlights();
+    std::vector<bool> handled_spotlights(spotlights.size(), false);
 
-    // Loop through shadow map implementations (separated by shared resources
-    // in pair.first)
-    for(auto& pair: shadow_maps)
-    {
-        shadow_map_impl* impl = pair.first.get();
+    const std::vector<directional_light*>& directional_lights =
+        scene->get_directional_lights();
 
-        render_pass(
-            forward_shader,
-            scene,
-            unhandled_lights,
-            v, p,
-            impl,
-            pair.second,
-            shadows_by_light
-        );
+    std::vector<bool> handled_directional_lights(
+        directional_lights.size(), false
+    );
 
-        // The rest of the passes should be added on top of the current one.
-        glEnable(GL_BLEND);
-    }
+    glDisable(GL_BLEND);
+    glDepthFunc(GL_LEQUAL);
+    depth_pass(depth_shader, scene, v, p);
 
-    // Make sure at least one pass was made
-    if(shadow_maps.size() == 0)
-        render_pass(forward_shader, scene, unhandled_lights, v, p);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+
+    render_shadowed_lights(
+        forward_shader,
+        directional_lights,
+        handled_directional_lights,
+        scene->get_directional_shadow_maps(),
+        scene, v, p
+    );
+
+    render_unshadowed_lights(
+        forward_shader,
+        handled_point_lights,
+        handled_spotlights,
+        handled_directional_lights,
+        scene, v, p
+    );
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }

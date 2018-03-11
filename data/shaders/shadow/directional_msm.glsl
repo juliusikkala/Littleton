@@ -7,19 +7,6 @@ struct shadow_map
     mat4 mvp;
 };
 
-struct shadow_vertex_data
-{
-    vec4 light_space_pos;
-};
-
-void calculate_shadow_vertex_data(
-    in shadow_map sm,
-    out shadow_vertex_data data,
-    vec3 vertex_pos
-){
-    data.light_space_pos = sm.mvp * vec4(vertex_pos, 1.0f);
-}
-
 // Adapted to GLSL from Peters Christoph's GDC 2016 slides
 // "Rendering Antialiased Shadows"
 float msm_shadow_intensity(vec4 b, float depth)
@@ -60,11 +47,11 @@ float msm_shadow_intensity(vec4 b, float depth)
 
 float shadow_coef(
     in shadow_map sm,
-    in shadow_vertex_data data,
+    vec4 light_space_pos,
     vec3 normal,
     vec3 light_dir
 ){
-    vec3 pos = data.light_space_pos.xyz / data.light_space_pos.w;
+    vec3 pos = light_space_pos.xyz / light_space_pos.w;
     if(abs(pos.z) > 1.0f) return 1.0f;
 
     pos.xy = pos.xy * 0.5f + 0.5;

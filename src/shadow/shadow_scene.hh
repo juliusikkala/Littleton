@@ -8,31 +8,25 @@
 class shadow_scene
 {
 public:
-    using shadow_map_map = std::map<
-        std::unique_ptr<shadow_map_impl>,
-        std::set<basic_shadow_map*>
+    using directional_shadow_map_map = std::map<
+        std::unique_ptr<directional_shadow_map_impl>,
+        std::vector<directional_shadow_map*>
     >;
 
-    shadow_scene(std::set<basic_shadow_map*> shadow_maps = {});
+    shadow_scene();
     ~shadow_scene();
 
-    void add_shadow_map(basic_shadow_map* sm);
-    void remove_shadow_map(basic_shadow_map* sm);
+    void add_shadow_map(directional_shadow_map* sm);
+    void remove_shadow_map(directional_shadow_map* sm);
 
     void clear_shadow_maps();
 
     size_t shadow_map_count() const;
 
-    void set_shadow_maps(const std::set<basic_shadow_map*>& shadow_maps);
-
-    const shadow_map_map& get_shadow_maps() const;
-    std::map<light*, basic_shadow_map*> get_shadow_maps_by_light() const;
+    const directional_shadow_map_map& get_directional_shadow_maps() const;
 
 private:
-    void add_shadow_map(basic_shadow_map* sm) const;
-    void remove_shadow_map(basic_shadow_map* sm) const;
-
-    mutable shadow_map_map shadow_maps;
+    directional_shadow_map_map directional_shadow_maps;
 };
 
 #endif

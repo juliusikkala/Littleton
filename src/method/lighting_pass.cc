@@ -33,14 +33,12 @@ render_scene* method::lighting_pass::get_scene() const
     return scene;
 }
 
-static void set_point_light(
+static void set_light(
     shader* s,
     point_light* light,
     const glm::mat4& view,
-    const glm::vec4& perspective_data,
-    int shadow_map_index = -1
+    const glm::vec4& perspective_data
 ){
-    s->set("light.shadow_map_index", shadow_map_index);
     s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
@@ -51,19 +49,14 @@ static void set_point_light(
         glm::vec3(view * glm::vec4(light->get_global_position(), 1))
     );
     s->set("light.color", light->get_color());
-
-    s->set("light.shadow_map_index", -1);
 }
 
-static void set_spotlight(
+static void set_light(
     shader* s,
     spotlight* light,
     const glm::mat4& view,
-    const glm::vec4& perspective_data,
-    int shadow_map_index = -1
+    const glm::vec4& perspective_data
 ){
-    s->set("light.shadow_map_index", shadow_map_index);
-
     s->set(
         "light.position",
         glm::vec3(view * glm::vec4(light->get_global_position(), 1))
@@ -92,17 +85,14 @@ static void set_spotlight(
         "light.exponent",
         light->get_falloff_exponent()
     );
-    s->set("light.shadow_map_index", -1);
 }
 
-static void set_directional_light(
+static void set_light(
     shader* s,
     directional_light* light,
     const glm::mat4& view,
-    const glm::vec4& perspective_data,
-    int shadow_map_index = -1
+    const glm::vec4& perspective_data
 ){
-    s->set("light.shadow_map_index", shadow_map_index);
     s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
@@ -115,65 +105,124 @@ static void set_directional_light(
     );
 }
 
-// Returns the handled lights
-static std::set<light*> render_shadowed_lights(
+template<typename L, typename S>
+void render_shadowed_lights(
     multishader* lighting_shader,
-    render_scene* scene,
-    const glm::mat4& view,
+    const shader::definition_map& default_definitions,
+    const std::vector<L*>& lights,
+    std::vector<bool>& handled_lights,
+    const S& shadow_maps,
+    const glm::mat4& v,
     const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
-    std::set<light*> shadowed_lights;
-    for(auto& pair: scene->get_shadow_maps())
+    for(auto& pair: shadow_maps)
     {
-        shader::definition_map default_definitions(
+        shader::definition_map definitions(
             pair.first->get_definitions()
         );
 
-        for(basic_shadow_map* sm: pair.second)
+        definitions.insert(
+            default_definitions.begin(),
+            default_definitions.end()
+        );
+
+        shader* s = lighting_shader->get(definitions);
+        s->bind();
+
+        unsigned texture_index = 4;
+        pair.first->set_common_uniforms(s, texture_index);
+
+        for(auto* sm: pair.second)
         {
-            directional_shadow_map* dsm =
-                dynamic_cast<directional_shadow_map*>(sm);
+            unsigned local_texture_index = texture_index;
+            L* light = sm->get_light();
 
-            shader::definition_map definitions(default_definitions);
-            unsigned texture_index = 4;
+            // Check if the light is in the scene and mark it as handled
+            auto it = std::lower_bound(lights.begin(), lights.end(), light);
+            if(it == lights.end() || *it != light) continue;
+            handled_lights[it - lights.begin()] = true;
 
-            if(dsm) definitions["DIRECTIONAL_LIGHT"];
-
-            shader* s = lighting_shader->get(definitions);
-            s->bind();
-
-            pair.first->set_common_uniforms(s, texture_index);
             pair.first->set_shadow_map_uniforms(
-                s,
-                texture_index,
-                sm,
-                "shadow.",
-                glm::inverse(view)
+                s, local_texture_index, sm, "shadow.", glm::inverse(v)
             );
 
-            if(dsm)
-            {
-                directional_light* l = dsm->get_light();
-                if(scene->get_directional_lights().count(l) == 0) continue;
-
-                set_directional_light(
-                    s,
-                    l,
-                    view,
-                    perspective_data,
-                    0
-                );
-                shadowed_lights.insert(l);
-            }
+            set_light(s, light, v, perspective_data);
 
             quad.draw();
         }
     }
-    return shadowed_lights;
 }
 
-// TODO: Refactor this function into something a bit shorter and clearer.
+void render_point_lights(
+    multishader* lighting_shader,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::vec4& perspective_data,
+    const vertex_buffer& quad
+){
+    // Render unshadowed lights
+    shader* s = lighting_shader->get({{"POINT_LIGHT", ""}});
+    s->bind();
+
+    for(point_light* l: scene->get_point_lights())
+    {
+        set_light(s, l, v, perspective_data);
+        quad.draw();
+    }
+}
+
+void render_spotlights(
+    multishader* lighting_shader,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::vec4& perspective_data,
+    const vertex_buffer& quad
+){
+    // Render unshadowed lights
+    shader* s = lighting_shader->get({{"SPOTLIGHT", ""}});
+    s->bind();
+
+    for(spotlight* l: scene->get_spotlights())
+    {
+        set_light(s, l, v, perspective_data);
+        quad.draw();
+    }
+}
+
+void render_directional_lights(
+    multishader* lighting_shader,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::vec4& perspective_data,
+    const vertex_buffer& quad
+){
+    const std::vector<directional_light*>& lights = 
+        scene->get_directional_lights();
+    std::vector<bool> handled_lights(lights.size(), false);
+
+    shader::definition_map definitions({{"DIRECTIONAL_LIGHT", ""}});
+
+    render_shadowed_lights(
+        lighting_shader,
+        definitions,
+        lights, handled_lights,
+        scene->get_directional_shadow_maps(),
+        v, perspective_data, quad
+    );
+
+    // Render unshadowed lights
+    shader* s = lighting_shader->get(definitions);
+    s->bind();
+
+    for(unsigned i = 0; i < lights.size(); ++i)
+    {
+        if(handled_lights[i]) continue;
+        set_light(s, lights[i], v, perspective_data);
+        quad.draw();
+    }
+}
+
 void method::lighting_pass::execute()
 {
     target_method::execute();
@@ -193,12 +242,6 @@ void method::lighting_pass::execute()
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
 
-    shader::definition_map point_light_definitions{{"POINT_LIGHT", ""}};
-    shader::definition_map directional_light_definitions{
-        {"DIRECTIONAL_LIGHT", ""}
-    };
-    shader::definition_map spotlight_definitions{{"SPOTLIGHT", ""}};
-
     fb_sampler.bind(buf->get_depth_stencil(), 0);
     fb_sampler.bind(buf->get_color_emission(), 1);
     fb_sampler.bind(buf->get_normal(), 2);
@@ -213,47 +256,15 @@ void method::lighting_pass::execute()
         far
     );
 
-    // Render shadowed lights first
-    std::set<light*> shadowed_lights = render_shadowed_lights(
+    render_point_lights(lighting_shader, scene, v, perspective_data, quad);
+    render_spotlights(lighting_shader, scene, v, perspective_data, quad);
+    render_directional_lights(
         lighting_shader,
         scene,
         v,
         perspective_data,
         quad
     );
-
-    // Render point lights
-    shader* pls = lighting_shader->get(point_light_definitions);
-    pls->bind();
-
-    for(point_light* l: scene->get_point_lights())
-    {
-        if(shadowed_lights.count(l)) continue;
-        set_point_light(pls, l, v, perspective_data);
-        quad.draw();
-    }
-
-    // Render spotlights
-    shader* sls = lighting_shader->get(spotlight_definitions);
-    sls->bind();
-
-    for(spotlight* l: scene->get_spotlights())
-    {
-        if(shadowed_lights.count(l)) continue;
-        set_spotlight(sls, l, v, perspective_data);
-        quad.draw();
-    }
-
-    // Render directional lights
-    shader* dls = lighting_shader->get(directional_light_definitions);
-    dls->bind();
-
-    for(directional_light* l: scene->get_directional_lights())
-    {
-        if(shadowed_lights.count(l)) continue;
-        set_directional_light(dls, l, v, perspective_data);
-        quad.draw();
-    }
 }
 
 std::string method::lighting_pass::get_name() const

@@ -9,14 +9,14 @@
 
 class ms_render_target;
 class pp_render_target;
-class msm_impl: public shadow_map_impl
+class directional_msm_impl: public directional_shadow_map_impl
 {
 public:
-    msm_impl(context& ctx);
+    directional_msm_impl(context& ctx);
 
     void render(
         shader_pool& store,
-        const std::set<basic_shadow_map*>& shadow_maps,
+        const std::vector<directional_shadow_map*>& shadow_maps,
         render_scene* scene
     ) override;
 
@@ -27,14 +27,14 @@ public:
     void set_shadow_map_uniforms(
         shader* s,
         unsigned& texture_index,
-        basic_shadow_map* shadow_map,
+        directional_shadow_map* shadow_map,
         const std::string& prefix,
         const glm::mat4& pos_to_world
     ) override;
 
 private:
     void ensure_render_targets(
-        const std::set<basic_shadow_map*>& shadow_maps
+        const std::vector<directional_shadow_map*>& shadow_maps
     );
 
     // Multisampling render targets by sample count.
@@ -47,39 +47,9 @@ private:
     sampler moment_sampler;
 };
 
-class msm_shadow_map
+class directional_shadow_map_msm: public directional_shadow_map
 {
-friend class msm_impl;
-public:
-    msm_shadow_map(
-        context& ctx,
-        glm::uvec2 size,
-        unsigned samples = 4,
-        unsigned radius = 4
-    );
-    msm_shadow_map(msm_shadow_map&& other);
-
-    unsigned get_samples() const;
-
-    void set_radius(unsigned radius);
-    unsigned get_radius() const;
-
-    texture& get_moments();
-    const texture& get_moments() const;
-
-    bool impl_is_compatible(const shadow_map_impl* impl);
-    msm_impl* create_impl() const;
-
-private:
-    texture moments;
-    framebuffer moments_buffer;
-    unsigned samples;
-    unsigned radius;
-};
-
-class directional_shadow_map_msm
-: public basic_shadow_map, public msm_shadow_map, public directional_shadow_map
-{
+friend class directional_msm_impl;
 public:
     directional_shadow_map_msm(
         context& ctx,
@@ -92,12 +62,24 @@ public:
         directional_light* light = nullptr
     );
 
-    bool impl_is_compatible(const shadow_map_impl* impl) override;
-    msm_impl* create_impl() const override;
+    directional_shadow_map_msm(directional_shadow_map_msm&& other);
 
-    light* get_light() const override;
-    glm::mat4 get_view() const override;
-    glm::mat4 get_projection() const override;
+    unsigned get_samples() const;
+
+    void set_radius(unsigned radius);
+    unsigned get_radius() const;
+
+    texture& get_moments();
+    const texture& get_moments() const;
+
+    bool impl_is_compatible(const directional_shadow_map_impl* impl);
+    directional_msm_impl* create_impl() const;
+
+private:
+    texture moments;
+    framebuffer moments_buffer;
+    unsigned samples;
+    unsigned radius;
 };
 
 #endif

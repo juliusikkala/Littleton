@@ -1,5 +1,5 @@
 /* This shader is meant to be used with generic.vert. It is suitable for
- * forward rendering, and supports materials.
+ * forward rendering and supports materials.
  */
 #version 400 core
 
@@ -8,7 +8,7 @@
 #include "light_types.glsl"
 #include "shadow.glsl"
 
-#if defined(LIGHTING)
+#ifdef MULTIPLE_LIGHTS
 uniform Lights
 {
     int point_light_count;
@@ -24,10 +24,21 @@ uniform Lights
     spotlight spot[MAX_SPOTLIGHT_COUNT];
 #endif
 } lights;
+
+#elif defined(SINGLE_LIGHT)
+
+#ifdef POINT_LIGHT
+uniform point_light light;
+#elif defined(SPOTLIGHT)
+uniform spotlight light;
+#elif defined(DIRECTIONAL_LIGHT)
+uniform directional_light light;
 #endif
 
-#if MAX_SHADOW_MAP_COUNT > 0
-uniform shadow_map shadows[MAX_SHADOW_MAP_COUNT];
+#endif
+
+#ifdef SHADOW_MAPPING
+uniform shadow_map shadow;
 #endif
 
 out vec4 out_color;
@@ -43,9 +54,6 @@ void main(void)
     vec3 ts_normal = get_material_normal();
     normal = normalize(tbn * ts_normal);
 #endif
-#endif
-
-#if defined(LIGHTING) && defined(VERTEX_NORMAL)
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
     vec3 view_dir = normalize(-f_in.position);
@@ -54,6 +62,7 @@ void main(void)
     float metallic = get_material_metallic();
     float f0 = get_material_f0() / 2.0f;
 
+#if defined(MULTIPLE_LIGHTS)
 #if MAX_POINT_LIGHT_COUNT > 0
     for(int i = 0; i < lights.point_light_count; ++i)
     {
@@ -84,18 +93,6 @@ void main(void)
             metallic
         );
 
-#if MAX_SHADOW_MAP_COUNT > 0
-        if(l.shadow_map_index >= 0)
-        {
-            c *= shadow_coef(
-                shadows[l.shadow_map_index],
-                f_in.shadow_data[l.shadow_map_index],
-                normal,
-                -l.direction
-            );
-        }
-#endif
-
         color.rgb += c;
     }
 #endif
@@ -116,9 +113,57 @@ void main(void)
     }
 #endif
 
+#elif defined(SINGLE_LIGHT)
+#ifdef POINT_LIGHT
+    color.rgb = calc_point_light(
+        light,
+        f_in.position,
+        surface_color.rgb,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
+#elif defined(SPOTLIGHT)
+    color.rgb = calc_spotlight(
+        light,
+        f_in.position,
+        surface_color.rgb,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
+#elif defined(DIRECTIONAL_LIGHT)
+    color.rgb = calc_directional_light(
+        light,
+        surface_color.rgb,
+        view_dir,
+        normal,
+        roughness,
+        f0,
+        metallic
+    );
+
+#ifdef SHADOW_MAPPING
+    color.rgb *= shadow_coef(
+        shadow,
+        f_in.light_space_pos,
+        normal,
+        -light.direction
+    );
+#endif
+#endif
+
 #else
     color = surface_color;
 #endif
+#else
+    color = surface_color;
+#endif
+
     if(color.a < 0.5f) discard;
     out_color = color;
 }

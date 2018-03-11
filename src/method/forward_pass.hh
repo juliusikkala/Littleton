@@ -27,6 +27,7 @@ namespace method
 
     private:
         multishader* forward_shader;
+        multishader* depth_shader;
         render_scene* scene; 
     };
 }

@@ -23,7 +23,7 @@ void method::render_shadow_maps::execute()
 {
     if(!pool || !scene) return;
 
-    for(auto& pair: scene->get_shadow_maps())
+    for(auto& pair: scene->get_directional_shadow_maps())
     {
         pair.first->render(*pool, pair.second, scene);
     }

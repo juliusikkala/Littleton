@@ -1,13 +1,9 @@
 layout(location = VERTEX_POSITION) in vec3 v_vertex;
 
-#if MAX_SHADOW_MAP_COUNT > 0
-#include "shadow.glsl"
-#endif
-
 out VERTEX_OUT {
     vec3 position;
-#if MAX_SHADOW_MAP_COUNT > 0
-    shadow_vertex_data shadow_data[MAX_SHADOW_MAP_COUNT];
+#ifdef SHADOW_MAPPING
+    vec4 light_space_pos;
 #endif
 #ifdef VERTEX_NORMAL
     vec3 normal;

@@ -322,12 +322,13 @@ public:
        binary_path(binary_path)
     { }
 
-    void load() const override
+protected:
+    void load_impl() const override
     {
         basic_load(src, binary_path);
     }
 
-    void unload() const override
+    void unload_impl() const override
     {
         basic_unload();
     }
