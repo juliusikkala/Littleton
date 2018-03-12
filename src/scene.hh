@@ -1,6 +1,7 @@
 #ifndef SCENE_HH
 #define SCENE_HH
 #include <vector>
+#include <map>
 
 class object;
 class camera;
@@ -8,6 +9,9 @@ class light;
 class directional_light;
 class point_light;
 class spotlight;
+class directional_shadow_map;
+class point_shadow_map;
+namespace method { class shadow_method; }
 
 class camera_scene
 {
@@ -83,9 +87,43 @@ private:
     std::vector<directional_light*> directional_lights;
 };
 
+class shadow_scene
+{
+public:
+    shadow_scene();
+    ~shadow_scene();
+
+    using directional_map = std::map<
+        method::shadow_method*,
+        std::vector<directional_shadow_map*>
+    >;
+
+    using point_map = std::map<
+        method::shadow_method*,
+        std::vector<point_shadow_map*>
+    >;
+
+    void add_shadow(directional_shadow_map* shadow);
+    void remove_shadow(directional_shadow_map* shadow);
+
+    void add_shadow(point_shadow_map* shadow);
+    void remove_shadow(point_shadow_map* shadow);
+
+    void clear_directional_shadows();
+    void clear_point_shadows();
+    void clear_shadows();
+
+    directional_map get_directional_shadows() const;
+    point_map get_point_shadows() const;
+
+private:
+    directional_map directional_shadows;
+    point_map point_shadows;
+};
 
 class render_scene
-: public camera_scene, public object_scene, public light_scene
+: public camera_scene, public object_scene, public light_scene,
+  public shadow_scene
 {
 public:
     render_scene();

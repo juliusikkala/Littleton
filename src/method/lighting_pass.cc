@@ -13,14 +13,12 @@ method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
-    std::vector<shadow_method*>&& shadows
+    render_scene* scene
 ):  target_method(target), buf(&buf),
     lighting_shader(pool.get_shader(
         shader::path{"lighting.vert", "lighting.frag"})
     ),
-    scene(scene), shadows(std::move(shadows)),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    scene(scene), quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
@@ -146,7 +144,6 @@ static void render_spotlights(
 static void render_directional_lights(
     multishader* lighting_shader,
     render_scene* scene,
-    const std::vector<method::shadow_method*>& shadows,
     const glm::mat4& v,
     const glm::vec4& perspective_data,
     const vertex_buffer& quad
@@ -158,8 +155,9 @@ static void render_directional_lights(
     shader::definition_map definitions({{"DIRECTIONAL_LIGHT", ""}});
 
     // Render shadowed lights
-    for(method::shadow_method* m: shadows)
+    for(const auto& pair: scene->get_directional_shadows())
     {
+        method::shadow_method* m = pair.first;
         shader::definition_map def(m->get_directional_definitions());
 
         def.insert(definitions.begin(), definitions.end());
@@ -170,19 +168,18 @@ static void render_directional_lights(
         unsigned texture_index = 4;
         m->set_directional_uniforms(s, texture_index);
 
-        for(unsigned i = 0; i < m->get_directional_shadow_map_count(); ++i)
+        for(directional_shadow_map* sm: pair.second)
         {
             unsigned local_texture_index = texture_index;
-            directional_light* light =
-                m->get_directional_shadow_map(i)->get_light();
+            directional_light* light = sm->get_light();
 
             // Check if the light is in the scene and mark it as handled
             auto it = std::lower_bound(lights.begin(), lights.end(), light);
             if(it == lights.end() || *it != light) continue;
             handled_lights[it - lights.begin()] = true;
 
-            m->set_directional_shadow_map_uniforms(
-                s, local_texture_index, i, "shadow.", glm::inverse(v)
+            m->set_shadow_map_uniforms(
+                s, local_texture_index, sm, "shadow.", glm::inverse(v)
             );
 
             set_light(s, light, v, perspective_data);
@@ -243,6 +240,7 @@ void method::lighting_pass::execute()
         perspective_data,
         quad
     );
+
     render_spotlights(
         lighting_shader,
         scene,
@@ -250,10 +248,10 @@ void method::lighting_pass::execute()
         perspective_data,
         quad
     );
+
     render_directional_lights(
         lighting_shader,
         scene,
-        shadows,
         v,
         perspective_data,
         quad

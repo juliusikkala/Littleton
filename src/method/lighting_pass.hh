@@ -20,8 +20,7 @@ namespace method
             render_target& target,
             gbuffer& buf,
             resource_pool& pool,
-            render_scene* scene,
-            std::vector<shadow_method*>&& shadows = {}
+            render_scene* scene
         );
 
         void set_scene(render_scene* scene);
@@ -36,7 +35,6 @@ namespace method
 
         multishader* lighting_shader;
         render_scene* scene;
-        std::vector<shadow_method*> shadows;
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;

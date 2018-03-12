@@ -17,6 +17,7 @@ class directional_shadow_map_msm: public directional_shadow_map
 friend class method::shadow_msm;
 public:
     directional_shadow_map_msm(
+        method::shadow_msm* method,
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
@@ -51,21 +52,12 @@ namespace method
     public:
         shadow_msm(resource_pool& pool, render_scene* scene);
 
-        void add(directional_shadow_map_msm* shadow_map);
-        void remove(directional_shadow_map_msm* shadow_map);
-        void clear();
-
         shader::definition_map get_directional_definitions() const override;
 
-        size_t get_directional_shadow_map_count() const override;
-
-        directional_shadow_map_msm*
-        get_directional_shadow_map(unsigned i) const override;
-
-        void set_directional_shadow_map_uniforms(
+        void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
-            unsigned i,
+            directional_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         ) override;
@@ -75,7 +67,9 @@ namespace method
         std::string get_name() const override;
 
     private:
-        void ensure_render_targets();
+        void ensure_render_targets(
+            const std::vector<directional_shadow_map*>& directional_shadow_maps
+        );
 
         // Multisampling render targets by sample count.
         std::map<unsigned, std::unique_ptr<framebuffer>> ms_rt;
@@ -89,8 +83,6 @@ namespace method
 
         const vertex_buffer& quad;
         sampler moment_sampler;
-
-        std::vector<directional_shadow_map_msm*> directional_shadow_maps;
     };
 };
 

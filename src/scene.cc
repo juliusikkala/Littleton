@@ -1,6 +1,7 @@
 #include "scene.hh"
 #include "helpers.hh"
 #include "light.hh"
+#include "shadow_map.hh"
 
 camera_scene::camera_scene(camera* cam)
 : cam(cam) {}
@@ -175,6 +176,67 @@ const std::vector<spotlight*>& light_scene::get_spotlights() const
 const std::vector<directional_light*>& light_scene::get_directional_lights() const
 {
     return directional_lights;
+}
+
+shadow_scene::shadow_scene() {}
+shadow_scene::~shadow_scene() {}
+
+void shadow_scene::add_shadow(directional_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    sorted_insert(directional_shadows[method], shadow);
+}
+
+void shadow_scene::remove_shadow(directional_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    auto it = directional_shadows.find(method);
+    if(it == directional_shadows.end()) return;
+
+    sorted_erase(it->second, shadow);
+    if(it->second.size() == 0) directional_shadows.erase(it);
+}
+
+void shadow_scene::add_shadow(point_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    sorted_insert(point_shadows[method], shadow);
+}
+
+void shadow_scene::remove_shadow(point_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    auto it = point_shadows.find(method);
+    if(it == point_shadows.end()) return;
+
+    sorted_erase(it->second, shadow);
+    if(it->second.size() == 0) point_shadows.erase(it);
+}
+
+void shadow_scene::clear_directional_shadows()
+{
+    directional_shadows.clear();
+}
+
+void shadow_scene::clear_point_shadows()
+{
+    point_shadows.clear();
+}
+
+void shadow_scene::clear_shadows()
+{
+    directional_shadows.clear();
+    point_shadows.clear();
+}
+
+shadow_scene::directional_map shadow_scene::get_directional_shadows() const
+{
+    return directional_shadows;
+}
+
+shadow_scene::point_map shadow_scene::get_point_shadows() const
+{
+    return point_shadows;
 }
 
 render_scene::render_scene() {}

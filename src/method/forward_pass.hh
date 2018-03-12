@@ -15,8 +15,7 @@ namespace method
         forward_pass(
             render_target& target,
             shader_pool& shaders,
-            render_scene* scene,
-            std::vector<shadow_method*>&& shadows = {}
+            render_scene* scene
         );
         ~forward_pass();
 
@@ -31,7 +30,6 @@ namespace method
         multishader* forward_shader;
         multishader* depth_shader;
         render_scene* scene; 
-        std::vector<shadow_method*> shadows;
     };
 }
 

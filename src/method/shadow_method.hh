@@ -27,19 +27,16 @@ namespace method
         // Definitions needed when using the shadow maps.
         virtual shader::definition_map get_directional_definitions() const = 0;
 
-        virtual size_t get_directional_shadow_map_count() const = 0;
-
-        virtual directional_shadow_map*
-        get_directional_shadow_map(unsigned i) const = 0;
-
-        // Sets shadow map uniforms.
-        virtual void set_directional_shadow_map_uniforms(
+        // Sets shadow map uniforms. The given shadow map is assumed to be a
+        // type compatible with the method.
+        virtual void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
-            unsigned i,
+            directional_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         ) = 0;
+
     protected:
         render_scene* scene;
     };

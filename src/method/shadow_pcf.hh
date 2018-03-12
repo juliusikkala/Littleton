@@ -18,6 +18,7 @@ class directional_shadow_map_pcf: public directional_shadow_map
 friend class method::shadow_pcf;
 public:
     directional_shadow_map_pcf(
+        method::shadow_pcf* method,
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
@@ -60,25 +61,16 @@ namespace method
     public:
         shadow_pcf(resource_pool& pool, render_scene* scene);
 
-        void add(directional_shadow_map_pcf* shadow_map);
-        void remove(directional_shadow_map_pcf* shadow_map);
-        void clear();
-
         void set_directional_uniforms(
             shader* s,
             unsigned& texture_index
         ) override;
         shader::definition_map get_directional_definitions() const override;
 
-        size_t get_directional_shadow_map_count() const override;
-
-        directional_shadow_map_pcf*
-        get_directional_shadow_map(unsigned i) const override;
-
-        void set_directional_shadow_map_uniforms(
+        void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
-            unsigned i,
+            directional_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         ) override;
@@ -92,8 +84,6 @@ namespace method
         const texture& shadow_noise;
         const texture& kernel;
         sampler shadow_sampler, noise_sampler;
-
-        std::vector<directional_shadow_map_pcf*> directional_shadow_maps;
     };
 };
 #endif

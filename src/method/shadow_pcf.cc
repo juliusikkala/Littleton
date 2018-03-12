@@ -26,21 +26,6 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
     noise_sampler(pool.get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {}
 
-void method::shadow_pcf::add(directional_shadow_map_pcf* shadow_map)
-{
-    sorted_insert(directional_shadow_maps, shadow_map);
-}
-
-void method::shadow_pcf::remove(directional_shadow_map_pcf* shadow_map)
-{
-    sorted_erase(directional_shadow_maps, shadow_map);
-}
-
-void method::shadow_pcf::clear()
-{
-    directional_shadow_maps.clear();
-}
-
 void method::shadow_pcf::set_directional_uniforms(
     shader* s,
     unsigned& texture_index
@@ -57,25 +42,15 @@ shader::definition_map method::shadow_pcf::get_directional_definitions() const
     return {{"SHADOW_MAPPING", "shadow/directional_pcf.glsl"}};
 }
 
-size_t method::shadow_pcf::get_directional_shadow_map_count() const
-{
-    return directional_shadow_maps.size();
-}
-
-directional_shadow_map_pcf*
-method::shadow_pcf::get_directional_shadow_map(unsigned i) const
-{
-    return directional_shadow_maps[i];
-}
-
-void method::shadow_pcf::set_directional_shadow_map_uniforms(
+void method::shadow_pcf::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
-    unsigned i,
+    directional_shadow_map* shadow_map,
     const std::string& prefix,
     const glm::mat4& pos_to_world
 ){
-    directional_shadow_map_pcf* sm = directional_shadow_maps[i];
+    directional_shadow_map_pcf* sm =
+        static_cast<directional_shadow_map_pcf*>(shadow_map);
 
     glm::mat4 lvp = sm->get_projection() * sm->get_view();
 
@@ -92,6 +67,16 @@ void method::shadow_pcf::set_directional_shadow_map_uniforms(
 
 void method::shadow_pcf::execute()
 {
+    if(!scene) return;
+
+    const shadow_scene::directional_map& directional =
+        scene->get_directional_shadows();
+    auto it = directional.find(this);
+    if(it == directional.end()) return;
+
+    const std::vector<directional_shadow_map*>& directional_shadow_maps =
+        it->second;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
@@ -99,13 +84,15 @@ void method::shadow_pcf::execute()
 
     depth_shader->bind();
 
-    for(directional_shadow_map_pcf* sm: directional_shadow_maps)
+    for(directional_shadow_map* sm: directional_shadow_maps)
     {
-        sm->depth_buffer.bind();
+        directional_shadow_map_pcf* pcf =
+            static_cast<directional_shadow_map_pcf*>(sm);
+        pcf->depth_buffer.bind();
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 vp = sm->get_projection() * sm->get_view();
+        glm::mat4 vp = pcf->get_projection() * pcf->get_view();
 
         for(object* obj: scene->get_objects())
         {
@@ -131,6 +118,7 @@ std::string method::shadow_pcf::get_name() const
 }
 
 directional_shadow_map_pcf::directional_shadow_map_pcf(
+    method::shadow_pcf* method,
     context& ctx,
     glm::uvec2 size,
     unsigned samples,
@@ -139,7 +127,7 @@ directional_shadow_map_pcf::directional_shadow_map_pcf(
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-):  directional_shadow_map(offset, area, depth_range, light),
+):  directional_shadow_map(method, offset, area, depth_range, light),
     depth(
        ctx,
        size,

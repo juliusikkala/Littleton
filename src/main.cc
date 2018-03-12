@@ -48,8 +48,8 @@ public:
         msm(pool, main_scene),
 
         gp(buf, pool, main_scene),
-        lp(screen, buf, pool, main_scene, {&pcf, &msm}),
-        fp(screen, pool, main_scene, {&pcf, &msm}),
+        lp(screen, buf, pool, main_scene),
+        fp(screen, pool, main_scene),
         visualizer(screen, buf, pool, main_scene),
 
         sky(
@@ -162,8 +162,15 @@ public:
         load_dfo(resources, graph, "data/test_scene.dfo", "data");
         load_dfo(resources, graph, "data/earth.dfo", "data");
 
+        glm::uvec2 render_resolution = win.get_size();
+
+        pipelines.reset(new game_pipelines(
+            win, render_resolution, resources, &main_scene
+        ));
+
         sun_shadow_pcf.reset(
             new directional_shadow_map_pcf(
+                &pipelines->get_pcf(),
                 win,
                 glm::uvec2(1024),
                 4,
@@ -177,6 +184,7 @@ public:
 
         sun_shadow_msm.reset(
             new directional_shadow_map_msm(
+                &pipelines->get_msm(),
                 win,
                 glm::uvec2(1024),
                 4,
@@ -187,12 +195,6 @@ public:
                 &sun
             )
         );
-
-        glm::uvec2 render_resolution = win.get_size();
-
-        pipelines.reset(new game_pipelines(
-            win, render_resolution, resources, &main_scene
-        ));
 
         current_pipeline = pipelines->get_forward_pipeline();
     }
@@ -226,11 +228,8 @@ public:
         main_scene.add_light(&l2);
         main_scene.add_light(&spot);
         main_scene.add_light(&sun);
-
-        method::shadow_msm& msm = pipelines->get_msm();
-        method::shadow_pcf& pcf = pipelines->get_pcf();
-        msm.add(sun_shadow_msm.get());
-        //pcf.add(sun_shadow_pcf.get());
+        //main_scene.add_shadow(sun_shadow_msm.get());
+        main_scene.add_shadow(sun_shadow_pcf.get());
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);

@@ -24,15 +24,13 @@ static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 method::forward_pass::forward_pass(
     render_target& target,
     shader_pool& pool,
-    render_scene* scene,
-    std::vector<shadow_method*>&& shadows
+    render_scene* scene
 ):  target_method(target),
     forward_shader(pool.get(
         shader::path{"generic.vert", "forward.frag"})
     ),
     depth_shader(pool.get(shader::path{"generic.vert", "depth.frag"})),
-    scene(scene),
-    shadows(std::move(shadows))
+    scene(scene)
 {}
 
 method::forward_pass::~forward_pass() {}
@@ -95,7 +93,6 @@ static void render_shadowed_lights(
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
-    const std::vector<method::shadow_method*>& shadow_maps,
     render_scene* scene,
     const glm::mat4& v,
     const glm::mat4& p
@@ -104,11 +101,14 @@ static void render_shadowed_lights(
         {{"DIRECTIONAL_LIGHT", ""},
          {"SINGLE_LIGHT", ""}}
     );
+
     const std::vector<directional_light*>& directional_lights =
         scene->get_directional_lights();
 
-    for(method::shadow_method* met: shadow_maps)
+    for(const auto& pair: scene->get_directional_shadows())
     {
+        method::shadow_method* met = pair.first;
+
         shader::definition_map scene_definitions(
             met->get_directional_definitions()
         );
@@ -118,10 +118,9 @@ static void render_shadowed_lights(
             directional_def.end()
         );
 
-        for(unsigned i = 0; i < met->get_directional_shadow_map_count(); ++i)
+        for(directional_shadow_map* sm: pair.second)
         {
-            directional_light* light =
-                met->get_directional_shadow_map(i)->get_light();
+            directional_light* light = sm->get_light();
 
             auto it = std::lower_bound(
                 directional_lights.begin(),
@@ -155,8 +154,8 @@ static void render_shadowed_lights(
                     unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
 
                     met->set_directional_uniforms(s, texture_index);
-                    met->set_directional_shadow_map_uniforms(
-                        s, texture_index, i, "shadow.", m
+                    met->set_shadow_map_uniforms(
+                        s, texture_index, sm, "shadow.", m
                     );
                     set_light(s, light, v);
 
@@ -421,7 +420,6 @@ void method::forward_pass::execute()
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        shadows,
         scene, v, p
     );
 

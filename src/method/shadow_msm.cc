@@ -32,45 +32,20 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
     )
 {}
 
-void method::shadow_msm::add(directional_shadow_map_msm* shadow_map)
-{
-    sorted_insert(directional_shadow_maps, shadow_map);
-}
-
-void method::shadow_msm::remove(directional_shadow_map_msm* shadow_map)
-{
-    sorted_erase(directional_shadow_maps, shadow_map);
-}
-
-void method::shadow_msm::clear()
-{
-    directional_shadow_maps.clear();
-}
-
 shader::definition_map method::shadow_msm::get_directional_definitions() const
 {
     return {{"SHADOW_MAPPING", "shadow/directional_msm.glsl"}};
 }
 
-size_t method::shadow_msm::get_directional_shadow_map_count() const
-{
-    return directional_shadow_maps.size();
-}
-
-directional_shadow_map_msm*
-method::shadow_msm::get_directional_shadow_map(unsigned i) const
-{
-    return directional_shadow_maps[i];
-}
-
-void method::shadow_msm::set_directional_shadow_map_uniforms(
+void method::shadow_msm::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
-    unsigned i,
+    directional_shadow_map* shadow_map,
     const std::string& prefix,
     const glm::mat4& pos_to_world
 ){
-    directional_shadow_map_msm* sm = directional_shadow_maps[i];
+    directional_shadow_map_msm* sm =
+        static_cast<directional_shadow_map_msm*>(shadow_map);
 
     glm::mat4 lvp = sm->get_projection() * sm->get_view();
 
@@ -83,15 +58,27 @@ void method::shadow_msm::set_directional_shadow_map_uniforms(
 
 void method::shadow_msm::execute()
 {
+    if(!scene) return;
+
+    const shadow_scene::directional_map& directional =
+        scene->get_directional_shadows();
+    auto it = directional.find(this);
+    if(it == directional.end()) return;
+
+    const std::vector<directional_shadow_map*>& directional_shadow_maps =
+        it->second;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
-    ensure_render_targets();
+    ensure_render_targets(directional_shadow_maps);
 
-    for(directional_shadow_map_msm* msm: directional_shadow_maps)
+    for(directional_shadow_map* sm: directional_shadow_maps)
     {
+        directional_shadow_map_msm* msm =
+            static_cast<directional_shadow_map_msm*>(sm);
         // Render depth data
         depth_shader->bind();
 
@@ -170,16 +157,20 @@ std::string method::shadow_msm::get_name() const
     return "shadow_msm";
 }
 
-void method::shadow_msm::ensure_render_targets()
-{
+void method::shadow_msm::ensure_render_targets(
+    const std::vector<directional_shadow_map*>& directional_shadow_maps
+){
     std::map<unsigned, glm::uvec2> ms;
     glm::uvec2 pp;
 
-    for(directional_shadow_map_msm* sm: directional_shadow_maps)
+    for(directional_shadow_map* sm: directional_shadow_maps)
     {
-        glm::uvec2& ms_size = ms[sm->get_samples()];
-        ms_size = glm::max(sm->moments.get_size(), ms_size);
-        pp = glm::max(sm->moments.get_size(), pp);
+        directional_shadow_map_msm* msm =
+            static_cast<directional_shadow_map_msm*>(sm);
+
+        glm::uvec2& ms_size = ms[msm->get_samples()];
+        ms_size = glm::max(msm->moments.get_size(), ms_size);
+        pp = glm::max(msm->moments.get_size(), pp);
     }
 
     for(auto& pair: ms)
@@ -218,6 +209,7 @@ void method::shadow_msm::ensure_render_targets()
 }
 
 directional_shadow_map_msm::directional_shadow_map_msm(
+    method::shadow_msm* method,
     context& ctx,
     glm::uvec2 size,
     unsigned samples,
@@ -226,12 +218,13 @@ directional_shadow_map_msm::directional_shadow_map_msm(
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-):  directional_shadow_map(offset, area, depth_range, light),
+):  directional_shadow_map(method, offset, area, depth_range, light),
     moments(ctx, size, GL_RGBA16, GL_FLOAT),
     moments_buffer(ctx, size, {{GL_COLOR_ATTACHMENT0, {&moments}}}),
     samples(samples),
     radius(radius)
-{}
+{
+}
 
 directional_shadow_map_msm::directional_shadow_map_msm(directional_shadow_map_msm&& other)
 :   directional_shadow_map(other),

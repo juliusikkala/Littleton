@@ -4,11 +4,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 directional_shadow_map::directional_shadow_map(
+    method::shadow_method* method,
     glm::vec3 offset,
     glm::vec2 area,
     glm::vec2 depth_range,
     directional_light* light
-): up(0,1,0), l(light)
+): method(method), up(0,1,0), l(light)
 {
     set_volume(area, depth_range);
     target.set_position(offset);
@@ -69,6 +70,11 @@ glm::mat4 directional_shadow_map::get_projection() const
     return projection;
 }
 
+method::shadow_method* directional_shadow_map::get_method() const
+{
+    return method;
+}
+
 void directional_shadow_map::set_light(directional_light* light)
 {
     this->l = light;
@@ -80,9 +86,10 @@ directional_light* directional_shadow_map::get_light() const
 }
 
 point_shadow_map::point_shadow_map(
+    method::shadow_method* method,
     glm::vec2 depth_range,
     point_light* light
-): l(light)
+): method(method), l(light)
 {
     set_range(depth_range);
 }
@@ -130,4 +137,9 @@ glm::mat4 point_shadow_map::get_view(unsigned face) const
 glm::mat4 point_shadow_map::get_projection() const
 {
     return projection;
+}
+
+method::shadow_method* point_shadow_map::get_method() const
+{
+    return method;
 }
