@@ -78,3 +78,56 @@ directional_light* directional_shadow_map::get_light() const
 {
     return l;
 }
+
+point_shadow_map::point_shadow_map(
+    glm::vec2 depth_range,
+    point_light* light
+): l(light)
+{
+    set_range(depth_range);
+}
+
+point_shadow_map::point_shadow_map(const point_shadow_map& other)
+: projection(other.projection), l(other.l) { }
+
+void point_shadow_map::set_light(point_light* light)
+{
+    this->l = light;
+}
+
+point_light* point_shadow_map::get_light() const
+{
+    return l;
+}
+
+void point_shadow_map::set_range(glm::vec2 depth_range)
+{
+    projection = glm::perspective(
+        float(M_PI/2.0f),
+        1.0f,
+        depth_range.x,
+        depth_range.y
+    );
+}
+
+glm::mat4 point_shadow_map::get_view(unsigned face) const
+{
+    if(!l) return glm::mat4(0);
+
+    static const glm::mat4 face_rotations[6] = {
+        glm::lookAt(glm::vec3(0), glm::vec3(1,0,0), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,1,0), glm::vec3(0,0,1)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,1)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,0,1), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,0,-1), glm::vec3(0,-1,0))
+    };
+    glm::mat4 transform = glm::inverse(l->get_global_transform());
+
+    return face_rotations[face] * transform;
+}
+
+glm::mat4 point_shadow_map::get_projection() const
+{
+    return projection;
+}

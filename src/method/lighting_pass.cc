@@ -182,7 +182,7 @@ static void render_directional_lights(
             handled_lights[it - lights.begin()] = true;
 
             m->set_directional_shadow_map_uniforms(
-                s, texture_index, i, "shadow.", glm::inverse(v)
+                s, local_texture_index, i, "shadow.", glm::inverse(v)
             );
 
             set_light(s, light, v, perspective_data);

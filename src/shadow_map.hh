@@ -38,4 +38,25 @@ private:
     directional_light* l;
 };
 
+class point_shadow_map
+{
+public:
+    point_shadow_map(
+        glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
+        point_light* light = nullptr
+    );
+    point_shadow_map(const point_shadow_map& other);
+
+    void set_light(point_light* light = nullptr);
+    point_light* get_light() const;
+
+    void set_range(glm::vec2 depth_range);
+    glm::mat4 get_view(unsigned face) const;
+    glm::mat4 get_projection() const;
+
+private:
+    glm::mat4 projection;
+
+    point_light* l;
+};
 #endif

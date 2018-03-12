@@ -377,6 +377,22 @@ void texture::basic_load(
             true
         );
         break;
+    case GL_TEXTURE_CUBE_MAP:
+        for(unsigned i = 0; i < 6; ++i)
+        {
+            glTexImage2D(
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0,
+                internal_format,
+                size.x,
+                size.y,
+                0,
+                external_format,
+                type,
+                data
+            );
+        }
+        break;
     default:
         throw std::runtime_error("Unknown texture target!");
     }
