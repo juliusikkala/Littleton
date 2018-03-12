@@ -60,6 +60,7 @@ void sampler::set_extension(GLint extension)
 {
     glSamplerParameteri(sampler_object, GL_TEXTURE_WRAP_S, extension);
     glSamplerParameteri(sampler_object, GL_TEXTURE_WRAP_T, extension);
+    glSamplerParameteri(sampler_object, GL_TEXTURE_WRAP_R, extension);
 }
 
 void sampler::set_anisotropy(unsigned anisotropy)

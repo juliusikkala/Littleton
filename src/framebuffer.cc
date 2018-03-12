@@ -31,9 +31,10 @@ framebuffer::framebuffer(
     context& ctx,
     glm::uvec2 size,
     const target_specification_map& target_specifications,
-    unsigned samples
+    unsigned samples,
+    GLenum target
 ):  render_target(ctx, size), target_specifications(target_specifications),
-    samples(samples)
+    samples(samples), target(target)
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -45,7 +46,7 @@ framebuffer::framebuffer(
         GLenum attachment = pair.first;
         const target_specifier& spec = pair.second;
 
-        if(spec.as_texture)
+        if(spec.as_texture || target == GL_TEXTURE_CUBE_MAP)
         {
             texture* tex;
 
@@ -67,7 +68,7 @@ framebuffer::framebuffer(
                     spec.format,
                     internal_format_compatible_type(spec.format),
                     samples,
-                    samples ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D
+                    target
                 );
                 owned_textures.emplace_back(tex);
             }
@@ -139,9 +140,9 @@ framebuffer::framebuffer(
 }
 
 framebuffer::framebuffer(framebuffer&& f)
-: render_target(f), target_specifications(std::move(f.target_specifications)),
-  samples(f.samples), owned_textures(std::move(f.owned_textures)),
-  targets(std::move(f.targets))
+:   render_target(f), target_specifications(std::move(f.target_specifications)),
+    samples(f.samples), target(f.target),
+    owned_textures(std::move(f.owned_textures)), targets(std::move(f.targets))
 {
     f.fbo = 0;
     f.targets.clear();
@@ -166,6 +167,7 @@ framebuffer::get_target_specifications() const
     return target_specifications;
 }
 unsigned framebuffer::get_samples() const { return samples; }
+GLenum framebuffer::get_target() const { return target; }
 
 texture* framebuffer::get_texture_target(GLenum attachment) const
 {

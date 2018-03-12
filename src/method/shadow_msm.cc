@@ -196,7 +196,8 @@ void method::shadow_msm::ensure_render_targets()
                     glm::max(pair.second, ms_size),
                     {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
                      {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
-                    pair.first
+                    pair.first,
+                    pair.first > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D
                 )
             );
         }

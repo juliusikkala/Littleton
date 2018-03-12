@@ -32,7 +32,8 @@ public:
         context& ctx,
         glm::uvec2 size,
         const target_specification_map& target_specifications = {},
-        unsigned samples = 0
+        unsigned samples = 0,
+        GLenum target = GL_TEXTURE_2D
     );
 
     framebuffer(framebuffer&& f);
@@ -40,12 +41,14 @@ public:
 
     const target_specification_map& get_target_specifications() const;
     unsigned get_samples() const;
+    GLenum get_target() const;
 
     texture* get_texture_target(GLenum attachment) const;
 
 private:
     target_specification_map target_specifications;
     unsigned samples;
+    GLenum target;
 
     std::vector<std::unique_ptr<texture>> owned_textures;
 
