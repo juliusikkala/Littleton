@@ -350,6 +350,7 @@ static void depth_pass(
     const glm::mat4& v,
     const glm::mat4& p
 ){
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
@@ -379,6 +380,7 @@ static void depth_pass(
             group.mesh->draw();
         }
     }
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 void method::forward_pass::execute()
@@ -408,6 +410,7 @@ void method::forward_pass::execute()
 
     glDisable(GL_BLEND);
     glDepthFunc(GL_LEQUAL);
+
     depth_pass(depth_shader, scene, v, p);
 
     glEnable(GL_BLEND);
