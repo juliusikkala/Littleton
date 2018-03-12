@@ -26,34 +26,70 @@
 #include <algorithm>
 #include <glm/gtc/random.hpp>
 
-struct deferred_data
+class game_pipelines
 {
-    deferred_data(
+public:
+    game_pipelines(
         window& w,
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):  screen(w, resolution, GL_RGB16F, GL_FLOAT),
-        buf(w, resolution),
+    ):  buf(w, resolution),
+        screen(w, resolution, {
+            {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}},
+            {GL_DEPTH_ATTACHMENT, {&buf.get_depth_stencil()}}
+        }),
+        postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
+
+        clear_buf(buf),
+        clear_screen(screen),
+
         pcf(pool, main_scene),
         msm(pool, main_scene),
-        clear_buf(buf),
-        clear_screen(screen.input(0)),
-        gp(buf, pool, main_scene),
-        lp(screen.input(0), buf, pool, main_scene, {&pcf, &msm}),
-        sky(screen.input(0), pool, main_scene, &buf.get_depth_stencil()),
-        tm(screen.input(1), pool, &screen.output(1)),
-        screen_to_window(
-            w, screen.input(1),
-            method::blit_framebuffer::COLOR_ONLY
-        )
-    {
-        screen.set_depth_stencil(0, &buf.get_depth_stencil());
-    }
 
-    const std::vector<pipeline_method*> get_methods()
-    {
-        return {
+        gp(buf, pool, main_scene),
+        lp(screen, buf, pool, main_scene, {&pcf, &msm}),
+        fp(screen, pool, main_scene, {&pcf, &msm}),
+        visualizer(screen, buf, pool, main_scene),
+
+        sky(
+            screen,
+            pool,
+            main_scene,
+            &buf.get_depth_stencil()
+        ),
+        tm(
+            postprocess.input(0),
+            pool,
+            screen.get_texture_target(GL_COLOR_ATTACHMENT0)
+        ),
+        postprocess_to_window(
+            w,
+            postprocess.input(0),
+            method::blit_framebuffer::COLOR_ONLY
+        ),
+        screen_to_window(
+             w,
+             screen,
+             method::blit_framebuffer::COLOR_ONLY
+        ),
+        forward_pipeline({
+            &pcf,
+            &msm,
+            &clear_screen,
+            &fp,
+            &sky,
+            &tm,
+            &postprocess_to_window
+        }),
+        visualizer_pipeline({
+            &clear_buf,
+            &clear_screen,
+            &gp,
+            &visualizer,
+            &screen_to_window
+        }),
+        deferred_pipeline({
             &pcf,
             &msm,
             &clear_buf,
@@ -62,134 +98,47 @@ struct deferred_data
             &lp,
             &sky,
             &tm,
-            &screen_to_window
-        };
-    }
-
-    doublebuffer screen;
-    gbuffer buf;
-
-    method::shadow_pcf pcf;
-    method::shadow_msm msm;
-    method::clear clear_buf;
-    method::clear clear_screen;
-    method::geometry_pass gp;
-    method::lighting_pass lp;
-    method::sky sky;
-    method::tonemap tm;
-    method::blit_framebuffer screen_to_window;
-};
-
-struct visualizer_data
-{
-    visualizer_data(
-        window& w,
-        glm::uvec2 resolution,
-        resource_pool& pool,
-        render_scene* main_scene
-    ): screen(w, resolution, GL_RGB16F, GL_FLOAT),
-       buf(w, resolution),
-       clear_buf(buf),
-       clear_screen(screen.input(0)),
-       gp(buf, pool, main_scene),
-       visualizer(screen.input(0), buf, pool, main_scene),
-       screen_to_window(
-            w,
-            screen.input(0),
-            method::blit_framebuffer::COLOR_ONLY
-        )
-    {}
-
-    const std::vector<pipeline_method*> get_methods()
-    {
-        return {&clear_buf, &clear_screen, &gp, &visualizer, &screen_to_window};
-    }
-
-    doublebuffer screen;
-    gbuffer buf;
-
-    method::clear clear_buf;
-    method::clear clear_screen;
-    method::geometry_pass gp;
-    method::visualize_gbuffer visualizer;
-    method::blit_framebuffer screen_to_window;
-};
-
-struct forward_data
-{
-    forward_data(
-        window& w,
-        glm::uvec2 resolution,
-        resource_pool& pool,
-        render_scene* main_scene
-    ):  screen(w, resolution, {
-            {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}},
-            {GL_DEPTH_ATTACHMENT, {GL_DEPTH24_STENCIL8, true}}
-        }),
-        postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
-        pcf(pool, main_scene),
-        msm(pool, main_scene),
-        clear_screen(screen),
-        fp(screen, pool, main_scene, {&pcf, &msm}),
-        sky(
-            screen,
-            pool,
-            main_scene,
-            screen.get_texture_target(GL_DEPTH_ATTACHMENT)
-        ),
-        tm(
-            postprocess.input(0),
-            pool,
-            screen.get_texture_target(GL_COLOR_ATTACHMENT0)
-        ),
-        postprocess_to_window(
-          w,
-          postprocess.input(0),
-          method::blit_framebuffer::COLOR_ONLY
-        )
-    {}
-
-
-    const std::vector<pipeline_method*> get_methods()
-    {
-        return {
-            &pcf,
-            &msm,
-            &clear_screen,
-            &fp,
-            &sky,
-            &tm,
             &postprocess_to_window
-        };
+        })
+    {
     }
 
+    method::shadow_msm& get_msm() { return msm; }
+    method::shadow_pcf& get_pcf() { return pcf; }
+
+    method::sky& get_sky() { return sky; }
+
+    pipeline* get_forward_pipeline() { return &forward_pipeline; }
+    pipeline* get_visualizer_pipeline() { return &visualizer_pipeline; }
+    pipeline* get_deferred_pipeline() { return &deferred_pipeline; }
+
+private:
+    gbuffer buf;
     framebuffer screen;
     doublebuffer postprocess;
 
+    method::clear clear_buf;
+    method::clear clear_screen;
+
     method::shadow_pcf pcf;
     method::shadow_msm msm;
-    method::clear clear_screen;
+
+    method::geometry_pass gp;
+    method::lighting_pass lp;
+
     method::forward_pass fp;
+
+    method::visualize_gbuffer visualizer;
+
     method::sky sky;
     method::tonemap tm;
     method::blit_framebuffer postprocess_to_window;
-};
+    method::blit_framebuffer screen_to_window;
 
-template<typename T>
-class custom_pipeline: public T, public pipeline
-{
-public:
-    custom_pipeline(
-        window& w,
-        glm::uvec2 resolution,
-        resource_pool& pool,
-        render_scene* main_scene
-    ): T(w, resolution, pool, main_scene), pipeline(T::get_methods()) {}
+    pipeline forward_pipeline;
+    pipeline visualizer_pipeline;
+    pipeline deferred_pipeline;
 };
-
-using deferred_pipeline = custom_pipeline<deferred_data>;
-using visualizer_pipeline = custom_pipeline<visualizer_data>;
-using forward_pipeline = custom_pipeline<forward_data>;
 
 class game
 {
@@ -222,7 +171,7 @@ public:
                 glm::vec3(0),
                 glm::vec2(8.0f),
                 glm::vec2(-5.0f, 5.0f),
-                &fake_sun
+                &sun
             )
         );
 
@@ -235,23 +184,17 @@ public:
                 glm::vec3(0),
                 glm::vec2(8.0f),
                 glm::vec2(-5.0f, 5.0f),
-                &fake_sun
+                &sun
             )
         );
 
         glm::uvec2 render_resolution = win.get_size();
 
-        dp.reset(new deferred_pipeline(
-            win, render_resolution, resources, &main_scene
-        ));
-        vp.reset(new visualizer_pipeline(
-            win, render_resolution, resources, &main_scene
-        ));
-        fp.reset(new forward_pipeline(
+        pipelines.reset(new game_pipelines(
             win, render_resolution, resources, &main_scene
         ));
 
-        current_pipeline = fp.get();
+        current_pipeline = pipelines->get_forward_pipeline();
     }
 
     void setup_scene()
@@ -282,22 +225,20 @@ public:
         main_scene.add_light(&l1);
         main_scene.add_light(&l2);
         main_scene.add_light(&spot);
-        main_scene.add_light(&fake_sun);
+        main_scene.add_light(&sun);
 
-        dp->msm.add(sun_shadow_msm.get());
-        //dp->pcf.add(sun_shadow_pcf.get());
-        fp->msm.add(sun_shadow_msm.get());
-        //fp->pcf.add(sun_shadow_pcf.get());
+        method::shadow_msm& msm = pipelines->get_msm();
+        method::shadow_pcf& pcf = pipelines->get_pcf();
+        msm.add(sun_shadow_msm.get());
+        //pcf.add(sun_shadow_pcf.get());
 
-        dp->sky.set_sun(&sun);
-        dp->sky.set_intensity(5);
-        dp->sky.set_samples(8,2);
-        fp->sky.set_sun(&sun);
-        fp->sky.set_scaling(1/6.3781e6);
-        fp->sky.set_radius(6.3781e6);
-        fp->sky.set_samples(12,3);
-        fp->sky.set_intensity(1);
-        fp->sky.set_parent(earth);
+        method::sky& sky = pipelines->get_sky();
+        sky.set_sun(&sun);
+        sky.set_scaling(1/6.3781e6);
+        sky.set_radius(6.3781e6);
+        sky.set_samples(12,3);
+        sky.set_intensity(1);
+        sky.set_parent(earth);
 
         paused = false;
         measure_times = false;
@@ -324,9 +265,12 @@ public:
                 if(e.key.keysym.sym == SDLK_ESCAPE) return false;
                 if(e.key.keysym.sym == SDLK_PLUS) speed *= 1.1;
                 if(e.key.keysym.sym == SDLK_MINUS) speed /= 1.1;
-                if(e.key.keysym.sym == SDLK_1) current_pipeline = dp.get();
-                if(e.key.keysym.sym == SDLK_2) current_pipeline = vp.get();
-                if(e.key.keysym.sym == SDLK_3) current_pipeline = fp.get();
+                if(e.key.keysym.sym == SDLK_1)
+                    current_pipeline = pipelines->get_deferred_pipeline();
+                if(e.key.keysym.sym == SDLK_2)
+                    current_pipeline = pipelines->get_visualizer_pipeline();
+                if(e.key.keysym.sym == SDLK_3)
+                    current_pipeline = pipelines->get_forward_pipeline();
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;
                 if(e.key.keysym.sym == SDLK_r)
@@ -385,18 +329,6 @@ public:
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
 
-        if(current_pipeline == dp.get())
-        {
-            fake_sun.set_color(dp->sky.get_attenuated_sun_color(
-                cam.get_global_position()
-            ));
-        }
-        else
-        {
-            fake_sun.set_color(sun.get_color());
-        }
-        fake_sun.set_direction(sun.get_direction());
-
         return true;
     }
 
@@ -442,14 +374,10 @@ private:
     point_light l2;
     spotlight spot;
     directional_light sun;
-    // This is a copy of 'sun' approximately colored by the atmosphere
-    directional_light fake_sun;
 
     std::unique_ptr<directional_shadow_map_pcf> sun_shadow_pcf;
     std::unique_ptr<directional_shadow_map_msm> sun_shadow_msm;
-    std::unique_ptr<deferred_pipeline> dp;
-    std::unique_ptr<visualizer_pipeline> vp;
-    std::unique_ptr<forward_pipeline> fp;
+    std::unique_ptr<game_pipelines> pipelines;
 
     pipeline* current_pipeline;
 
