@@ -54,6 +54,45 @@ private:
     unsigned samples;
 };
 
+class point_shadow_map_pcf: public point_shadow_map
+{
+friend class method::shadow_pcf;
+public:
+    point_shadow_map_pcf(
+        method::shadow_pcf* method,
+        context& ctx,
+        glm::uvec2 size,
+        unsigned samples = 16,
+        float radius = 4.0f,
+        glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
+        point_light* light = nullptr
+    );
+    point_shadow_map_pcf(point_shadow_map_pcf&& other);
+
+    void set_bias(
+        float min_bias = 0.001,
+        float max_bias = 0.02
+    );
+
+    glm::vec2 get_bias() const;
+
+    void set_samples(unsigned samples);
+    unsigned get_samples() const;
+
+    void set_radius(float radius);
+    float set_radius() const;
+
+    texture& get_depth();
+    const texture& get_depth() const;
+
+private:
+    texture depth;
+    framebuffer depth_buffer;
+    float min_bias, max_bias;
+    float radius;
+    unsigned samples;
+};
+
 namespace method
 {
     class shadow_pcf: public shadow_method

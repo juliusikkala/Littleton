@@ -52,7 +52,7 @@ class point_shadow_map
 public:
     point_shadow_map(
         method::shadow_method* method,
-        glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
+        glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
     point_shadow_map(const point_shadow_map& other);

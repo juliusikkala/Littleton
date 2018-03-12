@@ -189,3 +189,81 @@ const texture& directional_shadow_map_pcf::get_depth() const
 {
     return depth;
 }
+
+point_shadow_map_pcf::point_shadow_map_pcf(
+    method::shadow_pcf* method,
+    context& ctx,
+    glm::uvec2 size,
+    unsigned samples,
+    float radius,
+    glm::vec2 depth_range,
+    point_light* light
+):  point_shadow_map(method, depth_range, light),
+    depth(
+       ctx,
+       size,
+       GL_DEPTH_COMPONENT16,
+       GL_FLOAT,
+       0,
+       GL_TEXTURE_CUBE_MAP
+    ),
+    depth_buffer(
+        ctx,
+        size,
+        {{GL_DEPTH_ATTACHMENT, {&depth}}},
+        GL_TEXTURE_CUBE_MAP
+    ),
+    radius(radius), samples(samples)
+{
+    set_bias();
+}
+
+point_shadow_map_pcf::point_shadow_map_pcf(
+    point_shadow_map_pcf&& other
+):  point_shadow_map(other),
+    depth(std::move(other.depth)),
+    depth_buffer(std::move(other.depth_buffer)),
+    min_bias(other.min_bias), max_bias(other.max_bias),
+    radius(other.radius), samples(other.samples)
+{}
+
+void point_shadow_map_pcf::set_bias(float min_bias, float max_bias)
+{
+    this->min_bias = min_bias;
+    this->max_bias = max_bias;
+}
+
+glm::vec2 point_shadow_map_pcf::get_bias() const
+{
+    return glm::vec2(min_bias, max_bias);
+}
+
+void point_shadow_map_pcf::set_samples(unsigned samples)
+{
+    this->samples = samples;
+}
+
+unsigned point_shadow_map_pcf::get_samples() const
+{
+    return samples;
+}
+
+void point_shadow_map_pcf::set_radius(float radius)
+{
+    this->radius = radius;
+}
+
+float point_shadow_map_pcf::set_radius() const
+{
+    return radius;
+}
+
+texture& point_shadow_map_pcf::get_depth()
+{
+    return depth;
+}
+
+const texture& point_shadow_map_pcf::get_depth() const
+{
+    return depth;
+}
