@@ -61,6 +61,8 @@ public:
     point_light* get_light() const;
 
     void set_range(glm::vec2 depth_range);
+    glm::vec2 get_range() const;
+
     glm::mat4 get_view(unsigned face) const;
     glm::mat4 get_projection() const;
 
@@ -68,6 +70,7 @@ public:
 
 private:
     method::shadow_method* method;
+    glm::vec2 range;
     glm::mat4 projection;
 
     point_light* l;

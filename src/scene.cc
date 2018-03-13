@@ -229,12 +229,12 @@ void shadow_scene::clear_shadows()
     point_shadows.clear();
 }
 
-shadow_scene::directional_map shadow_scene::get_directional_shadows() const
+const shadow_scene::directional_map& shadow_scene::get_directional_shadows() const
 {
     return directional_shadows;
 }
 
-shadow_scene::point_map shadow_scene::get_point_shadows() const
+const shadow_scene::point_map& shadow_scene::get_point_shadows() const
 {
     return point_shadows;
 }

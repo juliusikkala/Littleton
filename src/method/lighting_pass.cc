@@ -43,6 +43,7 @@ static void set_light(
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
     s->set("in_material", 3);
+    s->set("inv_view", glm::inverse(view));
     s->set("perspective_data", perspective_data);
     s->set(
         "light.position",
@@ -112,13 +113,54 @@ static void render_point_lights(
     const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
+    const std::vector<point_light*>& lights = 
+        scene->get_point_lights();
+    std::vector<bool> handled_lights(lights.size(), false);
+
+    shader::definition_map definitions({{"POINT_LIGHT", ""}});
+
+    // Render shadowed lights
+    for(const auto& pair: scene->get_point_shadows())
+    {
+        method::shadow_method* m = pair.first;
+        shader::definition_map def(m->get_point_definitions());
+
+        def.insert(definitions.begin(), definitions.end());
+
+        shader* s = lighting_shader->get(def);
+        s->bind();
+
+        unsigned texture_index = 4;
+        m->set_point_uniforms(s, texture_index);
+
+        for(point_shadow_map* sm: pair.second)
+        {
+            unsigned local_texture_index = texture_index;
+            point_light* light = sm->get_light();
+
+            // Check if the light is in the scene and mark it as handled
+            auto it = std::lower_bound(lights.begin(), lights.end(), light);
+            if(it == lights.end() || *it != light) continue;
+            handled_lights[it - lights.begin()] = true;
+
+            m->set_shadow_map_uniforms(
+                s, local_texture_index, sm, "shadow.", glm::inverse(v)
+            );
+
+            set_light(s, light, v, perspective_data);
+
+            quad.draw();
+        }
+    }
+
     // Render unshadowed lights
-    shader* s = lighting_shader->get({{"POINT_LIGHT", ""}});
+    shader* s = lighting_shader->get(definitions);
     s->bind();
 
-    for(point_light* l: scene->get_point_lights())
+    for(unsigned i = 0; i < lights.size(); ++i)
     {
-        set_light(s, l, v, perspective_data);
+        if(handled_lights[i]) continue;
+        set_light(s, lights[i], v, perspective_data);
         quad.draw();
     }
 }

@@ -398,7 +398,7 @@ void texture::basic_load(
     }
 
     if(glGetError() != GL_NO_ERROR)
-        throw std::runtime_error("Failed to create empty texture");
+        throw std::runtime_error("Failed to create a texture from data");
 
     this->internal_format = internal_format;
     this->type = type;

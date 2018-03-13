@@ -18,6 +18,9 @@ out vec4 out_color;
 #ifdef SHADOW_MAPPING
 uniform shadow_map shadow;
 #endif
+#ifdef POINT_SHADOW_MAPPING
+uniform mat4 inv_view;
+#endif
 
 void main(void)
 {
@@ -41,6 +44,15 @@ void main(void)
         f0,
         metallic
     );
+
+#ifdef POINT_SHADOW_MAPPING
+    vec3 dir = pos - light.position;
+    lighting *= shadow_coef(
+        shadow,
+        vec3(inv_view * vec4(dir, 0)),
+        dot(dir, normal)
+    );
+#endif
 #elif defined(SPOTLIGHT)
     vec3 lighting = calc_spotlight(
         light,
@@ -63,7 +75,7 @@ void main(void)
         metallic
     );
 
-#ifdef SHADOW_MAPPING
+#ifdef DIRECTIONAL_SHADOW_MAPPING
     lighting *= shadow_coef(
         shadow,
         shadow.mvp * vec4(pos, 1.0),

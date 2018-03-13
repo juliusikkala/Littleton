@@ -37,55 +37,36 @@ method::forward_pass::~forward_pass() {}
 
 static void set_light(
     shader* s,
-    point_light* light,
-    const glm::mat4& view
+    point_light* light
 ){
-    s->set(
-        "light.position",
-        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
-    );
+    s->set("light.position", light->get_global_position());
     s->set("light.color", light->get_color());
 }
 
 static void set_light(
     shader* s,
-    spotlight* light,
-    const glm::mat4& view
+    spotlight* light
 ){
-    s->set(
-        "light.position",
-        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
-    );
+    s->set("light.position", light->get_global_position());
     s->set("light.color", light->get_color());
 
     s->set(
         "light.direction",
-        glm::normalize(
-            glm::vec3(
-                view * glm::vec4(light->get_global_direction(), 0)
-            )
-        )
+        glm::normalize(light->get_global_direction())
     );
     s->set<float>(
         "light.cutoff",
         cos(glm::radians(light->get_cutoff_angle()))
     );
-    s->set(
-        "light.exponent",
-        light->get_falloff_exponent()
-    );
+    s->set("light.exponent", light->get_falloff_exponent());
 }
 
 static void set_light(
     shader* s,
-    directional_light* light,
-    const glm::mat4& view
+    directional_light* light
 ){
     s->set("light.color", light->get_color());
-    s->set(
-        "light.direction",
-        glm::normalize(glm::vec3(view * glm::vec4(light->get_direction(), 0)))
-    );
+    s->set("light.direction", glm::normalize(light->get_direction()));
 }
 
 static void render_shadowed_lights(
@@ -104,6 +85,8 @@ static void render_shadowed_lights(
 
     const std::vector<directional_light*>& directional_lights =
         scene->get_directional_lights();
+
+    glm::vec3 camera_pos = scene->get_camera()->get_global_position();
 
     for(const auto& pair: scene->get_directional_shadows())
     {
@@ -136,9 +119,8 @@ static void render_shadowed_lights(
                 if(!mod) continue;
 
                 glm::mat4 m = obj->get_global_transform();
-                glm::mat4 mv = v * m;
-                glm::mat3 n_mv(glm::inverseTranspose(mv));
-                glm::mat4 mvp = p * mv;
+                glm::mat3 n_m(glm::inverseTranspose(m));
+                glm::mat4 mvp = p * v * m;
 
                 for(model::vertex_group& group: *mod)
                 {
@@ -157,11 +139,12 @@ static void render_shadowed_lights(
                     met->set_shadow_map_uniforms(
                         s, texture_index, sm, "shadow.", m
                     );
-                    set_light(s, light, v);
+                    set_light(s, light);
 
                     s->set("mvp", mvp);
-                    s->set("m", mv);
-                    s->set("n_m", n_mv);
+                    s->set("m", m);
+                    s->set("n_m", n_m);
+                    s->set("camera_pos", camera_pos);
 
                     group.mat->apply(s);
                     group.mesh->draw();
@@ -175,7 +158,6 @@ static std::unique_ptr<uniform_block> create_light_block(
     const std::string& block_name,
     render_scene* scene,
     shader* compatible_shader,
-    const glm::mat4& v,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights
@@ -196,14 +178,8 @@ static std::unique_ptr<uniform_block> create_light_block(
 
         point_light_count++;
         std::string prefix = "point["+std::to_string(i)+"].";
-        light_block->set(
-            prefix + "color",
-            l->get_color()
-        );
-        light_block->set(
-            prefix + "position",
-            glm::vec3(v * glm::vec4(l->get_global_position(), 1))
-        );
+        light_block->set(prefix + "color", l->get_color());
+        light_block->set(prefix + "position", l->get_global_position());
     }
 
     const std::vector<spotlight*>& spotlights = scene->get_spotlights();
@@ -214,18 +190,11 @@ static std::unique_ptr<uniform_block> create_light_block(
 
         spotlight_count++;
         std::string prefix = "spot["+std::to_string(i)+"].";
-        light_block->set(
-            prefix + "color",
-            l->get_color()
-        );
-        light_block->set(
-            prefix + "position",
-            glm::vec3(v * glm::vec4(l->get_global_position(), 1))
-        );
+        light_block->set(prefix + "color", l->get_color());
+        light_block->set(prefix + "position", l->get_global_position());
         light_block->set(
             prefix + "direction",
-            glm::normalize(glm::vec3(
-                v * glm::vec4(l->get_global_direction(), 0)))
+            glm::normalize(l->get_global_direction())
         );
         light_block->set<float>(
             prefix + "cutoff",
@@ -253,7 +222,7 @@ static std::unique_ptr<uniform_block> create_light_block(
         );
         light_block->set(
             prefix + "direction",
-            glm::normalize(glm::vec3(v * glm::vec4(l->get_direction(), 0)))
+            glm::normalize(l->get_direction())
         );
     }
 
@@ -294,15 +263,16 @@ static void render_unshadowed_lights(
 
     std::unique_ptr<uniform_block> light_block;
 
+    glm::vec3 camera_pos = scene->get_camera()->get_global_position();
+
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
         if(!mod) continue;
 
         glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mv = v * m;
-        glm::mat3 n_mv(glm::inverseTranspose(mv));
-        glm::mat4 mvp = p * mv;
+        glm::mat3 n_m(glm::inverseTranspose(m));
+        glm::mat4 mvp = p * v * m;
 
         for(model::vertex_group& group: *mod)
         {
@@ -324,7 +294,6 @@ static void render_unshadowed_lights(
                     "Lights",
                     scene,
                     s,
-                    v,
                     handled_point_lights,
                     handled_spotlights,
                     handled_directional_lights
@@ -334,8 +303,9 @@ static void render_unshadowed_lights(
             if(light_block) s->set_block("Lights", 0);
 
             s->set("mvp", mvp);
-            s->set("m", mv);
-            s->set("n_m", n_mv);
+            s->set("m", m);
+            s->set("n_m", n_m);
+            s->set("camera_pos", camera_pos);
 
             group.mat->apply(s);
             group.mesh->draw();
@@ -356,9 +326,7 @@ static void depth_pass(
         if(!mod) continue;
 
         glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mv = v * m;
-        glm::mat3 n_mv(glm::inverseTranspose(mv));
-        glm::mat4 mvp = p * mv;
+        glm::mat4 mvp = p * v * m;
 
         for(model::vertex_group& group: *mod)
         {
@@ -372,8 +340,7 @@ static void depth_pass(
             s->bind();
 
             s->set("mvp", mvp);
-            s->set("m", mv);
-            s->set("n_m", n_mv);
+            s->set("m", m);
 
             group.mat->apply(s);
             group.mesh->draw();

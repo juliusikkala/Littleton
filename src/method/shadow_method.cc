@@ -16,3 +16,31 @@ render_scene* method::shadow_method::get_scene() const
 }
 
 void method::shadow_method::set_directional_uniforms(shader*, unsigned&) {}
+void method::shadow_method::set_point_uniforms(shader*, unsigned&) {}
+
+shader::definition_map method::shadow_method::get_directional_definitions()
+const
+{
+    return {};
+}
+
+shader::definition_map method::shadow_method::get_point_definitions() const
+{
+    return {};
+}
+
+void method::shadow_method::set_shadow_map_uniforms(
+    shader*,
+    unsigned&,
+    directional_shadow_map*,
+    const std::string&,
+    const glm::mat4& 
+){}
+
+void method::shadow_method::set_shadow_map_uniforms(
+    shader*,
+    unsigned&,
+    point_shadow_map*,
+    const std::string&,
+    const glm::mat4&
+){}

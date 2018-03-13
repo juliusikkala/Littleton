@@ -1,6 +1,6 @@
 in VERTEX_OUT {
     vec3 position;
-#ifdef SHADOW_MAPPING
+#ifdef DIRECTIONAL_SHADOW_MAPPING
     vec4 light_space_pos;
 #endif
 #ifdef VERTEX_NORMAL

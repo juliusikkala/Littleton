@@ -109,12 +109,18 @@ point_light* point_shadow_map::get_light() const
 
 void point_shadow_map::set_range(glm::vec2 depth_range)
 {
+    this->range = depth_range;
     projection = glm::perspective(
         float(M_PI/2.0f),
         1.0f,
         depth_range.x,
         depth_range.y
     );
+}
+
+glm::vec2 point_shadow_map::get_range() const
+{
+    return range;
 }
 
 glm::mat4 point_shadow_map::get_view(unsigned face) const
@@ -125,7 +131,7 @@ glm::mat4 point_shadow_map::get_view(unsigned face) const
         glm::lookAt(glm::vec3(0), glm::vec3(1,0,0), glm::vec3(0,-1,0)),
         glm::lookAt(glm::vec3(0), glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
         glm::lookAt(glm::vec3(0), glm::vec3(0,1,0), glm::vec3(0,0,1)),
-        glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,1)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,-1)),
         glm::lookAt(glm::vec3(0), glm::vec3(0,0,1), glm::vec3(0,-1,0)),
         glm::lookAt(glm::vec3(0), glm::vec3(0,0,-1), glm::vec3(0,-1,0))
     };

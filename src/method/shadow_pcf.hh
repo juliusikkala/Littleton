@@ -104,12 +104,27 @@ namespace method
             shader* s,
             unsigned& texture_index
         ) override;
+
+        void set_point_uniforms(
+            shader* s,
+            unsigned& texture_index
+        ) override;
+
         shader::definition_map get_directional_definitions() const override;
+        shader::definition_map get_point_definitions() const override;
 
         void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
             directional_shadow_map* shadow_map,
+            const std::string& prefix,
+            const glm::mat4& pos_to_world
+        ) override;
+
+        void set_shadow_map_uniforms(
+            shader* s,
+            unsigned& texture_index,
+            point_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         ) override;
@@ -120,9 +135,10 @@ namespace method
 
     private:
         shader* depth_shader;
+        shader* cubemap_depth_shader;
         const texture& shadow_noise;
         const texture& kernel;
-        sampler shadow_sampler, noise_sampler;
+        sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
     };
 };
 #endif

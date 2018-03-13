@@ -113,8 +113,8 @@ public:
     void clear_point_shadows();
     void clear_shadows();
 
-    directional_map get_directional_shadows() const;
-    point_map get_point_shadows() const;
+    const directional_map& get_directional_shadows() const;
+    const point_map& get_point_shadows() const;
 
 private:
     directional_map directional_shadows;

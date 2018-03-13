@@ -34,7 +34,10 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
 
 shader::definition_map method::shadow_msm::get_directional_definitions() const
 {
-    return {{"SHADOW_MAPPING", "shadow/directional_msm.glsl"}};
+    return {
+        {"SHADOW_MAPPING", "shadow/directional_msm.glsl"},
+        {"DIRECTIONAL_SHADOW_MAPPING", ""}
+    };
 }
 
 void method::shadow_msm::set_shadow_map_uniforms(

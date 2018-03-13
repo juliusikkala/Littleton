@@ -73,10 +73,9 @@ framebuffer::framebuffer(
                 owned_textures.emplace_back(tex);
             }
 
-            glFramebufferTexture2D(
+            glFramebufferTexture(
                 GL_FRAMEBUFFER,
                 attachment,
-                tex->get_target(),
                 tex->get_texture(),
                 0
             );

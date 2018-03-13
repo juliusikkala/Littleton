@@ -10,7 +10,7 @@ uniform mat4 m;
 uniform mat3 n_m;
 #endif
 
-#ifdef SHADOW_MAPPING
+#ifdef DIRECTIONAL_SHADOW_MAPPING
 #include "shadow.glsl"
 uniform shadow_map shadow;
 #endif
@@ -20,7 +20,7 @@ void main(void)
     v_out.position = vec3(m * vec4(v_vertex, 1.0f));
     gl_Position = mvp * vec4(v_vertex, 1.0f);
 
-#ifdef SHADOW_MAPPING
+#ifdef DIRECTIONAL_SHADOW_MAPPING
     v_out.light_space_pos = shadow.mvp * vec4(v_vertex, 1.0f);
 #endif
 

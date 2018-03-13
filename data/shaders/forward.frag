@@ -41,6 +41,8 @@ uniform directional_light light;
 uniform shadow_map shadow;
 #endif
 
+uniform vec3 camera_pos;
+
 out vec4 out_color;
 
 void main(void)
@@ -56,7 +58,7 @@ void main(void)
 #endif
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
-    vec3 view_dir = normalize(-f_in.position);
+    vec3 view_dir = normalize(camera_pos-f_in.position);
     float roughness = get_material_roughness();
     roughness = roughness * roughness;
     float metallic = get_material_metallic();
@@ -147,7 +149,7 @@ void main(void)
         metallic
     );
 
-#ifdef SHADOW_MAPPING
+#ifdef DIRECTIONAL_SHADOW_MAPPING
     color.rgb *= shadow_coef(
         shadow,
         f_in.light_space_pos,
