@@ -212,9 +212,9 @@ unsigned next_power_of_two(unsigned n)
     return n;
 }
 
-template<class F>
+template<typename T, class F>
 void mitchell_best_candidate(
-    std::vector<glm::vec2>& samples,
+    std::vector<T>& samples,
     F&& sample_generator,
     unsigned candidate_count,
     unsigned count
@@ -226,15 +226,15 @@ void mitchell_best_candidate(
 
     while(count--)
     {
-        glm::vec2 farthest = glm::vec2(0, 0);
+        T farthest = T(0);
         float farthest_distance = 0;
 
         for(unsigned i = 0; i < candidate_count; ++i)
         {
-            glm::vec2 candidate = sample_generator();
+            T candidate = sample_generator();
             float candidate_distance = INFINITY;
 
-            for(const glm::vec2& sample: samples)
+            for(const T& sample: samples)
             {
                 float dist = glm::distance(candidate, sample);
                 if(dist < candidate_distance) candidate_distance = dist;
@@ -277,6 +277,20 @@ void mitchell_best_candidate(
         [w, h](){
             return glm::linearRand(glm::vec2(-w/2, -h/2), glm::vec2(w/2, h/2));
         },
+        candidate_count,
+        count
+    );
+}
+
+void mitchell_best_candidate(
+    std::vector<glm::vec3>& samples,
+    float r,
+    unsigned candidate_count,
+    unsigned count
+){
+    mitchell_best_candidate(
+        samples,
+        [r](){return glm::ballRand(r);},
         candidate_count,
         count
     );

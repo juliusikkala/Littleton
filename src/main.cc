@@ -201,8 +201,8 @@ public:
                 &pipelines->get_pcf(),
                 win,
                 glm::uvec2(1024),
-                4,
-                4,
+                16,
+                0.05f,
                 glm::vec2(0.01f, 5.0f),
                 &l1
             )
@@ -237,8 +237,8 @@ public:
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
         main_scene.add_light(&l1);
-        main_scene.add_light(&l2);
-        main_scene.add_light(&spot);
+        //main_scene.add_light(&l2);
+        //main_scene.add_light(&spot);
         //main_scene.add_light(&sun);
         main_scene.add_shadow(sun_shadow_msm.get());
         main_scene.add_shadow(fly_shadow_pcf.get());

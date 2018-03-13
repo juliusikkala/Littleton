@@ -25,6 +25,27 @@ static texture* generate_circular_random(context& ctx, glm::uvec2 size)
     );
 }
 
+static texture* generate_spherical_random(context& ctx, glm::uvec2 size)
+{
+    std::vector<glm::vec3> spherical_samples;
+    spherical_samples.resize(size.x * size.y);
+
+    for(unsigned i = 0; i < size.x * size.y; ++i)
+    {
+        spherical_samples[i] = glm::sphericalRand(1.0f);
+    }
+
+    return new texture(
+        ctx,
+        size,
+        GL_RGB8_SNORM,
+        GL_FLOAT,
+        0,
+        GL_TEXTURE_2D,
+        (float*)spherical_samples.data()
+    );
+}
+
 static texture* generate_circular_poisson(context& ctx, unsigned size)
 {
     std::vector<glm::vec2> poisson;
@@ -40,6 +61,28 @@ static texture* generate_circular_poisson(context& ctx, unsigned size)
         ctx,
         glm::uvec2(size),
         GL_RG8_SNORM,
+        GL_FLOAT,
+        0,
+        GL_TEXTURE_1D,
+        (float*)poisson.data()
+    );
+}
+
+static texture* generate_spherical_poisson(context& ctx, unsigned size)
+{
+    std::vector<glm::vec3> poisson;
+
+    mitchell_best_candidate(
+        poisson,
+        1.0f,
+        20,
+        size
+    );
+
+    return new texture(
+        ctx,
+        glm::uvec2(size),
+        GL_RGB8_SNORM,
         GL_FLOAT,
         0,
         GL_TEXTURE_1D,
@@ -120,4 +163,26 @@ const texture& common::ensure_circular_poisson_texture(
 
     if(pool.contains(name)) return *pool.get(name);
     return *pool.add(name, generate_circular_poisson(pool.get_context(), size));
+}
+
+const texture& common::ensure_spherical_random_texture(
+    texture_pool& pool,
+    glm::uvec2 size
+){
+    std::string name =
+        "spherical_random_" + std::to_string(size.x)
+        + "x" + std::to_string(size.y);
+
+    if(pool.contains(name)) return *pool.get(name);
+    return *pool.add(name, generate_spherical_random(pool.get_context(), size));
+}
+
+const texture& common::ensure_spherical_poisson_texture(
+    texture_pool& pool,
+    unsigned size
+){
+    std::string name = "spherical_poisson_" + std::to_string(size);
+
+    if(pool.contains(name)) return *pool.get(name);
+    return *pool.add(name, generate_spherical_poisson(pool.get_context(), size));
 }

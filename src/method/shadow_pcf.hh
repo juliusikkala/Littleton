@@ -63,7 +63,7 @@ public:
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
-        float radius = 4.0f,
+        float radius = 0.1f,
         glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
@@ -136,8 +136,10 @@ namespace method
     private:
         shader* depth_shader;
         shader* cubemap_depth_shader;
-        const texture& shadow_noise;
-        const texture& kernel;
+        const texture& shadow_noise_2d;
+        const texture& kernel_2d;
+        const texture& shadow_noise_3d;
+        const texture& kernel_3d;
         sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
     };
 };

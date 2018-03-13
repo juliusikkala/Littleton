@@ -1,6 +1,6 @@
 struct shadow_map
 {
-    samplerCube map;
+    samplerCubeShadow map;
     float far_plane;
 
     float min_bias;
@@ -17,15 +17,40 @@ float shadow_coef(
     vec3 dir, // This must be in world space!
     float ndotd
 ){
-    float map_depth = texture(sm.map, dir).x * sm.far_plane;
     float depth = length(dir);
-
     float bias = max(
         sm.max_bias * (1.0f - ndotd),
         sm.min_bias
     );
 
-    return (depth - bias) <= map_depth ? 1.0f : 0.0f;
+    float shadow = 0.0f;
+
+    ivec2 tex_size = textureSize(sm.map, 0);
+    ivec2 noise_size = textureSize(shadow_noise, 0);
+
+    ivec2 sample_pos =
+        ivec2(fract(vec2(dir.x+dir.z, dir.y+dir.z) * tex_size) * noise_size);
+    vec3 random_vec = texelFetch(shadow_noise, sample_pos, 0).xyz;
+    vec3 ndir = dir / depth;
+    vec3 tangent = normalize(random_vec - ndir * dot(random_vec, ndir));
+    mat3 rotation = mat3(tangent, cross(ndir, tangent), ndir);
+    
+    for(int i = 0; i < sm.samples; ++i)
+    {
+        vec3 sample_offset =
+            rotation * texelFetch(shadow_kernel, i, 0).xyz * sm.radius;
+
+        shadow += dot(
+            textureGather(
+                sm.map,
+                dir + sample_offset,
+                depth/sm.far_plane - bias
+            ),
+            vec4(0.25f/sm.samples)
+        );
+    }
+
+    return shadow;
 }
 
 

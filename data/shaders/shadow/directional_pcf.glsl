@@ -33,9 +33,7 @@ float shadow_coef(
     ivec2 noise_size = textureSize(shadow_noise, 0);
     vec2 texel = 1.0f/vec2(tex_size);
 
-    ivec2 sample_pos = ivec2(
-        fract(pos.xy * tex_size) * noise_size
-    );
+    ivec2 sample_pos = ivec2(fract(pos.xy * tex_size) * noise_size);
     vec2 cs = texelFetch(shadow_noise, sample_pos, 0).xy;
     mat2 rotation = mat2(cs.x, cs.y, -cs.y, cs.x);
 
@@ -44,11 +42,10 @@ float shadow_coef(
         vec2 sample_offset =
             rotation * texelFetch(shadow_kernel, i, 0).xy * sm.radius;
 
-        shadow += dot(textureGather(
-            sm.map,
-            pos.xy + sample_offset * texel,
-            pos.z - bias
-        ), vec4(0.25/sm.samples));
+        shadow += dot(
+            textureGather(sm.map, pos.xy + sample_offset * texel, pos.z - bias),
+            vec4(0.25/sm.samples)
+        );
     }
 
     return shadow;

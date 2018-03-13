@@ -24,9 +24,23 @@ namespace common
         glm::uvec2 size
     );
 
+    // Adds texture "spherical_random_<size.x>x<size.y>", a texture with
+    // random 3d unit vectors.
+    const texture& ensure_spherical_random_texture(
+        texture_pool& pool,
+        glm::uvec2 size
+    );
+
     // Adds texture "circular_poisson_<size>", a texture with
     // poisson-distributed 2d points.
     const texture& ensure_circular_poisson_texture(
+        texture_pool& pool,
+        unsigned size
+    );
+
+    // Adds texture "spherical_poisson_<size>", a texture with
+    // poisson-distributed 2d points.
+    const texture& ensure_spherical_poisson_texture(
         texture_pool& pool,
         unsigned size
     );

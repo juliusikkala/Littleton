@@ -79,6 +79,14 @@ void mitchell_best_candidate(
     unsigned count
 );
 
+// Spherical version
+void mitchell_best_candidate(
+    std::vector<glm::vec3>& samples,
+    float r,
+    unsigned candidate_count,
+    unsigned count
+);
+
 std::vector<glm::vec2> grid_samples(
     unsigned w,
     unsigned h,

@@ -14,10 +14,17 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
     )),
     cubemap_depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/point_pcf.frag", "cubemap.geom"},
-        {{"VERTEX_POSITION", "0"}}
+        {{"VERTEX_POSITION", "0"},
+         {"DISCARD_ALPHA", "0.5"}}
     )),
-    shadow_noise(common::ensure_circular_random_texture(pool, glm::uvec2(512))),
-    kernel(common::ensure_circular_poisson_texture(pool, 256)),
+    shadow_noise_2d(
+        common::ensure_circular_random_texture(pool, glm::uvec2(512))
+    ),
+    kernel_2d(common::ensure_circular_poisson_texture(pool, 256)),
+    shadow_noise_3d(
+        common::ensure_spherical_random_texture(pool, glm::uvec2(512))
+    ),
+    kernel_3d(common::ensure_spherical_poisson_texture(pool, 256)),
     shadow_sampler(
         pool.get_context(),
         GL_LINEAR,
@@ -34,7 +41,7 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
         GL_CLAMP_TO_EDGE,
         0,
         glm::vec4(1),
-        GL_NONE
+        GL_COMPARE_REF_TO_TEXTURE
     ),
     noise_sampler(pool.get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
@@ -47,9 +54,9 @@ void method::shadow_pcf::set_directional_uniforms(
 ){
     s->set(
         "shadow_noise",
-        noise_sampler.bind(shadow_noise, texture_index++)
+        noise_sampler.bind(shadow_noise_2d, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
+    s->set("shadow_kernel", noise_sampler.bind(kernel_2d, texture_index++));
 }
 
 void method::shadow_pcf::set_point_uniforms(
@@ -58,9 +65,9 @@ void method::shadow_pcf::set_point_uniforms(
 ){
     s->set(
         "shadow_noise",
-        noise_sampler.bind(shadow_noise, texture_index++)
+        noise_sampler.bind(shadow_noise_3d, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
+    s->set("shadow_kernel", noise_sampler.bind(kernel_3d, texture_index++));
 }
 
 shader::definition_map method::shadow_pcf::get_directional_definitions() const
