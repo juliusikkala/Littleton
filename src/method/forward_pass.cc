@@ -152,6 +152,72 @@ static void render_shadowed_lights(
             }
         }
     }
+
+    shader::definition_map point_def(
+        {{"POINT_LIGHT", ""},
+         {"SINGLE_LIGHT", ""}}
+    );
+
+    const std::vector<point_light*>& point_lights = scene->get_point_lights();
+
+    for(const auto& pair: scene->get_point_shadows())
+    {
+        method::shadow_method* met = pair.first;
+
+        shader::definition_map scene_definitions(met->get_point_definitions());
+        scene_definitions.insert(point_def.begin(), point_def.end());
+
+        for(point_shadow_map* sm: pair.second)
+        {
+            point_light* light = sm->get_light();
+
+            auto it = std::lower_bound(
+                point_lights.begin(),
+                point_lights.end(),
+                light
+            );
+            if(it == point_lights.end() || *it != light) continue;
+            handled_point_lights[it - point_lights.begin()] = true;
+
+            for(object* obj: scene->get_objects())
+            {
+                model* mod = obj->get_model();
+                if(!mod) continue;
+
+                glm::mat4 m = obj->get_global_transform();
+                glm::mat3 n_m(glm::inverseTranspose(m));
+                glm::mat4 mvp = p * v * m;
+
+                for(model::vertex_group& group: *mod)
+                {
+                    if(!group.mat || !group.mesh) continue;
+
+                    shader::definition_map def = scene_definitions;
+                    group.mat->update_definitions(def);
+                    group.mesh->update_definitions(def);
+
+                    shader* s = forward_shader->get(def);
+                    s->bind();
+
+                    unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
+
+                    met->set_point_uniforms(s, texture_index);
+                    met->set_shadow_map_uniforms(
+                        s, texture_index, sm, "shadow.", m
+                    );
+                    set_light(s, light);
+
+                    s->set("mvp", mvp);
+                    s->set("m", m);
+                    s->set("n_m", n_m);
+                    s->set("camera_pos", camera_pos);
+
+                    group.mat->apply(s);
+                    group.mesh->draw();
+                }
+            }
+        }
+    }
 }
 
 static std::unique_ptr<uniform_block> create_light_block(

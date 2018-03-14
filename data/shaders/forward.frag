@@ -127,6 +127,11 @@ void main(void)
         f0,
         metallic
     );
+
+#ifdef POINT_SHADOW_MAPPING
+    vec3 dir = pos - light.position;
+    color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
+#endif
 #elif defined(SPOTLIGHT)
     color.rgb = calc_spotlight(
         light,
