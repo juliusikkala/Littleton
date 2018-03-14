@@ -10,16 +10,18 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
 :   glresource(pool.get_context()),
     shadow_method(scene),
     depth_shader(pool.get_shader(
-        shader::path{"generic.vert", "shadow/msm.frag"},
+        shader::path{"generic.vert", "shadow/directional_msm.frag"},
+        {{"VERTEX_POSITION", "0"}}
+    )),
+    cubemap_depth_shader(pool.get_shader(
+        shader::path{"generic.vert", "shadow/point_msm.frag", "cubemap.geom"},
         {{"VERTEX_POSITION", "0"}}
     )),
     vertical_blur_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "blur.frag"},
-        {{"VERTICAL", ""}}
+        shader::path{"fullscreen.vert", "blur.frag"}, {{"VERTICAL", ""}}
     )),
     horizontal_blur_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "blur.frag"},
-        {{"HORIZONTAL", ""}}
+        shader::path{"fullscreen.vert", "blur.frag"}, {{"HORIZONTAL", ""}}
     )),
     quad(common::ensure_quad_vertex_buffer(pool)),
     moment_sampler(
@@ -29,6 +31,12 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
        GL_CLAMP_TO_BORDER,
        0,
        glm::vec4(0.0f, 0.0, 1.0f, 0.0f)
+    ),
+    cubemap_moment_sampler(
+        pool.get_context(),
+        GL_LINEAR,
+        GL_LINEAR,
+        GL_CLAMP_TO_EDGE
     )
 {}
 
@@ -37,6 +45,14 @@ shader::definition_map method::shadow_msm::get_directional_definitions() const
     return {
         {"SHADOW_MAPPING", "shadow/directional_msm.glsl"},
         {"DIRECTIONAL_SHADOW_MAPPING", ""}
+    };
+}
+
+shader::definition_map method::shadow_msm::get_point_definitions() const
+{
+    return {
+        {"SHADOW_MAPPING", "shadow/point_msm.glsl"},
+        {"POINT_SHADOW_MAPPING", ""}
     };
 }
 
@@ -59,99 +75,171 @@ void method::shadow_msm::set_shadow_map_uniforms(
     s->set(prefix + "mvp", lvp * pos_to_world);
 }
 
+void method::shadow_msm::set_shadow_map_uniforms(
+    shader* s,
+    unsigned& texture_index,
+    point_shadow_map* shadow_map,
+    const std::string& prefix,
+    const glm::mat4& pos_to_world
+){
+    point_shadow_map_msm* sm = static_cast<point_shadow_map_msm*>(shadow_map);
+
+    s->set(
+        prefix + "map",
+        cubemap_moment_sampler.bind(sm->moments, texture_index++)
+    );
+    s->set(prefix + "far_plane", sm->get_range().y);
+}
+
 void method::shadow_msm::execute()
 {
     if(!scene) return;
 
-    const shadow_scene::directional_map& directional =
-        scene->get_directional_shadows();
-    auto it = directional.find(this);
-    if(it == directional.end()) return;
 
-    const std::vector<directional_shadow_map*>& directional_shadow_maps =
-        it->second;
+    const std::vector<directional_shadow_map*>* directional_shadow_maps = NULL;
+    {
+        const shadow_scene::directional_map& directional =
+            scene->get_directional_shadows();
+        auto it = directional.find(this);
+        if(it != directional.end()) directional_shadow_maps = &it->second;
+    }
 
-    glEnable(GL_DEPTH_TEST);
+    const std::vector<point_shadow_map*>* point_shadow_maps = NULL;
+    {
+        const shadow_scene::point_map& point = scene->get_point_shadows();
+        auto it = point.find(this);
+        if(it != point.end()) point_shadow_maps = &it->second;
+    }
+
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
+    glClearColor(0, 0.63, 0, 0.63);
 
-    ensure_render_targets(directional_shadow_maps);
-
-    for(directional_shadow_map* sm: directional_shadow_maps)
+    if(directional_shadow_maps)
     {
-        directional_shadow_map_msm* msm =
-            static_cast<directional_shadow_map_msm*>(sm);
-        // Render depth data
+        ensure_render_targets(*directional_shadow_maps);
         depth_shader->bind();
+        for(directional_shadow_map* sm: *directional_shadow_maps)
+        {
+            directional_shadow_map_msm* msm =
+                static_cast<directional_shadow_map_msm*>(sm);
+            // Render depth data
 
-        render_target* target =
-            msm->get_samples() == 0 ?
-            (render_target*)pp_rt.get() :
-            (render_target*)ms_rt[msm->get_samples()].get();
+            render_target* target =
+                msm->get_samples() == 0 ?
+                (render_target*)pp_rt.get() :
+                (render_target*)ms_rt[msm->get_samples()].get();
 
+            glEnable(GL_DEPTH_TEST);
+
+            target->bind();
+            glm::uvec2 target_size = msm->moments.get_size();
+            glViewport(0, 0, target_size.x, target_size.y);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glm::mat4 vp = msm->get_projection() * msm->get_view();
+
+            for(object* obj: scene->get_objects())
+            {
+                model* mod = obj->get_model();
+                if(!mod) continue;
+
+                glm::mat4 mvp = vp * obj->get_global_transform();
+                depth_shader->set("mvp", mvp);
+
+                for(model::vertex_group& group: *mod)
+                {
+                    if(!group.mesh) continue;
+
+                    group.mesh->draw();
+                }
+            }
+
+            target->bind(GL_READ_FRAMEBUFFER);
+            msm->moments_buffer.bind(GL_DRAW_FRAMEBUFFER);
+            glBlitFramebuffer(
+                0, 0, target_size.x, target_size.y,
+                0, 0, target_size.x, target_size.y,
+                GL_COLOR_BUFFER_BIT,
+                GL_NEAREST
+            );
+
+            // Blur the depth (thanks to moment magic this can be done!)
+            unsigned radius = msm->get_radius();
+            if(radius == 0) continue;
+
+            vertical_blur_shader->bind();
+
+            glDisable(GL_DEPTH_TEST);
+
+            pp_rt->bind();
+            glViewport(0, 0, target_size.x, target_size.y);
+            vertical_blur_shader->set(
+                "tex",
+                moment_sampler.bind(msm->moments, 0)
+            );
+            vertical_blur_shader->set("samples", (int)(2 * radius + 1));
+            quad.draw();
+
+            msm->moments_buffer.bind();
+            horizontal_blur_shader->set(
+                "tex",
+                moment_sampler.bind(
+                    *pp_rt->get_texture_target(GL_COLOR_ATTACHMENT0), 0
+                )
+            );
+            horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
+            quad.draw();
+        }
+    }
+
+    if(point_shadow_maps)
+    {
         glEnable(GL_DEPTH_TEST);
 
-        target->bind();
-        glm::uvec2 target_size = msm->moments.get_size();
-        glViewport(0, 0, target_size.x, target_size.y);
+        cubemap_depth_shader->bind();
 
-        glClearColor(0, 0.63, 0, 0.63);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glm::mat4 vp = msm->get_projection() * msm->get_view();
-
-        for(object* obj: scene->get_objects())
+        for(point_shadow_map* sm: *point_shadow_maps)
         {
-            model* mod = obj->get_model();
-            if(!mod) continue;
+            point_shadow_map_msm* msm = static_cast<point_shadow_map_msm*>(sm);
+            // Render depth data
 
-            glm::mat4 mvp = vp * obj->get_global_transform();
+            msm->moments_buffer.bind();
 
-            for(model::vertex_group& group: *mod)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glm::mat4 proj = msm->get_projection();
+
+            glm::mat4 face_vps[6] = {
+                proj * msm->get_view(0), proj * msm->get_view(1),
+                proj * msm->get_view(2), proj * msm->get_view(3),
+                proj * msm->get_view(4), proj * msm->get_view(5)
+            };
+            cubemap_depth_shader->set("face_vps", 6, face_vps);
+            cubemap_depth_shader->set(
+                "pos", msm->get_light()->get_global_position()
+            );
+            cubemap_depth_shader->set("far_plane", msm->get_range().y);
+
+            for(object* obj: scene->get_objects())
             {
-                if(!group.mesh) continue;
+                model* mod = obj->get_model();
+                if(!mod) continue;
 
-                depth_shader->set("mvp", mvp);
-                group.mesh->draw();
+                glm::mat4 m = obj->get_global_transform();
+                cubemap_depth_shader->set("m", m);
+                cubemap_depth_shader->set("mvp", m);
+
+                for(model::vertex_group& group: *mod)
+                {
+                    if(!group.mesh) continue;
+
+                    group.mesh->draw();
+                }
             }
         }
-
-        target->bind(GL_READ_FRAMEBUFFER);
-        msm->moments_buffer.bind(GL_DRAW_FRAMEBUFFER);
-        glBlitFramebuffer(
-            0, 0, target_size.x, target_size.y,
-            0, 0, target_size.x, target_size.y,
-            GL_COLOR_BUFFER_BIT,
-            GL_NEAREST
-        );
-
-        // Blur the depth (thanks to moment magic this can be done!)
-        unsigned radius = msm->get_radius();
-        if(radius == 0) continue;
-
-        vertical_blur_shader->bind();
-
-        glDisable(GL_DEPTH_TEST);
-
-        pp_rt->bind();
-        glViewport(0, 0, target_size.x, target_size.y);
-        vertical_blur_shader->set(
-            "tex",
-            moment_sampler.bind(msm->moments, 0)
-        );
-        vertical_blur_shader->set("samples", (int)(2 * radius + 1));
-        quad.draw();
-
-        msm->moments_buffer.bind();
-        horizontal_blur_shader->set(
-            "tex",
-            moment_sampler.bind(
-                *pp_rt->get_texture_target(GL_COLOR_ATTACHMENT0), 0
-            )
-        );
-        horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
-        quad.draw();
     }
 }
 
@@ -229,8 +317,9 @@ directional_shadow_map_msm::directional_shadow_map_msm(
 {
 }
 
-directional_shadow_map_msm::directional_shadow_map_msm(directional_shadow_map_msm&& other)
-:   directional_shadow_map(other),
+directional_shadow_map_msm::directional_shadow_map_msm(
+    directional_shadow_map_msm&& other
+):  directional_shadow_map(other),
     moments(std::move(other.moments)),
     moments_buffer(std::move(other.moments_buffer)),
     samples(other.samples),
@@ -259,6 +348,50 @@ texture& directional_shadow_map_msm::get_moments()
 }
 
 const texture& directional_shadow_map_msm::get_moments() const
+{
+    return moments;
+}
+
+point_shadow_map_msm::point_shadow_map_msm(
+    method::shadow_msm* method,
+    context& ctx,
+    glm::uvec2 size,
+    unsigned samples,
+    float radius,
+    glm::vec2 depth_range,
+    point_light* light
+):  point_shadow_map(method, depth_range, light),
+    moments(ctx, size, GL_RGBA16, GL_FLOAT, 0, GL_TEXTURE_CUBE_MAP),
+    moments_buffer(
+        ctx,
+        size,
+        {{GL_COLOR_ATTACHMENT0, {&moments}},
+         {GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}}},
+        0, GL_TEXTURE_CUBE_MAP
+    ),
+    samples(samples)
+{
+}
+
+point_shadow_map_msm::point_shadow_map_msm(point_shadow_map_msm&& other)
+:   point_shadow_map(other),
+    moments(std::move(other.moments)),
+    moments_buffer(std::move(other.moments_buffer)),
+    samples(other.samples)
+{
+}
+
+unsigned point_shadow_map_msm::get_samples() const
+{
+    return samples;
+}
+
+texture& point_shadow_map_msm::get_moments()
+{
+    return moments;
+}
+
+const texture& point_shadow_map_msm::get_moments() const
 {
     return moments;
 }

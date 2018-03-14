@@ -4,20 +4,16 @@
 
 struct shadow_map
 {
-    sampler2D map;
-    mat4 mvp;
+    samplerCube map;
+    float far_plane;
 };
 
 float shadow_coef(
     in shadow_map sm,
-    vec4 light_space_pos,
-    vec3 normal,
-    vec3 light_dir
+    vec3 dir, // This must be in world space!
+    float ndotd
 ){
-    vec3 pos = light_space_pos.xyz / light_space_pos.w;
-    if(abs(pos.z) > 1.0f) return 1.0f;
-
-    pos.xy = pos.xy * 0.5f + 0.5;
+    float depth = (length(dir) / sm.far_plane) * 2.0f - 1.0f;
 
     mat4 q = mat4(
         -1.0f/3.0f, 0.0f, -0.75f, 0.0f,
@@ -25,10 +21,11 @@ float shadow_coef(
         SQRT3, 0.0f, 0.75f*SQRT3, 0.0f,
         0.0f, 1.0f, 0.0f, 1.0f
     );
-    vec4 m = q * (texture(sm.map, pos.xy) - vec4(0.5f, 0.0f, 0.5f, 0.0f));
+    vec4 m = q * (texture(sm.map, dir) - vec4(0.5f, 0.0f, 0.5f, 0.0f));
     float alpha = 6e-5;
     vec4 b = mix(m, vec4(0.0f, 0.628f, 0.0f, 0.628f), alpha);
 
-    return 1.0f - msm_shadow_intensity(b, pos.z);
+    return 1.0f - msm_shadow_intensity(b, depth);
 }
+
 

@@ -33,12 +33,12 @@ float shadow_coef(
     vec3 random_vec = texelFetch(shadow_noise, sample_pos, 0).xyz;
     vec3 ndir = dir / depth;
     vec3 tangent = normalize(random_vec - ndir * dot(random_vec, ndir));
-    mat3 rotation = mat3(tangent, cross(ndir, tangent), ndir);
+    mat2x3 tangent_space = mat2x3(tangent, cross(ndir, tangent));
     
     for(int i = 0; i < sm.samples; ++i)
     {
         vec3 sample_offset =
-            rotation * texelFetch(shadow_kernel, i, 0).xyz * sm.radius;
+            tangent_space * texelFetch(shadow_kernel, i, 0).xy * sm.radius;
 
         shadow += dot(
             textureGather(

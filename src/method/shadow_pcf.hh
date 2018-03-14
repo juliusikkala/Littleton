@@ -137,9 +137,8 @@ namespace method
         shader* depth_shader;
         shader* cubemap_depth_shader;
         const texture& shadow_noise_2d;
-        const texture& kernel_2d;
         const texture& shadow_noise_3d;
-        const texture& kernel_3d;
+        const texture& kernel;
         sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
     };
 };

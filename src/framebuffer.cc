@@ -81,6 +81,8 @@ framebuffer::framebuffer(
             );
 
             targets.emplace(attachment, tex);
+            if(glGetError() != GL_NO_ERROR)
+                throw std::runtime_error("Failed to create texture target");
         }
         else
         {

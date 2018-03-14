@@ -20,11 +20,10 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
     shadow_noise_2d(
         common::ensure_circular_random_texture(pool, glm::uvec2(512))
     ),
-    kernel_2d(common::ensure_circular_poisson_texture(pool, 256)),
     shadow_noise_3d(
         common::ensure_spherical_random_texture(pool, glm::uvec2(512))
     ),
-    kernel_3d(common::ensure_spherical_poisson_texture(pool, 256)),
+    kernel(common::ensure_circular_poisson_texture(pool, 256)),
     shadow_sampler(
         pool.get_context(),
         GL_LINEAR,
@@ -56,7 +55,7 @@ void method::shadow_pcf::set_directional_uniforms(
         "shadow_noise",
         noise_sampler.bind(shadow_noise_2d, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(kernel_2d, texture_index++));
+    s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
 void method::shadow_pcf::set_point_uniforms(
@@ -67,7 +66,7 @@ void method::shadow_pcf::set_point_uniforms(
         "shadow_noise",
         noise_sampler.bind(shadow_noise_3d, texture_index++)
     );
-    s->set("shadow_kernel", noise_sampler.bind(kernel_3d, texture_index++));
+    s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
 shader::definition_map method::shadow_pcf::get_directional_definitions() const

@@ -84,8 +84,11 @@ window::window(const params& p)
     last_frame = SDL_GetTicks();
 
     context::init();
+
+    //Enable generic options
     if(p.srgb) glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 }
 
 window::~window()

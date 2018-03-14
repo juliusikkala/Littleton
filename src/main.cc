@@ -200,11 +200,23 @@ public:
             new point_shadow_map_pcf(
                 &pipelines->get_pcf(),
                 win,
-                glm::uvec2(1024),
+                glm::uvec2(256),
                 16,
-                0.05f,
+                0.1f,
                 glm::vec2(0.01f, 5.0f),
                 &l1
+            )
+        );
+
+        fly_shadow_msm.reset(
+            new point_shadow_map_msm(
+                &pipelines->get_msm(),
+                win,
+                glm::uvec2(256),
+                0,
+                1.0f,
+                glm::vec2(0.01f, 5.0f),
+                &l2
             )
         );
 
@@ -234,15 +246,15 @@ public:
         spot.set_falloff_exponent(10);
         spot.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-        sun.set_color(glm::vec3(1,1,1) * 5.0f);
+        sun.set_color(glm::vec3(1,1,1) * 0.2f);
 
         main_scene.add_light(&l1);
-        //main_scene.add_light(&l2);
+        main_scene.add_light(&l2);
         //main_scene.add_light(&spot);
-        //main_scene.add_light(&sun);
+        main_scene.add_light(&sun);
         main_scene.add_shadow(sun_shadow_msm.get());
         main_scene.add_shadow(fly_shadow_pcf.get());
-        //main_scene.add_shadow(sun_shadow_pcf.get());
+        main_scene.add_shadow(fly_shadow_msm.get());
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);
@@ -330,11 +342,12 @@ public:
             time += delta;
             suzanne->rotate_local(delta*60, glm::vec3(0,1,0));
             l1.set_position(glm::vec3(sin(time*2),2,cos(time*2)));
-            l2.set_position(glm::vec3(
+            /*l2.set_position(glm::vec3(
                 sin(time*2+M_PI),
                 2-sin(time*5),
                 cos(time*2+M_PI)
-            ));
+            ));*/
+            l2.set_position(glm::vec3(0,2,0));
             spot.set_orientation(time*50, glm::vec3(1,0,0));
             spot.set_cutoff_angle(sin(time)*45+45);
             earth->rotate(delta*60, glm::vec3(0,1,0));
@@ -390,6 +403,7 @@ private:
     std::unique_ptr<directional_shadow_map_pcf> sun_shadow_pcf;
     std::unique_ptr<directional_shadow_map_msm> sun_shadow_msm;
     std::unique_ptr<point_shadow_map_pcf> fly_shadow_pcf;
+    std::unique_ptr<point_shadow_map_msm> fly_shadow_msm;
     std::unique_ptr<game_pipelines> pipelines;
 
     pipeline* current_pipeline;
