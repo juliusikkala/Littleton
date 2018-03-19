@@ -15,7 +15,8 @@ float shadow_coef(
     vec3 light_dir
 ){
     vec3 pos = light_space_pos.xyz / light_space_pos.w;
-    if(abs(pos.z) > 1.0f) return 1.0f;
+    if(abs(pos.z) >= 1.0f || abs(pos.x) >= 1.0f || abs(pos.y) >= 1.0f)
+        return 1.0f;
 
     pos.xy = pos.xy * 0.5f + 0.5;
 

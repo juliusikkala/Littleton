@@ -58,7 +58,7 @@ void method::shadow_pcf::set_directional_uniforms(
     s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
-void method::shadow_pcf::set_point_uniforms(
+void method::shadow_pcf::set_omni_uniforms(
     shader* s,
     unsigned& texture_index
 ){
@@ -77,7 +77,7 @@ shader::definition_map method::shadow_pcf::get_directional_definitions() const
     };
 }
 
-shader::definition_map method::shadow_pcf::get_point_definitions() const
+shader::definition_map method::shadow_pcf::get_omni_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/omni_pcf.glsl"},

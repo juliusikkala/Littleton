@@ -123,7 +123,7 @@ static void render_point_lights(
     for(const auto& pair: scene->get_omni_shadows())
     {
         method::shadow_method* m = pair.first;
-        shader::definition_map def(m->get_point_definitions());
+        shader::definition_map def(m->get_omni_definitions());
 
         def.insert(definitions.begin(), definitions.end());
 
@@ -131,7 +131,7 @@ static void render_point_lights(
         s->bind();
 
         unsigned texture_index = 4;
-        m->set_point_uniforms(s, texture_index);
+        m->set_omni_uniforms(s, texture_index);
 
         for(omni_shadow_map* sm: pair.second)
         {

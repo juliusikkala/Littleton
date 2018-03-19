@@ -11,6 +11,7 @@ class point_light;
 class spotlight;
 class directional_shadow_map;
 class omni_shadow_map;
+class perspective_shadow_map;
 namespace method { class shadow_method; }
 
 class camera_scene
@@ -103,22 +104,33 @@ public:
         std::vector<omni_shadow_map*>
     >;
 
+    using perspective_map = std::map<
+        method::shadow_method*,
+        std::vector<perspective_shadow_map*>
+    >;
+
     void add_shadow(directional_shadow_map* shadow);
     void remove_shadow(directional_shadow_map* shadow);
 
     void add_shadow(omni_shadow_map* shadow);
     void remove_shadow(omni_shadow_map* shadow);
 
+    void add_shadow(perspective_shadow_map* shadow);
+    void remove_shadow(perspective_shadow_map* shadow);
+
     void clear_directional_shadows();
     void clear_omni_shadows();
+    void clear_perspective_shadows();
     void clear_shadows();
 
     const directional_map& get_directional_shadows() const;
     const omni_map& get_omni_shadows() const;
+    const perspective_map& get_perspective_shadows() const;
 
 private:
     directional_map directional_shadows;
     omni_map omni_shadows;
+    perspective_map perspective_shadows;
 };
 
 class render_scene

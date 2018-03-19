@@ -213,6 +213,22 @@ void shadow_scene::remove_shadow(omni_shadow_map* shadow)
     if(it->second.size() == 0) omni_shadows.erase(it);
 }
 
+void shadow_scene::add_shadow(perspective_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    sorted_insert(perspective_shadows[method], shadow);
+}
+
+void shadow_scene::remove_shadow(perspective_shadow_map* shadow)
+{
+    method::shadow_method* method = shadow->get_method();
+    auto it = perspective_shadows.find(method);
+    if(it == perspective_shadows.end()) return;
+
+    sorted_erase(it->second, shadow);
+    if(it->second.size() == 0) perspective_shadows.erase(it);
+}
+
 void shadow_scene::clear_directional_shadows()
 {
     directional_shadows.clear();
@@ -223,10 +239,16 @@ void shadow_scene::clear_omni_shadows()
     omni_shadows.clear();
 }
 
+void shadow_scene::clear_perspective_shadows()
+{
+    perspective_shadows.clear();
+}
+
 void shadow_scene::clear_shadows()
 {
     directional_shadows.clear();
     omni_shadows.clear();
+    perspective_shadows.clear();
 }
 
 const shadow_scene::directional_map& shadow_scene::get_directional_shadows() const
@@ -237,6 +259,12 @@ const shadow_scene::directional_map& shadow_scene::get_directional_shadows() con
 const shadow_scene::omni_map& shadow_scene::get_omni_shadows() const
 {
     return omni_shadows;
+}
+
+const shadow_scene::perspective_map&
+shadow_scene::get_perspective_shadows() const
+{
+    return perspective_shadows;
 }
 
 render_scene::render_scene() {}

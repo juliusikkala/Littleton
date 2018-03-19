@@ -75,4 +75,38 @@ private:
 
     point_light* l;
 };
+
+class perspective_shadow_map
+{
+public:
+    perspective_shadow_map(
+        method::shadow_method* method,
+        double fov = 30,
+        glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
+        point_light* light = nullptr
+    );
+    perspective_shadow_map(const perspective_shadow_map& other);
+
+    void set_light(point_light* light = nullptr);
+    point_light* get_light() const;
+
+    void set_range(glm::vec2 depth_range);
+    glm::vec2 get_range() const;
+
+    void set_fov(float fov);
+    float get_fov() const;
+
+    glm::mat4 get_view() const;
+    glm::mat4 get_projection() const;
+
+    method::shadow_method* get_method() const;
+
+private:
+    method::shadow_method* method;
+    float fov;
+    glm::vec2 range;
+    glm::mat4 projection;
+
+    point_light* l;
+};
 #endif

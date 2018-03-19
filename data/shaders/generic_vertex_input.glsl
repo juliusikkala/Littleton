@@ -2,7 +2,7 @@ layout(location = VERTEX_POSITION) in vec3 v_vertex;
 
 out VERTEX_OUT {
     vec3 position;
-#ifdef DIRECTIONAL_SHADOW_MAPPING
+#if defined(DIRECTIONAL_SHADOW_MAPPING) || defined(PERSPECTIVE_SHADOW_MAPPING)
     vec4 light_space_pos;
 #endif
 #ifdef VERTEX_NORMAL

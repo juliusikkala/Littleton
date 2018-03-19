@@ -1,6 +1,6 @@
 in VERTEX_OUT {
     vec3 position;
-#ifdef DIRECTIONAL_SHADOW_MAPPING
+#if defined(DIRECTIONAL_SHADOW_MAPPING) || defined(PERSPECTIVE_SHADOW_MAPPING)
     vec4 light_space_pos;
 #endif
 #ifdef VERTEX_NORMAL
@@ -17,7 +17,7 @@ in VERTEX_OUT {
 
 out VERTEX_OUT {
     vec3 position;
-#ifdef DIRECTIONAL_SHADOW_MAPPING
+#if defined(DIRECTIONAL_SHADOW_MAPPING) || defined(PERSPECTIVE_SHADOW_MAPPING)
     vec4 light_space_pos;
 #endif
 #ifdef VERTEX_NORMAL

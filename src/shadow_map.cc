@@ -149,3 +149,73 @@ method::shadow_method* omni_shadow_map::get_method() const
 {
     return method;
 }
+
+perspective_shadow_map::perspective_shadow_map(
+    method::shadow_method* method,
+    double fov,
+    glm::vec2 depth_range,
+    point_light* light
+): method(method), l(light)
+{
+    set_fov(fov);
+    set_range(depth_range);
+}
+
+perspective_shadow_map::perspective_shadow_map(
+    const perspective_shadow_map& other
+):  method(other.method), fov(other.fov), range(other.range),
+    projection(other.projection), l(other.l)
+{
+}
+
+void perspective_shadow_map::set_light(point_light* light)
+{
+    l = light;
+}
+
+point_light* perspective_shadow_map::get_light() const
+{
+    return l;
+}
+
+void perspective_shadow_map::set_range(glm::vec2 depth_range)
+{
+    this->range = depth_range;
+    projection = glm::perspective(glm::radians(fov), 1.0f, range.x, range.y);
+}
+
+glm::vec2 perspective_shadow_map::get_range() const
+{
+    return range;
+}
+
+void perspective_shadow_map::set_fov(float fov)
+{
+    this->fov = fov;
+    projection = glm::perspective(glm::radians(fov), 1.0f, range.x, range.y);
+}
+
+float perspective_shadow_map::get_fov() const
+{
+    return fov;
+}
+
+glm::mat4 perspective_shadow_map::get_view() const
+{
+    if(!l) return glm::mat4(0);
+
+    glm::mat4 translation = glm::translate(-l->get_global_position());
+    glm::mat4 rotation = glm::toMat4(glm::inverse(l->get_global_orientation()));
+    return rotation * translation;
+}
+
+glm::mat4 perspective_shadow_map::get_projection() const
+{
+    return projection;
+}
+
+method::shadow_method* perspective_shadow_map::get_method() const
+{
+    return method;
+}
+

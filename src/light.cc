@@ -31,13 +31,11 @@ point_light::point_light(glm::vec3 color)
 
 spotlight::spotlight(
     glm::vec3 color,
-    glm::vec3 direction,
     float cutoff_angle,
     float falloff_exponent
-): directional_light(color, direction), cutoff_angle(cutoff_angle),
- falloff_exponent(falloff_exponent)
+):  point_light(color), cutoff_angle(cutoff_angle),
+    falloff_exponent(falloff_exponent)
 {
-    set_direction(direction);
 }
 
 void spotlight::set_cutoff_angle(float cutoff_angle)
@@ -62,6 +60,6 @@ float spotlight::get_falloff_exponent() const
 
 glm::vec3 spotlight::get_global_direction() const
 {
-    return get_global_orientation() * get_direction();
+    return get_global_orientation() * glm::vec3(0, 0, -1);
 }
 

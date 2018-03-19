@@ -132,6 +132,12 @@ void main(void)
     vec3 dir = pos - light.position;
     color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
 #endif
+#ifdef PERSPECTIVE_SHADOW_MAPPING
+    color.rgb *= shadow_coef(
+        shadow, f_in.light_space_pos, normal, pos - light.position
+    );
+#endif
+
 #elif defined(SPOTLIGHT)
     color.rgb = calc_spotlight(
         light,
@@ -143,6 +149,16 @@ void main(void)
         f0,
         metallic
     );
+#ifdef OMNI_SHADOW_MAPPING
+    vec3 dir = pos - light.position;
+    color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
+#endif
+#ifdef PERSPECTIVE_SHADOW_MAPPING
+    color.rgb *= shadow_coef(
+        shadow, f_in.light_space_pos, normal, pos - light.position
+    );
+#endif
+
 #elif defined(DIRECTIONAL_LIGHT)
     color.rgb = calc_directional_light(
         light,

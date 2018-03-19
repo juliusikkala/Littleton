@@ -69,15 +69,98 @@ static void set_light(
     s->set("light.direction", glm::normalize(light->get_direction()));
 }
 
+static void set_shadow(
+    method::shadow_method* met,
+    shader* s,
+    unsigned& texture_index,
+    directional_shadow_map* sm,
+    const glm::mat4& m
+){
+    met->set_directional_uniforms(s, texture_index);
+    met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
+}
+
+static void set_shadow(
+    method::shadow_method* met,
+    shader* s,
+    unsigned& texture_index,
+    omni_shadow_map* sm,
+    const glm::mat4& m
+){
+    met->set_omni_uniforms(s, texture_index);
+    met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
+}
+
+static void set_shadow(
+    method::shadow_method* met,
+    shader* s,
+    unsigned& texture_index,
+    perspective_shadow_map* sm,
+    const glm::mat4& m
+){
+    met->set_perspective_uniforms(s, texture_index);
+    met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
+}
+
+template<typename L, typename S>
+static void render_pass(
+    method::shadow_method* met,
+    const shader::definition_map& scene_definitions,
+    render_scene* scene,
+    multishader* forward_shader,
+    L* light,
+    S* sm
+){
+    camera* cam = scene->get_camera();
+    glm::mat4 v = glm::inverse(cam->get_global_transform());
+    glm::mat4 p = cam->get_projection();
+    glm::vec3 camera_pos = cam->get_global_position();
+
+    for(object* obj: scene->get_objects())
+    {
+        model* mod = obj->get_model();
+        if(!mod) continue;
+
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat3 n_m(glm::inverseTranspose(m));
+        glm::mat4 mvp = p * v * m;
+
+        for(model::vertex_group& group: *mod)
+        {
+            if(!group.mat || !group.mesh) continue;
+
+            shader::definition_map def = scene_definitions;
+            group.mat->update_definitions(def);
+            group.mesh->update_definitions(def);
+
+            shader* s = forward_shader->get(def);
+            s->bind();
+
+            unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
+
+            set_shadow(met, s, texture_index, sm, m);
+            set_light(s, light);
+
+            s->set("mvp", mvp);
+            s->set("m", m);
+            s->set("n_m", n_m);
+            s->set("camera_pos", camera_pos);
+
+            group.mat->apply(s);
+            group.mesh->draw();
+        }
+    }
+}
+
 static void render_shadowed_lights(
     multishader* forward_shader,
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
-    render_scene* scene,
-    const glm::mat4& v,
-    const glm::mat4& p
+    render_scene* scene
 ){
+    // Directional shadows are a bit simpler to use since they are always bound
+    // to only one light type, directional_light.
     shader::definition_map directional_def(
         {{"DIRECTIONAL_LIGHT", ""},
          {"SINGLE_LIGHT", ""}}
@@ -85,8 +168,6 @@ static void render_shadowed_lights(
 
     const std::vector<directional_light*>& directional_lights =
         scene->get_directional_lights();
-
-    glm::vec3 camera_pos = scene->get_camera()->get_global_position();
 
     for(const auto& pair: scene->get_directional_shadows())
     {
@@ -113,43 +194,9 @@ static void render_shadowed_lights(
             if(it == directional_lights.end() || *it != light) continue;
             handled_directional_lights[it - directional_lights.begin()] = true;
 
-            for(object* obj: scene->get_objects())
-            {
-                model* mod = obj->get_model();
-                if(!mod) continue;
-
-                glm::mat4 m = obj->get_global_transform();
-                glm::mat3 n_m(glm::inverseTranspose(m));
-                glm::mat4 mvp = p * v * m;
-
-                for(model::vertex_group& group: *mod)
-                {
-                    if(!group.mat || !group.mesh) continue;
-
-                    shader::definition_map def = scene_definitions;
-                    group.mat->update_definitions(def);
-                    group.mesh->update_definitions(def);
-
-                    shader* s = forward_shader->get(def);
-                    s->bind();
-
-                    unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
-
-                    met->set_directional_uniforms(s, texture_index);
-                    met->set_shadow_map_uniforms(
-                        s, texture_index, sm, "shadow.", m
-                    );
-                    set_light(s, light);
-
-                    s->set("mvp", mvp);
-                    s->set("m", m);
-                    s->set("n_m", n_m);
-                    s->set("camera_pos", camera_pos);
-
-                    group.mat->apply(s);
-                    group.mesh->draw();
-                }
-            }
+            render_pass(
+                met, scene_definitions, scene, forward_shader, light, sm
+            );
         }
     }
 
@@ -158,63 +205,104 @@ static void render_shadowed_lights(
          {"SINGLE_LIGHT", ""}}
     );
 
+    shader::definition_map spot_def(
+        {{"SPOTLIGHT", ""},
+         {"SINGLE_LIGHT", ""}}
+    );
+
     const std::vector<point_light*>& point_lights = scene->get_point_lights();
+    const std::vector<spotlight*>& spotlights = scene->get_spotlights();
 
     for(const auto& pair: scene->get_omni_shadows())
     {
         method::shadow_method* met = pair.first;
 
-        shader::definition_map scene_definitions(met->get_point_definitions());
-        scene_definitions.insert(point_def.begin(), point_def.end());
+        shader::definition_map scene_definitions(met->get_omni_definitions());
+        shader::definition_map point_definitions(scene_definitions);
+        point_definitions.insert(point_def.begin(), point_def.end());
+        shader::definition_map spot_definitions(scene_definitions);
+        spot_definitions.insert(spot_def.begin(), spot_def.end());
 
         for(omni_shadow_map* sm: pair.second)
         {
-            point_light* light = sm->get_light();
+            point_light* point = sm->get_light();
+            spotlight* spot = static_cast<spotlight*>(point);
 
-            auto it = std::lower_bound(
+            auto point_it = std::lower_bound(
                 point_lights.begin(),
                 point_lights.end(),
-                light
+                point
             );
-            if(it == point_lights.end() || *it != light) continue;
-            handled_point_lights[it - point_lights.begin()] = true;
 
-            for(object* obj: scene->get_objects())
+            auto spot_it = std::lower_bound(
+                spotlights.begin(),
+                spotlights.end(),
+                spot
+            );
+
+            if(point_it != point_lights.end() && *point_it == point)
             {
-                model* mod = obj->get_model();
-                if(!mod) continue;
+                handled_point_lights[point_it - point_lights.begin()] = true;
 
-                glm::mat4 m = obj->get_global_transform();
-                glm::mat3 n_m(glm::inverseTranspose(m));
-                glm::mat4 mvp = p * v * m;
+                render_pass(
+                    met, point_definitions, scene, forward_shader, point, sm
+                );
+            }
+            else if(spot_it != spotlights.end() && *spot_it == spot)
+            {
+                handled_spotlights[spot_it - spotlights.begin()] = true;
 
-                for(model::vertex_group& group: *mod)
-                {
-                    if(!group.mat || !group.mesh) continue;
+                render_pass(
+                    met, spot_definitions, scene, forward_shader, spot, sm
+                );
+            }
+        }
+    }
 
-                    shader::definition_map def = scene_definitions;
-                    group.mat->update_definitions(def);
-                    group.mesh->update_definitions(def);
+    for(const auto& pair: scene->get_perspective_shadows())
+    {
+        method::shadow_method* met = pair.first;
 
-                    shader* s = forward_shader->get(def);
-                    s->bind();
+        shader::definition_map scene_definitions(
+            met->get_perspective_definitions()
+        );
+        shader::definition_map point_definitions(scene_definitions);
+        point_definitions.insert(point_def.begin(), point_def.end());
+        shader::definition_map spot_definitions(scene_definitions);
+        spot_definitions.insert(spot_def.begin(), spot_def.end());
 
-                    unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
+        for(perspective_shadow_map* sm: pair.second)
+        {
+            point_light* point = sm->get_light();
+            spotlight* spot = static_cast<spotlight*>(point);
 
-                    met->set_point_uniforms(s, texture_index);
-                    met->set_shadow_map_uniforms(
-                        s, texture_index, sm, "shadow.", m
-                    );
-                    set_light(s, light);
+            auto point_it = std::lower_bound(
+                point_lights.begin(),
+                point_lights.end(),
+                point
+            );
 
-                    s->set("mvp", mvp);
-                    s->set("m", m);
-                    s->set("n_m", n_m);
-                    s->set("camera_pos", camera_pos);
+            auto spot_it = std::lower_bound(
+                spotlights.begin(),
+                spotlights.end(),
+                spot
+            );
 
-                    group.mat->apply(s);
-                    group.mesh->draw();
-                }
+            if(point_it != point_lights.end() && *point_it == point)
+            {
+                handled_point_lights[point_it - point_lights.begin()] = true;
+
+                render_pass(
+                    met, point_definitions, scene, forward_shader, point, sm
+                );
+            }
+            else if(spot_it != spotlights.end() && *spot_it == spot)
+            {
+                handled_spotlights[spot_it - spotlights.begin()] = true;
+
+                render_pass(
+                    met, spot_definitions, scene, forward_shader, spot, sm
+                );
             }
         }
     }
@@ -320,10 +408,12 @@ static void render_unshadowed_lights(
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
-    render_scene* scene,
-    const glm::mat4& v,
-    const glm::mat4& p
+    render_scene* scene
 ){
+    camera* cam = scene->get_camera();
+    glm::mat4 v = glm::inverse(cam->get_global_transform());
+    glm::mat4 p = cam->get_projection();
+
     shader::definition_map scene_definitions;
     update_scene_definitions(scene_definitions, scene);
 
@@ -381,10 +471,12 @@ static void render_unshadowed_lights(
 
 static void depth_pass(
     multishader* depth_shader,
-    render_scene* scene,
-    const glm::mat4& v,
-    const glm::mat4& p
+    render_scene* scene
 ){
+    camera* cam = scene->get_camera();
+    glm::mat4 v = glm::inverse(cam->get_global_transform());
+    glm::mat4 p = cam->get_projection();
+
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     for(object* obj: scene->get_objects())
     {
@@ -431,9 +523,6 @@ void method::forward_pass::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    glm::mat4 v = glm::inverse(cam->get_global_transform());
-    glm::mat4 p = cam->get_projection();
-
     std::vector<bool> handled_point_lights(scene->point_light_count(), false);
     std::vector<bool> handled_spotlights(scene->spotlight_count(), false);
     std::vector<bool> handled_directional_lights(
@@ -443,7 +532,7 @@ void method::forward_pass::execute()
     glDisable(GL_BLEND);
     glDepthFunc(GL_LEQUAL);
 
-    depth_pass(depth_shader, scene, v, p);
+    depth_pass(depth_shader, scene);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -453,7 +542,7 @@ void method::forward_pass::execute()
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene, v, p
+        scene
     );
 
     render_unshadowed_lights(
@@ -461,7 +550,7 @@ void method::forward_pass::execute()
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene, v, p
+        scene
     );
 }
 

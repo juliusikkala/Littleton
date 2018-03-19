@@ -51,6 +51,7 @@ public:
         lp(screen, buf, pool, main_scene),
         fp(screen, pool, main_scene),
         visualizer(screen, buf, pool, main_scene),
+        dt(w, pool),
 
         sky(
             screen,
@@ -99,7 +100,8 @@ public:
             &sky,
             &tm,
             &postprocess_to_window
-        })
+        }),
+        texture_pipeline({&dt})
     {
     }
 
@@ -107,10 +109,12 @@ public:
     method::shadow_pcf& get_pcf() { return pcf; }
 
     method::sky& get_sky() { return sky; }
+    void set_texture(texture* tex) { dt.set_texture(tex); }
 
     pipeline* get_forward_pipeline() { return &forward_pipeline; }
     pipeline* get_visualizer_pipeline() { return &visualizer_pipeline; }
     pipeline* get_deferred_pipeline() { return &deferred_pipeline; }
+    pipeline* get_texture_pipeline() { return &texture_pipeline; }
 
 private:
     gbuffer buf;
@@ -125,10 +129,9 @@ private:
 
     method::geometry_pass gp;
     method::lighting_pass lp;
-
     method::forward_pass fp;
-
     method::visualize_gbuffer visualizer;
+    method::draw_texture dt;
 
     method::sky sky;
     method::tonemap tm;
@@ -138,6 +141,7 @@ private:
     pipeline forward_pipeline;
     pipeline visualizer_pipeline;
     pipeline deferred_pipeline;
+    pipeline texture_pipeline;
 };
 
 class game
@@ -220,6 +224,20 @@ public:
             )
         );
 
+        spot_shadow_msm.reset(
+            new perspective_shadow_map_msm(
+                &pipelines->get_msm(),
+                win,
+                glm::uvec2(1024),
+                2,
+                2.0f,
+                30,
+                glm::vec2(0.01f, 5.0f),
+                &spot
+            )
+        );
+
+        pipelines->set_texture(&spot_shadow_msm->get_moments());
         current_pipeline = pipelines->get_forward_pipeline();
     }
 
@@ -246,15 +264,16 @@ public:
         spot.set_falloff_exponent(10);
         spot.set_position(glm::vec3(0.0f, 2.0f, 0.0f));
 
-        sun.set_color(glm::vec3(1,1,1) * 0.2f);
+        sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        main_scene.add_light(&l1);
-        main_scene.add_light(&l2);
-        //main_scene.add_light(&spot);
-        main_scene.add_light(&sun);
-        main_scene.add_shadow(sun_shadow_msm.get());
-        main_scene.add_shadow(fly_shadow_pcf.get());
-        main_scene.add_shadow(fly_shadow_msm.get());
+        //main_scene.add_light(&l1);
+        //main_scene.add_light(&l2);
+        main_scene.add_light(&spot);
+        //main_scene.add_light(&sun);
+        //main_scene.add_shadow(sun_shadow_msm.get());
+        //main_scene.add_shadow(fly_shadow_pcf.get());
+        //main_scene.add_shadow(fly_shadow_msm.get());
+        main_scene.add_shadow(spot_shadow_msm.get());
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);
@@ -295,6 +314,8 @@ public:
                     current_pipeline = pipelines->get_visualizer_pipeline();
                 if(e.key.keysym.sym == SDLK_3)
                     current_pipeline = pipelines->get_forward_pipeline();
+                if(e.key.keysym.sym == SDLK_4)
+                    current_pipeline = pipelines->get_texture_pipeline();
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;
                 if(e.key.keysym.sym == SDLK_r)
@@ -342,14 +363,16 @@ public:
             time += delta;
             suzanne->rotate_local(delta*60, glm::vec3(0,1,0));
             l1.set_position(glm::vec3(sin(time*2),2,cos(time*2)));
-            /*l2.set_position(glm::vec3(
+            l2.set_position(glm::vec3(
                 sin(time*2+M_PI),
                 2-sin(time*5),
                 cos(time*2+M_PI)
-            ));*/
-            l2.set_position(glm::vec3(0,2,0));
+            ));
             spot.set_orientation(time*50, glm::vec3(1,0,0));
-            spot.set_cutoff_angle(sin(time)*45+45);
+            //spot.set_cutoff_angle(sin(time)*45+45);
+            //spot_shadow_msm->set_fov(spot.get_cutoff_angle());
+            spot.set_cutoff_angle(180);
+            spot_shadow_msm->set_fov(90);
             earth->rotate(delta*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
         }
@@ -404,6 +427,7 @@ private:
     std::unique_ptr<directional_shadow_map_msm> sun_shadow_msm;
     std::unique_ptr<omni_shadow_map_pcf> fly_shadow_pcf;
     std::unique_ptr<omni_shadow_map_msm> fly_shadow_msm;
+    std::unique_ptr<perspective_shadow_map_msm> spot_shadow_msm;
     std::unique_ptr<game_pipelines> pipelines;
 
     pipeline* current_pipeline;

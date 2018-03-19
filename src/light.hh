@@ -37,12 +37,11 @@ public:
     point_light(glm::vec3 color = glm::vec3(1.0));
 };
 
-class spotlight: public directional_light, public transformable_node
+class spotlight: public point_light
 {
 public:
     spotlight(
         glm::vec3 color = glm::vec3(1.0),
-        glm::vec3 direction = glm::vec3(0,-1,0),
         float cutoff_angle = 30,
         float falloff_exponent = 1
     );

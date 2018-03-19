@@ -105,13 +105,13 @@ namespace method
             unsigned& texture_index
         ) override;
 
-        void set_point_uniforms(
+        void set_omni_uniforms(
             shader* s,
             unsigned& texture_index
         ) override;
 
         shader::definition_map get_directional_definitions() const override;
-        shader::definition_map get_point_definitions() const override;
+        shader::definition_map get_omni_definitions() const override;
 
         void set_shadow_map_uniforms(
             shader* s,
