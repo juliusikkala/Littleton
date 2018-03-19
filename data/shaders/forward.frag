@@ -128,7 +128,7 @@ void main(void)
         metallic
     );
 
-#ifdef POINT_SHADOW_MAPPING
+#ifdef OMNI_SHADOW_MAPPING
     vec3 dir = pos - light.position;
     color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
 #endif

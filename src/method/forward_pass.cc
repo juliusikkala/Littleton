@@ -160,14 +160,14 @@ static void render_shadowed_lights(
 
     const std::vector<point_light*>& point_lights = scene->get_point_lights();
 
-    for(const auto& pair: scene->get_point_shadows())
+    for(const auto& pair: scene->get_omni_shadows())
     {
         method::shadow_method* met = pair.first;
 
         shader::definition_map scene_definitions(met->get_point_definitions());
         scene_definitions.insert(point_def.begin(), point_def.end());
 
-        for(point_shadow_map* sm: pair.second)
+        for(omni_shadow_map* sm: pair.second)
         {
             point_light* light = sm->get_light();
 

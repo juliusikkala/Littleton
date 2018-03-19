@@ -40,7 +40,7 @@ void method::shadow_method::set_shadow_map_uniforms(
 void method::shadow_method::set_shadow_map_uniforms(
     shader*,
     unsigned&,
-    point_shadow_map*,
+    omni_shadow_map*,
     const std::string&,
     const glm::mat4&
 ){}

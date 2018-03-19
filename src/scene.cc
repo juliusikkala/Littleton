@@ -197,20 +197,20 @@ void shadow_scene::remove_shadow(directional_shadow_map* shadow)
     if(it->second.size() == 0) directional_shadows.erase(it);
 }
 
-void shadow_scene::add_shadow(point_shadow_map* shadow)
+void shadow_scene::add_shadow(omni_shadow_map* shadow)
 {
     method::shadow_method* method = shadow->get_method();
-    sorted_insert(point_shadows[method], shadow);
+    sorted_insert(omni_shadows[method], shadow);
 }
 
-void shadow_scene::remove_shadow(point_shadow_map* shadow)
+void shadow_scene::remove_shadow(omni_shadow_map* shadow)
 {
     method::shadow_method* method = shadow->get_method();
-    auto it = point_shadows.find(method);
-    if(it == point_shadows.end()) return;
+    auto it = omni_shadows.find(method);
+    if(it == omni_shadows.end()) return;
 
     sorted_erase(it->second, shadow);
-    if(it->second.size() == 0) point_shadows.erase(it);
+    if(it->second.size() == 0) omni_shadows.erase(it);
 }
 
 void shadow_scene::clear_directional_shadows()
@@ -218,15 +218,15 @@ void shadow_scene::clear_directional_shadows()
     directional_shadows.clear();
 }
 
-void shadow_scene::clear_point_shadows()
+void shadow_scene::clear_omni_shadows()
 {
-    point_shadows.clear();
+    omni_shadows.clear();
 }
 
 void shadow_scene::clear_shadows()
 {
     directional_shadows.clear();
-    point_shadows.clear();
+    omni_shadows.clear();
 }
 
 const shadow_scene::directional_map& shadow_scene::get_directional_shadows() const
@@ -234,9 +234,9 @@ const shadow_scene::directional_map& shadow_scene::get_directional_shadows() con
     return directional_shadows;
 }
 
-const shadow_scene::point_map& shadow_scene::get_point_shadows() const
+const shadow_scene::omni_map& shadow_scene::get_omni_shadows() const
 {
-    return point_shadows;
+    return omni_shadows;
 }
 
 render_scene::render_scene() {}

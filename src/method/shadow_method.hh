@@ -46,7 +46,7 @@ namespace method
         virtual void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
-            point_shadow_map* shadow_map,
+            omni_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         );

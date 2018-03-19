@@ -120,7 +120,7 @@ static void render_point_lights(
     shader::definition_map definitions({{"POINT_LIGHT", ""}});
 
     // Render shadowed lights
-    for(const auto& pair: scene->get_point_shadows())
+    for(const auto& pair: scene->get_omni_shadows())
     {
         method::shadow_method* m = pair.first;
         shader::definition_map def(m->get_point_definitions());
@@ -133,7 +133,7 @@ static void render_point_lights(
         unsigned texture_index = 4;
         m->set_point_uniforms(s, texture_index);
 
-        for(point_shadow_map* sm: pair.second)
+        for(omni_shadow_map* sm: pair.second)
         {
             unsigned local_texture_index = texture_index;
             point_light* light = sm->get_light();

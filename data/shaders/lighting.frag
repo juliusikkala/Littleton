@@ -18,7 +18,7 @@ out vec4 out_color;
 #ifdef SHADOW_MAPPING
 uniform shadow_map shadow;
 #endif
-#ifdef POINT_SHADOW_MAPPING
+#ifdef OMNI_SHADOW_MAPPING
 uniform mat4 inv_view;
 #endif
 
@@ -45,7 +45,7 @@ void main(void)
         metallic
     );
 
-#ifdef POINT_SHADOW_MAPPING
+#ifdef OMNI_SHADOW_MAPPING
     vec3 dir = pos - light.position;
     lighting *= shadow_coef(
         shadow,

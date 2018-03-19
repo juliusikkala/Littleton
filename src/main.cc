@@ -197,7 +197,7 @@ public:
         );
 
         fly_shadow_pcf.reset(
-            new point_shadow_map_pcf(
+            new omni_shadow_map_pcf(
                 &pipelines->get_pcf(),
                 win,
                 glm::uvec2(256),
@@ -209,7 +209,7 @@ public:
         );
 
         fly_shadow_msm.reset(
-            new point_shadow_map_msm(
+            new omni_shadow_map_msm(
                 &pipelines->get_msm(),
                 win,
                 glm::uvec2(256),
@@ -402,8 +402,8 @@ private:
 
     std::unique_ptr<directional_shadow_map_pcf> sun_shadow_pcf;
     std::unique_ptr<directional_shadow_map_msm> sun_shadow_msm;
-    std::unique_ptr<point_shadow_map_pcf> fly_shadow_pcf;
-    std::unique_ptr<point_shadow_map_msm> fly_shadow_msm;
+    std::unique_ptr<omni_shadow_map_pcf> fly_shadow_pcf;
+    std::unique_ptr<omni_shadow_map_msm> fly_shadow_msm;
     std::unique_ptr<game_pipelines> pipelines;
 
     pipeline* current_pipeline;

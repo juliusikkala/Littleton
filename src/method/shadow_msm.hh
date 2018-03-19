@@ -45,11 +45,11 @@ private:
     unsigned radius;
 };
 
-class point_shadow_map_msm: public point_shadow_map
+class omni_shadow_map_msm: public omni_shadow_map
 {
 friend class method::shadow_msm;
 public:
-    point_shadow_map_msm(
+    omni_shadow_map_msm(
         method::shadow_msm* method,
         context& ctx,
         glm::uvec2 size,
@@ -58,7 +58,7 @@ public:
         glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
-    point_shadow_map_msm(point_shadow_map_msm&& other);
+    omni_shadow_map_msm(omni_shadow_map_msm&& other);
 
     unsigned get_samples() const;
 
@@ -92,7 +92,7 @@ namespace method
         void set_shadow_map_uniforms(
             shader* s,
             unsigned& texture_index,
-            point_shadow_map* shadow_map,
+            omni_shadow_map* shadow_map,
             const std::string& prefix,
             const glm::mat4& pos_to_world
         ) override;

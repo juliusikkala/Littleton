@@ -47,15 +47,15 @@ private:
     directional_light* l;
 };
 
-class point_shadow_map
+class omni_shadow_map
 {
 public:
-    point_shadow_map(
+    omni_shadow_map(
         method::shadow_method* method,
         glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
-    point_shadow_map(const point_shadow_map& other);
+    omni_shadow_map(const omni_shadow_map& other);
 
     void set_light(point_light* light = nullptr);
     point_light* get_light() const;

@@ -14,7 +14,7 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
         {{"VERTEX_POSITION", "0"}}
     )),
     cubemap_depth_shader(pool.get_shader(
-        shader::path{"generic.vert", "shadow/point_msm.frag", "cubemap.geom"},
+        shader::path{"generic.vert", "shadow/omni_msm.frag", "cubemap.geom"},
         {{"VERTEX_POSITION", "0"}}
     )),
     vertical_blur_shader(pool.get_shader(
@@ -51,8 +51,8 @@ shader::definition_map method::shadow_msm::get_directional_definitions() const
 shader::definition_map method::shadow_msm::get_point_definitions() const
 {
     return {
-        {"SHADOW_MAPPING", "shadow/point_msm.glsl"},
-        {"POINT_SHADOW_MAPPING", ""}
+        {"SHADOW_MAPPING", "shadow/omni_msm.glsl"},
+        {"OMNI_SHADOW_MAPPING", ""}
     };
 }
 
@@ -78,11 +78,11 @@ void method::shadow_msm::set_shadow_map_uniforms(
 void method::shadow_msm::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
-    point_shadow_map* shadow_map,
+    omni_shadow_map* shadow_map,
     const std::string& prefix,
     const glm::mat4& pos_to_world
 ){
-    point_shadow_map_msm* sm = static_cast<point_shadow_map_msm*>(shadow_map);
+    omni_shadow_map_msm* sm = static_cast<omni_shadow_map_msm*>(shadow_map);
 
     s->set(
         prefix + "map",
@@ -104,11 +104,11 @@ void method::shadow_msm::execute()
         if(it != directional.end()) directional_shadow_maps = &it->second;
     }
 
-    const std::vector<point_shadow_map*>* point_shadow_maps = NULL;
+    const std::vector<omni_shadow_map*>* omni_shadow_maps = NULL;
     {
-        const shadow_scene::point_map& point = scene->get_point_shadows();
-        auto it = point.find(this);
-        if(it != point.end()) point_shadow_maps = &it->second;
+        const shadow_scene::omni_map& omni = scene->get_omni_shadows();
+        auto it = omni.find(this);
+        if(it != omni.end()) omni_shadow_maps = &it->second;
     }
 
     glEnable(GL_CULL_FACE);
@@ -195,15 +195,15 @@ void method::shadow_msm::execute()
         }
     }
 
-    if(point_shadow_maps)
+    if(omni_shadow_maps)
     {
         glEnable(GL_DEPTH_TEST);
 
         cubemap_depth_shader->bind();
 
-        for(point_shadow_map* sm: *point_shadow_maps)
+        for(omni_shadow_map* sm: *omni_shadow_maps)
         {
-            point_shadow_map_msm* msm = static_cast<point_shadow_map_msm*>(sm);
+            omni_shadow_map_msm* msm = static_cast<omni_shadow_map_msm*>(sm);
             // Render depth data
 
             msm->moments_buffer.bind();
@@ -352,7 +352,7 @@ const texture& directional_shadow_map_msm::get_moments() const
     return moments;
 }
 
-point_shadow_map_msm::point_shadow_map_msm(
+omni_shadow_map_msm::omni_shadow_map_msm(
     method::shadow_msm* method,
     context& ctx,
     glm::uvec2 size,
@@ -360,7 +360,7 @@ point_shadow_map_msm::point_shadow_map_msm(
     float radius,
     glm::vec2 depth_range,
     point_light* light
-):  point_shadow_map(method, depth_range, light),
+):  omni_shadow_map(method, depth_range, light),
     moments(ctx, size, GL_RGBA16, GL_FLOAT, 0, GL_TEXTURE_CUBE_MAP),
     moments_buffer(
         ctx,
@@ -373,25 +373,25 @@ point_shadow_map_msm::point_shadow_map_msm(
 {
 }
 
-point_shadow_map_msm::point_shadow_map_msm(point_shadow_map_msm&& other)
-:   point_shadow_map(other),
+omni_shadow_map_msm::omni_shadow_map_msm(omni_shadow_map_msm&& other)
+:   omni_shadow_map(other),
     moments(std::move(other.moments)),
     moments_buffer(std::move(other.moments_buffer)),
     samples(other.samples)
 {
 }
 
-unsigned point_shadow_map_msm::get_samples() const
+unsigned omni_shadow_map_msm::get_samples() const
 {
     return samples;
 }
 
-texture& point_shadow_map_msm::get_moments()
+texture& omni_shadow_map_msm::get_moments()
 {
     return moments;
 }
 
-const texture& point_shadow_map_msm::get_moments() const
+const texture& omni_shadow_map_msm::get_moments() const
 {
     return moments;
 }

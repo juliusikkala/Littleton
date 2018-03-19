@@ -13,7 +13,7 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
         {{"VERTEX_POSITION", "0"}}
     )),
     cubemap_depth_shader(pool.get_shader(
-        shader::path{"generic.vert", "shadow/point_pcf.frag", "cubemap.geom"},
+        shader::path{"generic.vert", "shadow/omni_pcf.frag", "cubemap.geom"},
         {{"VERTEX_POSITION", "0"},
          {"DISCARD_ALPHA", "0.5"}}
     )),
@@ -80,8 +80,8 @@ shader::definition_map method::shadow_pcf::get_directional_definitions() const
 shader::definition_map method::shadow_pcf::get_point_definitions() const
 {
     return {
-        {"SHADOW_MAPPING", "shadow/point_pcf.glsl"},
-        {"POINT_SHADOW_MAPPING", ""}
+        {"SHADOW_MAPPING", "shadow/omni_pcf.glsl"},
+        {"OMNI_SHADOW_MAPPING", ""}
     };
 }
 
@@ -111,12 +111,12 @@ void method::shadow_pcf::set_shadow_map_uniforms(
 void method::shadow_pcf::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
-    point_shadow_map* shadow_map,
+    omni_shadow_map* shadow_map,
     const std::string& prefix,
     const glm::mat4& pos_to_world
 ){
-    point_shadow_map_pcf* sm =
-        static_cast<point_shadow_map_pcf*>(shadow_map);
+    omni_shadow_map_pcf* sm =
+        static_cast<omni_shadow_map_pcf*>(shadow_map);
 
     s->set(
         prefix + "map",
@@ -143,11 +143,11 @@ void method::shadow_pcf::execute()
         if(it != directional.end()) directional_shadow_maps = &it->second;
     }
 
-    const std::vector<point_shadow_map*>* point_shadow_maps = NULL;
+    const std::vector<omni_shadow_map*>* omni_shadow_maps = NULL;
     {
-        const shadow_scene::point_map& point = scene->get_point_shadows();
-        auto it = point.find(this);
-        if(it != point.end()) point_shadow_maps = &it->second;
+        const shadow_scene::omni_map& omni = scene->get_omni_shadows();
+        auto it = omni.find(this);
+        if(it != omni.end()) omni_shadow_maps = &it->second;
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -188,14 +188,14 @@ void method::shadow_pcf::execute()
         }
     }
 
-    if(point_shadow_maps)
+    if(omni_shadow_maps)
     {
         cubemap_depth_shader->bind();
 
         // Point shadow maps
-        for(point_shadow_map* sm: *point_shadow_maps)
+        for(omni_shadow_map* sm: *omni_shadow_maps)
         {
-            point_shadow_map_pcf* pcf = static_cast<point_shadow_map_pcf*>(sm);
+            omni_shadow_map_pcf* pcf = static_cast<omni_shadow_map_pcf*>(sm);
             pcf->depth_buffer.bind();
             glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -310,7 +310,7 @@ const texture& directional_shadow_map_pcf::get_depth() const
     return depth;
 }
 
-point_shadow_map_pcf::point_shadow_map_pcf(
+omni_shadow_map_pcf::omni_shadow_map_pcf(
     method::shadow_pcf* method,
     context& ctx,
     glm::uvec2 size,
@@ -318,7 +318,7 @@ point_shadow_map_pcf::point_shadow_map_pcf(
     float radius,
     glm::vec2 depth_range,
     point_light* light
-):  point_shadow_map(method, depth_range, light),
+):  omni_shadow_map(method, depth_range, light),
     depth(
        ctx,
        size,
@@ -338,52 +338,52 @@ point_shadow_map_pcf::point_shadow_map_pcf(
     set_bias();
 }
 
-point_shadow_map_pcf::point_shadow_map_pcf(
-    point_shadow_map_pcf&& other
-):  point_shadow_map(other),
+omni_shadow_map_pcf::omni_shadow_map_pcf(
+    omni_shadow_map_pcf&& other
+):  omni_shadow_map(other),
     depth(std::move(other.depth)),
     depth_buffer(std::move(other.depth_buffer)),
     min_bias(other.min_bias), max_bias(other.max_bias),
     radius(other.radius), samples(other.samples)
 {}
 
-void point_shadow_map_pcf::set_bias(float min_bias, float max_bias)
+void omni_shadow_map_pcf::set_bias(float min_bias, float max_bias)
 {
     this->min_bias = min_bias;
     this->max_bias = max_bias;
 }
 
-glm::vec2 point_shadow_map_pcf::get_bias() const
+glm::vec2 omni_shadow_map_pcf::get_bias() const
 {
     return glm::vec2(min_bias, max_bias);
 }
 
-void point_shadow_map_pcf::set_samples(unsigned samples)
+void omni_shadow_map_pcf::set_samples(unsigned samples)
 {
     this->samples = samples;
 }
 
-unsigned point_shadow_map_pcf::get_samples() const
+unsigned omni_shadow_map_pcf::get_samples() const
 {
     return samples;
 }
 
-void point_shadow_map_pcf::set_radius(float radius)
+void omni_shadow_map_pcf::set_radius(float radius)
 {
     this->radius = radius;
 }
 
-float point_shadow_map_pcf::set_radius() const
+float omni_shadow_map_pcf::set_radius() const
 {
     return radius;
 }
 
-texture& point_shadow_map_pcf::get_depth()
+texture& omni_shadow_map_pcf::get_depth()
 {
     return depth;
 }
 
-const texture& point_shadow_map_pcf::get_depth() const
+const texture& omni_shadow_map_pcf::get_depth() const
 {
     return depth;
 }

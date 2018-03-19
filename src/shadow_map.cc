@@ -85,7 +85,7 @@ directional_light* directional_shadow_map::get_light() const
     return l;
 }
 
-point_shadow_map::point_shadow_map(
+omni_shadow_map::omni_shadow_map(
     method::shadow_method* method,
     glm::vec2 depth_range,
     point_light* light
@@ -94,20 +94,20 @@ point_shadow_map::point_shadow_map(
     set_range(depth_range);
 }
 
-point_shadow_map::point_shadow_map(const point_shadow_map& other)
+omni_shadow_map::omni_shadow_map(const omni_shadow_map& other)
 : projection(other.projection), l(other.l) { }
 
-void point_shadow_map::set_light(point_light* light)
+void omni_shadow_map::set_light(point_light* light)
 {
     this->l = light;
 }
 
-point_light* point_shadow_map::get_light() const
+point_light* omni_shadow_map::get_light() const
 {
     return l;
 }
 
-void point_shadow_map::set_range(glm::vec2 depth_range)
+void omni_shadow_map::set_range(glm::vec2 depth_range)
 {
     this->range = depth_range;
     projection = glm::perspective(
@@ -118,12 +118,12 @@ void point_shadow_map::set_range(glm::vec2 depth_range)
     );
 }
 
-glm::vec2 point_shadow_map::get_range() const
+glm::vec2 omni_shadow_map::get_range() const
 {
     return range;
 }
 
-glm::mat4 point_shadow_map::get_view(unsigned face) const
+glm::mat4 omni_shadow_map::get_view(unsigned face) const
 {
     if(!l) return glm::mat4(0);
 
@@ -140,12 +140,12 @@ glm::mat4 point_shadow_map::get_view(unsigned face) const
     return face_rotations[face] * transform;
 }
 
-glm::mat4 point_shadow_map::get_projection() const
+glm::mat4 omni_shadow_map::get_projection() const
 {
     return projection;
 }
 
-method::shadow_method* point_shadow_map::get_method() const
+method::shadow_method* omni_shadow_map::get_method() const
 {
     return method;
 }
