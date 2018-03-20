@@ -166,6 +166,8 @@ namespace method
 
         shader* depth_shader;
         shader* cubemap_depth_shader;
+        shader* perspective_depth_shader;
+
         shader* vertical_blur_shader;
         shader* horizontal_blur_shader;
 

@@ -188,7 +188,7 @@ static std::string process_source(
 
 bool shader::path::operator==(const path& other) const
 {
-    return vert == other.vert && frag == other.frag;
+    return vert == other.vert && frag == other.frag && geom == other.geom;
 }
 
 size_t boost::hash_value(const shader::path& p)
@@ -196,6 +196,7 @@ size_t boost::hash_value(const shader::path& p)
     std::size_t seed = 0;
     boost::hash_combine(seed, p.vert);
     boost::hash_combine(seed, p.frag);
+    boost::hash_combine(seed, p.geom);
     return seed;
 }
 

@@ -228,7 +228,7 @@ public:
             new perspective_shadow_map_msm(
                 &pipelines->get_msm(),
                 win,
-                glm::uvec2(1024),
+                glm::uvec2(256),
                 2,
                 2.0f,
                 30,
@@ -371,7 +371,7 @@ public:
             spot.set_orientation(time*50, glm::vec3(1,0,0));
             //spot.set_cutoff_angle(sin(time)*45+45);
             //spot_shadow_msm->set_fov(spot.get_cutoff_angle());
-            spot.set_cutoff_angle(180);
+            spot.set_cutoff_angle(45);
             spot_shadow_msm->set_fov(90);
             earth->rotate(delta*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));

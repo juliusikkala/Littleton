@@ -17,6 +17,10 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
         shader::path{"generic.vert", "shadow/omni_msm.frag", "cubemap.geom"},
         {{"VERTEX_POSITION", "0"}}
     )),
+    perspective_depth_shader(pool.get_shader(
+        shader::path{"generic.vert", "shadow/omni_msm.frag"},
+        {{"VERTEX_POSITION", "0"}}
+    )),
     vertical_blur_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"}, {{"VERTICAL", ""}}
     )),
@@ -57,7 +61,7 @@ shader::definition_map method::shadow_msm::get_omni_definitions() const
 shader::definition_map method::shadow_msm::get_perspective_definitions() const
 {
     return {
-        {"SHADOW_MAPPING", "shadow/directional_msm.glsl"},
+        {"SHADOW_MAPPING", "shadow/perspective_msm.glsl"},
         {"PERSPECTIVE_SHADOW_MAPPING", ""}
     };
 }
@@ -114,6 +118,7 @@ void method::shadow_msm::set_shadow_map_uniforms(
         moment_sampler.bind(sm->moments, texture_index++)
     );
     s->set(prefix + "mvp", lvp * pos_to_world);
+    s->set(prefix + "far_plane", sm->get_range().y);
 }
 
 template<typename L>
@@ -152,7 +157,9 @@ static void render_single(
         model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 mvp = vp * obj->get_global_transform();
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mvp = vp * m;
+        depth_shader->set("m", m);
         depth_shader->set("mvp", mvp);
 
         for(model::vertex_group& group: *mod)
@@ -261,16 +268,20 @@ void method::shadow_msm::execute()
 
     if(perspective_shadow_maps)
     {
-        depth_shader->bind();
+        perspective_depth_shader->bind();
         for(perspective_shadow_map* sm: *perspective_shadow_maps)
         {
             perspective_shadow_map_msm* msm =
                 static_cast<perspective_shadow_map_msm*>(sm);
+            perspective_depth_shader->set("far_plane", msm->get_range().y);
+            perspective_depth_shader->set(
+                "pos", msm->get_light()->get_global_position()
+            );
             render_single(
                 msm,
                 scene,
                 quad,
-                depth_shader,
+                perspective_depth_shader,
                 horizontal_blur_shader,
                 vertical_blur_shader,
                 ms_rt,
