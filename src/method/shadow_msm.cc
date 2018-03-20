@@ -12,15 +12,18 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
     pool(pool),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/directional_msm.frag"},
-        {{"VERTEX_POSITION", "0"}}
+        {{"VERTEX_POSITION", "0"},
+         {"DISCARD_ALPHA", "0.5"}}
     )),
     cubemap_depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/omni_msm.frag", "cubemap.geom"},
-        {{"VERTEX_POSITION", "0"}}
+        {{"VERTEX_POSITION", "0"},
+         {"DISCARD_ALPHA", "0.5"}}
     )),
     perspective_depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/omni_msm.frag"},
-        {{"VERTEX_POSITION", "0"}}
+        {{"VERTEX_POSITION", "0"},
+         {"DISCARD_ALPHA", "0.5"}}
     )),
     vertical_blur_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"}, {{"VERTICAL", ""}}

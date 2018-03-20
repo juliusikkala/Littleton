@@ -12,7 +12,8 @@ struct shadow_map
 float shadow_coef(
     in shadow_map sm,
     vec4 light_space_pos,
-    float dist
+    float dist,
+    float ndotl
 ){
     vec3 pos = light_space_pos.xyz / light_space_pos.w;
     float depth = (dist / sm.far_plane) * 2.0f - 1.0f;

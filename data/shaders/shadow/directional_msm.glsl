@@ -11,8 +11,7 @@ struct shadow_map
 float shadow_coef(
     in shadow_map sm,
     vec4 light_space_pos,
-    vec3 normal,
-    vec3 light_dir
+    float ndotl
 ){
     vec3 pos = light_space_pos.xyz / light_space_pos.w;
     if(abs(pos.z) >= 1.0f || abs(pos.x) >= 1.0f || abs(pos.y) >= 1.0f)

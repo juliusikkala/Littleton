@@ -54,8 +54,11 @@ void main(void)
     );
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
+    vec3 ldir = pos - light.position;
+    float ldir_len = length(ldir);
     lighting *= shadow_coef(
-        shadow, shadow.mvp * vec4(pos, 1.0), length(pos - light.position)
+        shadow, shadow.mvp * vec4(pos, 1.0), ldir_len,
+        dot(normal, ldir/ldir_len)
     );
 #endif
 #elif defined(SPOTLIGHT)
@@ -78,8 +81,11 @@ void main(void)
     );
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
+    vec3 ldir = pos - light.position;
+    float ldir_len = length(ldir);
     lighting *= shadow_coef(
-        shadow, shadow.mvp * vec4(pos, 1.0), length(pos - light.position)
+        shadow, shadow.mvp * vec4(pos, 1.0), ldir_len,
+        dot(normal, ldir/ldir_len)
     );
 #endif
 
@@ -98,8 +104,7 @@ void main(void)
     lighting *= shadow_coef(
         shadow,
         shadow.mvp * vec4(pos, 1.0),
-        normal,
-        -light.direction
+        dot(normal, -light.direction)
     );
 #endif
 #endif

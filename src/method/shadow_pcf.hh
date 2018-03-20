@@ -30,11 +30,7 @@ public:
     );
     directional_shadow_map_pcf(directional_shadow_map_pcf&& other);
 
-    void set_bias(
-        float min_bias = 0.001,
-        float max_bias = 0.02
-    );
-
+    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
     glm::vec2 get_bias() const;
 
     void set_samples(unsigned samples);
@@ -69,11 +65,43 @@ public:
     );
     omni_shadow_map_pcf(omni_shadow_map_pcf&& other);
 
-    void set_bias(
-        float min_bias = 0.001,
-        float max_bias = 0.02
-    );
+    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
+    glm::vec2 get_bias() const;
 
+    void set_samples(unsigned samples);
+    unsigned get_samples() const;
+
+    void set_radius(float radius);
+    float set_radius() const;
+
+    texture& get_depth();
+    const texture& get_depth() const;
+
+private:
+    texture depth;
+    framebuffer depth_buffer;
+    float min_bias, max_bias;
+    float radius;
+    unsigned samples;
+};
+
+class perspective_shadow_map_pcf: public perspective_shadow_map
+{
+friend class method::shadow_pcf;
+public:
+    perspective_shadow_map_pcf(
+        method::shadow_pcf* method,
+        context& ctx,
+        glm::uvec2 size,
+        unsigned samples = 16,
+        float radius = 0.1f,
+        double fov = 30,
+        glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
+        point_light* light = nullptr
+    );
+    perspective_shadow_map_pcf(perspective_shadow_map_pcf&& other);
+
+    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
     glm::vec2 get_bias() const;
 
     void set_samples(unsigned samples);
@@ -110,8 +138,14 @@ namespace method
             unsigned& texture_index
         ) override;
 
+        void set_perspective_uniforms(
+            shader* s,
+            unsigned& texture_index
+        ) override;
+
         shader::definition_map get_directional_definitions() const override;
         shader::definition_map get_omni_definitions() const override;
+        shader::definition_map get_perspective_definitions() const override;
 
         void set_shadow_map_uniforms(
             shader* s,
@@ -129,6 +163,14 @@ namespace method
             const glm::mat4& pos_to_world
         ) override;
 
+        void set_shadow_map_uniforms(
+            shader* s,
+            unsigned& texture_index,
+            perspective_shadow_map* shadow_map,
+            const std::string& prefix,
+            const glm::mat4& pos_to_world
+        ) override;
+
         void execute() override;
 
         std::string get_name() const override;
@@ -136,6 +178,7 @@ namespace method
     private:
         shader* depth_shader;
         shader* cubemap_depth_shader;
+        shader* perspective_depth_shader;
         const texture& shadow_noise_2d;
         const texture& shadow_noise_3d;
         const texture& kernel;

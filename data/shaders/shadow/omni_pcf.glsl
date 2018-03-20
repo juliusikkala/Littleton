@@ -34,6 +34,8 @@ float shadow_coef(
     vec3 ndir = dir / depth;
     vec3 tangent = normalize(random_vec - ndir * dot(random_vec, ndir));
     mat2x3 tangent_space = mat2x3(tangent, cross(ndir, tangent));
+
+    depth/=sm.far_plane;
     
     for(int i = 0; i < sm.samples; ++i)
     {
@@ -44,7 +46,7 @@ float shadow_coef(
             textureGather(
                 sm.map,
                 dir + sample_offset,
-                depth/sm.far_plane - bias
+                depth - bias
             ),
             vec4(0.25f/sm.samples)
         );

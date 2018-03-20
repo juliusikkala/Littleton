@@ -133,8 +133,11 @@ void main(void)
     color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
+    vec3 ldir = pos - light.position;
+    float ldir_len = length(ldir);
     color.rgb *= shadow_coef(
-        shadow, f_in.light_space_pos, length(pos - light.position)
+        shadow, f_in.light_space_pos, length(pos - light.position),
+        dot(normal, ldir/ldir_len)
     );
 #endif
 
@@ -154,8 +157,11 @@ void main(void)
     color.rgb *= shadow_coef(shadow, dir, dot(dir, normal));
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
+    vec3 ldir = pos - light.position;
+    float ldir_len = length(ldir);
     color.rgb *= shadow_coef(
-        shadow, f_in.light_space_pos, length(pos - light.position)
+        shadow, f_in.light_space_pos, length(pos - light.position),
+        dot(normal, ldir/ldir_len)
     );
 #endif
 
@@ -174,8 +180,7 @@ void main(void)
     color.rgb *= shadow_coef(
         shadow,
         f_in.light_space_pos,
-        normal,
-        -light.direction
+        dot(normal, -light.direction)
     );
 #endif
 #endif
