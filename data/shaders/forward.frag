@@ -134,7 +134,7 @@ void main(void)
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
     color.rgb *= shadow_coef(
-        shadow, f_in.light_space_pos, normal, length(pos - light.position)
+        shadow, f_in.light_space_pos, length(pos - light.position)
     );
 #endif
 
@@ -155,7 +155,7 @@ void main(void)
 #endif
 #ifdef PERSPECTIVE_SHADOW_MAPPING
     color.rgb *= shadow_coef(
-        shadow, f_in.light_space_pos, normal, length(pos - light.position)
+        shadow, f_in.light_space_pos, length(pos - light.position)
     );
 #endif
 

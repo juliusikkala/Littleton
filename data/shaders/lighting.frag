@@ -53,6 +53,11 @@ void main(void)
         dot(dir, normal)
     );
 #endif
+#ifdef PERSPECTIVE_SHADOW_MAPPING
+    lighting *= shadow_coef(
+        shadow, shadow.mvp * vec4(pos, 1.0), length(pos - light.position)
+    );
+#endif
 #elif defined(SPOTLIGHT)
     vec3 lighting = calc_spotlight(
         light,
@@ -64,6 +69,20 @@ void main(void)
         f0,
         metallic
     );
+#ifdef OMNI_SHADOW_MAPPING
+    vec3 dir = pos - light.position;
+    lighting *= shadow_coef(
+        shadow,
+        vec3(inv_view * vec4(dir, 0)),
+        dot(dir, normal)
+    );
+#endif
+#ifdef PERSPECTIVE_SHADOW_MAPPING
+    lighting *= shadow_coef(
+        shadow, shadow.mvp * vec4(pos, 1.0), length(pos - light.position)
+    );
+#endif
+
 #elif defined(DIRECTIONAL_LIGHT)
     vec3 lighting = calc_directional_light(
         light,

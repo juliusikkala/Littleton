@@ -9,6 +9,7 @@
 method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
 :   glresource(pool.get_context()),
     shadow_method(scene),
+    pool(pool),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "shadow/directional_msm.frag"},
         {{"VERTEX_POSITION", "0"}}
@@ -124,29 +125,45 @@ void method::shadow_msm::set_shadow_map_uniforms(
 template<typename L>
 static void render_single(
     L* msm,
+    resource_pool& pool,
     render_scene* scene,
     const vertex_buffer& quad,
     shader* depth_shader,
     shader* horizontal_blur_shader,
     shader* vertical_blur_shader,
-    std::map<unsigned, std::unique_ptr<framebuffer>>& ms_rt,
-    std::unique_ptr<framebuffer>& pp_rt,
     sampler& moment_sampler
 ){
     texture& moments = msm->get_moments();
     framebuffer& moments_buffer = msm->get_framebuffer();
 
-    // Render depth data
-    render_target* target =
-        msm->get_samples() == 0 ?
-        (render_target*)pp_rt.get() :
-        (render_target*)ms_rt[msm->get_samples()].get();
+    render_target* target = nullptr;
 
+    framebuffer_pool::loaner postprocess_buffer(pool.loan_framebuffer(
+        moments.get_size(),
+        {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+         {GL_COLOR_ATTACHMENT0, {GL_RGBA16, true}}},
+        0
+    ));
+    framebuffer_pool::loaner multisample_buffer(nullptr);
+    if(msm->get_samples() != 0)
+    {
+        multisample_buffer = pool.loan_framebuffer(
+            moments.get_size(),
+            {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+             {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
+            msm->get_samples()
+        );
+        target = multisample_buffer.get();
+    }
+    else
+    {
+        target = postprocess_buffer.get();
+    }
+
+    // Render depth data
     glEnable(GL_DEPTH_TEST);
 
     target->bind();
-    glm::uvec2 target_size = moments.get_size();
-    glViewport(0, 0, target_size.x, target_size.y);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -172,6 +189,8 @@ static void render_single(
 
     target->bind(GL_READ_FRAMEBUFFER);
     moments_buffer.bind(GL_DRAW_FRAMEBUFFER);
+
+    glm::uvec2 target_size = moments.get_size();
     glBlitFramebuffer(
         0, 0, target_size.x, target_size.y,
         0, 0, target_size.x, target_size.y,
@@ -187,8 +206,7 @@ static void render_single(
 
     glDisable(GL_DEPTH_TEST);
 
-    pp_rt->bind();
-    glViewport(0, 0, target_size.x, target_size.y);
+    postprocess_buffer->bind();
     vertical_blur_shader->set(
         "tex",
         moment_sampler.bind(moments, 0)
@@ -200,7 +218,7 @@ static void render_single(
     horizontal_blur_shader->set(
         "tex",
         moment_sampler.bind(
-            *pp_rt->get_texture_target(GL_COLOR_ATTACHMENT0), 0
+            *postprocess_buffer->get_texture_target(GL_COLOR_ATTACHMENT0), 0
         )
     );
     horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
@@ -240,11 +258,6 @@ void method::shadow_msm::execute()
     glDisable(GL_STENCIL_TEST);
     glClearColor(0, 0.63, 0, 0.63);
 
-    ensure_render_targets(
-        directional_shadow_maps,
-        perspective_shadow_maps
-    );
-
     if(directional_shadow_maps)
     {
         depth_shader->bind();
@@ -254,13 +267,12 @@ void method::shadow_msm::execute()
                 static_cast<directional_shadow_map_msm*>(sm);
             render_single(
                 msm,
+                pool,
                 scene,
                 quad,
                 depth_shader,
                 horizontal_blur_shader,
                 vertical_blur_shader,
-                ms_rt,
-                pp_rt,
                 moment_sampler
             );
         }
@@ -279,13 +291,12 @@ void method::shadow_msm::execute()
             );
             render_single(
                 msm,
+                pool,
                 scene,
                 quad,
                 perspective_depth_shader,
                 horizontal_blur_shader,
                 vertical_blur_shader,
-                ms_rt,
-                pp_rt,
                 moment_sampler
             );
         }
@@ -342,73 +353,6 @@ void method::shadow_msm::execute()
 std::string method::shadow_msm::get_name() const
 {
     return "shadow_msm";
-}
-
-void method::shadow_msm::ensure_render_targets(
-    const std::vector<directional_shadow_map*>* directional_shadow_maps,
-    const std::vector<perspective_shadow_map*>* perspective_shadow_maps
-){
-    std::map<unsigned, glm::uvec2> ms;
-    glm::uvec2 pp;
-
-    if(directional_shadow_maps)
-    {
-        for(directional_shadow_map* sm: *directional_shadow_maps)
-        {
-            directional_shadow_map_msm* msm =
-                static_cast<directional_shadow_map_msm*>(sm);
-
-            glm::uvec2& ms_size = ms[msm->get_samples()];
-            ms_size = glm::max(msm->moments.get_size(), ms_size);
-            pp = glm::max(msm->moments.get_size(), pp);
-        }
-    }
-    if(perspective_shadow_maps)
-    {
-        for(perspective_shadow_map* sm: *perspective_shadow_maps)
-        {
-            perspective_shadow_map_msm* msm =
-                static_cast<perspective_shadow_map_msm*>(sm);
-
-            glm::uvec2& ms_size = ms[msm->get_samples()];
-            ms_size = glm::max(msm->moments.get_size(), ms_size);
-            pp = glm::max(msm->moments.get_size(), pp);
-        }
-    }
-
-    for(auto& pair: ms)
-    {
-        std::unique_ptr<framebuffer>& cur = ms_rt[pair.first];
-
-        glm::uvec2 ms_size = cur ? cur->get_size() : glm::uvec2(0);
-
-        if(ms_size.x < pair.second.x || ms_size.y < pair.second.y)
-        {
-            cur.reset(
-                new framebuffer(
-                    get_context(),
-                    glm::max(pair.second, ms_size),
-                    {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
-                     {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
-                    pair.first,
-                    pair.first > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D
-                )
-            );
-        }
-    }
-
-    glm::uvec2 pp_size = pp_rt ? pp_rt->get_size() : glm::uvec2(0);
-    if(pp_size.x < pp.x || pp_size.y < pp.y)
-    {
-        pp_rt.reset(
-            new framebuffer(
-                get_context(),
-                glm::max(pp, pp_size),
-                {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
-                 {GL_COLOR_ATTACHMENT0, {GL_RGBA16, true}}}
-            )
-        );
-    }
 }
 
 directional_shadow_map_msm::directional_shadow_map_msm(

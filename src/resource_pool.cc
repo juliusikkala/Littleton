@@ -6,10 +6,16 @@ resource_pool::resource_pool(
     const std::optional<std::string>& shader_binary_path
 ):  glresource(ctx), shader_pool(ctx, shader_path, shader_binary_path),
     texture_pool(ctx), vertex_buffer_pool(ctx), sampler_pool(ctx),
-    material_pool(ctx), model_pool(ctx)
+    material_pool(ctx), model_pool(ctx), framebuffer_pool(ctx)
 {
 }
 resource_pool::~resource_pool() {}
+
+framebuffer_pool::loaner resource_pool::loan_framebuffer(
+    glm::uvec2 size,
+    const framebuffer::target_specification_map& target_specifications,
+    unsigned samples
+){ return framebuffer_pool::loan(size, target_specifications, samples); }
 
 multishader* resource_pool::add_shader(const shader::path& path)
 {
@@ -54,6 +60,7 @@ generic_resource_alias_impl(model, model_pool);
 void resource_pool::unload_all()
 {
     shader_pool::unload_all();
+    framebuffer_pool::unload_all();
     texture_pool::unload_all();
     vertex_buffer_pool::unload_all();
 }

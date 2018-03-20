@@ -2,6 +2,7 @@
 #define RESOURCE_POOL_HH
 #include "resource.hh"
 #include "shader_pool.hh"
+#include "framebuffer_pool.hh"
 #include "texture.hh"
 #include "vertex_buffer.hh"
 #include "sampler.hh"
@@ -67,7 +68,7 @@ bool contains_ ## type(const std::string& name); \
 class resource_pool
 : public virtual glresource, public shader_pool, public texture_pool,
   public vertex_buffer_pool, public sampler_pool, public material_pool,
-  public model_pool
+  public model_pool, public framebuffer_pool
 {
 public:
     resource_pool(
@@ -78,6 +79,12 @@ public:
     resource_pool(const resource_pool& other) = delete;
     resource_pool(resource_pool& other) = delete;
     ~resource_pool();
+
+    framebuffer_pool::loaner loan_framebuffer(
+        glm::uvec2 size,
+        const framebuffer::target_specification_map& target_specifications,
+        unsigned samples = 0
+    );
 
     multishader* add_shader(const shader::path& path);
     void remove_shader(const shader::path& path);

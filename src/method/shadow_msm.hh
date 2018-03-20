@@ -153,16 +153,7 @@ namespace method
         std::string get_name() const override;
 
     private:
-        void ensure_render_targets(
-            const std::vector<directional_shadow_map*>* directional_shadow_maps,
-            const std::vector<perspective_shadow_map*>* perspective_shadow_maps
-        );
-
-        // Multisampling render targets by sample count.
-        std::map<unsigned, std::unique_ptr<framebuffer>> ms_rt;
-
-        // Postprocessing render target
-        std::unique_ptr<framebuffer> pp_rt;
+        resource_pool& pool;
 
         shader* depth_shader;
         shader* cubemap_depth_shader;

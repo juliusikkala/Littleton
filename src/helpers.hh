@@ -117,12 +117,13 @@ template<typename Resource, typename Pool>
 class loan_returner
 {
 public:
+    loan_returner();
     loan_returner(Pool& return_target);
 
     void operator()(Resource* res);
 
 private:
-    Pool& return_target;
+    Pool* return_target;
 };
 
 

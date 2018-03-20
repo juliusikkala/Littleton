@@ -106,26 +106,23 @@ static void set_light(
     );
 }
 
-static void render_point_lights(
+template<typename L>
+static void render_shadowed(
     multishader* lighting_shader,
-    render_scene* scene,
+    const shadow_scene::omni_map& shadows,
+    const shader::definition_map& light_definitions,
+    const std::vector<L*>& lights,
+    std::vector<bool>& handled_lights,
     const glm::mat4& v,
     const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
-    const std::vector<point_light*>& lights = 
-        scene->get_point_lights();
-    std::vector<bool> handled_lights(lights.size(), false);
-
-    shader::definition_map definitions({{"POINT_LIGHT", ""}});
-
-    // Render shadowed lights
-    for(const auto& pair: scene->get_omni_shadows())
+    for(const auto& pair: shadows)
     {
         method::shadow_method* m = pair.first;
         shader::definition_map def(m->get_omni_definitions());
 
-        def.insert(definitions.begin(), definitions.end());
+        def.insert(light_definitions.begin(), light_definitions.end());
 
         shader* s = lighting_shader->get(def);
         s->bind();
@@ -136,7 +133,7 @@ static void render_point_lights(
         for(omni_shadow_map* sm: pair.second)
         {
             unsigned local_texture_index = texture_index;
-            point_light* light = sm->get_light();
+            L* light = static_cast<L*>(sm->get_light());
 
             // Check if the light is in the scene and mark it as handled
             auto it = std::lower_bound(lights.begin(), lights.end(), light);
@@ -152,6 +149,85 @@ static void render_point_lights(
             quad.draw();
         }
     }
+}
+
+template<typename L>
+static void render_shadowed(
+    multishader* lighting_shader,
+    const shadow_scene::perspective_map& shadows,
+    const shader::definition_map& light_definitions,
+    const std::vector<L*>& lights,
+    std::vector<bool>& handled_lights,
+    const glm::mat4& v,
+    const glm::vec4& perspective_data,
+    const vertex_buffer& quad
+){
+    for(const auto& pair: shadows)
+    {
+        method::shadow_method* m = pair.first;
+        shader::definition_map def(m->get_perspective_definitions());
+
+        def.insert(light_definitions.begin(), light_definitions.end());
+
+        shader* s = lighting_shader->get(def);
+        s->bind();
+
+        unsigned texture_index = 4;
+        m->set_omni_uniforms(s, texture_index);
+
+        for(perspective_shadow_map* sm: pair.second)
+        {
+            unsigned local_texture_index = texture_index;
+            L* light = static_cast<L*>(sm->get_light());
+
+            // Check if the light is in the scene and mark it as handled
+            auto it = std::lower_bound(lights.begin(), lights.end(), light);
+            if(it == lights.end() || *it != light) continue;
+            handled_lights[it - lights.begin()] = true;
+
+            m->set_shadow_map_uniforms(
+                s, local_texture_index, sm, "shadow.", glm::inverse(v)
+            );
+
+            set_light(s, light, v, perspective_data);
+
+            quad.draw();
+        }
+    }
+}
+
+
+static void render_point_lights(
+    multishader* lighting_shader,
+    render_scene* scene,
+    const glm::mat4& v,
+    const glm::vec4& perspective_data,
+    const vertex_buffer& quad
+){
+    const std::vector<point_light*>& lights = 
+        scene->get_point_lights();
+    std::vector<bool> handled_lights(lights.size(), false);
+
+    shader::definition_map definitions({{"POINT_LIGHT", ""}});
+
+    // Render shadowed lights
+    render_shadowed(
+        lighting_shader,
+        scene->get_omni_shadows(),
+        definitions,
+        lights,
+        handled_lights,
+        v, perspective_data, quad
+    );
+
+    render_shadowed(
+        lighting_shader,
+        scene->get_perspective_shadows(),
+        definitions,
+        lights,
+        handled_lights,
+        v, perspective_data, quad
+    );
 
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
@@ -172,13 +248,38 @@ static void render_spotlights(
     const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
+    const std::vector<spotlight*>& lights = scene->get_spotlights();
+    std::vector<bool> handled_lights(lights.size(), false);
+
+    shader::definition_map definitions({{"SPOTLIGHT", ""}});
+
+    // Render shadowed lights
+    render_shadowed(
+        lighting_shader,
+        scene->get_omni_shadows(),
+        definitions,
+        lights,
+        handled_lights,
+        v, perspective_data, quad
+    );
+
+    render_shadowed(
+        lighting_shader,
+        scene->get_perspective_shadows(),
+        definitions,
+        lights,
+        handled_lights,
+        v, perspective_data, quad
+    );
+
     // Render unshadowed lights
     shader* s = lighting_shader->get({{"SPOTLIGHT", ""}});
     s->bind();
 
-    for(spotlight* l: scene->get_spotlights())
+    for(unsigned i = 0; i < lights.size(); ++i)
     {
-        set_light(s, l, v, perspective_data);
+        if(handled_lights[i]) continue;
+        set_light(s, lights[i], v, perspective_data);
         quad.draw();
     }
 }
