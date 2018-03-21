@@ -24,7 +24,7 @@ uniform mat4 inv_view;
 
 void main(void)
 {
-    vec3 surface_color = get_albedo();
+    vec4 surface_color = decode_color_emission();
     vec3 normal = decode_normal();
     float roughness, metallic, f0;
     decode_material(roughness, metallic, f0);
@@ -37,7 +37,7 @@ void main(void)
     vec3 lighting = calc_point_light(
         light,
         pos,
-        surface_color,
+        surface_color.rgb,
         view_dir,
         normal,
         roughness,
@@ -65,7 +65,7 @@ void main(void)
     vec3 lighting = calc_spotlight(
         light,
         pos,
-        surface_color,
+        surface_color.rgb,
         view_dir,
         normal,
         roughness,
@@ -92,7 +92,7 @@ void main(void)
 #elif defined(DIRECTIONAL_LIGHT)
     vec3 lighting = calc_directional_light(
         light,
-        surface_color,
+        surface_color.rgb,
         view_dir,
         normal,
         roughness,
@@ -107,6 +107,10 @@ void main(void)
         dot(normal, -light.direction)
     );
 #endif
+#endif
+
+#ifdef EMISSION
+    vec3 lighting = surface_color.rgb * surface_color.w;
 #endif
 
     out_color = vec4(lighting, 1.0f);

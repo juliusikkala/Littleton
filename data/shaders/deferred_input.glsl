@@ -8,6 +8,12 @@ uniform sampler2D in_color_emission;
 uniform sampler2D in_normal;
 uniform sampler2D in_material;
 
+vec4 decode_color_emission()
+{
+    vec4 d = texture(in_color_emission, uv);
+    return vec4(d.rgb, 1.0f/d.w - 1.0f);
+}
+
 vec3 decode_normal()
 {
     vec2 n2 = texture(in_normal, uv).xy * SQRT2;
@@ -26,7 +32,3 @@ void decode_material(out float roughness, out float metallic, out float f0)
     f0 = encoded.z/2.0f;
 }
 
-vec3 get_albedo()
-{
-    return texture(in_color_emission, uv).rgb;
-}

@@ -22,6 +22,12 @@ struct material_t
     sampler2D normal;
 #endif
 
+#ifdef MATERIAL_EMISSION_CONSTANT
+    float emission;
+#elif defined(MATERIAL_EMISSION_TEXTURE)
+    sampler2D emission;
+#endif
+
     float f0;
 };
 
@@ -94,6 +100,24 @@ vec3 get_material_normal()
     ).xyz*2.0f-1.0f);
 }
 #endif
+
+float get_material_emission()
+{
+#ifdef MATERIAL_EMISSION_CONSTANT
+    return material.emission;
+#elif defined(MATERIAL_EMISSION_TEXTURE)
+    return texture(
+        material.emission,
+#ifdef VERTEX_UV
+        f_in.uv
+#else
+        vec2(0.0f)
+#endif
+    ).x;
+#else
+    return 0.0f;
+#endif
+}
 
 float get_material_f0()
 {

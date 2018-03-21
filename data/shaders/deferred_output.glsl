@@ -10,6 +10,11 @@ layout(location=1) out vec2 out_normal;
 
 layout(location=2) out vec4 out_material;
 
+vec4 encode_color_emission(vec3 color, float emission)
+{
+    return vec4(color, 1.0f/(emission + 1.0f));
+}
+
 vec2 encode_normal(vec3 normal)
 {
     vec3 n = normalize(normal);

@@ -10,7 +10,11 @@ void main(void)
     vec4 color = get_material_color();
 
     if(color.a < 0.5f) discard;
-    out_color_emission = color;
+
+    out_color_emission = encode_color_emission(
+        color.rgb,
+        get_material_emission()
+    );
 
 #ifdef VERTEX_NORMAL
     vec3 normal = normalize(f_in.normal);

@@ -33,16 +33,21 @@ render_scene* method::lighting_pass::get_scene() const
     return scene;
 }
 
+static void set_gbuf(shader* s)
+{
+    s->set("in_depth", 0);
+    s->set("in_color_emission", 1);
+    s->set("in_normal", 2);
+    s->set("in_material", 3);
+}
+
 static void set_light(
     shader* s,
     point_light* light,
     const glm::mat4& view,
     const glm::vec4& perspective_data
 ){
-    s->set("in_depth", 0);
-    s->set("in_color_emission", 1);
-    s->set("in_normal", 2);
-    s->set("in_material", 3);
+    set_gbuf(s);
     s->set("inv_view", glm::inverse(view));
     s->set("perspective_data", perspective_data);
     s->set(
@@ -58,6 +63,8 @@ static void set_light(
     const glm::mat4& view,
     const glm::vec4& perspective_data
 ){
+    set_gbuf(s);
+
     s->set(
         "light.position",
         glm::vec3(view * glm::vec4(light->get_global_position(), 1))
@@ -73,10 +80,6 @@ static void set_light(
         )
     );
     
-    s->set("in_depth", 0);
-    s->set("in_color_emission", 1);
-    s->set("in_normal", 2);
-    s->set("in_material", 3);
     s->set("perspective_data", perspective_data);
     s->set<float>(
         "light.cutoff",
@@ -94,10 +97,7 @@ static void set_light(
     const glm::mat4& view,
     const glm::vec4& perspective_data
 ){
-    s->set("in_depth", 0);
-    s->set("in_color_emission", 1);
-    s->set("in_normal", 2);
-    s->set("in_material", 3);
+    set_gbuf(s);
     s->set("perspective_data", perspective_data);
     s->set("light.color", light->get_color());
     s->set(
@@ -343,6 +343,20 @@ static void render_directional_lights(
     }
 }
 
+static void render_emission(
+    multishader* lighting_shader,
+    const vertex_buffer& quad
+){
+    shader::definition_map def({{"EMISSION", ""}});
+
+    shader* s = lighting_shader->get(def);
+    s->bind();
+
+    set_gbuf(s);
+
+    quad.draw();
+}
+
 void method::lighting_pass::execute()
 {
     target_method::execute();
@@ -399,6 +413,8 @@ void method::lighting_pass::execute()
         perspective_data,
         quad
     );
+
+    render_emission(lighting_shader, quad);
 }
 
 std::string method::lighting_pass::get_name() const

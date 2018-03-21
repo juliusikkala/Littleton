@@ -115,6 +115,8 @@ void main(void)
     }
 #endif
 
+    color.rgb += surface_color.rgb * get_material_emission();
+
 #elif defined(SINGLE_LIGHT)
 #ifdef POINT_LIGHT
     color.rgb = calc_point_light(

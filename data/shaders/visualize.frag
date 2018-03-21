@@ -14,7 +14,7 @@ void main(void)
 #elif defined(SHOW_NORMAL)
     out_color = vec4(decode_normal()*0.5f+0.5f, 1.0f);
 #elif defined(SHOW_COLOR)
-    out_color = vec4(get_albedo(), 1.0f);
+    out_color = vec4(decode_color_emission().rgb, 1.0f);
 #elif defined(SHOW_ROUGHNESS)
     float roughness, metallic, f0;
     decode_material(roughness, metallic, f0);
