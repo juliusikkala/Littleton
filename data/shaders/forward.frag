@@ -23,6 +23,7 @@ uniform Lights
 #if MAX_SPOTLIGHT_COUNT > 0
     spotlight spot[MAX_SPOTLIGHT_COUNT];
 #endif
+    vec3 ambient;
 } lights;
 
 #elif defined(SINGLE_LIGHT)
@@ -115,7 +116,8 @@ void main(void)
     }
 #endif
 
-    color.rgb += surface_color.rgb * get_material_emission();
+    color.rgb +=
+        surface_color.rgb * (get_material_emission() + lights.ambient);
 
 #elif defined(SINGLE_LIGHT)
 #ifdef POINT_LIGHT

@@ -24,13 +24,14 @@ static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 method::forward_pass::forward_pass(
     render_target& target,
     shader_pool& pool,
-    render_scene* scene
+    render_scene* scene,
+    bool apply_ambient
 ):  target_method(target),
     forward_shader(pool.get(
         shader::path{"generic.vert", "forward.frag"})
     ),
     depth_shader(pool.get(shader::path{"generic.vert", "depth.frag"})),
-    scene(scene)
+    scene(scene), apply_ambient(apply_ambient)
 {}
 
 method::forward_pass::~forward_pass() {}
@@ -314,7 +315,8 @@ static std::unique_ptr<uniform_block> create_light_block(
     shader* compatible_shader,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
-    const std::vector<bool>& handled_directional_lights
+    const std::vector<bool>& handled_directional_lights,
+    glm::vec3 ambient
 ){
     unsigned point_light_count = 0;
     unsigned spotlight_count = 0;
@@ -323,6 +325,7 @@ static std::unique_ptr<uniform_block> create_light_block(
     std::unique_ptr<uniform_block> light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
+    light_block->set("ambient", ambient);
 
     const std::vector<point_light*>& point_lights = scene->get_point_lights();
     for(unsigned i = 0; i < point_lights.size(); ++i)
@@ -408,7 +411,8 @@ static void render_unshadowed_lights(
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
-    render_scene* scene
+    render_scene* scene,
+    bool apply_ambient
 ){
     camera* cam = scene->get_camera();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
@@ -452,7 +456,8 @@ static void render_unshadowed_lights(
                     s,
                     handled_point_lights,
                     handled_spotlights,
-                    handled_directional_lights
+                    handled_directional_lights,
+                    apply_ambient ? scene->get_ambient() : glm::vec3(0)
                 );
                 light_block->bind(0);
             }
@@ -550,12 +555,23 @@ void method::forward_pass::execute()
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene
+        scene,
+        apply_ambient
     );
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }
 render_scene* method::forward_pass::get_scene() const { return scene; }
+
+void method::forward_pass::set_apply_ambient(bool apply_ambient)
+{
+    this->apply_ambient = apply_ambient;
+}
+
+bool method::forward_pass::get_apply_ambient() const
+{
+    return apply_ambient;
+}
 
 std::string method::forward_pass::get_name() const
 {

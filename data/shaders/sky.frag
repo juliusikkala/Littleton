@@ -127,7 +127,7 @@ void main(void)
     vec3 dir = normalize(pos);
     float t0, t1;
 
-    float d = get_linear_depth();
+    float d = get_linear_depth(uv);
     if(intersect_sphere(vec3(0), dir, origin, t0, t1))
     {
         if(t0 * dir.z < d) discard;

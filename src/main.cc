@@ -19,6 +19,7 @@
 #include "method/shadow_pcf.hh"
 #include "method/shadow_msm.hh"
 #include "method/draw_texture.hh"
+#include "method/ssao.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -39,7 +40,7 @@ public:
             {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}},
             {GL_DEPTH_ATTACHMENT, {&buf.get_depth_stencil()}}
         }),
-        postprocess(w, resolution, GL_RGB16F, GL_FLOAT),
+        postprocess(w, resolution, GL_RGB16F),
 
         clear_buf(buf),
         clear_screen(screen),
@@ -48,7 +49,7 @@ public:
         msm(pool, main_scene),
 
         gp(buf, pool, main_scene),
-        lp(screen, buf, pool, main_scene),
+        lp(screen, buf, pool, main_scene, false),
         fp(screen, pool, main_scene),
         visualizer(screen, buf, pool, main_scene),
         dt(w, pool),
@@ -64,6 +65,7 @@ public:
             pool,
             screen.get_texture_target(GL_COLOR_ATTACHMENT0)
         ),
+        ssao(screen, buf, pool, main_scene, 0.2f, 8),
         postprocess_to_window(
             w,
             postprocess.input(0),
@@ -97,6 +99,7 @@ public:
             &clear_screen,
             &gp,
             &lp,
+            &ssao,
             &sky,
             &tm,
             &postprocess_to_window
@@ -135,6 +138,8 @@ private:
 
     method::sky sky;
     method::tonemap tm;
+    method::ssao ssao;
+
     method::blit_framebuffer postprocess_to_window;
     method::blit_framebuffer screen_to_window;
 
@@ -266,14 +271,15 @@ public:
 
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        main_scene.add_light(&sun);
-        main_scene.add_light(&l1);
-        main_scene.add_light(&l2);
+        //main_scene.add_light(&sun);
+        //main_scene.add_light(&l1);
+        //main_scene.add_light(&l2);
         main_scene.add_light(&spot);
-        main_scene.add_shadow(sun_shadow_msm.get());
+        //main_scene.add_shadow(sun_shadow_msm.get());
         //main_scene.add_shadow(fly_shadow_pcf.get());
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
+        main_scene.set_ambient(glm::vec3(0.03));
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);

@@ -2,6 +2,7 @@
 #define SCENE_HH
 #include <vector>
 #include <map>
+#include <glm/glm.hpp>
 
 class object;
 class camera;
@@ -55,6 +56,9 @@ public:
     );
     ~light_scene();
 
+    void set_ambient(glm::vec3 ambient);
+    glm::vec3 get_ambient() const;
+
     void add_light(point_light* pl);
     void remove_light(point_light* pl);
     void clear_point_lights();
@@ -83,6 +87,7 @@ public:
     std::vector<light*> get_lights() const;
 
 private:
+    glm::vec3 ambient;
     std::vector<point_light*> point_lights;
     std::vector<spotlight*> spotlights;
     std::vector<directional_light*> directional_lights;

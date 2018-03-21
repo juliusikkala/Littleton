@@ -20,11 +20,15 @@ namespace method
             render_target& target,
             gbuffer& buf,
             resource_pool& pool,
-            render_scene* scene
+            render_scene* scene,
+            bool apply_ambient = true
         );
 
         void set_scene(render_scene* scene);
         render_scene* get_scene() const;
+
+        void set_apply_ambient(bool apply_ambient);
+        bool get_apply_ambient() const;
 
         void execute() override;
 
@@ -35,6 +39,8 @@ namespace method
 
         multishader* lighting_shader;
         render_scene* scene;
+
+        bool apply_ambient;
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;

@@ -57,10 +57,21 @@ light_scene::light_scene(
     std::vector<point_light*>&& point_lights,
     std::vector<spotlight*>&& spotlights,
     std::vector<directional_light*>&& directional_lights
-): point_lights(std::move(point_lights)), spotlights(std::move(spotlights)),
-   directional_lights(std::move(directional_lights)) {}
+):  ambient(0), point_lights(std::move(point_lights)),
+    spotlights(std::move(spotlights)),
+    directional_lights(std::move(directional_lights)) {}
 
 light_scene::~light_scene() {}
+
+void light_scene::set_ambient(glm::vec3 ambient)
+{
+    this->ambient = ambient;
+}
+
+glm::vec3 light_scene::get_ambient() const
+{
+    return ambient;
+}
 
 void light_scene::add_light(point_light* pl)
 {

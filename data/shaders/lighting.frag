@@ -15,6 +15,10 @@ uniform directional_light light;
 
 out vec4 out_color;
 
+#ifdef EMISSION
+uniform vec3 ambient;
+#endif
+
 #ifdef SHADOW_MAPPING
 uniform shadow_map shadow;
 #endif
@@ -24,13 +28,13 @@ uniform mat4 inv_view;
 
 void main(void)
 {
-    vec4 surface_color = decode_color_emission();
-    vec3 normal = decode_normal();
+    vec4 surface_color = decode_color_emission(uv);
+    vec3 normal = decode_normal(uv);
     float roughness, metallic, f0;
-    decode_material(roughness, metallic, f0);
+    decode_material(uv, roughness, metallic, f0);
     roughness = roughness * roughness;
 
-    vec3 pos = decode_position();
+    vec3 pos = decode_position(uv);
     vec3 view_dir = normalize(-pos);
 
 #ifdef POINT_LIGHT
@@ -110,7 +114,7 @@ void main(void)
 #endif
 
 #ifdef EMISSION
-    vec3 lighting = surface_color.rgb * surface_color.w;
+    vec3 lighting = surface_color.rgb * (ambient + surface_color.w);
 #endif
 
     out_color = vec4(lighting, 1.0f);

@@ -1,15 +1,25 @@
 #include "doublebuffer.hh"
+#include "helpers.hh"
 #include <stdexcept>
 
 doublebuffer::doublebuffer(
     context& ctx,
     glm::uvec2 size,
-    GLint internal_format,
-    GLenum type
+    GLint internal_format
 ): glresource(ctx), cur_index(0),
    buffers{
-    texture(ctx, size, internal_format, type),
-    texture(ctx, size, internal_format, type)
+    texture(
+        ctx,
+        size,
+        internal_format,
+        internal_format_compatible_type(internal_format)
+    ),
+    texture(
+        ctx,
+        size,
+        internal_format,
+        internal_format_compatible_type(internal_format)
+    )
    },
    targets{target(ctx, buffers[0]), target(ctx, buffers[1])}
 {

@@ -13,12 +13,14 @@ method::lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene
+    render_scene* scene,
+    bool apply_ambient
 ):  target_method(target), buf(&buf),
     lighting_shader(pool.get_shader(
-        shader::path{"lighting.vert", "lighting.frag"})
+        shader::path{"fullscreen.vert", "lighting.frag"})
     ),
-    scene(scene), quad(common::ensure_quad_vertex_buffer(pool)),
+    scene(scene), apply_ambient(apply_ambient),
+    quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
@@ -31,6 +33,16 @@ void method::lighting_pass::set_scene(render_scene* scene)
 render_scene* method::lighting_pass::get_scene() const
 {
     return scene;
+}
+
+void method::lighting_pass::set_apply_ambient(bool apply_ambient)
+{
+    this->apply_ambient = apply_ambient;
+}
+
+bool method::lighting_pass::get_apply_ambient() const
+{
+    return apply_ambient;
 }
 
 static void set_gbuf(shader* s)
@@ -345,7 +357,8 @@ static void render_directional_lights(
 
 static void render_emission(
     multishader* lighting_shader,
-    const vertex_buffer& quad
+    const vertex_buffer& quad,
+    const glm::vec3& ambient
 ){
     shader::definition_map def({{"EMISSION", ""}});
 
@@ -353,6 +366,7 @@ static void render_emission(
     s->bind();
 
     set_gbuf(s);
+    s->set("ambient", ambient);
 
     quad.draw();
 }
@@ -414,7 +428,11 @@ void method::lighting_pass::execute()
         quad
     );
 
-    render_emission(lighting_shader, quad);
+    render_emission(
+        lighting_shader,
+        quad,
+        apply_ambient ? scene->get_ambient() : glm::vec3(0)
+    );
 }
 
 std::string method::lighting_pass::get_name() const
