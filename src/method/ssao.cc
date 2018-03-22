@@ -9,7 +9,7 @@
 #include <glm/gtc/random.hpp>
 #include <cmath>
 
-static texture generate_ssao_kernel(
+static texture* generate_ssao_kernel(
     context& ctx,
     unsigned size
 ){
@@ -20,11 +20,11 @@ static texture generate_ssao_kernel(
     {
         glm::vec3 dir = glm::sphericalRand(1.0f);
         dir.z = fabs(dir.z);
-        float distance = glm::linearRand(0.0f, 1.0f);
-        samples[i] = dir * (distance * distance);
+        float scale = (float)i / size;
+        samples[i] = dir * glm::mix(0.1f, 1.0f, scale * scale);
     }
 
-    return texture(
+    return new texture(
         ctx,
         glm::uvec2(size),
         GL_RGB8_SNORM,
@@ -44,7 +44,7 @@ method::ssao::ssao(
     unsigned samples,
     unsigned blur_radius,
     float bias
-):  target_method(target), buf(&buf),
+):  target_method(target), glresource(pool.get_context()), buf(&buf),
     ssao_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ssao.frag"}, {}
     )),
@@ -58,15 +58,15 @@ method::ssao::ssao(
         shader::path{"fullscreen.vert", "ambient.frag"}, {}
     )),
     scene(scene),
-    ssao_buffer(pool.get_context(), target.get_size(), GL_R8),
+    ssao_buffer(get_context(), target.get_size(), GL_R8),
     radius(radius), samples(samples), blur_radius(blur_radius), bias(bias),
     random_rotation(
-        common::ensure_spherical_random_texture(pool, glm::uvec2(512))
+        common::ensure_spherical_random_texture(pool, glm::uvec2(4))
     ),
-    kernel(generate_ssao_kernel(pool.get_context(), 256)),
+    kernel(generate_ssao_kernel(get_context(), samples)),
     quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    noise_sampler(pool.get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
+    noise_sampler(get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
 }
 
@@ -82,6 +82,7 @@ float method::ssao::get_radius() const
 
 void method::ssao::set_samples(unsigned samples)
 {
+    kernel.reset(generate_ssao_kernel(get_context(), samples)),
     this->samples = samples;
 }
 
@@ -145,7 +146,7 @@ void method::ssao::execute()
     ssao_shader->set("proj", p);
     ssao_shader->set("perspective_data", perspective_data);
     ssao_shader->set("noise", noise_sampler.bind(random_rotation, 2));
-    ssao_shader->set("kernel", noise_sampler.bind(kernel, 3));
+    ssao_shader->set("kernel", noise_sampler.bind(*kernel, 3));
 
     quad.draw();
 

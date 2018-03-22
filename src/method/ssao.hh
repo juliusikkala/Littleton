@@ -5,6 +5,8 @@
 #include "sampler.hh"
 #include "shadow_method.hh"
 #include "doublebuffer.hh"
+#include "resource.hh"
+#include <memory>
 
 class gbuffer;
 class resource_pool;
@@ -12,7 +14,7 @@ class shader;
 
 namespace method
 {
-    class ssao: public target_method
+    class ssao: public target_method, public glresource
     {
     public:
         ssao(
@@ -60,7 +62,7 @@ namespace method
         float bias;
 
         const texture& random_rotation;
-        texture kernel;
+        std::unique_ptr<texture> kernel;
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;

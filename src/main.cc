@@ -65,7 +65,7 @@ public:
             pool,
             screen.get_texture_target(GL_COLOR_ATTACHMENT0)
         ),
-        ssao(screen, buf, pool, main_scene, 0.2f, 8),
+        ssao(screen, buf, pool, main_scene, 0.2f, 4, 2, 0.01),
         postprocess_to_window(
             w,
             postprocess.input(0),
