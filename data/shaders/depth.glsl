@@ -1,29 +1,30 @@
 uniform sampler2D in_depth;
-uniform vec4 perspective_data;
+uniform vec3 clip_info;
+uniform vec2 projection_info;
 
 float get_depth(vec2 uv)
 {
     return texture(in_depth, uv).x;
 }
 
-float linearize_depth(float depth, vec2 uv)
+float linearize_depth(float depth)
 {
-    float n = perspective_data.z;
-    float f = perspective_data.w;
-
-    // Linearize depth
-    return 2.0f * n * f / (n + f - depth * (f - n));
+    return -2.0f * clip_info.x / (depth * clip_info.y + clip_info.z);
 }
 
 float get_linear_depth(vec2 uv)
 {
     float depth = texture(in_depth, uv).x * 2.0f - 1.0f;
-    return linearize_depth(depth, uv);
+    return linearize_depth(depth);
+}
+
+vec3 get_position(float linear_depth, vec2 uv)
+{
+    return vec3((0.5f-uv) * projection_info * linear_depth, linear_depth);
 }
 
 vec3 decode_position(vec2 uv)
 {
-    float depth = get_linear_depth(uv);
-    return vec3((0.5f-uv)*perspective_data.xy*depth, depth);
+    return get_position(get_linear_depth(uv), uv);
 }
 

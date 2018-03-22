@@ -112,6 +112,8 @@ std::string add_line_numbers(const std::string& src);
 
 GLint internal_format_to_external_format(GLint internal_format);
 GLint internal_format_compatible_type(GLint internal_format);
+unsigned internal_format_channel_count(GLint internal_format);
+GLenum get_binding_name(GLenum target);
 
 template<typename Resource, typename Pool>
 class loan_returner

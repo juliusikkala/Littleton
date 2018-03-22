@@ -196,14 +196,6 @@ void method::sky::execute()
     glm::vec3 sun_color = sun->get_color();
 
     glm::mat4 p = cam->get_projection();
-    float near, far, fov, aspect;
-    decompose_perspective(p, near, far, fov, aspect);
-    glm::vec4 perspective_data = glm::vec4(
-        2*tan(fov/2.0f)*aspect,
-        2*tan(fov/2.0f),
-        near,
-        far
-    );
 
     // Can't scale this non-uniformly.
     float scale = origin_node.get_global_scaling().x;
@@ -229,7 +221,8 @@ void method::sky::execute()
     sky_shader->set("sun_color", intensity * sun_color);
     sky_shader->set("ip", glm::inverse(p));
     sky_shader->set("origin", origin);
-    sky_shader->set("perspective_data", perspective_data);
+    sky_shader->set("projection_info", cam->get_projection_info());
+    sky_shader->set("clip_info", cam->get_clip_info());
     quad.draw();
 }
 

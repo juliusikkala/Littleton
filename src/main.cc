@@ -20,6 +20,7 @@
 #include "method/shadow_msm.hh"
 #include "method/draw_texture.hh"
 #include "method/ssao.hh"
+#include "method/sao.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -65,7 +66,7 @@ public:
             pool,
             screen.get_texture_target(GL_COLOR_ATTACHMENT0)
         ),
-        ssao(screen, buf, pool, main_scene, 0.2f, 4, 2, 0.01),
+        sao(screen, buf, pool, main_scene),
         postprocess_to_window(
             w,
             postprocess.input(0),
@@ -99,7 +100,7 @@ public:
             &clear_screen,
             &gp,
             &lp,
-            &ssao,
+            &sao,
             &sky,
             &tm,
             &postprocess_to_window
@@ -138,7 +139,7 @@ private:
 
     method::sky sky;
     method::tonemap tm;
-    method::ssao ssao;
+    method::sao sao;
 
     method::blit_framebuffer postprocess_to_window;
     method::blit_framebuffer screen_to_window;
@@ -358,7 +359,7 @@ public:
             fov -= delta*30;
         if(state[SDL_SCANCODE_X])
             fov += delta*30;
-        cam.perspective(fov, win.get_aspect(), 0.1, 20);
+        cam.perspective(fov, win.get_aspect(), 0.1);
         cam.set_orientation(pitch, yaw);
 
         object* suzanne = graph.get_object("Suzanne");

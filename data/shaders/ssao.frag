@@ -33,7 +33,7 @@ void main(void)
         o.xy = 0.5f * o.xy + 0.5f;
         
         float sample_depth = get_linear_depth(o.xy);
-        float offset_depth = linearize_depth(o.z, o.xy);
+        float offset_depth = linearize_depth(o.z);
 
         float range_check = smoothstep(
             0.0, 1.0, radius/abs(offset_depth - sample_depth)

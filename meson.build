@@ -52,6 +52,7 @@ src = [
   'src/method/shadow_pcf.cc',
   'src/method/shadow_msm.cc',
   'src/method/ssao.cc',
+  'src/method/sao.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

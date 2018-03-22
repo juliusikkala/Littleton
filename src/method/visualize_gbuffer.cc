@@ -51,7 +51,7 @@ static void render_visualizer(
     method::visualize_gbuffer::visualizer v,
     multishader* ms,
     const vertex_buffer& quad,
-    glm::vec4 perspective_data
+    camera* cam
 ){
     shader* s;
     switch(v)
@@ -88,7 +88,8 @@ static void render_visualizer(
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
     s->set("in_material", 3);
-    s->set("perspective_data", perspective_data);
+    s->set("projection_info", cam->get_projection_info());
+    s->set("clip_info", cam->get_clip_info());
     quad.draw();
 }
 
@@ -106,15 +107,6 @@ void method::visualize_gbuffer::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    float near, far, fov, aspect;
-    decompose_perspective(cam->get_projection(), near, far, fov, aspect);
-    glm::vec4 perspective_data = glm::vec4(
-        2*tan(fov/2.0f)*aspect,
-        2*tan(fov/2.0f),
-        near,
-        far
-    );
-
     fb_sampler.bind(buf->get_depth_stencil(), 0);
     fb_sampler.bind(buf->get_color_emission(), 1);
     fb_sampler.bind(buf->get_normal(), 2);
@@ -122,12 +114,7 @@ void method::visualize_gbuffer::execute()
 
     if(visualizers.size() == 1)
     {
-        render_visualizer(
-            visualizers[0],
-            visualize_shader,
-            quad,
-            perspective_data
-        );
+        render_visualizer(visualizers[0], visualize_shader, quad, cam);
     }
     else if(visualizers.size() == 4)
     {
@@ -135,33 +122,17 @@ void method::visualize_gbuffer::execute()
         glm::uvec2 half_size = size/2u;
 
         glViewport(0, half_size.y, half_size.x, half_size.y);
-        render_visualizer(
-            visualizers[0],
-            visualize_shader,
-            quad,
-            perspective_data
-        );
+        render_visualizer(visualizers[0], visualize_shader, quad, cam);
+
         glViewport(half_size.x, half_size.y, half_size.x, half_size.y);
-        render_visualizer(
-            visualizers[1],
-            visualize_shader,
-            quad,
-            perspective_data
-        );
+        render_visualizer(visualizers[1], visualize_shader, quad, cam);
+
         glViewport(0, 0, half_size.x, half_size.y);
-        render_visualizer(
-            visualizers[2],
-            visualize_shader,
-            quad,
-            perspective_data
-        );
+        render_visualizer(visualizers[2], visualize_shader, quad, cam);
+
         glViewport(half_size.x, 0, half_size.x, half_size.y);
-        render_visualizer(
-            visualizers[3],
-            visualize_shader,
-            quad,
-            perspective_data
-        );
+        render_visualizer(visualizers[3], visualize_shader, quad, cam);
+
         glViewport(0, 0, size.x, size.y);
     }
 }

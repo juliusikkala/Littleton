@@ -36,6 +36,8 @@ public:
     GLenum get_type() const;
     glm::uvec2 get_size() const;
 
+    void generate_mipmaps();
+
     static texture* create(
         context& ctx,
         const std::string& path,

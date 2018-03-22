@@ -126,14 +126,6 @@ void method::ssao::execute()
     glDisable(GL_STENCIL_TEST);
 
     glm::mat4 p = cam->get_projection();
-    float near, far, fov, aspect;
-    decompose_perspective(p, near, far, fov, aspect);
-    glm::vec4 perspective_data = glm::vec4(
-        2*tan(fov/2.0f)*aspect,
-        2*tan(fov/2.0f),
-        near,
-        far
-    );
 
     ssao_buffer.input().bind();
 
@@ -144,7 +136,8 @@ void method::ssao::execute()
     ssao_shader->set<int>("samples", samples);
     ssao_shader->set("bias", bias);
     ssao_shader->set("proj", p);
-    ssao_shader->set("perspective_data", perspective_data);
+    ssao_shader->set("projection_info", cam->get_projection_info());
+    ssao_shader->set("clip_info", cam->get_clip_info());
     ssao_shader->set("noise", noise_sampler.bind(random_rotation, 2));
     ssao_shader->set("kernel", noise_sampler.bind(*kernel, 3));
 

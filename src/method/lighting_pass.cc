@@ -45,23 +45,19 @@ bool method::lighting_pass::get_apply_ambient() const
     return apply_ambient;
 }
 
-static void set_gbuf(shader* s)
+static void set_gbuf(shader* s, const camera* cam)
 {
     s->set("in_depth", 0);
     s->set("in_color_emission", 1);
     s->set("in_normal", 2);
     s->set("in_material", 3);
+    s->set("projection_info", cam->get_projection_info());
+    s->set("clip_info", cam->get_clip_info());
 }
 
-static void set_light(
-    shader* s,
-    point_light* light,
-    const glm::mat4& view,
-    const glm::vec4& perspective_data
-){
-    set_gbuf(s);
+static void set_light(shader* s, point_light* light, const glm::mat4& view)
+{
     s->set("inv_view", glm::inverse(view));
-    s->set("perspective_data", perspective_data);
     s->set(
         "light.position",
         glm::vec3(view * glm::vec4(light->get_global_position(), 1))
@@ -69,14 +65,8 @@ static void set_light(
     s->set("light.color", light->get_color());
 }
 
-static void set_light(
-    shader* s,
-    spotlight* light,
-    const glm::mat4& view,
-    const glm::vec4& perspective_data
-){
-    set_gbuf(s);
-
+static void set_light(shader* s, spotlight* light, const glm::mat4& view)
+{
     s->set(
         "light.position",
         glm::vec3(view * glm::vec4(light->get_global_position(), 1))
@@ -92,7 +82,6 @@ static void set_light(
         )
     );
     
-    s->set("perspective_data", perspective_data);
     s->set<float>(
         "light.cutoff",
         cos(glm::radians(light->get_cutoff_angle()))
@@ -106,11 +95,8 @@ static void set_light(
 static void set_light(
     shader* s,
     directional_light* light,
-    const glm::mat4& view,
-    const glm::vec4& perspective_data
+    const glm::mat4& view
 ){
-    set_gbuf(s);
-    s->set("perspective_data", perspective_data);
     s->set("light.color", light->get_color());
     s->set(
         "light.direction",
@@ -125,8 +111,8 @@ static void render_shadowed(
     const shader::definition_map& light_definitions,
     const std::vector<L*>& lights,
     std::vector<bool>& handled_lights,
+    const camera* cam,
     const glm::mat4& v,
-    const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
     for(const auto& pair: shadows)
@@ -156,7 +142,8 @@ static void render_shadowed(
                 s, local_texture_index, sm, "shadow.", glm::inverse(v)
             );
 
-            set_light(s, light, v, perspective_data);
+            set_gbuf(s, cam);
+            set_light(s, light, v);
 
             quad.draw();
         }
@@ -170,8 +157,8 @@ static void render_shadowed(
     const shader::definition_map& light_definitions,
     const std::vector<L*>& lights,
     std::vector<bool>& handled_lights,
+    const camera* cam,
     const glm::mat4& v,
-    const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
     for(const auto& pair: shadows)
@@ -201,7 +188,8 @@ static void render_shadowed(
                 s, local_texture_index, sm, "shadow.", glm::inverse(v)
             );
 
-            set_light(s, light, v, perspective_data);
+            set_gbuf(s, cam);
+            set_light(s, light, v);
 
             quad.draw();
         }
@@ -213,7 +201,6 @@ static void render_point_lights(
     multishader* lighting_shader,
     render_scene* scene,
     const glm::mat4& v,
-    const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
     const std::vector<point_light*>& lights = 
@@ -229,7 +216,8 @@ static void render_point_lights(
         definitions,
         lights,
         handled_lights,
-        v, perspective_data, quad
+        scene->get_camera(),
+        v, quad
     );
 
     render_shadowed(
@@ -238,17 +226,19 @@ static void render_point_lights(
         definitions,
         lights,
         handled_lights,
-        v, perspective_data, quad
+        scene->get_camera(),
+        v, quad
     );
 
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
+    set_gbuf(s, scene->get_camera());
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        set_light(s, lights[i], v, perspective_data);
+        set_light(s, lights[i], v);
         quad.draw();
     }
 }
@@ -257,7 +247,6 @@ static void render_spotlights(
     multishader* lighting_shader,
     render_scene* scene,
     const glm::mat4& v,
-    const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
     const std::vector<spotlight*>& lights = scene->get_spotlights();
@@ -272,7 +261,8 @@ static void render_spotlights(
         definitions,
         lights,
         handled_lights,
-        v, perspective_data, quad
+        scene->get_camera(),
+        v, quad
     );
 
     render_shadowed(
@@ -281,17 +271,19 @@ static void render_spotlights(
         definitions,
         lights,
         handled_lights,
-        v, perspective_data, quad
+        scene->get_camera(),
+        v, quad
     );
 
     // Render unshadowed lights
     shader* s = lighting_shader->get({{"SPOTLIGHT", ""}});
     s->bind();
+    set_gbuf(s, scene->get_camera());
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        set_light(s, lights[i], v, perspective_data);
+        set_light(s, lights[i], v);
         quad.draw();
     }
 }
@@ -300,7 +292,6 @@ static void render_directional_lights(
     multishader* lighting_shader,
     render_scene* scene,
     const glm::mat4& v,
-    const glm::vec4& perspective_data,
     const vertex_buffer& quad
 ){
     const std::vector<directional_light*>& lights = 
@@ -337,7 +328,8 @@ static void render_directional_lights(
                 s, local_texture_index, sm, "shadow.", glm::inverse(v)
             );
 
-            set_light(s, light, v, perspective_data);
+            set_gbuf(s, scene->get_camera());
+            set_light(s, light, v);
 
             quad.draw();
         }
@@ -346,11 +338,12 @@ static void render_directional_lights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
+    set_gbuf(s, scene->get_camera());
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        set_light(s, lights[i], v, perspective_data);
+        set_light(s, lights[i], v);
         quad.draw();
     }
 }
@@ -358,14 +351,15 @@ static void render_directional_lights(
 static void render_emission(
     multishader* lighting_shader,
     const vertex_buffer& quad,
-    const glm::vec3& ambient
+    const glm::vec3& ambient,
+    const camera* cam
 ){
     shader::definition_map def({{"EMISSION", ""}});
 
     shader* s = lighting_shader->get(def);
     s->bind();
 
-    set_gbuf(s);
+    set_gbuf(s, cam);
     s->set("ambient", ambient);
 
     quad.draw();
@@ -388,27 +382,16 @@ void method::lighting_pass::execute()
     if(!cam) return;
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
-    glm::mat4 p = cam->get_projection();
 
     fb_sampler.bind(buf->get_depth_stencil(), 0);
     fb_sampler.bind(buf->get_color_emission(), 1);
     fb_sampler.bind(buf->get_normal(), 2);
     fb_sampler.bind(buf->get_material(), 3);
 
-    float near, far, fov, aspect;
-    decompose_perspective(p, near, far, fov, aspect);
-    glm::vec4 perspective_data = glm::vec4(
-        2*tan(fov/2.0f)*aspect,
-        2*tan(fov/2.0f),
-        near,
-        far
-    );
-
     render_point_lights(
         lighting_shader,
         scene,
         v,
-        perspective_data,
         quad
     );
 
@@ -416,7 +399,6 @@ void method::lighting_pass::execute()
         lighting_shader,
         scene,
         v,
-        perspective_data,
         quad
     );
 
@@ -424,14 +406,14 @@ void method::lighting_pass::execute()
         lighting_shader,
         scene,
         v,
-        perspective_data,
         quad
     );
 
     render_emission(
         lighting_shader,
         quad,
-        apply_ambient ? scene->get_ambient() : glm::vec3(0)
+        apply_ambient ? scene->get_ambient() : glm::vec3(0),
+        scene->get_camera()
     );
 }
 

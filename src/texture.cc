@@ -14,6 +14,95 @@ static unsigned choose_alignment(unsigned line_bytes)
     return 1;
 }
 
+static GLuint create_texture_from_data(
+    GLenum target,
+    GLenum type,
+    glm::uvec2 size,
+    GLint internal_format,
+    const void* data,
+    unsigned samples = 0
+){
+    unsigned mipmap_count = floor(log2(std::max(size.x, size.y)))+1;
+
+    GLint external_format = internal_format_to_external_format(internal_format);
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0);
+    GLint prev_tex = 0;
+    glGetIntegerv(get_binding_name(target), &prev_tex);
+    glBindTexture(target, tex);
+
+    unsigned n = internal_format_channel_count(internal_format);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, choose_alignment(size.x * n));
+
+    switch(target)
+    {
+    case GL_TEXTURE_2D:
+        glTexStorage2D(target, mipmap_count, internal_format, size.x, size.y);
+
+        if(data)
+        {
+            glTexSubImage2D(
+                target, 0, 0, 0, size.x, size.y,
+                external_format, type,
+                data
+            );
+            glGenerateMipmap(target);
+        }
+        break;
+    case GL_TEXTURE_1D:
+        glTexStorage1D(target, mipmap_count, internal_format, size.x);
+
+        if(data)
+        {
+            glTexSubImage1D(
+                target, 0, 0, size.x,
+                external_format, type,
+                data
+            );
+
+            glGenerateMipmap(target);
+        }
+        break;
+    case GL_TEXTURE_2D_MULTISAMPLE:
+        glTexImage2DMultisample(
+            target,
+            samples,
+            internal_format,
+            size.x,
+            size.y,
+            true
+        );
+        break;
+    case GL_TEXTURE_CUBE_MAP:
+        glTexStorage2D(target, mipmap_count, internal_format, size.x, size.y);
+
+        if(data)
+        {
+            for(unsigned i = 0; i < 6; ++i)
+            {
+                GLenum face = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
+                glTexSubImage2D(
+                    face, 0, 0, 0, size.x, size.y,
+                    external_format, type,
+                    data
+                );
+            }
+        }
+        glGenerateMipmap(target);
+        break;
+    default:
+        throw std::runtime_error("Unknown texture target!");
+    }
+
+    if(prev_tex != 0) glBindTexture(target, prev_tex);
+
+    if(glGetError() != GL_NO_ERROR) throw std::runtime_error("Fuck");
+
+    return tex;
+}
+
 static GLuint load_texture(
     context& ctx,
     const std::string& path,
@@ -73,34 +162,13 @@ static GLuint load_texture(
         break;
     }
 
-    unsigned mipmap_count = floor(log2(std::max(w, h)))+1;
-
-    GLint external_format = internal_format_to_external_format(internal_format);
-
-    GLuint tex = 0;
-    glGenTextures(1, &tex);
-    glActiveTexture(GL_TEXTURE0);
-    GLint prev_tex = 0;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &prev_tex);
-    glBindTexture(target, tex);
-
-    glTexStorage2D(
+    GLuint tex = create_texture_from_data(
         target,
-        mipmap_count,
+        type,
+        glm::uvec2(w, h),
         internal_format,
-        w, h
-    );
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, choose_alignment(w * n));
-
-    glTexSubImage2D(
-        target, 0, 0, 0, w, h,
-        external_format, type,
         data
     );
-    glGenerateMipmap(target);
-
-    if(prev_tex != 0) glBindTexture(target, prev_tex);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create texture from " + path);
@@ -189,6 +257,13 @@ glm::uvec2 texture::get_size() const
 {
     load();
     return size;
+}
+
+void texture::generate_mipmaps()
+{
+    load();
+    glBindTexture(target, tex);
+    glGenerateMipmap(target);
 }
 
 class file_texture: public texture
@@ -333,69 +408,7 @@ void texture::basic_load(
 ) const {
     if(tex) return;
 
-    GLint external_format = internal_format_to_external_format(internal_format);
-
-    glGenTextures(1, &tex);
-    glBindTexture(target, tex);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    switch(target)
-    {
-    case GL_TEXTURE_2D:
-        glTexImage2D(
-            target,
-            0,
-            internal_format,
-            size.x,
-            size.y,
-            0,
-            external_format,
-            type,
-            data
-        );
-        break;
-    case GL_TEXTURE_1D:
-        glTexImage1D(
-            target,
-            0,
-            internal_format,
-            size.x,
-            0,
-            external_format,
-            type,
-            data
-        );
-        break;
-    case GL_TEXTURE_2D_MULTISAMPLE:
-        glTexImage2DMultisample(
-            target,
-            samples,
-            internal_format,
-            size.x,
-            size.y,
-            true
-        );
-        break;
-    case GL_TEXTURE_CUBE_MAP:
-        for(unsigned i = 0; i < 6; ++i)
-        {
-            glTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                0,
-                internal_format,
-                size.x,
-                size.y,
-                0,
-                external_format,
-                type,
-                data
-            );
-        }
-        break;
-    default:
-        throw std::runtime_error("Unknown texture target!");
-    }
+    tex = create_texture_from_data(target, type, size, internal_format, data);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create a texture from data");
