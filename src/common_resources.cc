@@ -117,7 +117,7 @@ const sampler& common::ensure_framebuffer_sampler(sampler_pool& pool)
     if(pool.contains(name)) return *pool.get(name);
     return *pool.add(name,
         new sampler(pool.get_context(),
-            GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,
+            GL_NEAREST, GL_NEAREST,
             GL_CLAMP_TO_EDGE
         )
     );

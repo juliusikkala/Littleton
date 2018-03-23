@@ -39,7 +39,13 @@ method::sao::sao(
     }),
     ao(get_context(), target.get_size(), GL_R8),
     quad(common::ensure_quad_vertex_buffer(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
+    fb_sampler(common::ensure_framebuffer_sampler(pool)),
+    mipmap_sampler(
+        get_context(),
+        GL_NEAREST,
+        GL_NEAREST_MIPMAP_NEAREST,
+        GL_CLAMP_TO_EDGE
+    )
 {
 }
 
@@ -115,7 +121,7 @@ void method::sao::execute()
     glm::vec2 ppu = cam->pixels_per_unit(get_target().get_size());
 
     ao_sample_pass_shader->bind();
-    ao_sample_pass_shader->set("in_depth", fb_sampler.bind(*depth_tex, 0));
+    ao_sample_pass_shader->set("in_depth", mipmap_sampler.bind(*depth_tex, 0));
     ao_sample_pass_shader->set(
         "in_normal",
         fb_sampler.bind(buf->get_normal(), 1)

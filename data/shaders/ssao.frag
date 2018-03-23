@@ -9,6 +9,7 @@ uniform sampler2D noise;
 uniform sampler1D kernel;
 uniform mat4 proj;
 
+in vec2 uv;
 out float output;
 
 void main(void)

@@ -280,7 +280,7 @@ public:
         //main_scene.add_shadow(fly_shadow_pcf.get());
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
-        main_scene.set_ambient(glm::vec3(0.5));
+        main_scene.set_ambient(glm::vec3(0.03));
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);
@@ -359,7 +359,7 @@ public:
             fov -= delta*30;
         if(state[SDL_SCANCODE_X])
             fov += delta*30;
-        cam.perspective(fov, win.get_aspect(), 0.1);
+        cam.perspective(fov, win.get_aspect(), 0.1, 20);
         cam.set_orientation(pitch, yaw);
 
         object* suzanne = graph.get_object("Suzanne");

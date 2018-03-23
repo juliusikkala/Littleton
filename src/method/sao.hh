@@ -65,6 +65,7 @@ namespace method
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;
+        sampler mipmap_sampler;
     };
 }
 

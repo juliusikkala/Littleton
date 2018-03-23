@@ -52,5 +52,4 @@ vec3 brdf(
     vec3 kd = (vec3(1.0f) - fresnel) * (1.0f - metallic);
 
     return (kd * surface_color + specular * PI) * radiance * cos_l;
-    //return (1-pow(1.0f - cos_d, 5.0f)) * radiance * cos_l;
 }

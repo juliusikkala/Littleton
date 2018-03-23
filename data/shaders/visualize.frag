@@ -1,13 +1,15 @@
 /* This shader is for visualizing the G-Buffer. */
 #version 400 core
+
 #include "deferred_input.glsl"
 
+in vec2 uv;
 out vec4 out_color;
 
 void main(void)
 {
 #ifdef SHOW_DEPTH
-    out_color = vec4(vec3(get_depth()), 1.0f);
+    out_color = vec4(vec3(get_depth(uv)), 1.0f);
 #elif defined(SHOW_POSITION)
     vec3 pos = decode_position(uv);
     out_color = vec4(pos.x, pos.y, -pos.z, 1.0f);

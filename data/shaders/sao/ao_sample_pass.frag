@@ -5,7 +5,6 @@
 #define NUM_SPIRAL_TURNS 17
 
 #include "constants.glsl"
-
 #include "deferred_input.glsl"
 
 uniform float radius;
@@ -14,6 +13,7 @@ uniform int samples;
 uniform float bias;
 uniform float multiplier;
 
+in vec2 uv;
 out float out_ao;
 
 void main(void)

@@ -1,7 +1,4 @@
 #include "constants.glsl"
-
-in vec2 uv;
-
 #include "depth.glsl"
 
 uniform sampler2D in_color_emission;

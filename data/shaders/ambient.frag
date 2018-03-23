@@ -5,6 +5,7 @@
 uniform sampler2D occlusion;
 uniform vec3 ambient;
 
+in vec2 uv;
 out vec3 out_color;
 
 void main(void)

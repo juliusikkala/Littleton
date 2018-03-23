@@ -21,11 +21,15 @@ namespace method
             gbuffer& buf,
             resource_pool& pool,
             render_scene* scene,
-            bool apply_ambient = true
+            bool apply_ambient = true,
+            float cutoff = 5/256.0f // Set to negative to not use light volumes
         );
 
         void set_scene(render_scene* scene);
         render_scene* get_scene() const;
+
+        void set_cutoff(float cutoff);
+        float get_cutoff() const;
 
         void set_apply_ambient(bool apply_ambient);
         bool get_apply_ambient() const;
@@ -41,6 +45,7 @@ namespace method
         render_scene* scene;
 
         bool apply_ambient;
+        float cutoff;
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;

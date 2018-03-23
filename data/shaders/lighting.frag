@@ -2,6 +2,7 @@
 #version 400 core
 
 #include "light_types.glsl"
+#include "generic_fragment_input.glsl"
 #include "deferred_input.glsl"
 #include "shadow.glsl"
 
@@ -28,6 +29,7 @@ uniform mat4 inv_view;
 
 void main(void)
 {
+    vec2 uv = f_in.position.xy * 0.5f + 0.5f;
     vec4 surface_color = decode_color_emission(uv);
     vec3 normal = decode_normal(uv);
     float roughness, metallic, f0;

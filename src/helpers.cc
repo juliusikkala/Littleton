@@ -123,8 +123,8 @@ void decompose_perspective(
     float c = perspective[0][0];
     float d = perspective[1][1];
 
-    near = b/(1-a);
-    far = -b/(1+a);
+    near = fabs(-b/(1-a));
+    far = fabs(b/(1+a));
     fov = 2*atan(1/d);
     aspect = d/c;
 }
