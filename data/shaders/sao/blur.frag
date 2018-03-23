@@ -1,7 +1,7 @@
 #version 400 core
 
 #define EDGE_SHARPNESS 10.0
-#define STRIDE 2
+#define STRIDE 3
 #define RADIUS 4
 
 const float gaussian[] = float[](

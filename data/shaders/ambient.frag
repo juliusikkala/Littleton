@@ -9,7 +9,7 @@ out vec3 out_color;
 
 void main(void)
 {
-    vec4 surface_color = decode_color_emission(uv);
+    vec3 surface_color = decode_color_only(uv);
 
-    out_color = surface_color.rgb * ambient * texture(occlusion, uv).x;
+    out_color = surface_color * ambient * texture(occlusion, uv).x;
 }

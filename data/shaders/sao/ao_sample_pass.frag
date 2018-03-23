@@ -32,7 +32,7 @@ void main(void)
 
     // Assign a "random" rotation angle for each pixel
     float base_angle =
-        30 * pixel_pos.x ^ pixel_pos.y + 10 * pixel_pos.x*pixel_pos.y;
+        (3 * pixel_pos.x ^ pixel_pos.y + pixel_pos.x*pixel_pos.y) & 511;
 
     // Screen space radius in pixels
     float r = - proj_scale * radius / depth;
@@ -64,6 +64,7 @@ void main(void)
             int level = clamp(findMSB(int(h)) - MAX_OFFSET, 0, MAX_LEVEL);
             sample_pos.z =
                 texelFetch(in_depth, sample_coord.xy >> level, level).x;
+
             sample_pos.xy = vec2(sample_coord) + 0.5f;
 
             sample_pos = get_position(sample_pos.z, sample_pos.xy / depth_size);

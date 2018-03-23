@@ -66,7 +66,7 @@ public:
             pool,
             screen.get_texture_target(GL_COLOR_ATTACHMENT0)
         ),
-        sao(screen, buf, pool, main_scene),
+        sao(screen, buf, pool, main_scene, 0.2f, 8),
         postprocess_to_window(
             w,
             postprocess.input(0),
@@ -280,7 +280,7 @@ public:
         //main_scene.add_shadow(fly_shadow_pcf.get());
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
-        main_scene.set_ambient(glm::vec3(0.03));
+        main_scene.set_ambient(glm::vec3(0.5));
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);

@@ -162,7 +162,7 @@ void method::sao::execute()
     );
 
     ambient_shader->set("ambient", scene->get_ambient());
-    ambient_shader->set("occlusion", fb_sampler.bind(ao.output(), 2));
+    ambient_shader->set("occlusion", fb_sampler.bind(ao.output(), 1));
 
     quad.draw();
 }

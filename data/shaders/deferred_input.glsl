@@ -14,6 +14,11 @@ vec4 decode_color_emission(vec2 uv)
     return vec4(d.rgb, 1.0f/d.w - 1.0f);
 }
 
+vec3 decode_color_only(vec2 uv)
+{
+    return texture(in_color_emission, uv).rgb;
+}
+
 vec3 decode_normal(vec2 uv)
 {
     vec2 n2 = texture(in_normal, uv).xy * SQRT2;
