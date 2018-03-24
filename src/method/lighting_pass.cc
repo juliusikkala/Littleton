@@ -22,6 +22,7 @@ method::lighting_pass::lighting_pass(
         shader::path{"generic.vert", "lighting.frag"}
     )),
     scene(scene), apply_ambient(apply_ambient), cutoff(cutoff),
+    visualize_light_volumes(false),
     quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
@@ -57,6 +58,11 @@ bool method::lighting_pass::get_apply_ambient() const
     return apply_ambient;
 }
 
+void method::lighting_pass::set_visualize_light_volumes(bool visualize)
+{
+    visualize_light_volumes = visualize;
+}
+
 static void set_gbuf(shader* s, const camera* cam)
 {
     s->set("in_depth", 0);
@@ -84,22 +90,12 @@ static bool set_bounding_rect(
     // No need to render the light if it isn't in the frustum anyway.
     if(!cam->sphere_is_visible(light_pos, r)) return false;
 
-    float distance = glm::length(light_pos);
-    if(distance < r) // Sphere envelops the camera, so use a fullscreen quad
-        m = glm::mat4(1.0f);
-    else // Sphere is somewhere within the frustum
-    {
-        glm::vec4 extent = cam->sphere_extent(light_pos, r);
-        glm::vec2 center = glm::vec2(
-            extent.x + extent.z, extent.y + extent.w
-        ) / 2.0f;
-        glm::vec2 scale = glm::vec2(
-            extent.z - extent.x, extent.w - extent.y
-        ) / 2.0f;
-
-        m = glm::translate(glm::vec3(center, 0)) *
-            glm::scale(glm::vec3(scale, 0));
-    }
+    m = cam->get_projection() * sphere_projection_quad_matrix(
+        light_pos,
+        r,
+        cam->get_near(),
+        cam->get_far()
+    );
 
     s->set("m", m);
     s->set("mvp", m);
@@ -279,13 +275,15 @@ static void render_point_lights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    const vertex_buffer& quad
+    const vertex_buffer& quad,
+    bool visualize_light_volumes
 ){
     const std::vector<point_light*>& lights = 
         scene->get_point_lights();
     std::vector<bool> handled_lights(lights.size(), false);
 
     shader::definition_map definitions({{"POINT_LIGHT", ""}});
+    if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
     // Render shadowed lights
@@ -328,12 +326,14 @@ static void render_spotlights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    const vertex_buffer& quad
+    const vertex_buffer& quad,
+    bool visualize_light_volumes
 ){
     const std::vector<spotlight*>& lights = scene->get_spotlights();
     std::vector<bool> handled_lights(lights.size(), false);
 
     shader::definition_map definitions({{"SPOTLIGHT", ""}});
+    if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
     // Render shadowed lights
@@ -376,13 +376,15 @@ static void render_directional_lights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    const vertex_buffer& quad
+    const vertex_buffer& quad,
+    bool visualize_light_volumes
 ){
     const std::vector<directional_light*>& lights = 
         scene->get_directional_lights();
     std::vector<bool> handled_lights(lights.size(), false);
 
     shader::definition_map definitions({{"DIRECTIONAL_LIGHT", ""}});
+    if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
     camera* cam = scene->get_camera();
@@ -480,9 +482,15 @@ void method::lighting_pass::execute()
     fb_sampler.bind(buf->get_normal(), 2);
     fb_sampler.bind(buf->get_material(), 3);
 
-    render_point_lights(lighting_shader, scene, cutoff, quad);
-    render_spotlights(lighting_shader, scene, cutoff, quad);
-    render_directional_lights(lighting_shader, scene, cutoff, quad);
+    render_point_lights(
+        lighting_shader, scene, cutoff, quad, visualize_light_volumes
+    );
+    render_spotlights(
+        lighting_shader, scene, cutoff, quad, visualize_light_volumes
+    );
+    render_directional_lights(
+        lighting_shader, scene, cutoff, quad, visualize_light_volumes
+    );
 
     render_emission(
         lighting_shader,

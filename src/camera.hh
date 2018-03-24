@@ -15,12 +15,12 @@ public:
     glm::vec3 get_clip_info() const;
     glm::vec2 get_projection_info() const;
 
+    float get_near() const;
+    float get_far() const;
+    float get_aspect() const;
+
     // pos must be in view space
     bool sphere_is_visible(glm::vec3 pos, float r) const;
-
-    // pos must be in view space. Returns the projected extent of the sphere on
-    // the near plane.
-    glm::vec4 sphere_extent(glm::vec3 pos, float r) const;
 
     glm::vec2 pixels_per_unit(glm::uvec2 target_size) const;
 

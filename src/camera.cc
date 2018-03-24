@@ -18,7 +18,7 @@ void camera::perspective(float fov, float aspect, float near)
         1.0f/cos(atan(tan_fov * aspect))
     );
     this->near = near;
-    this->far = far;
+    this->far = INFINITY;
     this->aspect = aspect;
 }
 
@@ -53,6 +53,21 @@ glm::vec2 camera::get_projection_info() const
     return projection_info;
 }
 
+float camera::get_near() const
+{
+    return near;
+}
+
+float camera::get_far() const
+{
+    return far;
+}
+
+float camera::get_aspect() const
+{
+    return aspect;
+}
+
 // Using method described in http://www.lighthouse3d.com/tutorials/view-frustum-culling/radar-approach-testing-points/
 bool camera::sphere_is_visible(glm::vec3 pos, float r) const
 {
@@ -70,50 +85,6 @@ bool camera::sphere_is_visible(glm::vec3 pos, float r) const
     if(pc.x > pc.z + d || pc.x < -pc.z - d) return false;
 
     return true;
-}
-
-static glm::vec2 axis_extent(float near, glm::vec2 d, float r)
-{
-    glm::vec2 n = (d / glm::max(d.y, 0.0001f)) * near;
-
-    float D = glm::dot(d, d) - r * r;
-    if(D > 0)
-    {
-        float rt = r / sqrt(D);
-
-        glm::vec2 rt_v(-n.y, n.x);
-        rt_v*=rt;
-
-        glm::vec2 up = n + rt_v;
-        glm::vec2 down = n - rt_v;
-
-        return glm::vec2(
-            up.x / glm::max(up.y, 0.0001f),
-            down.x / glm::max(down.y, 0.0001f)
-        );
-    }
-    else return glm::vec2(-INFINITY, INFINITY);
-}
-
-glm::vec4 camera::sphere_extent(glm::vec3 pos, float r) const
-{
-    glm::vec2 w = axis_extent(
-        near,
-        glm::vec2(pos.x, -pos.z),
-        r
-    )/(tan_fov*aspect);
-
-    glm::vec2 h = axis_extent(
-        near,
-        glm::vec2(pos.y, -pos.z),
-        r
-    )/tan_fov;
-
-    return glm::clamp(
-        glm::vec4(w.x, h.x, w.y, h.y),
-        glm::vec4(-1.0f),
-        glm::vec4(1.0f)
-    );
 }
 
 glm::vec2 camera::pixels_per_unit(glm::uvec2 target_size) const

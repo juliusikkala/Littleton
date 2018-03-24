@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <glm/gtx/transform.hpp>
 
 std::string read_text_file(const std::string& path)
 {
@@ -210,6 +211,71 @@ unsigned next_power_of_two(unsigned n)
     n |= n >> 16;
     n++;
     return n;
+}
+
+static glm::vec2 circle_projection_range(glm::vec2 dir, float r, float big)
+{
+    float d2 = glm::dot(dir, dir);
+    float r2 = r * r;
+
+    if(d2 <= r2) { return glm::vec2(-1, 1) * big; }
+
+    float p = dir.y + r;
+
+    float len = sqrt(d2 - r2);
+    glm::vec2 n = dir / dir.y * p;
+
+    float h_len = r / len;
+    glm::vec2 h(-n.y, n.x);
+    h *= h_len;
+
+    glm::vec2 up = n + h;
+    float top = up.x / fabs(up.y) * p;
+
+    glm::vec2 down = n - h;
+    float bottom = down.x / fabs(down.y) * p;
+
+    if(dir.x > 0 && dir.y <= r)
+    {
+        bottom = big;
+        if(dir.y <= 0) top = -top;
+    }
+
+    if(dir.x < 0 && dir.y <= r)
+    {
+        top = -big;
+        if(dir.y <= 0) bottom = -bottom;
+    }
+
+    return glm::vec2(top, bottom);
+}
+
+glm::mat4 sphere_projection_quad_matrix(
+    glm::vec3 pos,
+    float r,
+    float near,
+    float far,
+    float big
+){
+    glm::vec2 w = circle_projection_range(glm::vec2(pos.x, -pos.z), r, big);
+    glm::vec2 h = circle_projection_range(glm::vec2(pos.y, -pos.z), r, big);
+
+    float d = r - pos.z;
+
+    if(d > far) // Further than far plane...
+    {
+        // Reproject to far plane
+        w *= far/d;
+        h *= far/d;
+
+        d = far;
+    }
+
+    glm::vec2 center = glm::vec2(w.x + w.y, h.x + h.y) / 2.0f;
+    glm::vec2 scale = glm::vec2(fabs(w.y - w.x), fabs(h.y - h.x)) / 2.0f;
+
+    return glm::translate(glm::vec3(center, glm::min(d, -near))) *
+           glm::scale(glm::vec3(scale, 0));
 }
 
 template<typename T, class F>

@@ -29,7 +29,7 @@ uniform mat4 inv_view;
 
 void main(void)
 {
-    vec2 uv = f_in.position.xy * 0.5f + 0.5f;
+    vec2 uv = gl_FragCoord.xy / textureSize(in_depth, 0);
     vec4 surface_color = decode_color_emission(uv);
     vec3 normal = decode_normal(uv);
     float roughness, metallic, f0;
@@ -117,6 +117,10 @@ void main(void)
 
 #ifdef EMISSION
     vec3 lighting = surface_color.rgb * (ambient + surface_color.w);
+#endif
+
+#ifdef VISUALIZE
+    lighting += vec3(0.1f);
 #endif
 
     out_color = vec4(lighting, 1.0f);

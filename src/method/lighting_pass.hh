@@ -34,6 +34,8 @@ namespace method
         void set_apply_ambient(bool apply_ambient);
         bool get_apply_ambient() const;
 
+        void set_visualize_light_volumes(bool visualize);
+
         void execute() override;
 
         std::string get_name() const override;
@@ -46,6 +48,7 @@ namespace method
 
         bool apply_ambient;
         float cutoff;
+        bool visualize_light_volumes;
 
         const vertex_buffer& quad;
         const sampler& fb_sampler;

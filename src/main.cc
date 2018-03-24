@@ -111,6 +111,7 @@ public:
 
     method::shadow_msm& get_msm() { return msm; }
     method::shadow_pcf& get_pcf() { return pcf; }
+    method::lighting_pass& get_lighting() { return lp; }
 
     method::sky& get_sky() { return sky; }
     void set_texture(texture* tex) { dt.set_texture(tex); }
@@ -154,7 +155,7 @@ class game
 {
 public:
     game()
-        : win({ "dflowers", {1280, 720}, true, true, false }),
+        : win({ "dflowers", {1280, 720}, false, true, false }),
         resources(win, { "data/shaders/" })
     {
         win.set_framerate_limit(200);
@@ -281,6 +282,8 @@ public:
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
         main_scene.set_ambient(glm::vec3(0.03));
+
+        //pipelines->get_lighting().set_visualize_light_volumes(true);
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);
