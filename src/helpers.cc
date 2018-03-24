@@ -274,7 +274,7 @@ glm::mat4 sphere_projection_quad_matrix(
     glm::vec2 center = glm::vec2(w.x + w.y, h.x + h.y) / 2.0f;
     glm::vec2 scale = glm::vec2(fabs(w.y - w.x), fabs(h.y - h.x)) / 2.0f;
 
-    return glm::translate(glm::vec3(center, glm::min(d, -near))) *
+    return glm::translate(glm::vec3(center, glm::min(-d, -near))) *
            glm::scale(glm::vec3(scale, 0));
 }
 

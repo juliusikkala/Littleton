@@ -85,17 +85,21 @@ static bool set_bounding_rect(
     const camera* cam, float cutoff
 ){
     glm::mat4 m = glm::mat4(1.0f);
-    float r = compute_cutoff_radius(light, cutoff);
 
-    // No need to render the light if it isn't in the frustum anyway.
-    if(!cam->sphere_is_visible(light_pos, r)) return false;
+    if(cutoff > 0)
+    {
+        float r = compute_cutoff_radius(light, cutoff);
 
-    m = cam->get_projection() * sphere_projection_quad_matrix(
-        light_pos,
-        r,
-        cam->get_near(),
-        cam->get_far()
-    );
+        // No need to render the light if it isn't in the frustum anyway.
+        if(!cam->sphere_is_visible(light_pos, r)) return false;
+
+        m = cam->get_projection() * sphere_projection_quad_matrix(
+            light_pos,
+            r,
+            cam->get_near(),
+            cam->get_far()
+        );
+    }
 
     s->set("m", m);
     s->set("mvp", m);
@@ -376,15 +380,13 @@ static void render_directional_lights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    const vertex_buffer& quad,
-    bool visualize_light_volumes
+    const vertex_buffer& quad
 ){
     const std::vector<directional_light*>& lights = 
         scene->get_directional_lights();
     std::vector<bool> handled_lights(lights.size(), false);
 
     shader::definition_map definitions({{"DIRECTIONAL_LIGHT", ""}});
-    if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
     camera* cam = scene->get_camera();
@@ -468,11 +470,21 @@ void method::lighting_pass::execute()
     if(!lighting_shader || !scene)
         return;
 
-    glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glDisable(GL_STENCIL_TEST);
+
+    if(cutoff > 0)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_GEQUAL);
+        glDepthMask(GL_FALSE);
+    }
+    else
+    {
+        glDisable(GL_DEPTH_TEST);
+    }
 
     camera* cam = scene->get_camera();
     if(!cam) return;
@@ -488,9 +500,15 @@ void method::lighting_pass::execute()
     render_spotlights(
         lighting_shader, scene, cutoff, quad, visualize_light_volumes
     );
-    render_directional_lights(
-        lighting_shader, scene, cutoff, quad, visualize_light_volumes
-    );
+
+    if(cutoff > 0)
+    {
+        glDisable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_TRUE);
+    }
+
+    render_directional_lights(lighting_shader, scene, cutoff, quad);
 
     render_emission(
         lighting_shader,
