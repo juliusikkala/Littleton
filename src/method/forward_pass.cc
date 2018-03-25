@@ -333,8 +333,9 @@ static std::unique_ptr<uniform_block> create_light_block(
         if(handled_point_lights[i]) continue;
         point_light* l = point_lights[i];
 
+        std::string prefix = "point["+std::to_string(point_light_count)+"].";
         point_light_count++;
-        std::string prefix = "point["+std::to_string(i)+"].";
+
         light_block->set(prefix + "color", l->get_color());
         light_block->set(prefix + "position", l->get_global_position());
     }
@@ -345,8 +346,9 @@ static std::unique_ptr<uniform_block> create_light_block(
         if(handled_spotlights[i]) continue;
         spotlight* l = spotlights[i];
 
+        std::string prefix = "spot["+std::to_string(spotlight_count)+"].";
         spotlight_count++;
-        std::string prefix = "spot["+std::to_string(i)+"].";
+
         light_block->set(prefix + "color", l->get_color());
         light_block->set(prefix + "position", l->get_global_position());
         light_block->set(
@@ -371,8 +373,10 @@ static std::unique_ptr<uniform_block> create_light_block(
         if(handled_directional_lights[i]) continue;
         directional_light* l = directional_lights[i];
 
+        std::string prefix =
+            "directional["+std::to_string(directional_light_count)+"].";
         directional_light_count++;
-        std::string prefix = "directional["+std::to_string(i)+"].";
+
         light_block->set(
             prefix + "color",
             l->get_color()

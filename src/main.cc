@@ -273,17 +273,17 @@ public:
 
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        main_scene.add_light(&sun);
+        //main_scene.add_light(&sun);
         //main_scene.add_light(&l1);
         //main_scene.add_light(&l2);
         main_scene.add_light(&spot);
-        main_scene.add_shadow(sun_shadow_msm.get());
+        //main_scene.add_shadow(sun_shadow_msm.get());
         //main_scene.add_shadow(fly_shadow_pcf.get());
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
         main_scene.set_ambient(glm::vec3(0.03));
 
-        pipelines->get_lighting().set_visualize_light_volumes(true);
+        //pipelines->get_lighting().set_visualize_light_volumes(true);
 
         method::sky& sky = pipelines->get_sky();
         sky.set_sun(&sun);
