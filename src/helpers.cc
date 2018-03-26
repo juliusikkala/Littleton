@@ -213,21 +213,22 @@ unsigned next_power_of_two(unsigned n)
     return n;
 }
 
-static glm::vec2 circle_projection_range(glm::vec2 dir, float r, float big)
-{
+static glm::vec2 circle_projection_range(
+    glm::vec2 dir,
+    float r,
+    float p,
+    float big
+){
     float d2 = glm::dot(dir, dir);
     float r2 = r * r;
 
     if(d2 <= r2) { return glm::vec2(-1, 1) * big; }
 
-    float p = dir.y + r;
-
     float len = sqrt(d2 - r2);
-    glm::vec2 n = dir / dir.y * p;
+    glm::vec2 n = dir / dir.y;
 
-    float h_len = r / len;
     glm::vec2 h(-n.y, n.x);
-    h *= h_len;
+    h *= r / len;
 
     glm::vec2 up = n + h;
     float top = up.x / fabs(up.y) * p;
@@ -255,26 +256,28 @@ glm::mat4 sphere_projection_quad_matrix(
     float r,
     float near,
     float far,
+    bool use_near_radius,
     float big
 ){
-    glm::vec2 w = circle_projection_range(glm::vec2(pos.x, -pos.z), r, big);
-    glm::vec2 h = circle_projection_range(glm::vec2(pos.y, -pos.z), r, big);
 
-    float d = r - pos.z;
+    float d = -pos.z;
 
-    if(d > far) // Further than far plane...
-    {
-        // Reproject to far plane
-        w *= far/d;
-        h *= far/d;
+    if(use_near_radius) d = glm::max(d - r, near);
+    else d = glm::min(d + r, far);
 
-        d = far;
-    }
+    glm::vec2 w = circle_projection_range(
+        glm::vec2(pos.x, -pos.z),
+        r, d, big
+    );
+    glm::vec2 h = circle_projection_range(
+        glm::vec2(pos.y, -pos.z),
+        r, d, big
+    );
 
     glm::vec2 center = glm::vec2(w.x + w.y, h.x + h.y) / 2.0f;
     glm::vec2 scale = glm::vec2(fabs(w.y - w.x), fabs(h.y - h.x)) / 2.0f;
 
-    return glm::translate(glm::vec3(center, glm::min(-d, -near))) *
+    return glm::translate(glm::vec3(center, -d)) *
            glm::scale(glm::vec3(scale, 0));
 }
 

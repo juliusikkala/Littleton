@@ -59,12 +59,16 @@ bool intersect_sphere(
 
 unsigned next_power_of_two(unsigned n);
 
+// Computes a modelview matrix for a quad such that it completely covers the
+// surface area of a sphere. use_near_radius determines whether the resulting
+// depth value is picked from the near edge of the sphere or the furthest edge.
 glm::mat4 sphere_projection_quad_matrix(
     glm::vec3 pos,
     float r,
     float near,
     float far,
-    float big = 1e5
+    bool use_near_radius = false,
+    float big = 1e3
 );
 
 // Note that this function is very slow. Please save your generated samples.

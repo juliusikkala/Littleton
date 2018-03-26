@@ -22,7 +22,7 @@ method::lighting_pass::lighting_pass(
         shader::path{"generic.vert", "lighting.frag"}
     )),
     scene(scene), apply_ambient(apply_ambient), cutoff(cutoff),
-    visualize_light_volumes(false),
+    light_test(TEST_NEAR), visualize_light_volumes(false),
     quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
@@ -46,6 +46,17 @@ void method::lighting_pass::set_cutoff(float cutoff)
 float method::lighting_pass::get_cutoff() const
 {
     return cutoff;
+}
+
+void method::lighting_pass::set_light_depth_test(depth_test test)
+{
+    this->light_test = test;
+}
+
+method::lighting_pass::depth_test
+method::lighting_pass::get_light_depth_test() const
+{
+    return light_test;
 }
 
 void method::lighting_pass::set_apply_ambient(bool apply_ambient)
@@ -82,7 +93,8 @@ static float compute_cutoff_radius(light* light, float cutoff)
 // Returns false if the light shouldn't be rendered at all.
 static bool set_bounding_rect(
     shader* s, point_light* light, glm::vec3 light_pos,
-    const camera* cam, float cutoff
+    const camera* cam, float cutoff,
+    method::lighting_pass::depth_test light_test
 ){
     glm::mat4 m = glm::mat4(1.0f);
 
@@ -97,7 +109,8 @@ static bool set_bounding_rect(
             light_pos,
             r,
             cam->get_near(),
-            cam->get_far()
+            cam->get_far(),
+            light_test == method::lighting_pass::TEST_NEAR
         );
     }
 
@@ -110,7 +123,8 @@ static bool set_light(
     shader* s,
     point_light* light,
     const camera* cam,
-    float cutoff
+    float cutoff,
+    method::lighting_pass::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::vec3 pos = glm::vec3(
@@ -119,14 +133,15 @@ static bool set_light(
     s->set("inv_view", inv_view);
     s->set("light.position", pos);
     s->set("light.color", light->get_color());
-    return set_bounding_rect(s, light, pos, cam, cutoff);
+    return set_bounding_rect(s, light, pos, cam, cutoff, light_test);
 }
 
 static bool set_light(
     shader* s,
     spotlight* light,
     const camera* cam,
-    float cutoff
+    float cutoff,
+    method::lighting_pass::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::mat4 view = glm::inverse(inv_view);
@@ -154,14 +169,13 @@ static bool set_light(
         light->get_falloff_exponent()
     );
 
-    return set_bounding_rect(s, light, pos, cam, cutoff);
+    return set_bounding_rect(s, light, pos, cam, cutoff, light_test);
 }
 
 static bool set_light(
     shader* s,
     directional_light* light,
-    const camera* cam,
-    float
+    const camera* cam
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     s->set("light.color", light->get_color());
@@ -188,6 +202,7 @@ static void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
+    method::lighting_pass::depth_test light_test,
     const vertex_buffer& quad
 ){
     for(const auto& pair: shadows)
@@ -213,7 +228,7 @@ static void render_shadowed(
             if(it == lights.end() || *it != light) continue;
             handled_lights[it - lights.begin()] = true;
 
-            if(!set_light(s, light, cam, cutoff)) continue;
+            if(!set_light(s, light, cam, cutoff, light_test)) continue;
 
             m->set_shadow_map_uniforms(
                 s, local_texture_index, sm,
@@ -236,6 +251,7 @@ static void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
+    method::lighting_pass::depth_test light_test,
     const vertex_buffer& quad
 ){
     for(const auto& pair: shadows)
@@ -261,7 +277,7 @@ static void render_shadowed(
             if(it == lights.end() || *it != light) continue;
             handled_lights[it - lights.begin()] = true;
 
-            if(!set_light(s, light, cam, cutoff)) continue;
+            if(!set_light(s, light, cam, cutoff, light_test)) continue;
 
             m->set_shadow_map_uniforms(
                 s, local_texture_index, sm,
@@ -279,6 +295,7 @@ static void render_point_lights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
+    method::lighting_pass::depth_test light_test,
     const vertex_buffer& quad,
     bool visualize_light_volumes
 ){
@@ -299,6 +316,7 @@ static void render_point_lights(
         handled_lights,
         scene->get_camera(),
         cutoff,
+        light_test,
         quad
     );
 
@@ -310,6 +328,7 @@ static void render_point_lights(
         handled_lights,
         scene->get_camera(),
         cutoff,
+        light_test,
         quad
     );
 
@@ -321,7 +340,8 @@ static void render_point_lights(
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], scene->get_camera(), cutoff)) continue;
+        if(!set_light(s, lights[i], scene->get_camera(), cutoff, light_test))
+            continue;
         quad.draw();
     }
 }
@@ -330,6 +350,7 @@ static void render_spotlights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
+    method::lighting_pass::depth_test light_test,
     const vertex_buffer& quad,
     bool visualize_light_volumes
 ){
@@ -349,6 +370,7 @@ static void render_spotlights(
         handled_lights,
         scene->get_camera(),
         cutoff,
+        light_test,
         quad
     );
 
@@ -360,6 +382,7 @@ static void render_spotlights(
         handled_lights,
         scene->get_camera(),
         cutoff,
+        light_test,
         quad
     );
 
@@ -371,7 +394,8 @@ static void render_spotlights(
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], scene->get_camera(), cutoff)) continue;
+        if(!set_light(s, lights[i], scene->get_camera(), cutoff, light_test))
+            continue;
         quad.draw();
     }
 }
@@ -379,7 +403,6 @@ static void render_spotlights(
 static void render_directional_lights(
     multishader* lighting_shader,
     render_scene* scene,
-    float cutoff,
     const vertex_buffer& quad
 ){
     const std::vector<directional_light*>& lights = 
@@ -415,7 +438,7 @@ static void render_directional_lights(
             if(it == lights.end() || *it != light) continue;
             handled_lights[it - lights.begin()] = true;
 
-            if(!set_light(s, light, cam, cutoff)) continue;
+            if(!set_light(s, light, cam)) continue;
 
             m->set_shadow_map_uniforms(
                 s, local_texture_index, sm,
@@ -436,7 +459,7 @@ static void render_directional_lights(
     for(unsigned i = 0; i < lights.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], cam, cutoff)) continue;
+        if(!set_light(s, lights[i], cam)) continue;
         quad.draw();
     }
 }
@@ -475,11 +498,12 @@ void method::lighting_pass::execute()
     glBlendFunc(GL_ONE, GL_ONE);
     glDisable(GL_STENCIL_TEST);
 
-    if(cutoff > 0)
+    if(cutoff > 0 && light_test != TEST_NONE)
     {
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_GEQUAL);
         glDepthMask(GL_FALSE);
+        if(light_test == TEST_FAR) glDepthFunc(GL_GEQUAL);
+        else glDepthFunc(GL_LEQUAL);
     }
     else
     {
@@ -495,20 +519,24 @@ void method::lighting_pass::execute()
     fb_sampler.bind(buf->get_material(), 3);
 
     render_point_lights(
-        lighting_shader, scene, cutoff, quad, visualize_light_volumes
+        lighting_shader, scene,
+        cutoff, light_test,
+        quad, visualize_light_volumes
     );
     render_spotlights(
-        lighting_shader, scene, cutoff, quad, visualize_light_volumes
+        lighting_shader, scene,
+        cutoff, light_test,
+        quad, visualize_light_volumes
     );
 
-    if(cutoff > 0)
+    if(cutoff > 0 && light_test != TEST_NONE)
     {
         glDisable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_TRUE);
     }
 
-    render_directional_lights(lighting_shader, scene, cutoff, quad);
+    render_directional_lights(lighting_shader, scene, quad);
 
     render_emission(
         lighting_shader,

@@ -98,8 +98,6 @@ static GLuint create_texture_from_data(
 
     if(prev_tex != 0) glBindTexture(target, prev_tex);
 
-    if(glGetError() != GL_NO_ERROR) throw std::runtime_error("Fuck");
-
     return tex;
 }
 

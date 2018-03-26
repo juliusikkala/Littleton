@@ -31,6 +31,16 @@ namespace method
         void set_cutoff(float cutoff);
         float get_cutoff() const;
 
+        enum depth_test
+        {
+            TEST_NONE = 0,
+            TEST_NEAR,
+            TEST_FAR
+        };
+
+        void set_light_depth_test(depth_test test);
+        depth_test get_light_depth_test() const;
+
         void set_apply_ambient(bool apply_ambient);
         bool get_apply_ambient() const;
 
@@ -48,6 +58,7 @@ namespace method
 
         bool apply_ambient;
         float cutoff;
+        depth_test light_test;
         bool visualize_light_volumes;
 
         const vertex_buffer& quad;
