@@ -385,6 +385,22 @@ std::vector<glm::vec2> grid_samples(
     return samples;
 }
 
+std::vector<float> generate_gaussian_kernel(
+    int radius,
+    float sigma
+){
+    std::vector<float> result;
+    result.reserve(radius * 2 + 1);
+
+    for(int i = -radius; i <= radius; ++i)
+    {
+        float f = i/sigma;
+        float weight = exp(-f*f/2.0f)/(sigma * sqrt(2*M_PI));
+        result.push_back(weight);
+    }
+    return result;
+}
+
 size_t count_lines(const std::string& str)
 {
     return 1 + std::count(str.begin(), str.end(), '\n');

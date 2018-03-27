@@ -111,6 +111,11 @@ std::vector<glm::vec2> poisson_samples(
     float mindist
 );
 
+std::vector<float> generate_gaussian_kernel(
+    int radius,
+    float sigma
+);
+
 template<typename T, typename Hash = boost::hash<T>>
 std::string append_hash_to_path(
     const std::string& prefix,

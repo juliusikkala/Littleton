@@ -21,6 +21,7 @@
 #include "method/draw_texture.hh"
 #include "method/ssao.hh"
 #include "method/sao.hh"
+#include "method/bloom.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
@@ -61,15 +62,21 @@ public:
             main_scene,
             &buf.get_depth_stencil()
         ),
-        tm(
+        bloom(
             postprocess.input(0),
             pool,
-            screen.get_texture_target(GL_COLOR_ATTACHMENT0)
+            screen.get_texture_target(GL_COLOR_ATTACHMENT0),
+            6.0f, 10, 0.1f
+        ),
+        tm(
+            postprocess.input(1),
+            pool,
+            &postprocess.output(1)
         ),
         sao(screen, buf, pool, main_scene, 0.2f, 8),
         postprocess_to_window(
             w,
-            postprocess.input(0),
+            postprocess.input(1),
             method::blit_framebuffer::COLOR_ONLY
         ),
         screen_to_window(
@@ -83,6 +90,7 @@ public:
             &clear_screen,
             &fp,
             &sky,
+            &bloom,
             &tm,
             &postprocess_to_window
         }),
@@ -102,6 +110,7 @@ public:
             &lp,
             &sao,
             &sky,
+            &bloom,
             &tm,
             &postprocess_to_window
         }),
@@ -139,6 +148,7 @@ private:
     method::draw_texture dt;
 
     method::sky sky;
+    method::bloom bloom;
     method::tonemap tm;
     method::sao sao;
 

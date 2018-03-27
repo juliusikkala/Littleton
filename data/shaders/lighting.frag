@@ -123,5 +123,5 @@ void main(void)
     lighting += vec3(0.1f);
 #endif
 
-    out_color = vec4(lighting, 1.0f);
+    out_color = vec4(max(lighting, vec3(0)), 1.0f);
 }
