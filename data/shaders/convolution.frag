@@ -15,7 +15,7 @@ void main(void)
     vec4 sum = vec4(0.0f);
     float total = 0.0f;
 
-    ivec2 off = -step_size * convolution_size / 2;
+    ivec2 off = -(step_size * convolution_size >> 1);
 
     for(int i = 0; i < convolution_size; ++i)
     {
