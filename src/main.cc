@@ -37,27 +37,23 @@ public:
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):  buf(w, resolution),
-        screen(w, resolution, {
-            {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}},
-            {GL_DEPTH_ATTACHMENT, {&buf.get_depth_stencil()}}
-        }),
+    ):  lighting(w, resolution, GL_RGB16F, GL_FLOAT),
+        buf(w, resolution, &lighting),
         postprocess(w, resolution, GL_RGB16F),
 
         clear_buf(buf),
-        clear_screen(screen),
 
         pcf(pool, main_scene),
         msm(pool, main_scene),
 
         gp(buf, pool, main_scene),
-        lp(screen, buf, pool, main_scene, false),
-        fp(screen, pool, main_scene),
-        visualizer(screen, buf, pool, main_scene),
+        lp(buf, buf, pool, main_scene, false),
+        fp(buf, pool, main_scene, false),
+        visualizer(buf, buf, pool, main_scene),
         dt(w, pool),
 
         sky(
-            screen,
+            buf,
             pool,
             main_scene,
             &buf.get_depth_stencil()
@@ -65,7 +61,7 @@ public:
         bloom(
             postprocess.input(0),
             pool,
-            screen.get_texture_target(GL_COLOR_ATTACHMENT0),
+            &lighting,
             6.0f, 10, 0.1f
         ),
         tm(
@@ -73,22 +69,23 @@ public:
             pool,
             &postprocess.output(1)
         ),
-        sao(screen, buf, pool, main_scene, 0.2f, 8),
+        sao(buf, buf, pool, main_scene, 0.2f, 8),
         postprocess_to_window(
             w,
             postprocess.input(1),
             method::blit_framebuffer::COLOR_ONLY
         ),
-        screen_to_window(
+        buf_to_window(
              w,
-             screen,
+             buf,
              method::blit_framebuffer::COLOR_ONLY
         ),
         forward_pipeline({
             &pcf,
             &msm,
-            &clear_screen,
+            &clear_buf,
             &fp,
+            &sao,
             &sky,
             &bloom,
             &tm,
@@ -96,16 +93,14 @@ public:
         }),
         visualizer_pipeline({
             &clear_buf,
-            &clear_screen,
             &gp,
             &visualizer,
-            &screen_to_window
+            &buf_to_window
         }),
         deferred_pipeline({
             &pcf,
             &msm,
             &clear_buf,
-            &clear_screen,
             &gp,
             &lp,
             &sao,
@@ -116,6 +111,7 @@ public:
         }),
         texture_pipeline({&pcf, &msm, &dt})
     {
+        fp.render_transparent(false);
     }
 
     method::shadow_msm& get_msm() { return msm; }
@@ -131,12 +127,11 @@ public:
     pipeline* get_texture_pipeline() { return &texture_pipeline; }
 
 private:
+    texture lighting;
     gbuffer buf;
-    framebuffer screen;
     doublebuffer postprocess;
 
     method::clear clear_buf;
-    method::clear clear_screen;
 
     method::shadow_pcf pcf;
     method::shadow_msm msm;
@@ -153,7 +148,7 @@ private:
     method::sao sao;
 
     method::blit_framebuffer postprocess_to_window;
-    method::blit_framebuffer screen_to_window;
+    method::blit_framebuffer buf_to_window;
 
     pipeline forward_pipeline;
     pipeline visualizer_pipeline;

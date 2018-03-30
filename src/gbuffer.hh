@@ -7,7 +7,11 @@
 class gbuffer: public render_target
 {
 public:
-    gbuffer(context& ctx, glm::uvec2 size);
+    gbuffer(
+        context& ctx,
+        glm::uvec2 size,
+        texture* lighting_target = nullptr
+    );
     gbuffer(gbuffer&& other);
     ~gbuffer();
 
@@ -15,6 +19,12 @@ public:
     texture& get_color_emission();
     texture& get_normal();
     texture& get_material();
+
+    // Assumes either draw_all or draw_geometry is in effect
+    void clear();
+    void draw_all();
+    void draw_geometry();
+    void draw_lighting();
 
 private:
     texture depth_stencil;

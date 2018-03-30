@@ -17,7 +17,7 @@ method::geometry_pass::geometry_pass(
     render_scene* scene
 ):  target_method(buf),
     geometry_shader(pool.get(
-        shader::path{"generic.vert", "geometry.frag"})
+        shader::path{"generic.vert", "forward.frag"})
     ),
     scene(scene)
 {}
@@ -53,6 +53,15 @@ void method::geometry_pass::execute()
     glm::mat4 p = cam->get_projection();
     glm::mat4 vp = p * v;
 
+    shader::definition_map common({
+        {"OUTPUT_GEOMETRY", ""},
+        {"MIN_ALPHA", "1.0f"}
+    });
+
+    gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
+    gbuf->draw_geometry();
+    gbuf->clear();
+
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
@@ -66,7 +75,7 @@ void method::geometry_pass::execute()
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader::definition_map definitions;
+            shader::definition_map definitions(common);
             group.mat->update_definitions(definitions);
             group.mesh->update_definitions(definitions);
 
@@ -81,6 +90,7 @@ void method::geometry_pass::execute()
             group.mesh->draw();
         }
     }
+    gbuf->draw_lighting();
 }
 
 std::string method::geometry_pass::get_name() const

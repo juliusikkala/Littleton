@@ -10,6 +10,7 @@
 #include "scene.hh"
 #include "vertex_buffer.hh"
 #include "shadow_map.hh"
+#include "gbuffer.hh"
 #include "shadow_method.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -30,30 +31,51 @@ method::forward_pass::forward_pass(
     forward_shader(pool.get(
         shader::path{"generic.vert", "forward.frag"})
     ),
-    depth_shader(pool.get(shader::path{"generic.vert", "depth.frag"})),
-    scene(scene), apply_ambient(apply_ambient)
+    depth_shader(pool.get(shader::path{"generic.vert", "forward.frag"})),
+    scene(scene), gbuf(nullptr),
+    opaque(true), transparent(true), apply_ambient(apply_ambient)
 {}
+
+method::forward_pass::forward_pass(
+    gbuffer& buf,
+    shader_pool& pool,
+    render_scene* scene,
+    bool apply_ambient
+):  forward_pass((render_target&)buf, pool, scene, apply_ambient)
+{
+    gbuf = &buf;
+}
 
 method::forward_pass::~forward_pass() {}
 
 static void set_light(
     shader* s,
-    point_light* light
+    point_light* light,
+    const glm::mat4& view
 ){
-    s->set("light.position", light->get_global_position());
+    s->set(
+        "light.position",
+        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
+    );
     s->set("light.color", light->get_color());
 }
 
 static void set_light(
     shader* s,
-    spotlight* light
+    spotlight* light,
+    const glm::mat4& view
 ){
-    s->set("light.position", light->get_global_position());
+    s->set(
+        "light.position",
+        glm::vec3(view * glm::vec4(light->get_global_position(), 1))
+    );
     s->set("light.color", light->get_color());
 
     s->set(
         "light.direction",
-        glm::normalize(light->get_global_direction())
+        glm::normalize(glm::vec3(
+            view * glm::vec4(light->get_global_direction(), 0)
+        ))
     );
     s->set<float>(
         "light.cutoff",
@@ -64,10 +86,16 @@ static void set_light(
 
 static void set_light(
     shader* s,
-    directional_light* light
+    directional_light* light,
+    const glm::mat4& view
 ){
     s->set("light.color", light->get_color());
-    s->set("light.direction", glm::normalize(light->get_direction()));
+    s->set(
+        "light.direction",
+        glm::normalize(glm::vec3(
+            view * glm::vec4(light->get_direction(), 0)
+        ))
+    );
 }
 
 static void set_shadow(
@@ -113,9 +141,9 @@ static void render_pass(
     S* sm
 ){
     camera* cam = scene->get_camera();
-    glm::mat4 v = glm::inverse(cam->get_global_transform());
+    glm::mat4 inv_view = cam->get_global_transform();
+    glm::mat4 v = glm::inverse(inv_view);
     glm::mat4 p = cam->get_projection();
-    glm::vec3 camera_pos = cam->get_global_position();
 
     for(object* obj: scene->get_objects())
     {
@@ -123,8 +151,9 @@ static void render_pass(
         if(!mod) continue;
 
         glm::mat4 m = obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(m));
-        glm::mat4 mvp = p * v * m;
+        glm::mat4 mv = v * m;
+        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
 
         for(model::vertex_group& group: *mod)
         {
@@ -140,12 +169,12 @@ static void render_pass(
             unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
 
             set_shadow(met, s, texture_index, sm, m);
-            set_light(s, light);
+            set_light(s, light, v);
 
             s->set("mvp", mvp);
-            s->set("m", m);
+            s->set("m", mv);
             s->set("n_m", n_m);
-            s->set("camera_pos", camera_pos);
+            s->set("inv_view", inv_view);
 
             group.mat->apply(s);
             group.mesh->draw();
@@ -158,14 +187,15 @@ static void render_shadowed_lights(
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
-    render_scene* scene
+    render_scene* scene,
+    const shader::definition_map& common
 ){
     // Directional shadows are a bit simpler to use since they are always bound
     // to only one light type, directional_light.
-    shader::definition_map directional_def(
-        {{"DIRECTIONAL_LIGHT", ""},
-         {"SINGLE_LIGHT", ""}}
-    );
+    shader::definition_map directional_def(common);
+    directional_def["DIRECTIONAL_LIGHT"];
+    directional_def["SINGLE_LIGHT"];
+    directional_def["OUTPUT_LIGHTING"];
 
     const std::vector<directional_light*>& directional_lights =
         scene->get_directional_lights();
@@ -201,15 +231,15 @@ static void render_shadowed_lights(
         }
     }
 
-    shader::definition_map point_def(
-        {{"POINT_LIGHT", ""},
-         {"SINGLE_LIGHT", ""}}
-    );
+    shader::definition_map point_def(common);
+    point_def["POINT_LIGHT"];
+    point_def["SINGLE_LIGHT"];
+    point_def["OUTPUT_LIGHTING"];
 
-    shader::definition_map spot_def(
-        {{"SPOTLIGHT", ""},
-         {"SINGLE_LIGHT", ""}}
-    );
+    shader::definition_map spot_def(common);
+    spot_def["SPOTLIGHT"];
+    spot_def["SINGLE_LIGHT"];
+    spot_def["OUTPUT_LIGHTING"];
 
     const std::vector<point_light*>& point_lights = scene->get_point_lights();
     const std::vector<spotlight*>& spotlights = scene->get_spotlights();
@@ -316,7 +346,7 @@ static std::unique_ptr<uniform_block> create_light_block(
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
-    glm::vec3 ambient
+    const glm::mat4& view
 ){
     unsigned point_light_count = 0;
     unsigned spotlight_count = 0;
@@ -325,7 +355,6 @@ static std::unique_ptr<uniform_block> create_light_block(
     std::unique_ptr<uniform_block> light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
-    light_block->set("ambient", ambient);
 
     const std::vector<point_light*>& point_lights = scene->get_point_lights();
     for(unsigned i = 0; i < point_lights.size(); ++i)
@@ -337,7 +366,10 @@ static std::unique_ptr<uniform_block> create_light_block(
         point_light_count++;
 
         light_block->set(prefix + "color", l->get_color());
-        light_block->set(prefix + "position", l->get_global_position());
+        light_block->set(
+            prefix + "position",
+            glm::vec3(view * glm::vec4(l->get_global_position(), 1))
+        );
     }
 
     const std::vector<spotlight*>& spotlights = scene->get_spotlights();
@@ -350,10 +382,15 @@ static std::unique_ptr<uniform_block> create_light_block(
         spotlight_count++;
 
         light_block->set(prefix + "color", l->get_color());
-        light_block->set(prefix + "position", l->get_global_position());
+        light_block->set(
+            prefix + "position",
+            glm::vec3(view * glm::vec4(l->get_global_position(), 1))
+        );
         light_block->set(
             prefix + "direction",
-            glm::normalize(l->get_global_direction())
+            glm::normalize(glm::vec3(
+                view * glm::vec4(l->get_global_direction(), 0)
+            ))
         );
         light_block->set<float>(
             prefix + "cutoff",
@@ -383,7 +420,9 @@ static std::unique_ptr<uniform_block> create_light_block(
         );
         light_block->set(
             prefix + "direction",
-            glm::normalize(l->get_direction())
+            glm::normalize(glm::vec3(
+                view * glm::vec4(l->get_direction(), 0)
+            ))
         );
     }
 
@@ -416,27 +455,25 @@ static void render_unshadowed_lights(
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
     render_scene* scene,
-    bool apply_ambient
+    const shader::definition_map& common
 ){
     camera* cam = scene->get_camera();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
 
-    shader::definition_map scene_definitions;
+    shader::definition_map scene_definitions(common);
     update_scene_definitions(scene_definitions, scene);
 
     std::unique_ptr<uniform_block> light_block;
-
-    glm::vec3 camera_pos = scene->get_camera()->get_global_position();
 
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(m));
-        glm::mat4 mvp = p * v * m;
+        glm::mat4 mv = v * obj->get_global_transform();
+        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
 
         for(model::vertex_group& group: *mod)
         {
@@ -461,16 +498,16 @@ static void render_unshadowed_lights(
                     handled_point_lights,
                     handled_spotlights,
                     handled_directional_lights,
-                    apply_ambient ? scene->get_ambient() : glm::vec3(0)
+                    v
                 );
                 light_block->bind(0);
             }
             if(light_block) s->set_block("Lights", 0);
 
             s->set("mvp", mvp);
-            s->set("m", m);
+            s->set("m", mv);
             s->set("n_m", n_m);
-            s->set("camera_pos", camera_pos);
+            s->set("ambient", scene->get_ambient());
 
             group.mat->apply(s);
             group.mesh->draw();
@@ -480,26 +517,27 @@ static void render_unshadowed_lights(
 
 static void depth_pass(
     multishader* depth_shader,
-    render_scene* scene
+    render_scene* scene,
+    const shader::definition_map& common
 ){
     camera* cam = scene->get_camera();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
 
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mvp = p * v * m;
+        glm::mat4 mv = v * obj->get_global_transform();
+        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
 
         for(model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
 
-            shader::definition_map def({{"DISCARD_ALPHA", "0.5"}});
+            shader::definition_map def(common);
             group.mat->update_definitions(def);
             group.mesh->update_definitions(def);
 
@@ -507,13 +545,16 @@ static void depth_pass(
             s->bind();
 
             s->set("mvp", mvp);
-            s->set("m", m);
+            s->set("m", mv);
+            s->set("n_m", n_m);
+            s->set("ambient", scene->get_ambient());
+
+            group.mat->apply(s);
 
             group.mat->apply(s);
             group.mesh->draw();
         }
     }
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 void method::forward_pass::execute()
@@ -538,10 +579,28 @@ void method::forward_pass::execute()
         scene->directional_light_count(), false
     );
 
+    shader::definition_map common_def({{"OUTPUT_LIGHTING", ""}});
+
+    if(!transparent) common_def["MIN_ALPHA"] = "1.0f";
+    if(!opaque) common_def["MAX_ALPHA"] = "1.0f";
+
+    if(gbuf)
+    {
+        common_def["OUTPUT_GEOMETRY"];
+        gbuf->draw_all();
+        gbuf->clear();
+    }
+
     glDisable(GL_BLEND);
     glDepthFunc(GL_LEQUAL);
 
-    depth_pass(depth_shader, scene);
+    depth_pass(depth_shader, scene, common_def);
+
+    if(gbuf)
+    {
+        common_def.erase("OUTPUT_GEOMETRY");
+        gbuf->draw_lighting();
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -551,8 +610,12 @@ void method::forward_pass::execute()
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene
+        scene,
+        common_def
     );
+
+    if(apply_ambient) common_def["APPLY_AMBIENT"];
+    common_def["APPLY_EMISSION"];
 
     render_unshadowed_lights(
         forward_shader,
@@ -560,7 +623,7 @@ void method::forward_pass::execute()
         handled_spotlights,
         handled_directional_lights,
         scene,
-        apply_ambient
+        common_def
     );
 }
 
@@ -575,6 +638,16 @@ void method::forward_pass::set_apply_ambient(bool apply_ambient)
 bool method::forward_pass::get_apply_ambient() const
 {
     return apply_ambient;
+}
+
+void method::forward_pass::render_opaque(bool opaque)
+{
+    this->opaque = opaque;
+}
+
+void method::forward_pass::render_transparent(bool transparent)
+{
+    this->transparent = transparent;
 }
 
 std::string method::forward_pass::get_name() const

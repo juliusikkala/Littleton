@@ -21,12 +21,7 @@ vec2 encode_normal(vec3 normal)
     return inversesqrt(2.0f+2.0f*n.z)*n.xy;
 }
 
-vec4 encode_material()
+vec4 encode_material(float roughness, float metallic, float f0)
 {
-    return vec4(
-        get_material_roughness(),
-        get_material_metallic(),
-        get_material_f0(),
-        0.0f
-    );
+    return vec4(roughness, metallic, f0, 0.0f);
 }
