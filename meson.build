@@ -36,6 +36,7 @@ src = [
   'src/loaders.cc',
   'src/common_resources.cc',
   'src/shadow_map.cc',
+  'src/environment_map.cc',
   'src/method/clear.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',
