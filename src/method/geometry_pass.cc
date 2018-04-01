@@ -60,7 +60,6 @@ void method::geometry_pass::execute()
 
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
     gbuf->draw_geometry();
-    gbuf->clear();
 
     for(object* obj: scene->get_objects())
     {

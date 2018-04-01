@@ -8,7 +8,9 @@
 #include "scene_graph.hh"
 #include "pipeline.hh"
 #include "framebuffer.hh"
+#include "environment_map.hh"
 #include "method/clear.hh"
+#include "method/clear_gbuffer.hh"
 #include "method/forward_pass.hh"
 #include "method/geometry_pass.hh"
 #include "method/lighting_pass.hh"
@@ -16,6 +18,7 @@
 #include "method/visualize_gbuffer.hh"
 #include "method/tonemap.hh"
 #include "method/sky.hh"
+#include "method/skybox.hh"
 #include "method/shadow_pcf.hh"
 #include "method/shadow_msm.hh"
 #include "method/draw_texture.hh"
@@ -42,6 +45,7 @@ public:
         postprocess(w, resolution, GL_RGB16F),
 
         clear_buf(buf),
+        skybox(buf, pool, main_scene),
 
         pcf(pool, main_scene),
         msm(pool, main_scene),
@@ -84,6 +88,7 @@ public:
             &pcf,
             &msm,
             &clear_buf,
+            &skybox,
             &fp,
             &sao,
             &sky,
@@ -93,6 +98,7 @@ public:
         }),
         visualizer_pipeline({
             &clear_buf,
+            &skybox,
             &gp,
             &visualizer,
             &buf_to_window
@@ -102,6 +108,7 @@ public:
             &msm,
             &clear_buf,
             &gp,
+            &skybox,
             &lp,
             &sao,
             &sky,
@@ -119,6 +126,7 @@ public:
     method::lighting_pass& get_lighting() { return lp; }
 
     method::sky& get_sky() { return sky; }
+    method::skybox& get_skybox() { return skybox; }
     void set_texture(texture* tex) { dt.set_texture(tex); }
 
     pipeline* get_forward_pipeline() { return &forward_pipeline; }
@@ -131,7 +139,8 @@ private:
     gbuffer buf;
     doublebuffer postprocess;
 
-    method::clear clear_buf;
+    method::clear_gbuffer clear_buf;
+    method::skybox skybox;
 
     method::shadow_pcf pcf;
     method::shadow_msm msm;
@@ -177,6 +186,10 @@ public:
     {
         load_dfo(resources, graph, "data/test_scene.dfo", "data");
         load_dfo(resources, graph, "data/earth.dfo", "data");
+
+        environment.reset(environment_map::create(
+            win, "data/environment/venice.hdr"
+        ));
 
         glm::uvec2 render_resolution = win.get_size();
 
@@ -287,6 +300,7 @@ public:
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
         main_scene.set_ambient(glm::vec3(0.03));
+        main_scene.set_skybox(environment.get());
 
         //pipelines->get_lighting().set_visualize_light_volumes(true);
 
@@ -390,6 +404,7 @@ public:
             spot_shadow->set_fov(90);
             earth->rotate(delta*60, glm::vec3(0,1,0));
             sun.set_direction(glm::vec3(sin(time/2), cos(time/2), 0));
+            pipelines->get_skybox().set_exposure(sin(time)+1);
         }
 
         return true;
@@ -443,6 +458,7 @@ private:
     std::unique_ptr<omni_shadow_map_pcf> fly_shadow_pcf;
     std::unique_ptr<omni_shadow_map_msm> fly_shadow_msm;
     std::unique_ptr<perspective_shadow_map_msm> spot_shadow;
+    std::unique_ptr<environment_map> environment;
     std::unique_ptr<game_pipelines> pipelines;
 
     pipeline* current_pipeline;

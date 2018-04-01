@@ -13,6 +13,8 @@ class spotlight;
 class directional_shadow_map;
 class omni_shadow_map;
 class perspective_shadow_map;
+class environment_map;
+
 namespace method { class shadow_method; }
 
 class camera_scene
@@ -138,9 +140,21 @@ private:
     perspective_map perspective_shadows;
 };
 
+class environment_scene
+{
+public:
+    environment_scene();
+
+    void set_skybox(environment_map* skybox);
+    environment_map* get_skybox() const;
+
+private:
+    environment_map* skybox;
+};
+
 class render_scene
 : public camera_scene, public object_scene, public light_scene,
-  public shadow_scene
+  public shadow_scene, public environment_scene
 {
 public:
     render_scene();

@@ -38,6 +38,7 @@ src = [
   'src/shadow_map.cc',
   'src/environment_map.cc',
   'src/method/clear.cc',
+  'src/method/clear_gbuffer.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/forward_pass.cc',
   'src/method/geometry_pass.cc',
@@ -55,6 +56,7 @@ src = [
   'src/method/ssao.cc',
   'src/method/sao.cc',
   'src/method/bloom.cc',
+  'src/method/skybox.cc',
 ]
 
 dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])

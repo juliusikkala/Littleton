@@ -80,13 +80,14 @@ static GLuint create_texture_from_data(
 
         if(data)
         {
+            size_t face_bytes = n * gl_type_sizeof(type) * size.x * size.y;
             for(unsigned i = 0; i < 6; ++i)
             {
                 GLenum face = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
                 glTexSubImage2D(
                     face, 0, 0, 0, size.x, size.y,
                     external_format, type,
-                    data
+                    ((uint8_t*)data) + face_bytes * i
                 );
             }
         }
@@ -128,6 +129,8 @@ static GLuint load_texture(
     }
     size.x = w;
     size.y = h;
+    if(target == GL_TEXTURE_CUBE_MAP)
+        size.y /= 6;
 
     if(!data)
     {
@@ -145,25 +148,25 @@ static GLuint load_texture(
     switch(n)
     {
     case 1:
-        internal_format = hdr ? GL_R16 : GL_R8;
+        internal_format = hdr ? GL_R16F : GL_R8;
         break;
     case 2:
-        internal_format = hdr ? GL_RG16 : GL_RG8;
+        internal_format = hdr ? GL_RG16F : GL_RG8;
         break;
     case 3:
         if(srgb) internal_format = GL_SRGB8;
-        else internal_format = hdr ? GL_RGB16 : GL_RGB8;
+        else internal_format = hdr ? GL_RGB16F : GL_RGB8;
         break;
     case 4:
         if(srgb) internal_format = GL_SRGB8_ALPHA8;
-        else internal_format = hdr ? GL_RGBA16 : GL_RGBA8;
+        else internal_format = hdr ? GL_RGBA16F : GL_RGBA8;
         break;
     }
 
     GLuint tex = create_texture_from_data(
         target,
         type,
-        glm::uvec2(w, h),
+        size,
         internal_format,
         data
     );
@@ -391,9 +394,9 @@ void texture::basic_load(
     );
 
     if(tex == 0)
-    {
         throw std::runtime_error("Unable to read texture " + path);
-    }
+
+    this->target = target;
 }
 
 void texture::basic_load(

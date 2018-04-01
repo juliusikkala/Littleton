@@ -676,6 +676,31 @@ unsigned internal_format_channel_count(GLint internal_format)
     }
 }
 
+unsigned gl_type_sizeof(GLenum type)
+{
+    switch(type)
+    {
+    case GL_BYTE:
+    case GL_UNSIGNED_BYTE:
+        return 1;
+    case GL_SHORT:
+    case GL_UNSIGNED_SHORT:
+    case GL_HALF_FLOAT:
+        return 2;
+    case GL_INT:
+    case GL_UNSIGNED_INT:
+    case GL_FIXED:
+    case GL_FLOAT:
+        return 4;
+    case GL_DOUBLE:
+        return 8;
+    default:
+        throw std::runtime_error(
+            "Unknown OpenGL type " + std::to_string(type)
+        );
+    }
+}
+
 GLenum get_binding_name(GLenum target)
 {
     switch(target)

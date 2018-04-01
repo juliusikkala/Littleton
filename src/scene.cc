@@ -278,4 +278,17 @@ shadow_scene::get_perspective_shadows() const
     return perspective_shadows;
 }
 
+environment_scene::environment_scene()
+: skybox(nullptr) {}
+
+void environment_scene::set_skybox(environment_map* skybox)
+{
+    this->skybox = skybox;
+}
+
+environment_map* environment_scene::get_skybox() const
+{
+    return skybox;
+}
+
 render_scene::render_scene() {}

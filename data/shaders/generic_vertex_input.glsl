@@ -1,3 +1,7 @@
+#ifndef VERTEX_POSITION
+#define VERTEX_POSITION 0
+#endif
+
 layout(location = VERTEX_POSITION) in vec3 v_vertex;
 
 out VERTEX_OUT {

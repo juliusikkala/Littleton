@@ -588,7 +588,6 @@ void method::forward_pass::execute()
     {
         common_def["OUTPUT_GEOMETRY"];
         gbuf->draw_all();
-        gbuf->clear();
     }
 
     glDisable(GL_BLEND);
