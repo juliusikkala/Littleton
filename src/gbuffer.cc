@@ -1,5 +1,8 @@
 #include "gbuffer.hh"
 #include "sampler.hh"
+#include "shader.hh"
+#include "shader_pool.hh"
+#include "vertex_buffer.hh"
 #include <stdexcept>
 
 gbuffer::gbuffer(
@@ -328,4 +331,81 @@ void gbuffer::set_draw(draw_mode mode)
 gbuffer::draw_mode gbuffer::get_draw() const
 {
     return mode;
+}
+
+shader* gbuffer::get_min_max_shader(shader_pool& pool) const
+{
+    if(!linear_depth) return nullptr;
+    if(linear_depth->get_external_format() == GL_RG)
+    {
+        return pool.get(
+            shader::path{"fullscreen.vert", "min_max_depth.frag"},
+            {{"MINIMUM", ""}, {"MAXIMUM", ""}}
+        );
+    }
+
+    return pool.get(
+        shader::path{"fullscreen.vert", "min_max_depth.frag"},
+        {{"MAXIMUM", ""}}
+    );
+}
+
+void gbuffer::render_depth_mipmaps(
+    shader* min_max,
+    const vertex_buffer& quad,
+    const sampler& fb_sampler
+){
+    if(!min_max || !linear_depth) return;
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_BLEND);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    glm::uvec2 size = get_size();
+    unsigned mipmap_count = floor(log2(std::max(size.x, size.y)))+1;
+
+    GLenum target = linear_depth->get_target();
+    GLuint tex = linear_depth->get_texture();
+
+    min_max->bind();
+    min_max->set("prev", fb_sampler.bind(tex));
+
+
+    GLuint attachments[] = {GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(1, attachments);
+
+    // Render mipmaps
+    for(unsigned i = 1; i < mipmap_count; ++i)
+    {
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT3,
+            target, tex, i
+        );
+        glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, i-1);
+        glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, i-1);
+
+        size = glm::max(size/2u, glm::uvec2(1));
+        glViewport(0,0,size.x,size.y);
+        quad.draw();
+    }
+
+    // Restore original state
+    size = get_size();
+    glViewport(0,0,size.x,size.y);
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_COLOR_ATTACHMENT3,
+        target, tex, 0
+    );
+
+    glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, 1000);
+
+    set_draw(mode);
+
+    reinstate_current_fbo();
 }

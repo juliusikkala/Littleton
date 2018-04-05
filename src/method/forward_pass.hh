@@ -3,9 +3,12 @@
 #include "pipeline.hh"
 
 class render_scene;
-class shader_pool;
+class resource_pool;
 class multishader;
+class shader;
 class gbuffer;
+class sampler;
+class vertex_buffer;
 
 namespace method
 {
@@ -15,14 +18,14 @@ namespace method
     public:
         forward_pass(
             render_target& target,
-            shader_pool& shaders,
+            resource_pool& pool,
             render_scene* scene,
             bool apply_ambient = true
         );
 
         forward_pass(
             gbuffer& target,
-            shader_pool& shaders,
+            resource_pool& pool,
             render_scene* scene,
             bool apply_ambient = true
         );
@@ -45,6 +48,8 @@ namespace method
     private:
         multishader* forward_shader;
         multishader* depth_shader;
+        shader* min_max_shader;
+
         render_scene* scene; 
         gbuffer* gbuf;
 
@@ -52,6 +57,8 @@ namespace method
         bool transparent;
 
         bool apply_ambient;
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;
     };
 }
 

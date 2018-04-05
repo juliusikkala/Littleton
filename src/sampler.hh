@@ -31,6 +31,13 @@ public:
     // Returns the index
     GLint bind(const texture& tex, unsigned index = 0) const;
 
+    // Returns the index
+    GLint bind(
+        GLuint tex,
+        unsigned index = 0,
+        GLenum target = GL_TEXTURE_2D
+    ) const;
+
 private:
     GLuint sampler_object;
 };

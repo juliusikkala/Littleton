@@ -4,6 +4,8 @@
 #include "object.hh"
 #include "material.hh"
 #include "vertex_buffer.hh"
+#include "common_resources.hh"
+#include "resource_pool.hh"
 #include "multishader.hh"
 #include "gbuffer.hh"
 #include "shader_pool.hh"
@@ -13,13 +15,16 @@
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene
 ):  target_method(buf),
-    geometry_shader(pool.get(
+    geometry_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
-    scene(scene)
+    min_max_shader(buf.get_min_max_shader(pool)),
+    scene(scene),
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
 
 void method::geometry_pass::set_scene(render_scene* scene)
@@ -90,12 +95,7 @@ void method::geometry_pass::execute()
         }
     }
 
-    texture* linear_depth = gbuf->get_linear_depth();
-    if(linear_depth)
-    {
-        //TODO: Generate min-max mipmaps if linear_depth has 2 channels.
-        linear_depth->generate_mipmaps();
-    }
+    gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 

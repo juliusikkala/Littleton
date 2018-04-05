@@ -3,9 +3,12 @@
 #include "pipeline.hh"
 
 class gbuffer;
-class shader_pool;
+class sampler;
 class render_scene;
 class multishader;
+class shader;
+class vertex_buffer;
+class resource_pool;
 
 namespace method
 {
@@ -14,7 +17,7 @@ namespace method
     public:
         geometry_pass(
             gbuffer& buf,
-            shader_pool& store,
+            resource_pool& store,
             render_scene* scene
         );
 
@@ -27,7 +30,10 @@ namespace method
 
     private:
         multishader* geometry_shader;
+        shader* min_max_shader;
         render_scene* scene;
+        const vertex_buffer& quad;
+        const sampler& fb_sampler;
     };
 };
 #endif

@@ -81,7 +81,7 @@ public:
             postprocess.input(0),
             pool,
             &lighting,
-            6.0f, 50, 0.1f
+            6.0f, 10, 0.1f
         ),
         tm(
             postprocess.input(1),

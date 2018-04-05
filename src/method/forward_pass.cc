@@ -6,12 +6,13 @@
 #include "material.hh"
 #include "helpers.hh"
 #include "multishader.hh"
-#include "shader_pool.hh"
+#include "resource_pool.hh"
 #include "scene.hh"
 #include "vertex_buffer.hh"
 #include "shadow_map.hh"
 #include "gbuffer.hh"
 #include "shadow_method.hh"
+#include "common_resources.hh"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
@@ -24,25 +25,29 @@ static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 
 method::forward_pass::forward_pass(
     render_target& target,
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene,
     bool apply_ambient
 ):  target_method(target),
-    forward_shader(pool.get(
+    forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
-    depth_shader(pool.get(shader::path{"generic.vert", "forward.frag"})),
+    depth_shader(pool.get_shader(shader::path{"generic.vert", "forward.frag"})),
+    min_max_shader(nullptr),
     scene(scene), gbuf(nullptr),
-    opaque(true), transparent(true), apply_ambient(apply_ambient)
+    opaque(true), transparent(true), apply_ambient(apply_ambient),
+    quad(common::ensure_quad_vertex_buffer(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
 
 method::forward_pass::forward_pass(
     gbuffer& buf,
-    shader_pool& pool,
+    resource_pool& pool,
     render_scene* scene,
     bool apply_ambient
 ):  forward_pass((render_target&)buf, pool, scene, apply_ambient)
 {
+    min_max_shader = buf.get_min_max_shader(pool);
     gbuf = &buf;
 }
 
@@ -598,16 +603,7 @@ void method::forward_pass::execute()
 
     depth_pass(depth_shader, scene, depth_def);
 
-    if(gbuf)
-    {
-        texture* linear_depth = gbuf->get_linear_depth();
-        if(linear_depth)
-        {
-            //TODO: Generate min-max mipmaps if linear_depth has 2 channels.
-            linear_depth->generate_mipmaps();
-        }
-        gbuf->set_draw(gbuffer::DRAW_LIGHTING);
-    }
+    if(gbuf) gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
@@ -633,6 +629,7 @@ void method::forward_pass::execute()
         common_def
     );
 
+    if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }
