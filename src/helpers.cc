@@ -213,6 +213,18 @@ unsigned next_power_of_two(unsigned n)
     return n;
 }
 
+unsigned factorize(unsigned n)
+{
+    // Divisible by two
+    if((n&1)==0) return 2;
+
+    unsigned last = floor(sqrt(n));
+    for(unsigned i = 3; i <= last; ++i)
+        if((n % i) == 0) return i;
+
+    return 0;
+}
+
 static glm::vec2 circle_projection_range(
     glm::vec2 dir,
     float r,

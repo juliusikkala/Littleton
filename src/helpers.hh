@@ -58,6 +58,7 @@ bool intersect_sphere(
 );
 
 unsigned next_power_of_two(unsigned n);
+unsigned factorize(unsigned n);
 
 // Computes a modelview matrix for a quad such that it completely covers the
 // surface area of a sphere. use_near_radius determines whether the resulting

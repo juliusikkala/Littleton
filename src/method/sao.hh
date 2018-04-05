@@ -49,7 +49,6 @@ namespace method
     private:
         gbuffer* buf;
 
-        shader* z_pass_shader;
         shader* ao_sample_pass_shader;
         shader* blur_shader;
         shader* ambient_shader;
@@ -59,8 +58,8 @@ namespace method
         unsigned samples;
         float bias;
         float intensity;
+        float spiral_turns;
 
-        framebuffer linear_depth;
         doublebuffer ao;
 
         const vertex_buffer& quad;

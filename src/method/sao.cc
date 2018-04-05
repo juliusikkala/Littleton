@@ -19,9 +19,6 @@ method::sao::sao(
     float bias,
     float intensity
 ):  target_method(target), glresource(pool.get_context()), buf(&buf),
-    z_pass_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "sao/z_pass.frag"}, {}
-    )),
     ao_sample_pass_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "sao/ao_sample_pass.frag"},
         {{"USE_NORMAL_TEXTURE", ""}}
@@ -34,9 +31,6 @@ method::sao::sao(
     )),
     scene(scene),
     radius(radius), samples(samples), bias(bias), intensity(intensity),
-    linear_depth(get_context(), target.get_size(), {
-        {GL_COLOR_ATTACHMENT0, {GL_R32F, true}}
-    }),
     ao(get_context(), target.get_size(), GL_R8),
     quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
@@ -47,6 +41,7 @@ method::sao::sao(
         GL_CLAMP_TO_EDGE
     )
 {
+    set_samples(samples);
 }
 
 void method::sao::set_radius(float radius)
@@ -62,6 +57,16 @@ float method::sao::get_radius() const
 void method::sao::set_samples(unsigned samples)
 {
     this->samples = samples;
+
+    spiral_turns = 17;
+    for(unsigned i = samples + 1; i < 2048; ++i)
+    {
+        if(!factorize(i))
+        {
+            spiral_turns = i;
+            break;
+        }
+    }
 }
 
 unsigned method::sao::get_samples() const
@@ -91,29 +96,18 @@ float method::sao::get_intensity() const
 
 void method::sao::execute()
 {
-    if(!z_pass_shader || !scene || scene->get_ambient() == glm::vec3(0))
+    if(!scene || scene->get_ambient() == glm::vec3(0))
         return;
 
     camera* cam = scene->get_camera();
-    if(!cam) return;
+    texture* depth_tex = buf->get_linear_depth();
+    if(!cam || !depth_tex) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
     glDisable(GL_STENCIL_TEST);
-
-    // Hierarchical z Pass
-    linear_depth.bind();
-
-    z_pass_shader->bind();
-    z_pass_shader->set("in_depth", fb_sampler.bind(buf->get_depth_stencil()));
-    z_pass_shader->set("clip_info", cam->get_clip_info());
-
-    quad.draw();
-
-    texture* depth_tex = linear_depth.get_texture_target(GL_COLOR_ATTACHMENT0);
-    depth_tex->generate_mipmaps();
 
     // Distributed AO sample pass
     ao.input().bind();
@@ -124,12 +118,13 @@ void method::sao::execute()
     ao_sample_pass_shader->set("in_depth", mipmap_sampler.bind(*depth_tex, 0));
     ao_sample_pass_shader->set(
         "in_normal",
-        fb_sampler.bind(buf->get_normal(), 1)
+        fb_sampler.bind(*buf->get_normal(), 1)
     );
     ao_sample_pass_shader->set("proj_scale", ppu.y);
     ao_sample_pass_shader->set("radius", radius);
     ao_sample_pass_shader->set<int>("samples", samples);
     ao_sample_pass_shader->set("bias", bias);
+    ao_sample_pass_shader->set("spiral_turns", spiral_turns);
     ao_sample_pass_shader->set<float>(
         "multiplier",
         5.0f * intensity / (samples * pow(radius, 6))
@@ -164,7 +159,7 @@ void method::sao::execute()
     ambient_shader->bind();
     ambient_shader->set(
         "in_color_emission",
-        fb_sampler.bind(buf->get_color_emission(), 0)
+        fb_sampler.bind(*buf->get_color_emission(), 0)
     );
 
     ambient_shader->set("ambient", scene->get_ambient());

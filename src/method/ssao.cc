@@ -130,8 +130,8 @@ void method::ssao::execute()
     ssao_buffer.input().bind();
 
     ssao_shader->bind();
-    ssao_shader->set("in_depth", fb_sampler.bind(buf->get_depth_stencil(), 0));
-    ssao_shader->set("in_normal", fb_sampler.bind(buf->get_normal(), 1));
+    ssao_shader->set("in_depth", fb_sampler.bind(*buf->get_depth_stencil(), 0));
+    ssao_shader->set("in_normal", fb_sampler.bind(*buf->get_normal(), 1));
     ssao_shader->set("radius", radius);
     ssao_shader->set<int>("samples", samples);
     ssao_shader->set("bias", bias);
@@ -172,7 +172,7 @@ void method::ssao::execute()
     ambient_shader->bind();
     ambient_shader->set(
         "in_color_emission",
-        fb_sampler.bind(buf->get_color_emission(), 0)
+        fb_sampler.bind(*buf->get_color_emission(), 0)
     );
 
     ambient_shader->set("ambient", scene->get_ambient());

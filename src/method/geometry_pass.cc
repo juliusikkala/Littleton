@@ -51,7 +51,6 @@ void method::geometry_pass::execute()
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 p = cam->get_projection();
-    glm::mat4 vp = p * v;
 
     shader::definition_map common({
         {"OUTPUT_GEOMETRY", ""},
@@ -59,16 +58,17 @@ void method::geometry_pass::execute()
     });
 
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
-    gbuf->draw_geometry();
+    gbuf->set_draw(gbuffer::DRAW_GEOMETRY);
+    gbuf->update_definitions(common);
 
     for(object* obj: scene->get_objects())
     {
         model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(v * m));
-        glm::mat4 mvp = vp * m;
+        glm::mat4 mv = v * obj->get_global_transform();
+        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 mvp = p * mv;
 
         for(model::vertex_group& group: *mod)
         {
@@ -82,14 +82,21 @@ void method::geometry_pass::execute()
             s->bind();
 
             s->set("mvp", mvp);
-            s->set("m", m);
+            s->set("m", mv);
             s->set("n_m", n_m);
 
             group.mat->apply(s);
             group.mesh->draw();
         }
     }
-    gbuf->draw_lighting();
+
+    texture* linear_depth = gbuf->get_linear_depth();
+    if(linear_depth)
+    {
+        //TODO: Generate min-max mipmaps if linear_depth has 2 channels.
+        linear_depth->generate_mipmaps();
+    }
+    gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
 std::string method::geometry_pass::get_name() const

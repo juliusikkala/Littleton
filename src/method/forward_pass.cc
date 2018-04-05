@@ -584,21 +584,29 @@ void method::forward_pass::execute()
     if(!transparent) common_def["MIN_ALPHA"] = "1.0f";
     if(!opaque) common_def["MAX_ALPHA"] = "1.0f";
 
+    shader::definition_map depth_def(common_def);
+
     if(gbuf)
     {
-        common_def["OUTPUT_GEOMETRY"];
-        gbuf->draw_all();
+        depth_def["OUTPUT_GEOMETRY"];
+        gbuf->set_draw(gbuffer::DRAW_ALL);
+        gbuf->update_definitions(depth_def);
     }
 
     glDisable(GL_BLEND);
     glDepthFunc(GL_LEQUAL);
 
-    depth_pass(depth_shader, scene, common_def);
+    depth_pass(depth_shader, scene, depth_def);
 
     if(gbuf)
     {
-        common_def.erase("OUTPUT_GEOMETRY");
-        gbuf->draw_lighting();
+        texture* linear_depth = gbuf->get_linear_depth();
+        if(linear_depth)
+        {
+            //TODO: Generate min-max mipmaps if linear_depth has 2 channels.
+            linear_depth->generate_mipmaps();
+        }
+        gbuf->set_draw(gbuffer::DRAW_LIGHTING);
     }
 
     glEnable(GL_BLEND);
@@ -624,6 +632,7 @@ void method::forward_pass::execute()
         scene,
         common_def
     );
+
 }
 
 void method::forward_pass::set_scene(render_scene* s) { scene = s; }

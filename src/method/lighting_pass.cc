@@ -74,12 +74,9 @@ void method::lighting_pass::set_visualize_light_volumes(bool visualize)
     visualize_light_volumes = visualize;
 }
 
-static void set_gbuf(shader* s, const camera* cam)
+static void set_gbuf(shader* s, gbuffer* buf, const camera* cam)
 {
-    s->set("in_depth", 0);
-    s->set("in_color_emission", 1);
-    s->set("in_normal", 2);
-    s->set("in_material", 3);
+    buf->set_uniforms(s);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
 }
@@ -195,6 +192,7 @@ static bool set_light(
 
 template<typename L>
 static void render_shadowed(
+    gbuffer* buf,
     multishader* lighting_shader,
     const shadow_scene::omni_map& shadows,
     const shader::definition_map& light_definitions,
@@ -235,7 +233,7 @@ static void render_shadowed(
                 "shadow.", cam->get_global_transform()
             );
 
-            set_gbuf(s, cam);
+            set_gbuf(s, buf, cam);
 
             quad.draw();
         }
@@ -244,6 +242,7 @@ static void render_shadowed(
 
 template<typename L>
 static void render_shadowed(
+    gbuffer* buf,
     multishader* lighting_shader,
     const shadow_scene::perspective_map& shadows,
     const shader::definition_map& light_definitions,
@@ -284,7 +283,7 @@ static void render_shadowed(
                 "shadow.", cam->get_global_transform()
             );
 
-            set_gbuf(s, cam);
+            set_gbuf(s, buf, cam);
 
             quad.draw();
         }
@@ -292,6 +291,7 @@ static void render_shadowed(
 }
 
 static void render_point_lights(
+    gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
@@ -309,6 +309,7 @@ static void render_point_lights(
 
     // Render shadowed lights
     render_shadowed(
+        buf,
         lighting_shader,
         scene->get_omni_shadows(),
         definitions,
@@ -321,6 +322,7 @@ static void render_point_lights(
     );
 
     render_shadowed(
+        buf,
         lighting_shader,
         scene->get_perspective_shadows(),
         definitions,
@@ -335,7 +337,7 @@ static void render_point_lights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
-    set_gbuf(s, scene->get_camera());
+    set_gbuf(s, buf, scene->get_camera());
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
@@ -347,6 +349,7 @@ static void render_point_lights(
 }
 
 static void render_spotlights(
+    gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
@@ -363,6 +366,7 @@ static void render_spotlights(
 
     // Render shadowed lights
     render_shadowed(
+        buf,
         lighting_shader,
         scene->get_omni_shadows(),
         definitions,
@@ -375,6 +379,7 @@ static void render_spotlights(
     );
 
     render_shadowed(
+        buf,
         lighting_shader,
         scene->get_perspective_shadows(),
         definitions,
@@ -389,7 +394,7 @@ static void render_spotlights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
-    set_gbuf(s, scene->get_camera());
+    set_gbuf(s, buf, scene->get_camera());
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
@@ -401,6 +406,7 @@ static void render_spotlights(
 }
 
 static void render_directional_lights(
+    gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
     const vertex_buffer& quad
@@ -445,7 +451,7 @@ static void render_directional_lights(
                 "shadow.", cam->get_global_transform()
             );
 
-            set_gbuf(s, cam);
+            set_gbuf(s, buf, cam);
 
             quad.draw();
         }
@@ -454,7 +460,7 @@ static void render_directional_lights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
-    set_gbuf(s, cam);
+    set_gbuf(s, buf, cam);
 
     for(unsigned i = 0; i < lights.size(); ++i)
     {
@@ -465,6 +471,7 @@ static void render_directional_lights(
 }
 
 static void render_emission(
+    gbuffer* buf,
     multishader* lighting_shader,
     const vertex_buffer& quad,
     const glm::vec3& ambient,
@@ -476,7 +483,7 @@ static void render_emission(
     shader* s = lighting_shader->get(def);
     s->bind();
 
-    set_gbuf(s, cam);
+    set_gbuf(s, buf, cam);
     s->set("ambient", ambient);
 
     glm::mat4 m = glm::mat4(1.0f);
@@ -515,18 +522,15 @@ void method::lighting_pass::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    fb_sampler.bind(buf->get_depth_stencil(), 0);
-    fb_sampler.bind(buf->get_color_emission(), 1);
-    fb_sampler.bind(buf->get_normal(), 2);
-    fb_sampler.bind(buf->get_material(), 3);
+    buf->bind_textures(fb_sampler);
 
     render_point_lights(
-        lighting_shader, scene,
+        buf, lighting_shader, scene,
         cutoff, light_test,
         quad, visualize_light_volumes
     );
     render_spotlights(
-        lighting_shader, scene,
+        buf, lighting_shader, scene,
         cutoff, light_test,
         quad, visualize_light_volumes
     );
@@ -538,10 +542,10 @@ void method::lighting_pass::execute()
         glDepthMask(GL_TRUE);
     }
 
-    render_directional_lights(lighting_shader, scene, quad);
+    render_directional_lights(buf, lighting_shader, scene, quad);
 
     render_emission(
-        lighting_shader,
+        buf, lighting_shader,
         quad,
         apply_ambient ? scene->get_ambient() : glm::vec3(0),
         scene->get_camera()

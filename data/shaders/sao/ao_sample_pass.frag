@@ -2,7 +2,6 @@
 
 #define MAX_OFFSET 3
 #define MAX_LEVEL 5
-#define NUM_SPIRAL_TURNS 17
 
 #include "constants.glsl"
 #include "deferred_input.glsl"
@@ -12,6 +11,7 @@ uniform float proj_scale;
 uniform int samples;
 uniform float bias;
 uniform float multiplier;
+uniform float spiral_turns;
 
 in vec2 uv;
 out float out_ao;
@@ -47,7 +47,7 @@ void main(void)
         float alpha = float(i + 0.5f) / samples;
         float h = alpha * r;
 
-        float angle = alpha * (NUM_SPIRAL_TURNS * 2.0f * PI) + base_angle;
+        float angle = alpha * (spiral_turns * 2.0f * PI) + base_angle;
 
         ivec2 orig = ivec2(h * vec2(cos(angle), sin(angle))) + pixel_pos;
         ivec2 sample_coord = clamp(

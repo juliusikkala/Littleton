@@ -26,5 +26,5 @@ void main(void)
         total += weight;
     }
 
-    dst = sum / total;
+    dst = isnan(sum.x+sum.y+sum.z+sum.w) ? vec4(1,0,0,1) : sum / total;
 }

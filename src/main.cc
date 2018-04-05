@@ -40,8 +40,23 @@ public:
         glm::uvec2 resolution,
         resource_pool& pool,
         render_scene* main_scene
-    ):  lighting(w, resolution, GL_RGB16F, GL_FLOAT),
-        buf(w, resolution, &lighting),
+    ):  normal(w, resolution, GL_RG16_SNORM, GL_UNSIGNED_BYTE),
+        color_emission(w, resolution, GL_RGBA8, GL_UNSIGNED_BYTE),
+        material(w, resolution, GL_RGBA8, GL_UNSIGNED_BYTE),
+        lighting(w, resolution, GL_RGB16F, GL_FLOAT),
+        linear_depth(w, resolution, GL_RG16F, GL_FLOAT),
+        depth_stencil(w, resolution, GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8),
+
+        buf(
+            w,
+            resolution,
+            &normal,
+            &color_emission,
+            &material,
+            &lighting,
+            &linear_depth,
+            &depth_stencil
+        ),
         postprocess(w, resolution, GL_RGB16F),
 
         clear_buf(buf),
@@ -60,20 +75,20 @@ public:
             buf,
             pool,
             main_scene,
-            &buf.get_depth_stencil()
+            buf.get_depth_stencil()
         ),
         bloom(
             postprocess.input(0),
             pool,
             &lighting,
-            6.0f, 10, 0.1f
+            6.0f, 50, 0.1f
         ),
         tm(
             postprocess.input(1),
             pool,
             &postprocess.output(1)
         ),
-        sao(buf, buf, pool, main_scene, 0.2f, 8),
+        sao(buf, buf, pool, main_scene, 1.0f, 8, 0.01f, 0.5f),
         postprocess_to_window(
             w,
             postprocess.input(1),
@@ -119,6 +134,7 @@ public:
         texture_pipeline({&pcf, &msm, &dt})
     {
         fp.render_transparent(false);
+        dt.set_texture(&linear_depth);
     }
 
     method::shadow_msm& get_msm() { return msm; }
@@ -135,7 +151,13 @@ public:
     pipeline* get_texture_pipeline() { return &texture_pipeline; }
 
 private:
+    texture normal;
+    texture color_emission;
+    texture material;
     texture lighting;
+    texture linear_depth;
+    texture depth_stencil;
+
     gbuffer buf;
     doublebuffer postprocess;
 
@@ -169,7 +191,7 @@ class game
 {
 public:
     game()
-        : win({ "dflowers", {1280, 720}, false, true, false }),
+        : win({ "dflowers", {1280, 720}, true, true, false }),
         resources(win, { "data/shaders/" })
     {
         win.set_framerate_limit(200);
@@ -262,7 +284,7 @@ public:
             )
         );
 
-        pipelines->set_texture(&spot_shadow->get_moments());
+        //pipelines->set_texture(&spot_shadow->get_moments());
         current_pipeline = pipelines->get_forward_pipeline();
     }
 

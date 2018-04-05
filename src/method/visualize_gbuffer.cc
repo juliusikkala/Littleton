@@ -48,6 +48,7 @@ void method::visualize_gbuffer::show(
 }
 
 static void render_visualizer(
+    const gbuffer* buf,
     method::visualize_gbuffer::visualizer v,
     multishader* ms,
     const vertex_buffer& quad,
@@ -84,10 +85,7 @@ static void render_visualizer(
         throw std::runtime_error("Unknown visualizer type");
     }
     s->bind();
-    s->set("in_depth", 0);
-    s->set("in_color_emission", 1);
-    s->set("in_normal", 2);
-    s->set("in_material", 3);
+    buf->set_uniforms(s);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
     quad.draw();
@@ -107,14 +105,11 @@ void method::visualize_gbuffer::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    fb_sampler.bind(buf->get_depth_stencil(), 0);
-    fb_sampler.bind(buf->get_color_emission(), 1);
-    fb_sampler.bind(buf->get_normal(), 2);
-    fb_sampler.bind(buf->get_material(), 3);
+    buf->bind_textures(fb_sampler);
 
     if(visualizers.size() == 1)
     {
-        render_visualizer(visualizers[0], visualize_shader, quad, cam);
+        render_visualizer(buf, visualizers[0], visualize_shader, quad, cam);
     }
     else if(visualizers.size() == 4)
     {
@@ -122,16 +117,16 @@ void method::visualize_gbuffer::execute()
         glm::uvec2 half_size = size/2u;
 
         glViewport(0, half_size.y, half_size.x, half_size.y);
-        render_visualizer(visualizers[0], visualize_shader, quad, cam);
+        render_visualizer(buf, visualizers[0], visualize_shader, quad, cam);
 
         glViewport(half_size.x, half_size.y, half_size.x, half_size.y);
-        render_visualizer(visualizers[1], visualize_shader, quad, cam);
+        render_visualizer(buf, visualizers[1], visualize_shader, quad, cam);
 
         glViewport(0, 0, half_size.x, half_size.y);
-        render_visualizer(visualizers[2], visualize_shader, quad, cam);
+        render_visualizer(buf, visualizers[2], visualize_shader, quad, cam);
 
         glViewport(half_size.x, 0, half_size.x, half_size.y);
-        render_visualizer(visualizers[3], visualize_shader, quad, cam);
+        render_visualizer(buf, visualizers[3], visualize_shader, quad, cam);
 
         glViewport(0, 0, size.x, size.y);
     }

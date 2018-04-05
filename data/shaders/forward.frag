@@ -50,12 +50,8 @@ uniform mat4 inv_view;
 
 uniform vec3 ambient;
 
-#ifdef OUTPUT_LIGHTING
-#ifdef OUTPUT_GEOMETRY
-layout(location=3) out vec4 out_lighting;
-#else
+#if defined(OUTPUT_LIGHTING) && !defined(OUTPUT_GEOMETRY)
 out vec4 out_lighting;
-#endif
 #endif
 
 void main(void)
@@ -85,9 +81,10 @@ void main(void)
     float f0 = get_material_f0();
 
 #ifdef OUTPUT_GEOMETRY
-    out_color_emission = encode_color_emission(surface_color.rgb, emission);
-    out_normal = encode_normal(normal);
-    out_material = encode_material(roughness, metallic, f0);
+    write_gbuffer(
+        pos, normal, surface_color.rgb,
+        emission, roughness, metallic, f0
+    );
 #endif
 
     roughness = roughness * roughness;

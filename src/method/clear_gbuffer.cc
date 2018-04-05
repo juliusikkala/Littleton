@@ -6,9 +6,9 @@ method::clear_gbuffer::~clear_gbuffer() {}
 
 void method::clear_gbuffer::execute()
 {
-    gbuf->draw_all();
+    gbuf->set_draw(gbuffer::DRAW_ALL);
     gbuf->clear();
-    gbuf->draw_lighting();
+    gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
 std::string method::clear_gbuffer::get_name() const
