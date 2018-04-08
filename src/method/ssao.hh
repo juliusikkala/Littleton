@@ -3,7 +3,6 @@
 #include "pipeline.hh"
 #include "vertex_buffer.hh"
 #include "sampler.hh"
-#include "shadow_method.hh"
 #include "doublebuffer.hh"
 #include "resource.hh"
 #include <memory>
@@ -11,6 +10,7 @@
 class gbuffer;
 class resource_pool;
 class shader;
+class render_scene;
 
 namespace method
 {

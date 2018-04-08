@@ -23,7 +23,7 @@ void main(void)
 
     float depth = texelFetch(in_depth, pixel_pos, 0).x;
 
-    vec3 pos = get_position(depth, uv);
+    vec3 pos = unproject_position(depth, uv);
 #ifdef USE_NORMAL_TEXTURE
     vec3 normal = -decode_normal(uv);
 #else
@@ -67,7 +67,10 @@ void main(void)
 
             sample_pos.xy = vec2(sample_coord) + 0.5f;
 
-            sample_pos = get_position(sample_pos.z, sample_pos.xy / depth_size);
+            sample_pos =
+                unproject_position(
+                    sample_pos.z, sample_pos.xy / depth_size
+                );
 
             vec3 v = pos - sample_pos;
 

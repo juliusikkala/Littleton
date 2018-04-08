@@ -1,5 +1,6 @@
 #include "constants.glsl"
 #include "depth.glsl"
+#include "projection.glsl"
 
 uniform sampler2D in_color_emission;
 uniform sampler2D in_normal;
@@ -18,10 +19,7 @@ vec3 decode_color_only(vec2 uv)
 
 vec3 decode_normal(vec2 uv)
 {
-    vec2 n2 = texture(in_normal, uv).xy * SQRT2;
-    float d = dot(n2, n2);
-    float f = sqrt(2.0f - d);
-    return vec3(f*n2, 1.0f - d);
+    return unproject_lambert_azimuthal_equal_area(texture(in_normal, uv).xy);
 }
 
 void decode_material(
@@ -36,5 +34,10 @@ void decode_material(
     // Instead of deferred_output.glsl, f0 is multiplied by 2 in material.cc
     // in order to use most of the available range and resolution.
     f0 = encoded.z/2.0f;
+}
+
+vec3 decode_position(vec2 uv)
+{
+    return unproject_position(get_linear_depth(uv), uv);
 }
 

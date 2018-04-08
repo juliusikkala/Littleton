@@ -23,6 +23,7 @@
 #include "method/shadow_msm.hh"
 #include "method/draw_texture.hh"
 #include "method/ssao.hh"
+#include "method/ssrt.hh"
 #include "method/sao.hh"
 #include "method/bloom.hh"
 #include "helpers.hh"
@@ -89,6 +90,8 @@ public:
             &postprocess.output(1)
         ),
         sao(buf, buf, pool, main_scene, 1.0f, 8, 0.01f, 0.5f),
+        ssrt(buf, buf, pool, main_scene),
+
         postprocess_to_window(
             w,
             postprocess.input(1),
@@ -126,6 +129,7 @@ public:
             &skybox,
             &lp,
             &sao,
+            &ssrt,
             &sky,
             &bloom,
             &tm,
@@ -176,6 +180,7 @@ private:
     method::sky sky;
     method::bloom bloom;
     method::tonemap tm;
+    method::ssrt ssrt;
     method::sao sao;
 
     method::blit_framebuffer postprocess_to_window;
@@ -285,7 +290,7 @@ public:
         );
 
         //pipelines->set_texture(&spot_shadow->get_moments());
-        current_pipeline = pipelines->get_forward_pipeline();
+        current_pipeline = pipelines->get_deferred_pipeline();
     }
 
     void setup_scene()

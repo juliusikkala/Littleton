@@ -1,6 +1,7 @@
 #include "constants.glsl"
 #include "generic_fragment_input.glsl"
 #include "material.glsl"
+#include "projection.glsl"
 
 #ifdef COLOR_EMISSION_INDEX
 layout(location=COLOR_EMISSION_INDEX) out vec4 out_color_emission;
@@ -31,8 +32,7 @@ vec4 encode_color_emission(vec3 color, float emission)
 
 vec2 encode_normal(vec3 normal)
 {
-    vec3 n = normalize(normal);
-    return inversesqrt(2.0f+2.0f*n.z)*n.xy;
+    return project_lambert_azimuthal_equal_area(normal);
 }
 
 vec4 encode_material(float roughness, float metallic, float f0)
