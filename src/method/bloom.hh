@@ -18,8 +18,9 @@ namespace method
             resource_pool& pool,
             texture* src,
             float threshold = 2.0f,
-            unsigned radius = 10,
-            float strength = 1.0f
+            unsigned radius = 5,
+            float strength = 1.0f,
+            unsigned level = 2
         );
 
         void set_threshold(float threshold);
@@ -30,6 +31,9 @@ namespace method
 
         void set_strength(float strength);
         float get_strength() const;
+
+        void set_level(unsigned level);
+        unsigned get_level() const;
 
         void execute() override;
 
@@ -47,10 +51,11 @@ namespace method
         float threshold;
         unsigned radius;
         float strength;
+        unsigned level;
         std::vector<float> gaussian_kernel;
 
         const vertex_buffer& quad;
-        const sampler& fb_sampler;
+        sampler smooth_sampler;
     };
 }
 #endif

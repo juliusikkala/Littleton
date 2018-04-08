@@ -4,9 +4,9 @@ uniform sampler2D prev;
 in vec2 uv;
 
 #if !defined(MAXIMUM) || !defined(MINIMUM)
-out float output;
+out float result;
 #else
-out vec2 output;
+out vec2 result;
 #endif
 
 void main(void)
@@ -23,10 +23,10 @@ void main(void)
 #endif
 
 #if defined(MAXIMUM) && defined(MINIMUM)
-    output = vec2(minimum, maximum);
+    result = vec2(minimum, maximum);
 #elif defined(MAXIMUM)
-    output = maximum;
+    result = maximum;
 #elif defined(MINIMUM)
-    output = minimum;
+    result = minimum;
 #endif
 }
