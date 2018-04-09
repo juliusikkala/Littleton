@@ -9,9 +9,9 @@
 #include <glm/gtc/random.hpp>
 #include <cmath>
 
-static unsigned mipmap_count(glm::uvec2 size)
+static unsigned max_mipmap_index(glm::uvec2 size)
 {
-    return floor(log2(std::max(size.x, size.y)))+1;
+    return floor(log2(std::max(size.x, size.y)));
 }
 
 method::ssrt::ssrt(
@@ -22,7 +22,7 @@ method::ssrt::ssrt(
 ):  target_method(target), buf(&buf), pool(pool),
     ssrt_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ssrt.frag"},
-        {{"RAY_MAX_LEVEL", std::to_string(mipmap_count(target.get_size()))}}
+        {{"RAY_MAX_LEVEL", std::to_string(max_mipmap_index(target.get_size()))}}
     )),
     blit_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blit_texture.frag"}, {}
@@ -73,12 +73,12 @@ void method::ssrt::execute()
     ssrt_shader->set("projection_info", cam->get_projection_info());
     ssrt_shader->set("clip_info", cam->get_clip_info());
 
-    ssrt_shader->set("ray_max_steps", 3000);
+    ssrt_shader->set("ray_max_steps", 1000);
     ssrt_shader->set("thickness", 0.5f);
 
     quad.draw();
 
-    glEnable(GL_BLEND);
+    //glEnable(GL_BLEND);
     get_target().bind();
 
     blit_shader->bind();
