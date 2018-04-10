@@ -4,6 +4,7 @@
 #include "shader_pool.hh"
 #include "vertex_buffer.hh"
 #include <stdexcept>
+#include <cmath>
 
 gbuffer::gbuffer(
     context& ctx,
@@ -232,10 +233,25 @@ void gbuffer::clear()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glStencilMask(0xFF);
-    glClearColor(0, 0, 0, 1);
+    static const float zero[4] = {0};
+    static const float neg_infinite[4] = {
+        -INFINITY, -INFINITY, -INFINITY, -INFINITY
+    };
+
+    if(normal_index >= 0)
+        glClearBufferfv(GL_COLOR, normal_index, zero);
+    if(color_emission_index >= 0)
+        glClearBufferfv(GL_COLOR, color_emission_index, zero);
+    if(material_index >= 0)
+        glClearBufferfv(GL_COLOR, material_index, zero);
+    if(linear_depth_index >= 0)
+        glClearBufferfv(GL_COLOR, linear_depth_index, neg_infinite);
+    if(lighting_index >= 0)
+        glClearBufferfv(GL_COLOR, lighting_index, zero);
+
     glClearDepth(1);
     glClearStencil(0);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     reinstate_current_fbo();
 }
 
