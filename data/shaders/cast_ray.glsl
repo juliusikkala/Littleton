@@ -1,88 +1,116 @@
 #include "projection.glsl"
+#include "depth.glsl"
 
-uniform int ray_max_level;
-uniform int ray_max_steps;
-uniform float thickness;
+#define CELL_STEP_OFFSET 0.05
 
-#undef RAY_MAX_LEVEL
-#define RAY_MAX_LEVEL 6
-#define RAY_MIN_LEVEL 0
+void step_texel(inout vec3 s, vec3 d, inout vec2 screen_p, vec2 level_size)
+{
+    vec2 p = s.xy * level_size;
+    vec2 o = p - screen_p;
+
+    vec2 sd = sign(d.xy);
+    vec2 t2 = (0.5f * sd - o) / (d.xy * level_size);
+
+    float t = t2.y;
+
+    if(t2.x < t2.y)
+    {
+        sd.y = 0;
+        t = t2.x;
+    }
+    else if(t2.x > t2.y)
+    {
+        sd.x = 0;
+    }
+    
+    screen_p += sd;
+    s += t * d;
+}
 
 bool cast_ray(
     in sampler2D linear_depth,
-    vec2 initial_uv,
     vec3 origin,
     vec3 dir,
-    out vec2 uv
+    mat4 proj,
+    float ray_steps,
+    float thickness,
+    float near,
+    out vec2 p,
+    out vec3 intersection
 ){
-    int level = RAY_MAX_LEVEL;
-    int steps = ray_max_steps;
+    float len = (origin.z + dir.z > near) ? (near - origin.z) / dir.z : 1.0f; 
 
-    float level_distance = 2.0f;
+    vec3 end = origin + dir * len;
+
+    vec4 ps = proj * vec4(origin, 1.0f);
+    vec3 s = ps.xyz / ps.w;
+    s.xy = s.xy * 0.5f + 0.5f;
+
+    vec4 pe = proj * vec4(end, 1.0f);
+    vec3 e = pe.xyz / pe.w;
+    e.xy = e.xy * 0.5f + 0.5f;
+
+    vec3 d = normalize(e - s);
 
     ivec2 size = textureSize(linear_depth, 0);
 
-    vec2 o = initial_uv;
-    vec2 d = projected_ray_direction(origin, dir);
-    d /= max(abs(d.x), abs(d.y));
-    ivec2 id = ivec2(sign(d));
+    int level = 0;
+    vec2 level_size = size >> level;
+    bool hit = false;
 
-    float prev_depth = origin.z;
-    vec2 prev_o = o;
 
-    ivec2 p = ivec2(o*textureSize(linear_depth, level));
-    while(steps-- != 0 && 0.0f <= o.x && o.x <= 1.0f && 0.0f <= o.y && o.y <= 1.0f)
+    s += 0.001f * d;
+    vec2 screen_p = floor(s.xy * level_size) + 0.5f;
+    vec3 prev_s = s;
+    prev_s.z = -1;
+
+    while(level > -1 && level < RAY_MAX_LEVEL && ray_steps > 0)
     {
-        ivec2 level_size = textureSize(linear_depth, level);
-        vec2 sample_depth = texelFetch(linear_depth, p, level).xy;
+        ray_steps -= 1.0f;
+        step_texel(s, d, screen_p, level_size);
 
-        vec2 s = o * level_size - vec2(p) - 0.5f;
-        vec2 t2 = (0.5f*sign(d) - s)/(d*level_size);
-        ivec2 d_step = id;
-        float t = t2.y;
+        vec2 ldepth = texelFetch(linear_depth, ivec2(screen_p), level).rg;
 
-        if(t2.x < t2.y)
+        float depth_hi = hyperbolic_depth(ldepth.r);
+        float depth_lo = hyperbolic_depth(ldepth.g - thickness);
+
+        vec2 s_depth = vec2(prev_s.z, s.z);
+        if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
+
+        if(s_depth.y > depth_hi && s_depth.x < depth_lo)
         {
-            d_step.y = 0;
-            t = t2.x;
+            p = screen_p / level_size;
+            level--;
         }
-        else if(t2.y < t2.x) d_step.x = 0;
+        prev_s = s;
 
-        p += d_step;
-        prev_o = o;
-        o += t * d;
-        level_distance -= 1.0f;
+        /*ray_steps -= 1.0f;
 
-        float next_depth =
-            origin.z + calculate_ray_length(origin, dir, o)*dir.z;
+        step_texel(s, d, level_size);
 
-        float min_depth = min(prev_depth, next_depth) + 0.01f;
-        float max_depth = max(prev_depth, next_depth) + 0.01f;
+        vec2 limit = abs(s.xy * 2.0f - 1.0f);
 
-        if(
-            min_depth > sample_depth.y ||
-            max_depth + thickness < sample_depth.x
-        ){// Miss
-            prev_depth = next_depth;
-            if(level_distance <= 0 && level != RAY_MAX_LEVEL)
-            {// Switch to upper mip level
-                level++;
-                level_distance = sqrt(8.0f);
-                p = ivec2(o*textureSize(linear_depth, level));
+        if(max(limit.x, limit.y) < 1.0f)
+        {
+            p = s.xy;
+            float depth = hyperbolic_depth(
+                texelFetch(linear_depth, ivec2(s.xy * level_size), level).r
+            );
+
+            if(s.z <= depth)
+            {
+                //level++;
+                level_size = size >> level;
+            }
+            else
+            {
+                float t = (s.z - depth) / d.z;
+                s -= d * t;
+                level--;
+                level_size = size >> level;
             }
         }
-        else if(level == RAY_MIN_LEVEL)
-        {// Hit!
-            uv = vec2(p + 0.5f) / vec2(level_size);
-            return true;
-        }
-        else
-        {// Possibly hit on a lower mip level.
-            level--;
-            level_distance = sqrt(8.0f);
-            o = prev_o;
-            p = ivec2(o*textureSize(linear_depth, level));
-        }
+        else break;*/
     }
-    return false;
+    return level == -1;
 }

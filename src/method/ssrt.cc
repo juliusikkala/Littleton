@@ -72,9 +72,10 @@ void method::ssrt::execute()
     ssrt_shader->set("proj", p);
     ssrt_shader->set("projection_info", cam->get_projection_info());
     ssrt_shader->set("clip_info", cam->get_clip_info());
+    ssrt_shader->set("near", -cam->get_near());
 
     ssrt_shader->set("ray_max_steps", 1000);
-    ssrt_shader->set("thickness", 0.5f);
+    ssrt_shader->set("thickness", 0.05f);
 
     quad.draw();
 
