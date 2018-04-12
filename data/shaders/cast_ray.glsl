@@ -53,7 +53,6 @@ bool cast_ray(
 
     s += (1 << RAY_MIN_LEVEL) * 0.005f * d;
     vec3 prev_s = s;
-    prev_s.z = -1;
 
     bool do_step = true;
 
@@ -79,8 +78,15 @@ bool cast_ray(
             if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
 
             if(s_depth.x < depth_lo && s_depth.y > depth_hi)
-            {
+            {// Hit
+                s = prev_s;
                 level--;
+                level_size = size >> level;
+            }
+            else
+            {// Miss
+                level++;
+                level_size = size >> level;
             }
             prev_s = s;
         }
