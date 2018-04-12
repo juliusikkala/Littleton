@@ -1,5 +1,6 @@
 #include "projection.glsl"
 #include "depth.glsl"
+#include "constants.glsl"
 
 void step_texel(inout vec3 s, vec3 d, vec2 level_size)
 {
@@ -31,6 +32,7 @@ bool cast_ray(
     out vec3 intersection
 ){
     float len = (origin.z + dir.z > near) ? (near - origin.z) / dir.z : 1.0f; 
+    origin += dir * 0.01f;
 
     vec3 end = origin + dir * len;
 
@@ -51,28 +53,32 @@ bool cast_ray(
     vec2 level_size = textureSize(linear_depth, level);
     bool hit = false;
 
-    s += (1 << RAY_MIN_LEVEL) * 0.005f * d;
     vec3 prev_s = s;
 
     bool do_step = true;
 
-    while(level > RAY_MIN_LEVEL-1 && level < RAY_MAX_LEVEL && ray_steps > 0)
+    while(level > RAY_MIN_LEVEL-1 && level <= RAY_MAX_LEVEL && ray_steps > 0)
     {
         ray_steps -= 1.0f;
         step_texel(s, d, level_size);
 
         vec2 limit = abs(s.xy * 2.0f - 1.0f);
 
+        hit = false;
         if(max(limit.x, limit.y) < 1.0f)
         {
+            p = (prev_s.xy + s.xy)*0.5f;
             vec2 ldepth = texelFetch(
                 linear_depth,
-                ivec2(s.xy*level_size),
+                ivec2(p*level_size),
                 level
             ).rg;
 
             float depth_hi = hyperbolic_depth(ldepth.g);
             float depth_lo = hyperbolic_depth(ldepth.r - thickness);
+
+            if(isnan(depth_hi)) depth_hi = 10000.0f;
+            if(isnan(depth_lo)) depth_lo = 10000.0f;
 
             vec2 s_depth = vec2(prev_s.z, s.z);
             if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
@@ -82,6 +88,7 @@ bool cast_ray(
                 s = prev_s;
                 level--;
                 level_size = size >> level;
+                hit = true;
             }
             else
             {// Miss
@@ -90,79 +97,14 @@ bool cast_ray(
             }
             prev_s = s;
         }
-        else break;
-
-        /*ray_steps -= 1.0f;
-
-        if(do_step) step_texel(s, d, screen_p, level_size);
-        do_step = true;
-
-        p = screen_p / level_size;
-        float depth = hyperbolic_depth(
-            texelFetch(linear_depth, ivec2(screen_p), level).g
-        );
-
-        if(s.z > depth)
-        {// Hit
-            float t = (s.z - depth) / d.z;
-            s -= t * d;
-
-            level--;
-            level_size = textureSize(linear_depth, level);
-            screen_p = floor(s.xy * level_size) + 0.5f;
-        }
-        else if(level < 2)
-        {// Miss
-            level++;
-            level_size = textureSize(linear_depth, level);
-            screen_p = floor(s.xy * level_size) + 0.5f;
-        }
-        prev_s = s;*/
-
-        /*
-        ray_steps -= 1.0f;
-
-        step_texel(s, d, screen_p, level_size);
-
-        vec2 limit = abs(s.xy * 2.0f - 1.0f);
-
-        if(max(limit.x, limit.y) < 1.0f)
+        else if(level != RAY_MIN_LEVEL)
         {
-            vec2 ldepth = texelFetch(linear_depth, ivec2(screen_p), level).rg;
-
-            float depth_hi = hyperbolic_depth(ldepth.r);
-            float depth_lo = hyperbolic_depth(ldepth.g - thickness);
-
-            vec2 s_depth = vec2(prev_s.z, s.z);
-            if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
-
-            if(s_depth.x > depth_hi && s_depth.y < depth_lo)
-            {
-                //float t = (s.z - depth_hi) / d.z;
-                //s -= d * t;
-                s = prev_s;
-                level--;
-                if(level != -1)
-                {
-                    level_size = size >> level;
-                    screen_p = floor(s.xy * level_size) + 0.5f;
-                }
-            }
-            else
-            {
-                level++;
-                level_size = size >> level;
-                screen_p = floor(s.xy * level_size) + 0.5f;
-            }
-            prev_s = s;
-
-            //screen_p = floor(s.xy * level_size) + 0.5f;
+            s = prev_s;
+            level--;
+            level_size = size >> level;
         }
         else break;
-        */
     }
-    p = s.xy;
 
-    return level == RAY_MIN_LEVEL-1;
-    //return false;
+    return level == RAY_MIN_LEVEL-1 && hit;
 }
