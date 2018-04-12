@@ -30,9 +30,15 @@ void main(void)
     );
 
     vec2 abs_tp = abs(tp*2.0f - 1.0f);
-    //float fade = min((1.0f - max(abs_tp.x, abs_tp.y)), 1.0f);
-    float fade = 1.0f;
+    float fade = min((1.0f - max(abs_tp.x, abs_tp.y)), 1.0f);
 
-    out_color = hit ? fade * texture(in_lighting, tp) : vec4(1,0,0,0);
+    out_color = hit ?
+        fade * texelFetch(
+            in_lighting,
+            ivec2(tp * textureSize(in_lighting, 0)),
+            0
+        ) :
+        vec4(0);
+
     //out_color = hit ? vec4(0,1,0,0) : vec4(1,0,0,0);
 }

@@ -79,7 +79,7 @@ void method::ssrt::execute()
 
     quad.draw();
 
-    //glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     get_target().bind();
 
     blit_shader->bind();
