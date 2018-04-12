@@ -62,12 +62,12 @@ bool cast_ray(
         ray_steps -= 1.0f;
         step_texel(s, d, level_size);
 
+        p = (prev_s.xy + s.xy)*0.5f;
         vec2 limit = abs(s.xy * 2.0f - 1.0f);
 
         hit = false;
         if(max(limit.x, limit.y) < 1.0f)
         {
-            p = (prev_s.xy + s.xy)*0.5f;
             vec2 ldepth = texelFetch(
                 linear_depth,
                 ivec2(p*level_size),
@@ -98,7 +98,7 @@ bool cast_ray(
             prev_s = s;
         }
         else if(level != RAY_MIN_LEVEL)
-        {
+        {// Attempt to step outside viewport, may still reflect something useful
             s = prev_s;
             level--;
             level_size = size >> level;

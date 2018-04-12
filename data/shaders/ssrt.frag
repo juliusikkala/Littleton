@@ -15,7 +15,7 @@ out vec4 out_color;
 void main(void)
 {
     ivec2 p = ivec2(gl_FragCoord.xy);
-    float depth = texelFetch(in_linear_depth, p, 0).x;
+    float depth = texelFetch(in_linear_depth, p, 0).y;
     vec3 normal = normalize(decode_normal(uv));
     vec3 o = unproject_position(depth, uv);
     vec3 view = normalize(-o);
@@ -29,6 +29,10 @@ void main(void)
         tp, intersection
     );
 
-    out_color = hit ? texture(in_lighting, tp) : vec4(0);
+    vec2 abs_tp = abs(tp*2.0f - 1.0f);
+    //float fade = min((1.0f - max(abs_tp.x, abs_tp.y)), 1.0f);
+    float fade = 1.0f;
+
+    out_color = hit ? fade * texture(in_lighting, tp) : vec4(1,0,0,0);
     //out_color = hit ? vec4(0,1,0,0) : vec4(1,0,0,0);
 }

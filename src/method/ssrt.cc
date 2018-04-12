@@ -75,7 +75,7 @@ void method::ssrt::execute()
     ssrt_shader->set("near", -cam->get_near());
 
     ssrt_shader->set("ray_max_steps", 1000);
-    ssrt_shader->set("thickness", 0.05f);
+    ssrt_shader->set("thickness", 0.1f);
 
     quad.draw();
 
