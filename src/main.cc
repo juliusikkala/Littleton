@@ -196,7 +196,7 @@ class game
 {
 public:
     game()
-        : win({ "dflowers", {1280, 720}, true, true, false }),
+        : win({ "dflowers", {1280, 720}, false, true, false }),
         resources(win, { "data/shaders/" })
     {
         win.set_framerate_limit(200);
