@@ -388,8 +388,7 @@ void gbuffer::render_depth_mipmaps(
     min_max->bind();
     min_max->set("prev", fb_sampler.bind(tex));
 
-    GLuint attachments[] = {GL_COLOR_ATTACHMENT3};
-    glDrawBuffers(1, attachments);
+    glDrawBuffer(GL_COLOR_ATTACHMENT3);
 
     // Render mipmaps
     for(unsigned i = 1; i < mipmap_count; ++i)
@@ -401,8 +400,6 @@ void gbuffer::render_depth_mipmaps(
         );
         glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, i-1);
         glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, i-1);
-        min_max->set<int>("level", i);
-        min_max->set("level_size", glm::ivec2(size));
         min_max->set<bool>("handle_top_edge", size.y&1);
         min_max->set<bool>("handle_right_edge", size.x&1);
         min_max->set<bool>("handle_both_edges", (size.x&1)&&(size.y&1));

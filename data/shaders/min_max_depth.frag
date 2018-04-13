@@ -1,8 +1,6 @@
 #version 400 core
 
 uniform sampler2D prev;
-uniform int level;
-uniform ivec2 level_size;
 uniform bool handle_both_edges;
 uniform bool handle_top_edge;
 uniform bool handle_right_edge;

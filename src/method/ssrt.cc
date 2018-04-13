@@ -29,7 +29,13 @@ method::ssrt::ssrt(
     )),
     scene(scene),
     quad(common::ensure_quad_vertex_buffer(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
+    fb_sampler(common::ensure_framebuffer_sampler(pool)),
+    mipmap_sampler(
+        pool.get_context(),
+        GL_NEAREST,
+        GL_NEAREST_MIPMAP_NEAREST,
+        GL_CLAMP_TO_EDGE
+    )
 {
 }
 
@@ -64,7 +70,7 @@ void method::ssrt::execute()
     glClear(GL_COLOR_BUFFER_BIT);
 
     ssrt_shader->bind();
-    ssrt_shader->set("in_linear_depth", fb_sampler.bind(*linear_depth, 0));
+    ssrt_shader->set("in_linear_depth", mipmap_sampler.bind(*linear_depth, 0));
     ssrt_shader->set("in_lighting", fb_sampler.bind(*lighting, 1));
     ssrt_shader->set("in_normal", fb_sampler.bind(*normal, 2));
     ssrt_shader->set("in_material", fb_sampler.bind(*material, 3));
