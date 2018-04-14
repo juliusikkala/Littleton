@@ -31,7 +31,7 @@ vec2 mip_gather()
         );
         vec2 res = s[0];
         for(int i = 1; i < 9; ++i)
-            res = vec2(min(res.x, s[i].x), max(res.y, s[i].y));
+            res = vec2(max(res.x, s[i].x), min(res.y, s[i].y));
         return res;
     }
     else if(handle_right_edge)
@@ -46,7 +46,7 @@ vec2 mip_gather()
         );
         vec2 res = s[0];
         for(int i = 1; i < 6; ++i)
-            res = vec2(min(res.x, s[i].x), max(res.y, s[i].y));
+            res = vec2(max(res.x, s[i].x), min(res.y, s[i].y));
         return res;
     }
     else if(handle_top_edge)
@@ -61,7 +61,7 @@ vec2 mip_gather()
         );
         vec2 res = s[0];
         for(int i = 1; i < 6; ++i)
-            res = vec2(min(res.x, s[i].x), max(res.y, s[i].y));
+            res = vec2(max(res.x, s[i].x), min(res.y, s[i].y));
         return res;
     }
     else
@@ -74,8 +74,8 @@ vec2 mip_gather()
         );
 
         return vec2(
-            min(min(s[0].x, s[1].x), min(s[2].x, s[3].x)),
-            max(max(s[0].y, s[1].y), max(s[2].y, s[3].y))
+            max(max(s[0].x, s[1].x), max(s[2].x, s[3].x)),
+            min(min(s[0].y, s[1].y), min(s[2].y, s[3].y))
         );
     }
 }
@@ -85,8 +85,8 @@ void main(void)
 #if defined(MAXIMUM) && defined(MINIMUM)
     result = mip_gather();
 #elif defined(MAXIMUM)
-    result = mip_gather().y;
-#elif defined(MINIMUM)
     result = mip_gather().x;
+#elif defined(MINIMUM)
+    result = mip_gather().y;
 #endif
 }

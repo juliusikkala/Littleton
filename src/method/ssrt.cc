@@ -80,8 +80,8 @@ void method::ssrt::execute()
     ssrt_shader->set("clip_info", cam->get_clip_info());
     ssrt_shader->set("near", -cam->get_near());
 
-    ssrt_shader->set("ray_max_steps", 1000);
-    ssrt_shader->set("thickness", 0.1f);
+    ssrt_shader->set("ray_max_steps", 200);
+    ssrt_shader->set("thickness", 0.2f);
 
     quad.draw();
 

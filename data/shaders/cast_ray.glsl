@@ -2,25 +2,9 @@
 #include "depth.glsl"
 #include "constants.glsl"
 
-void step_texel(inout vec3 s, vec3 d, vec2 level_size)
-{
-    vec2 o = s.xy * level_size;
-    vec2 edge_uv = vec2(
-        d.x < 0 ? ceil(o.x) : floor(o.x),
-        d.y < 0 ? ceil(o.y) : floor(o.y)
-    );
-
-    vec2 t2 = abs((edge_uv - o + sign(d.xy)) / (d.xy * level_size));
-    float t = min(t2.x, t2.y);
-
-    t *= 1.01f;
-
-    s += t * d;
-}
-
 #define RAY_MIN_LEVEL 0
 
-bool cast_ray(
+float cast_ray(
     in sampler2D linear_depth,
     vec3 origin,
     vec3 dir,
@@ -31,80 +15,91 @@ bool cast_ray(
     out vec2 p,
     out vec3 intersection
 ){
+    origin += dir * 0.02f;
     float len = (origin.z + dir.z > near) ? (near - origin.z) / dir.z : 1.0f; 
-    origin += dir * 0.01f;
 
     vec3 end = origin + dir * len;
 
     vec4 ps = proj * vec4(origin, 1.0f);
     vec3 s = ps.xyz / ps.w;
-    s.xy = s.xy * 0.5f + 0.5f;
-    vec3 orig_s = s;
 
     vec4 pe = proj * vec4(end, 1.0f);
     vec3 e = pe.xyz / pe.w;
-    e.xy = e.xy * 0.5f + 0.5f;
 
-    vec3 d = normalize(e - s);
+    vec3 d = e - s;
+    d.z *= 2.0f;
+    s.xy = s.xy * 0.5f + 0.5f;
 
     ivec2 size = textureSize(linear_depth, 0);
 
     int level = RAY_MIN_LEVEL;
-    vec2 level_size = textureSize(linear_depth, level);
-    bool hit = false;
+    vec2 level_size = size >> level;
 
     vec3 prev_s = s;
 
-    bool do_step = true;
+    vec2 sd = 0.5f + 0.501f * vec2(
+        d.x < 0 ? -1 : 1,
+        d.y < 0 ? -1 : 1
+    );
 
-    while(level > RAY_MIN_LEVEL-1 && level <= RAY_MAX_LEVEL && ray_steps > 0)
-    {
-        ray_steps -= 1.0f;
-        step_texel(s, d, level_size);
+    vec2 depth = vec2(0.0f);
 
-        p = (prev_s.xy + s.xy)*0.5f;
-        vec2 limit = abs(s.xy * 2.0f - 1.0f);
+    float hyperbolize_mul = -2.0f * clip_info.x/clip_info.y;
+    float hyperbolize_constant = -clip_info.z/clip_info.y;
 
-        hit = false;
-        if(max(limit.x, limit.y) < 1.0f)
-        {
-            vec2 ldepth = texelFetch(
-                linear_depth,
-                ivec2(p*level_size),
-                level
-            ).rg;
+    while(
+        level >= RAY_MIN_LEVEL &&
+        level <= RAY_MAX_LEVEL &&
+        s.z < 1.0f &&
+        ray_steps > 0
+    ){
+        ray_steps--;
 
-            float depth_hi = hyperbolic_depth(ldepth.g);
-            float depth_lo = hyperbolic_depth(ldepth.r - thickness);
+        prev_s = s;
+        p = s.xy * level_size;
 
-            if(isnan(depth_hi)) depth_hi = 10000.0f;
-            if(isnan(depth_lo)) depth_lo = 10000.0f;
+        vec2 t2 = (floor(p) + sd - p) / (d.xy * level_size);
+        float t = min(t2.x, t2.y);
 
-            vec2 s_depth = vec2(prev_s.z, s.z);
-            if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
+        s += t * d;
 
-            if(s_depth.x < depth_lo && s_depth.y > depth_hi)
-            {// Hit
-                s = prev_s;
-                level--;
-                level_size = size >> level;
-                hit = true;
-            }
-            else
-            {// Miss
-                level++;
-                level_size = size >> level;
-            }
-            prev_s = s;
-        }
-        else if(level != RAY_MIN_LEVEL)
-        {// Attempt to step outside viewport, may still reflect something useful
+#ifdef INFINITE_THICKNESS
+        depth.x = texelFetch(linear_depth, ivec2(p), level).x;
+        depth.x = hyperbolize_mul/depth.x + hyperbolize_constant;
+
+        if(max(prev_s.z, s.z) >= depth.x)
+        {// Hit
             s = prev_s;
             level--;
-            level_size = size >> level;
         }
-        else break;
+        else level++; // Miss
+#else
+        depth = texelFetch(linear_depth, ivec2(p), level).xy;
+        depth.y -= thickness;
+        depth = hyperbolize_mul/depth + hyperbolize_constant;
+
+        vec2 s_depth = vec2(prev_s.z, s.z);
+        if(s_depth.x > s_depth.y) s_depth = s_depth.yx;
+
+        if(s_depth.x < depth.y && s_depth.y > depth.x)
+        {// Hit
+            s = prev_s;
+            level--;
+        }
+        else level++; // Miss
+#endif
+
+        level_size = (size >> level);
     }
 
-    return level == RAY_MIN_LEVEL-1 && hit;
+    vec3 fade = abs(vec3(prev_s.xy * 2.0f, prev_s.z) - 1.0f);
+#ifdef INFINITE_THICKNESS
+    float hit_fade = clamp(1.0f - (s.z - depth.x)*300.f, 0.0f, 1.0f);
+#else
+    float hit_fade = 1.0f;
+#endif
+
+    return level == RAY_MIN_LEVEL-1?
+        (1.0f - max(max(fade.x, fade.y), fade.z)) * hit_fade:
+        0.0f;
 }

@@ -356,7 +356,7 @@ shader* gbuffer::get_min_max_shader(shader_pool& pool) const
     {
         return pool.get(
             shader::path{"fullscreen.vert", "min_max_depth.frag"},
-            {{"MINIMUM", ""}, {"MAXIMUM", ""}}
+            {{"MAXIMUM", ""}, {"MINIMUM", ""}}
         );
     }
 

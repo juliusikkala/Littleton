@@ -15,30 +15,25 @@ out vec4 out_color;
 void main(void)
 {
     ivec2 p = ivec2(gl_FragCoord.xy);
-    float depth = texelFetch(in_linear_depth, p, 0).y;
+    float depth = texelFetch(in_linear_depth, p, 0).x;
     vec3 normal = normalize(decode_normal(uv));
     vec3 o = unproject_position(depth, uv);
     vec3 view = normalize(-o);
-    vec3 d = normalize(reflect(-view, normal));
+    vec3 d = reflect(-view, normal);
 
     vec2 tp;
     vec3 intersection;
-    bool hit = cast_ray(
-        in_linear_depth, o, d, proj,
-        ray_max_steps, thickness, near,
-        tp, intersection
+    float fade = min(
+        4.0f*cast_ray(
+            in_linear_depth, o, d, proj,
+            ray_max_steps, thickness, near,
+            tp, intersection
+        ),
+        1.0f
     );
 
-    vec2 abs_tp = abs(tp*2.0f - 1.0f);
-    float fade = min((1.0f - max(abs_tp.x, abs_tp.y)), 1.0f);
-
-    out_color = hit ?
-        fade * texelFetch(
-            in_lighting,
-            ivec2(tp * textureSize(in_lighting, 0)),
-            0
-        ) :
+    out_color =
+        fade != 0.0f ?
+        fade * texelFetch(in_lighting, ivec2(tp), 0) :
         vec4(0);
-
-    //out_color = hit ? vec4(0,1,0,0) : vec4(1,0,0,0);
 }
