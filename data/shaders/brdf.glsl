@@ -14,15 +14,17 @@ float geometry_smith(float cos_l, float cos_v, float k)
     return 0.25f / ((cos_l * mk + k) * (cos_v * mk + k));
 }
 
+// Multiplied by pi so that it can be avoided later.
 float distribution_ggx(float cos_h, float a)
 {
     float a2 = a * a;
     float denom = cos_h * cos_h * (a2 - 1.0f) + 1.0f;
-    return a2 / (PI * denom * denom);
+    return a2 / (denom * denom);
 }
 
 vec3 brdf(
-    vec3 light_color,
+    vec3 diffuse_light_color,
+    vec3 specular_light_color,
     vec3 light_dir,
     vec3 surface_color,
     vec3 view_dir,
@@ -37,7 +39,6 @@ vec3 brdf(
     float cos_h = max(dot(normal, h), 0.0f);
     float cos_d = clamp(dot(view_dir, h), 0.0f, 1.0f);
 
-    vec3 radiance = light_color;
     vec3 f0_m = mix(vec3(f0), surface_color, metallic);
 
     float k = roughness + 1.0f;
@@ -51,5 +52,33 @@ vec3 brdf(
 
     vec3 kd = (vec3(1.0f) - fresnel) * (1.0f - metallic);
 
-    return (kd * surface_color + specular * PI) * radiance * cos_l;
+    return (kd * surface_color * diffuse_light_color +
+            specular * specular_light_color) * cos_l;
 }
+
+// TODO: Fix this, it's probably incorrect. Using distribution breaks
+// everything, and since normally distribution_ggx premultiplies by pi, do
+// that manually. Also, this must be multiplied by the specular color manually.
+vec3 brdf_reflection(
+    vec3 light_dir,
+    vec3 surface_color,
+    vec3 view_dir,
+    vec3 normal,
+    float roughness,
+    float f0,
+    float metallic
+){
+    float cos_l = max(dot(normal, light_dir), 0.0f);
+    float cos_v = max(dot(normal, view_dir), 0.0f);
+
+    vec3 f0_m = mix(vec3(f0), surface_color, metallic);
+
+    float k = roughness + 1.0f;
+    k = k * k / 8.0f;
+
+    vec3 fresnel = fresnel_schlick(cos_v, f0_m);
+    float geometry = geometry_smith(cos_l, cos_v, k);
+
+    return fresnel * geometry * PI * cos_l;
+}
+

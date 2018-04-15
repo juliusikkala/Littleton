@@ -5,9 +5,11 @@
 #include "resource_pool.hh"
 #include "camera.hh"
 #include "scene.hh"
+#include "multishader.hh"
 #include "common_resources.hh"
 #include <glm/gtc/random.hpp>
 #include <cmath>
+#include <stdexcept>
 
 static unsigned max_mipmap_index(glm::uvec2 size)
 {
@@ -20,10 +22,7 @@ method::ssrt::ssrt(
     resource_pool& pool,
     render_scene* scene
 ):  target_method(target), buf(&buf), pool(pool),
-    ssrt_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "ssrt.frag"},
-        {{"RAY_MAX_LEVEL", std::to_string(max_mipmap_index(target.get_size()))}}
-    )),
+    ssrt_shaders(pool.get_shader(shader::path{"fullscreen.vert", "ssrt.frag"})),
     blit_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blit_texture.frag"}, {}
     )),
@@ -35,8 +34,54 @@ method::ssrt::ssrt(
         GL_NEAREST,
         GL_NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
-    )
+    ),
+    max_steps(500),
+    thickness(-1.0f),
+    roughness_cutoff(0.5f),
+    brdf_cutoff(0.0f)
 {
+    set_thickness();
+}
+
+void method::ssrt::set_max_steps(unsigned max_steps)
+{
+    this->max_steps = max_steps;
+}
+
+void method::ssrt::set_roughness_cutoff(float cutoff)
+{
+    roughness_cutoff = cutoff;
+}
+
+void method::ssrt::set_brdf_cutoff(float cutoff)
+{
+    brdf_cutoff = cutoff;
+}
+
+void method::ssrt::set_thickness(float thickness)
+{
+    this->thickness = thickness;
+    texture* linear_depth = buf->get_linear_depth();
+
+    // Thickness requires min-max depth buffer
+    if(thickness > 0.0f && linear_depth &&
+       linear_depth->get_external_format() != GL_RG) 
+    {
+        throw std::runtime_error(
+            "Min-max (two channel) linear depth buffer required for SSRT with "
+            "finite thickness"
+        );
+    }
+
+    shader::definition_map def = {
+        {
+            "RAY_MAX_LEVEL",
+            std::to_string(max_mipmap_index(get_target().get_size()))
+        }
+    };
+    if(thickness < 0.0f) def["INFINITE_THICKNESS"];
+
+    ssrt_shader = ssrt_shaders->get(def);
 }
 
 void method::ssrt::execute()
@@ -50,7 +95,9 @@ void method::ssrt::execute()
     texture* lighting = buf->get_lighting();
     texture* normal = buf->get_normal();
     texture* material = buf->get_material();
-    if(!linear_depth || !lighting || !normal || !material) return;
+    texture* color_emission = buf->get_color_emission();
+    if(!linear_depth || !lighting || !normal || !material || !color_emission)
+        return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -74,14 +121,17 @@ void method::ssrt::execute()
     ssrt_shader->set("in_lighting", fb_sampler.bind(*lighting, 1));
     ssrt_shader->set("in_normal", fb_sampler.bind(*normal, 2));
     ssrt_shader->set("in_material", fb_sampler.bind(*material, 3));
+    ssrt_shader->set("in_color_emission", fb_sampler.bind(*color_emission, 4));
 
     ssrt_shader->set("proj", p);
     ssrt_shader->set("projection_info", cam->get_projection_info());
     ssrt_shader->set("clip_info", cam->get_clip_info());
     ssrt_shader->set("near", -cam->get_near());
 
-    ssrt_shader->set("ray_max_steps", 200);
-    ssrt_shader->set("thickness", 0.2f);
+    ssrt_shader->set<int>("ray_max_steps", max_steps);
+    ssrt_shader->set("thickness", thickness);
+    ssrt_shader->set("roughness_cutoff", roughness_cutoff);
+    ssrt_shader->set("brdf_cutoff", brdf_cutoff);
 
     quad.draw();
 

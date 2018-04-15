@@ -36,8 +36,11 @@ vec3 calc_point_light(
     float dist = length(dir);
     dir/=dist;
 
+    vec3 att_color = l.color/(dist*dist);
+
     return brdf(
-        l.color/(dist*dist),
+        att_color,
+        att_color,
         dir,
         surface_color,
         view_dir,
@@ -58,6 +61,7 @@ vec3 calc_directional_light(
     float metallic
 ){
     return brdf(
+        l.color,
         l.color,
         -l.direction,
         surface_color,
@@ -88,8 +92,11 @@ vec3 calc_spotlight(
         1.0f-pow((1.0f-cutoff)/(1.0f-l.cutoff), l.exponent) :
         0.0f;
 
+    vec3 att_color = l.color*cutoff/(dist*dist);
+
     return brdf(
-        l.color*cutoff/(dist*dist),
+        att_color,
+        att_color,
         dir,
         surface_color,
         view_dir,

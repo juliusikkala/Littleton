@@ -4,6 +4,16 @@
 
 #define RAY_MIN_LEVEL 0
 
+void step_ray(out vec2 p, inout vec3 s, vec3 d, vec2 sd, vec2 level_size)
+{
+    p = s.xy * level_size;
+
+    vec2 t2 = (floor(p) + sd - p) / (d.xy * level_size);
+    float t = min(t2.x, t2.y);
+
+    s += t * d;
+}
+
 float cast_ray(
     in sampler2D linear_depth,
     vec3 origin,
@@ -12,10 +22,8 @@ float cast_ray(
     float ray_steps,
     float thickness,
     float near,
-    out vec2 p,
-    out vec3 intersection
+    out vec2 p
 ){
-    origin += dir * 0.02f;
     float len = (origin.z + dir.z > near) ? (near - origin.z) / dir.z : 1.0f; 
 
     vec3 end = origin + dir * len;
@@ -47,21 +55,18 @@ float cast_ray(
     float hyperbolize_mul = -2.0f * clip_info.x/clip_info.y;
     float hyperbolize_constant = -clip_info.z/clip_info.y;
 
+    for(int i = 0; i < 3; ++i) step_ray(p, s, d, sd, level_size);
+
     while(
         level >= RAY_MIN_LEVEL &&
         level <= RAY_MAX_LEVEL &&
         s.z < 1.0f &&
         ray_steps > 0
     ){
-        ray_steps--;
+        ray_steps-=1.0f;
 
         prev_s = s;
-        p = s.xy * level_size;
-
-        vec2 t2 = (floor(p) + sd - p) / (d.xy * level_size);
-        float t = min(t2.x, t2.y);
-
-        s += t * d;
+        step_ray(p, s, d, sd, level_size);
 
 #ifdef INFINITE_THICKNESS
         depth.x = texelFetch(linear_depth, ivec2(p), level).x;
@@ -99,7 +104,7 @@ float cast_ray(
     float hit_fade = 1.0f;
 #endif
 
-    return level == RAY_MIN_LEVEL-1?
+    return level == RAY_MIN_LEVEL-1 ?
         (1.0f - max(max(fade.x, fade.y), fade.z)) * hit_fade:
         0.0f;
 }
