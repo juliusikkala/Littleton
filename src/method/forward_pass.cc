@@ -591,7 +591,11 @@ static void render_forward_pass(
 
     shader::definition_map common_def({{"OUTPUT_LIGHTING", ""}});
     if(opaque) common_def["MIN_ALPHA"] = "1.0f";
-    else common_def["MAX_ALPHA"] = "1.0f";
+    else
+    {
+        common_def["MAX_ALPHA"] = "1.0f";
+        common_def["MIN_ALPHA"] = std::to_string(1/255.0f);
+    }
 
     shader::definition_map depth_def(common_def);
 

@@ -4,6 +4,7 @@
 #include "framebuffer.hh"
 #include "helpers.hh"
 #include <unordered_map>
+#include <set>
 #include <memory>
 
 class framebuffer_pool: public virtual glresource

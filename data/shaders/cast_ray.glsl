@@ -98,11 +98,9 @@ float cast_ray(
     }
 
     vec3 fade = abs(vec3(prev_s.xy * 2.0f, prev_s.z) - 1.0f);
-#ifdef INFINITE_THICKNESS
-    float hit_fade = clamp(1.0f - (s.z - depth.x)*300.f, 0.0f, 1.0f);
-#else
+    // TODO: Come up with a way to make sides black without
+    // artifacting when target position has low resolution
     float hit_fade = 1.0f;
-#endif
 
     return level == RAY_MIN_LEVEL-1 ?
         (1.0f - max(max(fade.x, fade.y), fade.z)) * hit_fade:

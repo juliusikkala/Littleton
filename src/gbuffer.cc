@@ -251,6 +251,8 @@ void gbuffer::clear()
 
     glClearDepth(1);
     glClearStencil(0);
+    glStencilMask(0xFF);
+
     glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     reinstate_current_fbo();
 }

@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include "shadow_map.hh"
 #include "helpers.hh"
 #include <glm/gtx/transform.hpp>
