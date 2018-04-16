@@ -7,6 +7,7 @@
 #include "scene.hh"
 #include "multishader.hh"
 #include "common_resources.hh"
+#include "environment_map.hh"
 #include <glm/gtc/random.hpp>
 #include <cmath>
 #include <stdexcept>
@@ -35,10 +36,12 @@ method::ssrt::ssrt(
         GL_NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
     ),
+    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     max_steps(500),
     thickness(-1.0f),
     roughness_cutoff(0.5f),
-    brdf_cutoff(0.0f)
+    brdf_cutoff(0.0f),
+    fallback_cubemap(false)
 {
     set_thickness();
 }
@@ -73,15 +76,14 @@ void method::ssrt::set_thickness(float thickness)
         );
     }
 
-    shader::definition_map def = {
-        {
-            "RAY_MAX_LEVEL",
-            std::to_string(max_mipmap_index(get_target().get_size()))
-        }
-    };
-    if(thickness < 0.0f) def["INFINITE_THICKNESS"];
+    refresh_shader();
+}
 
-    ssrt_shader = ssrt_shaders->get(def);
+void method::ssrt::use_fallback_cubemap(bool use)
+{
+    this->fallback_cubemap = use;
+
+    refresh_shader();
 }
 
 void method::ssrt::execute()
@@ -103,7 +105,7 @@ void method::ssrt::execute()
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    glEnable(GL_STENCIL_TEST);
+    stencil_cull();
 
     glm::mat4 p = cam->get_projection();
     glm::uvec2 size(get_target().get_size());
@@ -133,6 +135,13 @@ void method::ssrt::execute()
     ssrt_shader->set("roughness_cutoff", roughness_cutoff);
     ssrt_shader->set("brdf_cutoff", brdf_cutoff);
 
+    environment_map* skybox = scene->get_skybox();
+    if(fallback_cubemap && skybox)
+    {
+        ssrt_shader->set("inv_view", cam->get_global_transform());
+        ssrt_shader->set("env", cubemap_sampler.bind(*skybox, 5));
+    }
+
     quad.draw();
 
     glEnable(GL_BLEND);
@@ -150,4 +159,18 @@ void method::ssrt::execute()
 std::string method::ssrt::get_name() const
 {
     return "ssrt";
+}
+
+void method::ssrt::refresh_shader()
+{
+    shader::definition_map def = {
+        {
+            "RAY_MAX_LEVEL",
+            std::to_string(max_mipmap_index(get_target().get_size()))
+        }
+    };
+    if(thickness < 0.0f) def["INFINITE_THICKNESS"];
+    if(fallback_cubemap) def["FALLBACK_CUBEMAP"];
+
+    ssrt_shader = ssrt_shaders->get(def);
 }

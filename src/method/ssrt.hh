@@ -5,6 +5,7 @@
 #include "sampler.hh"
 #include "doublebuffer.hh"
 #include "resource.hh"
+#include "stencil_handler.hh"
 #include <memory>
 
 class gbuffer;
@@ -15,7 +16,7 @@ class render_scene;
 
 namespace method
 {
-    class ssrt: public target_method
+    class ssrt: public target_method, public stencil_handler
     {
     public:
         ssrt(
@@ -34,11 +35,15 @@ namespace method
         // Set to negative for infinite depth (faster)
         void set_thickness(float thickness = -1.0f);
 
+        void use_fallback_cubemap(bool use = true);
+
         void execute() override;
 
         std::string get_name() const override;
 
     private:
+        void refresh_shader();
+
         gbuffer* buf;
         resource_pool& pool;
 
@@ -51,11 +56,13 @@ namespace method
         const vertex_buffer& quad;
         const sampler& fb_sampler;
         sampler mipmap_sampler;
+        sampler cubemap_sampler;
 
         unsigned max_steps;
         float thickness;
         float roughness_cutoff;
         float brdf_cutoff;
+        bool fallback_cubemap;
     };
 }
 

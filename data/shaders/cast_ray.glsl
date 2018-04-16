@@ -68,6 +68,8 @@ float cast_ray(
         prev_s = s;
         step_ray(p, s, d, sd, level_size);
 
+        // TODO: Make sure sample doesn't fall outside texture,
+        // that can cause artifacts
 #ifdef INFINITE_THICKNESS
         depth.x = texelFetch(linear_depth, ivec2(p), level).x;
         depth.x = hyperbolize_mul/depth.x + hyperbolize_constant;

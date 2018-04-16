@@ -155,7 +155,7 @@ public:
     {
         transparency_pass.render_transparent(true);
         transparency_pass.render_opaque(false);
-        transparency_pass.set_stencil_draw(2);
+        ssrt.use_fallback_cubemap(true);
         dt.set_texture(&linear_depth);
     }
 
@@ -339,11 +339,11 @@ public:
 
         sun.set_color(glm::vec3(1,1,1) * 5.0f);
 
-        main_scene.add_light(&sun);
+        //main_scene.add_light(&sun);
         //main_scene.add_light(&l1);
         //main_scene.add_light(&l2);
         main_scene.add_light(&spot);
-        main_scene.add_shadow(sun_shadow_msm.get());
+        //main_scene.add_shadow(sun_shadow_msm.get());
         //main_scene.add_shadow(fly_shadow_pcf.get());
         //main_scene.add_shadow(fly_shadow_msm.get());
         main_scene.add_shadow(spot_shadow.get());
