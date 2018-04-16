@@ -69,6 +69,7 @@ public:
         gp(buf, pool, main_scene),
         lp(buf, buf, pool, main_scene, false),
         fp(buf, pool, main_scene, false),
+        transparency_pass(buf, pool, main_scene, false),
         visualizer(buf, buf, pool, main_scene),
         dt(w, pool),
 
@@ -135,9 +136,26 @@ public:
             &tm,
             &postprocess_to_window
         }),
+        hybrid_pipeline({
+            &pcf,
+            &msm,
+            &clear_buf,
+            &gp,
+            &skybox,
+            &lp,
+            &sky,
+            &transparency_pass,
+            &sao,
+            &ssrt,
+            &bloom,
+            &tm,
+            &postprocess_to_window
+        }),
         texture_pipeline({&pcf, &msm, &dt})
     {
-        fp.render_transparent(false);
+        transparency_pass.render_transparent(true);
+        transparency_pass.render_opaque(false);
+        transparency_pass.set_stencil_draw(2);
         dt.set_texture(&linear_depth);
     }
 
@@ -152,6 +170,7 @@ public:
     pipeline* get_forward_pipeline() { return &forward_pipeline; }
     pipeline* get_visualizer_pipeline() { return &visualizer_pipeline; }
     pipeline* get_deferred_pipeline() { return &deferred_pipeline; }
+    pipeline* get_hybrid_pipeline() { return &hybrid_pipeline; }
     pipeline* get_texture_pipeline() { return &texture_pipeline; }
 
 private:
@@ -174,14 +193,15 @@ private:
     method::geometry_pass gp;
     method::lighting_pass lp;
     method::forward_pass fp;
+    method::forward_pass transparency_pass;
     method::visualize_gbuffer visualizer;
     method::draw_texture dt;
 
     method::sky sky;
     method::bloom bloom;
     method::tonemap tm;
-    method::ssrt ssrt;
     method::sao sao;
+    method::ssrt ssrt;
 
     method::blit_framebuffer postprocess_to_window;
     method::blit_framebuffer buf_to_window;
@@ -189,6 +209,7 @@ private:
     pipeline forward_pipeline;
     pipeline visualizer_pipeline;
     pipeline deferred_pipeline;
+    pipeline hybrid_pipeline;
     pipeline texture_pipeline;
 };
 
@@ -196,7 +217,7 @@ class game
 {
 public:
     game()
-        : win({ "dflowers", {1280, 720}, false, true, false }),
+        : win({ "dflowers", {1280, 720}, true, true, false }),
         resources(win, { "data/shaders/" })
     {
         win.set_framerate_limit(200);
@@ -290,7 +311,7 @@ public:
         );
 
         //pipelines->set_texture(&spot_shadow->get_moments());
-        current_pipeline = pipelines->get_deferred_pipeline();
+        current_pipeline = pipelines->get_hybrid_pipeline();
     }
 
     void setup_scene()
@@ -371,6 +392,8 @@ public:
                 if(e.key.keysym.sym == SDLK_3)
                     current_pipeline = pipelines->get_forward_pipeline();
                 if(e.key.keysym.sym == SDLK_4)
+                    current_pipeline = pipelines->get_hybrid_pipeline();
+                if(e.key.keysym.sym == SDLK_5)
                     current_pipeline = pipelines->get_texture_pipeline();
                 if(e.key.keysym.sym == SDLK_RETURN) paused = !paused;
                 if(e.key.keysym.sym == SDLK_t) measure_times = true;

@@ -27,7 +27,8 @@ method::forward_pass::forward_pass(
     render_target& target,
     resource_pool& pool,
     render_scene* scene,
-    bool apply_ambient
+    bool apply_ambient,
+    bool apply_transmittance
 ):  target_method(target),
     forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
@@ -36,6 +37,7 @@ method::forward_pass::forward_pass(
     min_max_shader(nullptr),
     scene(scene), gbuf(nullptr),
     opaque(true), transparent(true), apply_ambient(apply_ambient),
+    apply_transmittance(apply_transmittance),
     quad(common::ensure_quad_vertex_buffer(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
@@ -44,8 +46,11 @@ method::forward_pass::forward_pass(
     gbuffer& buf,
     resource_pool& pool,
     render_scene* scene,
-    bool apply_ambient
-):  forward_pass((render_target&)buf, pool, scene, apply_ambient)
+    bool apply_ambient,
+    bool apply_transmittance
+):  forward_pass(
+        (render_target&)buf, pool, scene, apply_ambient, apply_transmittance
+    )
 {
     min_max_shader = buf.get_min_max_shader(pool);
     gbuf = &buf;
@@ -562,21 +567,21 @@ static void depth_pass(
     }
 }
 
-void method::forward_pass::execute()
-{
-    target_method::execute();
-    if(!forward_shader || !scene)
-        return;
+static void render_forward_pass(
+    render_scene* scene,
+    bool opaque,
+    bool apply_ambient,
+    bool transmittance,
+    stencil_handler& stencil,
+    gbuffer* gbuf,
+    multishader* depth_shader,
+    multishader* forward_shader
+){
+    camera* cam = scene->get_camera();
+    if(!cam) return;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glStencilMask(0xFF);
-
-    camera* cam = scene->get_camera();
-    if(!cam) return;
 
     std::vector<bool> handled_point_lights(scene->point_light_count(), false);
     std::vector<bool> handled_spotlights(scene->spotlight_count(), false);
@@ -585,9 +590,8 @@ void method::forward_pass::execute()
     );
 
     shader::definition_map common_def({{"OUTPUT_LIGHTING", ""}});
-
-    if(!transparent) common_def["MIN_ALPHA"] = "1.0f";
-    if(!opaque) common_def["MAX_ALPHA"] = "1.0f";
+    if(opaque) common_def["MIN_ALPHA"] = "1.0f";
+    else common_def["MAX_ALPHA"] = "1.0f";
 
     shader::definition_map depth_def(common_def);
 
@@ -598,15 +602,25 @@ void method::forward_pass::execute()
         gbuf->update_definitions(depth_def);
     }
 
-    glDisable(GL_BLEND);
+    if(!opaque && transmittance)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    else
+    {
+        glDisable(GL_BLEND);
+    }
     glDepthFunc(GL_LEQUAL);
 
+    stencil.stencil_draw();
     depth_pass(depth_shader, scene, depth_def);
+    stencil.stencil_disable();
 
     if(gbuf) gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     render_shadowed_lights(
         forward_shader,
@@ -628,6 +642,41 @@ void method::forward_pass::execute()
         scene,
         common_def
     );
+}
+
+void method::forward_pass::execute()
+{
+    target_method::execute();
+    if(!forward_shader || !scene)
+        return;
+
+    if(opaque)
+    {
+        render_forward_pass(
+            scene,
+            true,
+            apply_ambient,
+            apply_transmittance,
+            *this,
+            gbuf,
+            depth_shader,
+            forward_shader
+        );
+    }
+
+    if(transparent)
+    {
+        render_forward_pass(
+            scene,
+            false,
+            apply_ambient,
+            apply_transmittance,
+            *this,
+            gbuf,
+            depth_shader,
+            forward_shader
+        );
+    }
 
     if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }

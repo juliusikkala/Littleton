@@ -37,6 +37,7 @@ src = [
   'src/common_resources.cc',
   'src/shadow_map.cc',
   'src/environment_map.cc',
+  'src/stencil_handler.cc',
   'src/method/clear.cc',
   'src/method/clear_gbuffer.cc',
   'src/method/fullscreen_effect.cc',

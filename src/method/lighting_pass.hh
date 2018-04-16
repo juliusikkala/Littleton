@@ -4,6 +4,7 @@
 #include "vertex_buffer.hh"
 #include "sampler.hh"
 #include "shadow_method.hh"
+#include "stencil_handler.hh"
 
 class gbuffer;
 class resource_pool;
@@ -13,7 +14,7 @@ class multishader;
 namespace method
 {
     class shadow_method;
-    class lighting_pass: public target_method
+    class lighting_pass: public target_method, public stencil_handler
     {
     public:
         lighting_pass(

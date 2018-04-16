@@ -1,6 +1,7 @@
 #ifndef METHOD_GEOMETRY_PASS_HH
 #define METHOD_GEOMETRY_PASS_HH
 #include "pipeline.hh"
+#include "stencil_handler.hh"
 
 class gbuffer;
 class sampler;
@@ -12,7 +13,7 @@ class resource_pool;
 
 namespace method
 {
-    class geometry_pass: public target_method
+    class geometry_pass: public target_method, public stencil_handler
     {
     public:
         geometry_pass(

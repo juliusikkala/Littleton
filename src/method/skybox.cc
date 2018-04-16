@@ -20,6 +20,7 @@ method::skybox::skybox(
     exposure(1.0f),
     quad(common::ensure_quad_vertex_buffer(pool))
 {
+    set_stencil_cull(0);
 }
 
 void method::skybox::set_scene(render_scene* s)
@@ -56,9 +57,8 @@ void method::skybox::execute()
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 0, 0xFF);
-    glStencilMask(0x00);
+
+    stencil_cull();
 
     sky_shader->bind();
 

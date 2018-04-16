@@ -2,6 +2,7 @@
 #define METHOD_SKYBOX_HH
 #include "pipeline.hh"
 #include "sampler.hh"
+#include "stencil_handler.hh"
 
 class shader;
 class resource_pool;
@@ -10,7 +11,7 @@ class vertex_buffer;
 
 namespace method
 {
-    class skybox: public target_method
+    class skybox: public target_method, public stencil_handler
     {
     public:
         skybox(

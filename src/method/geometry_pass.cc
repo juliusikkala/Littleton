@@ -46,10 +46,8 @@ void method::geometry_pass::execute()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glStencilMask(0xFF);
+
+    stencil_draw();
 
     camera* cam = scene->get_camera();
     if(!cam) return;

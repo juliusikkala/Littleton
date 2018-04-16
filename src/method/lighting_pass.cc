@@ -503,9 +503,8 @@ void method::lighting_pass::execute()
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 1, 0xFF);
-    glStencilMask(0x00);
+    
+    stencil_cull();
 
     if(cutoff > 0 && light_test != TEST_NONE)
     {
