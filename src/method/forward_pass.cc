@@ -148,7 +148,8 @@ static void render_pass(
     render_scene* scene,
     multishader* forward_shader,
     L* light,
-    S* sm
+    S* sm,
+    bool potentially_transparent_only
 ){
     camera* cam = scene->get_camera();
     glm::mat4 inv_view = cam->get_global_transform();
@@ -168,6 +169,8 @@ static void render_pass(
         for(model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
+            if(!group.mat->potentially_transparent() &&
+               potentially_transparent_only) continue;
 
             shader::definition_map def = scene_definitions;
             group.mat->update_definitions(def);
@@ -198,7 +201,8 @@ static void render_shadowed_lights(
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
     render_scene* scene,
-    const shader::definition_map& common
+    const shader::definition_map& common,
+    bool potentially_transparent_only
 ){
     // Directional shadows are a bit simpler to use since they are always bound
     // to only one light type, directional_light.
@@ -236,7 +240,8 @@ static void render_shadowed_lights(
             handled_directional_lights[it - directional_lights.begin()] = true;
 
             render_pass(
-                met, scene_definitions, scene, forward_shader, light, sm
+                met, scene_definitions, scene, forward_shader, light, sm,
+                potentially_transparent_only
             );
         }
     }
@@ -286,7 +291,8 @@ static void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_pass(
-                    met, point_definitions, scene, forward_shader, point, sm
+                    met, point_definitions, scene, forward_shader, point, sm,
+                    potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -294,7 +300,8 @@ static void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_pass(
-                    met, spot_definitions, scene, forward_shader, spot, sm
+                    met, spot_definitions, scene, forward_shader, spot, sm,
+                    potentially_transparent_only
                 );
             }
         }
@@ -334,7 +341,8 @@ static void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_pass(
-                    met, point_definitions, scene, forward_shader, point, sm
+                    met, point_definitions, scene, forward_shader, point, sm,
+                    potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -342,7 +350,8 @@ static void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_pass(
-                    met, spot_definitions, scene, forward_shader, spot, sm
+                    met, spot_definitions, scene, forward_shader, spot, sm,
+                    potentially_transparent_only
                 );
             }
         }
@@ -465,7 +474,8 @@ static void render_unshadowed_lights(
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
     render_scene* scene,
-    const shader::definition_map& common
+    const shader::definition_map& common,
+    bool potentially_transparent_only
 ){
     camera* cam = scene->get_camera();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
@@ -488,6 +498,8 @@ static void render_unshadowed_lights(
         for(model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
+            if(!group.mat->potentially_transparent() &&
+               potentially_transparent_only) continue;
 
             shader::definition_map def = scene_definitions;
             group.mat->update_definitions(def);
@@ -528,7 +540,8 @@ static void render_unshadowed_lights(
 static void depth_pass(
     multishader* depth_shader,
     render_scene* scene,
-    const shader::definition_map& common
+    const shader::definition_map& common,
+    bool potentially_transparent_only
 ){
     camera* cam = scene->get_camera();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
@@ -546,6 +559,8 @@ static void depth_pass(
         for(model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
+            if(!group.mat->potentially_transparent() &&
+               potentially_transparent_only) continue;
 
             shader::definition_map def(common);
             group.mat->update_definitions(def);
@@ -606,22 +621,61 @@ static void render_forward_pass(
         gbuf->update_definitions(depth_def);
     }
 
-    if(!opaque && transmittance)
+    glDisable(GL_BLEND);
+    glDepthFunc(GL_LEQUAL);
+
+    if(gbuf)
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+        if(!opaque)
+        {
+            glColorMaski(
+                gbuf->get_lighting_index(),
+                GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE
+            );
+        }
+
+        stencil.stencil_draw();
+        depth_pass(depth_shader, scene, depth_def, !opaque);
+        stencil.stencil_disable();
+
+        if(!opaque)
+        {
+            glColorMaski(
+                gbuf->get_lighting_index(),
+                GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE
+            );
+        }
+
+        gbuf->set_draw(gbuffer::DRAW_LIGHTING);
+        if(!opaque && transmittance)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunci(
+                gbuf->get_lighting_index(),
+                GL_ZERO,
+                GL_ONE_MINUS_SRC_ALPHA
+            );
+            depth_def.erase("OUTPUT_GEOMETRY");
+            depth_pass(depth_shader, scene, depth_def, !opaque);
+        }
     }
     else
     {
-        glDisable(GL_BLEND);
+        if(!opaque) glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+        stencil.stencil_draw();
+        depth_pass(depth_shader, scene, depth_def, !opaque);
+        stencil.stencil_disable();
+
+        if(!opaque) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+        if(!opaque && transmittance)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+            depth_pass(depth_shader, scene, depth_def, !opaque);
+        }
     }
-    glDepthFunc(GL_LEQUAL);
-
-    stencil.stencil_draw();
-    depth_pass(depth_shader, scene, depth_def);
-    stencil.stencil_disable();
-
-    if(gbuf) gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -632,7 +686,8 @@ static void render_forward_pass(
         handled_spotlights,
         handled_directional_lights,
         scene,
-        common_def
+        common_def,
+        !opaque
     );
 
     if(apply_ambient) common_def["APPLY_AMBIENT"];
@@ -644,7 +699,8 @@ static void render_forward_pass(
         handled_spotlights,
         handled_directional_lights,
         scene,
-        common_def
+        common_def,
+        !opaque
     );
 }
 

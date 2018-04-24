@@ -15,6 +15,8 @@ public:
     void update_definitions(shader::definition_map& def) const;
     void apply(shader* s);
 
+    bool potentially_transparent() const;
+
     using sampler_tex = std::pair<sampler*, texture*>;
 
     std::variant<sampler_tex, float> metallic;

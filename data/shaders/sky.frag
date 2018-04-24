@@ -132,7 +132,7 @@ void main(void)
     {
         if(t0 * dir.z < d) discard;
         t1 = max(t1 * dir.z, d) / dir.z;
-        out_color = sky_color(dir, t0, t1);
+        out_color = max(sky_color(dir, t0, t1), vec4(0));
     }
     else discard;
 }

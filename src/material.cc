@@ -148,3 +148,13 @@ void material::apply(shader* s)
         std::get<1>(subsurface_depth)
     );
 }
+
+bool material::potentially_transparent() const
+{
+    if(color.index() == 0)
+    {
+        sampler_tex tex = std::get<0>(color);
+        if(tex.second) return tex.second->get_external_format() == GL_RGBA;
+        return false;
+    } else return std::get<1>(color).a < 1.0f;
+}

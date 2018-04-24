@@ -82,8 +82,6 @@ void method::ssrt::set_thickness(float thickness)
 void method::ssrt::use_fallback_cubemap(bool use)
 {
     this->fallback_cubemap = use;
-
-    refresh_shader();
 }
 
 void method::ssrt::execute()
@@ -138,8 +136,13 @@ void method::ssrt::execute()
     environment_map* skybox = scene->get_skybox();
     if(fallback_cubemap && skybox)
     {
+        ssrt_shader->set("fallback_cubemap", true);
         ssrt_shader->set("inv_view", cam->get_global_transform());
         ssrt_shader->set("env", cubemap_sampler.bind(*skybox, 5));
+    }
+    else
+    {
+        ssrt_shader->set("fallback_cubemap", false);
     }
 
     quad.draw();
