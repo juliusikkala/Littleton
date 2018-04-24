@@ -12,6 +12,7 @@ uniform float thickness;
 uniform float near;
 uniform float roughness_cutoff;
 uniform float brdf_cutoff;
+uniform float ray_offset;
 uniform int ray_max_steps;
 out vec4 out_color;
 
@@ -53,7 +54,7 @@ void main(void)
         vec3 intersection;
         float fade = min(
             4.0f*cast_ray(
-                in_linear_depth, o, d, proj,
+                in_linear_depth, o, d, proj, ray_offset,
                 ray_max_steps, thickness, near, tp
             ),
             1.0f
@@ -63,11 +64,7 @@ void main(void)
             texture(env, (inv_view * vec4(-d, 0)).xyz) : 
             vec4(0);
         if(fade == 0.0f && !fallback_cubemap) discard;
-        else
-        {
-            color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
-            out_color = vec4(color.rgb * att, surface_color.a);
-        }
+        else color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
         out_color = vec4(color.rgb * att, surface_color.a);
     }
 }

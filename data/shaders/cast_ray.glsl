@@ -19,12 +19,15 @@ float cast_ray(
     vec3 origin,
     vec3 dir,
     mat4 proj,
+    float ray_offset,
     float ray_steps,
     float thickness,
     float near,
     out vec2 p
 ){
     float len = (origin.z + dir.z > near) ? (near - origin.z) / dir.z : 1.0f; 
+
+    origin += ray_offset * dir;
 
     vec3 end = origin + dir * len;
 
@@ -55,8 +58,6 @@ float cast_ray(
     float hyperbolize_mul = -2.0f * clip_info.x/clip_info.y;
     float hyperbolize_constant = -clip_info.z/clip_info.y;
 
-    for(int i = 0; i < 3; ++i) step_ray(p, s, d, sd, level_size);
-
     while(
         level >= RAY_MIN_LEVEL &&
         level <= RAY_MAX_LEVEL &&
@@ -70,7 +71,7 @@ float cast_ray(
 
         // TODO: Make sure sample doesn't fall outside texture,
         // that can cause artifacts
-#ifdef INFINITE_THICKNESS
+#ifdef DEPTH_INFINITE_THICKNESS
         depth.x = texelFetch(linear_depth, ivec2(p), level).x;
         depth.x = hyperbolize_mul/depth.x + hyperbolize_constant;
 

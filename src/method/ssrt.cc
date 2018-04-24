@@ -41,6 +41,7 @@ method::ssrt::ssrt(
     thickness(-1.0f),
     roughness_cutoff(0.5f),
     brdf_cutoff(0.0f),
+    ray_offset(0.01f),
     fallback_cubemap(false)
 {
     set_thickness();
@@ -77,6 +78,11 @@ void method::ssrt::set_thickness(float thickness)
     }
 
     refresh_shader();
+}
+
+void method::ssrt::set_ray_offset(float offset)
+{
+    ray_offset = offset;
 }
 
 void method::ssrt::use_fallback_cubemap(bool use)
@@ -132,6 +138,7 @@ void method::ssrt::execute()
     ssrt_shader->set("thickness", thickness);
     ssrt_shader->set("roughness_cutoff", roughness_cutoff);
     ssrt_shader->set("brdf_cutoff", brdf_cutoff);
+    ssrt_shader->set("ray_offset", ray_offset);
 
     environment_map* skybox = scene->get_skybox();
     if(fallback_cubemap && skybox)
@@ -172,8 +179,7 @@ void method::ssrt::refresh_shader()
             std::to_string(max_mipmap_index(get_target().get_size()))
         }
     };
-    if(thickness < 0.0f) def["INFINITE_THICKNESS"];
-    if(fallback_cubemap) def["FALLBACK_CUBEMAP"];
+    if(thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
 
     ssrt_shader = ssrt_shaders->get(def);
 }

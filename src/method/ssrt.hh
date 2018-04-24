@@ -34,6 +34,8 @@ namespace method
         void set_brdf_cutoff(float cutoff = 0.0f);
         // Set to negative for infinite depth (faster)
         void set_thickness(float thickness = -1.0f);
+        // Distance of the first sample from the point where the ray starts
+        void set_ray_offset(float offset = 0.01f);
 
         void use_fallback_cubemap(bool use = true);
 
@@ -62,6 +64,7 @@ namespace method
         float thickness;
         float roughness_cutoff;
         float brdf_cutoff;
+        float ray_offset;
         bool fallback_cubemap;
     };
 }
