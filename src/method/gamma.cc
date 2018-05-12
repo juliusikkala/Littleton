@@ -14,7 +14,7 @@ method::gamma::gamma(
     gamma_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "gamma.frag"}, {})
     ),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }

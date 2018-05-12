@@ -1,18 +1,20 @@
 project(
   'DarkFlowers',
-  'cpp',
+  ['cpp', 'c'],
   default_options : ['cpp_std=c++1z', 'buildtype=debugoptimized']
 )
 
 src = [
   'lib/stb_image.c',
+  'lib/tiny_gltf.cc',
   'src/main.cc',
   'src/window.cc',
   'src/resource.cc',
   'src/resource_pool.cc',
   'src/shader_pool.cc',
   'src/framebuffer_pool.cc',
-  'src/vertex_buffer.cc',
+  'src/gpu_buffer.cc',
+  'src/primitive.cc',
   'src/shader.cc',
   'src/texture.cc',
   'src/material.cc',
@@ -61,9 +63,6 @@ src = [
   'src/method/ssrt.cc',
 ]
 
-dfoutils_sp = subproject('DFOUtils', default_options : ['buildtype=release'])
-dfo_dep = dfoutils_sp.get_variable('dfo_dep')
-
 cc = meson.get_compiler('cpp')
 m_dep = cc.find_library('m', required : false)
 sdl2_dep = dependency('sdl2')
@@ -78,7 +77,6 @@ executable(
   'dflowers',
   src,
   dependencies: [
-    dfo_dep,
     m_dep,
     sdl2_dep,
     glew_dep,

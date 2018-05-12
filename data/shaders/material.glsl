@@ -1,89 +1,59 @@
 struct material_t
 {
-#ifdef MATERIAL_COLOR_CONSTANT
-    vec4 color;
-#elif defined(MATERIAL_COLOR_TEXTURE)
+    vec4 color_factor;
+#ifdef MATERIAL_COLOR_TEXTURE
     sampler2D color;
 #endif
 
-#ifdef MATERIAL_METALLIC_CONSTANT
-    float metallic;
-#elif defined(MATERIAL_METALLIC_TEXTURE)
-    sampler2D metallic;
-#endif
-
-#ifdef MATERIAL_ROUGHNESS_CONSTANT
-    float roughness;
-#elif defined(MATERIAL_ROUGHNESS_TEXTURE)
-    sampler2D roughness;
+    float metallic_factor;
+    float roughness_factor;
+#ifdef MATERIAL_METALLIC_ROUGHNESS_TEXTURE
+    sampler2D metallic_roughness;
 #endif
 
 #ifdef MATERIAL_NORMAL_TEXTURE
     sampler2D normal;
 #endif
 
-#ifdef MATERIAL_EMISSION_CONSTANT
-    float emission;
-#elif defined(MATERIAL_EMISSION_TEXTURE)
+    float f0;
+
+    vec3 emission_factor;
+#ifdef MATERIAL_EMISSION_TEXTURE
     sampler2D emission;
 #endif
-
-    float f0;
 };
 
 uniform material_t material;
 
 vec4 get_material_color()
 {
-#ifdef MATERIAL_COLOR_CONSTANT
-    return material.color;
-#elif defined(MATERIAL_COLOR_TEXTURE)
+#ifdef MATERIAL_COLOR_TEXTURE
     return texture(
         material.color,
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
         f_in.uv
 #else
         vec2(0.0f)
 #endif
-    );
+    ) * material.color_factor;
 #else
-    return vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    return material.color_factor;
 #endif
 }
 
-float get_material_metallic()
+vec2 get_material_metallic_roughness()
 {
-#ifdef MATERIAL_METALLIC_CONSTANT
-    return material.metallic;
-#elif defined(MATERIAL_METALLIC_TEXTURE)
+#ifdef MATERIAL_METALLIC_ROUGHNESS_TEXTURE
     return texture(
-        material.metallic,
-#ifdef VERTEX_UV
+        material.metallic_roughness,
+#ifdef VERTEX_UV0
         f_in.uv
 #else
         vec2(0.0f)
 #endif
-    ).x;
+    ).yz * vec2(material.metallic_factor, material.roughness_factor);
 #else
-    return 0.0f;
-#endif
-}
-
-float get_material_roughness()
-{
-#ifdef MATERIAL_ROUGHNESS_CONSTANT
-    return material.roughness;
-#elif defined(MATERIAL_ROUGHNESS_TEXTURE)
-    return texture(
-        material.roughness,
-#ifdef VERTEX_UV
-        f_in.uv
-#else
-        vec2(0.0f)
-#endif
-    ).x;
-#else
-    return 0.0f;
+    return vec2(material.metallic_factor, material.roughness_factor);
 #endif
 }
 
@@ -92,30 +62,28 @@ vec3 get_material_normal()
 {
     return normalize(texture(
         material.normal,
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
         f_in.uv
 #else
         vec2(0.0f)
 #endif
-    ).xyz*2.0f-1.0f);
+    ).xyz * 2.0f - 1.0f);
 }
 #endif
 
-float get_material_emission()
+vec3 get_material_emission()
 {
-#ifdef MATERIAL_EMISSION_CONSTANT
-    return material.emission;
-#elif defined(MATERIAL_EMISSION_TEXTURE)
+#ifdef MATERIAL_EMISSION_TEXTURE
     return texture(
         material.emission,
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
         f_in.uv
 #else
         vec2(0.0f)
 #endif
-    ).x;
+    ).xyz * material.emission_factor;
 #else
-    return 0.0f;
+    return material.emission_factor;
 #endif
 }
 

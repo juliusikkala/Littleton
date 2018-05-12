@@ -1,7 +1,7 @@
 #ifndef METHOD_DRAW_TEXTURE_HH
 #define METHOD_DRAW_TEXTURE_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 
 class texture;
@@ -28,7 +28,7 @@ namespace method
         std::string get_name() const override;
 
     private:
-        const vertex_buffer& quad;
+        const primitive& quad;
         sampler color_sampler;
 
         shader* draw_shader;

@@ -1,7 +1,7 @@
 #ifndef METHOD_TONEMAP_HH
 #define METHOD_TONEMAP_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 
 class texture;
@@ -29,7 +29,7 @@ namespace method
     private:
         texture* src;
         shader* tonemap_shader;
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
 
         float exposure;

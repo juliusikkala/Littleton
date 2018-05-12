@@ -10,7 +10,7 @@ method::fullscreen_effect::fullscreen_effect(
     resource_pool& pool,
     shader* effect
 ): target_method(target), effect(effect),
-   quad(common::ensure_quad_vertex_buffer(pool))
+   quad(common::ensure_quad_primitive(pool))
 {}
 
 method::fullscreen_effect::~fullscreen_effect() { }

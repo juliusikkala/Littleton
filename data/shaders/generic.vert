@@ -33,7 +33,7 @@ void main(void)
 #endif
 #endif
 
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
     v_out.uv = v_uv;
 #endif
 }

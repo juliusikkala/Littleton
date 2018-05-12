@@ -75,9 +75,10 @@ void main(void)
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
     vec3 view_dir = normalize(-f_in.position);
-    float roughness = get_material_roughness();
-    float emission = get_material_emission();
-    float metallic = get_material_metallic();
+    vec3 emission = get_material_emission();
+    vec2 metallic_roughness = get_material_metallic_roughness();
+    float metallic = metallic_roughness.x;
+    float roughness = metallic_roughness.y;
     float f0 = get_material_f0();
 
 #ifdef OUTPUT_GEOMETRY
@@ -226,7 +227,7 @@ void main(void)
     color.rgb += surface_color.rgb * ambient;
 #endif
 #ifdef APPLY_EMISSION
-    color.rgb += surface_color.rgb * emission;
+    color.rgb += emission;
 #endif
 
     out_lighting = color;

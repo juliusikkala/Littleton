@@ -2,159 +2,75 @@
 #include "texture.hh"
 #include "shader.hh"
 
-material::material(): ior(1.0) {}
+material::material()
+:   color_factor(glm::vec4(1.0f)),
+    color_texture(nullptr, nullptr),
+    metallic_factor(0.0f),
+    roughness_factor(1.0f),
+    metallic_roughness_texture(nullptr, nullptr),
+    normal_factor(1.0f),
+    normal_texture(nullptr, nullptr),
+    ior(1.45f),
+    emission_factor(0.0f),
+    emission_texture(nullptr, nullptr)
+{}
 
-template<typename T>
-static void update_texture_variant_def(
+static void update_def(
     shader::definition_map& def,
-    const T& v,
-    const char* constant_key,
-    const char* texture_key
+    const material::sampler_tex& v,
+    const char* key
 ){
-    if(v.index() == 0)
-    {
-        def.erase(constant_key);
-        material::sampler_tex tex = std::get<0>(v);
-        if(tex.first && tex.second) def[texture_key];
-        else def.erase(texture_key);
-    }
-    else
-    {
-        def.erase(texture_key);
-        def[constant_key];
-    }
+    if(v.first == nullptr) def.erase(key);
+    else def[key];
 }
 
 void material::update_definitions(shader::definition_map& def) const
 {
-    update_texture_variant_def(
+    update_def(def, color_texture, "MATERIAL_COLOR_TEXTURE");
+    update_def(
         def,
-        metallic,
-        "MATERIAL_METALLIC_CONSTANT",
-        "MATERIAL_METALLIC_TEXTURE"
+        metallic_roughness_texture,
+        "MATERIAL_METALLIC_ROUGHNESS_TEXTURE"
     );
-
-    update_texture_variant_def(
-        def,
-        color,
-        "MATERIAL_COLOR_CONSTANT",
-        "MATERIAL_COLOR_TEXTURE"
-    );
-
-    update_texture_variant_def(
-        def,
-        roughness,
-        "MATERIAL_ROUGHNESS_CONSTANT",
-        "MATERIAL_ROUGHNESS_TEXTURE"
-    );
-
-    if(normal.first && normal.second) def["MATERIAL_NORMAL_TEXTURE"];
-    else def.erase("MATERIAL_NORMAL_TEXTURE");
-
-    update_texture_variant_def(
-        def,
-        emission,
-        "MATERIAL_EMISSION_CONSTANT",
-        "MATERIAL_EMISSION_TEXTURE"
-    );
-
-    update_texture_variant_def(
-        def,
-        subsurface_scattering,
-        "MATERIAL_SUBSURFACE_SCATTERING_CONSTANT",
-        "MATERIAL_SUBSURFACE_SCATTERING_TEXTURE"
-    );
-
-    update_texture_variant_def(
-        def,
-        subsurface_depth,
-        "MATERIAL_SUBSURFACE_DEPTH_CONSTANT",
-        "MATERIAL_SUBSURFACE_DEPTH_TEXTURE"
-    );
+    update_def(def, normal_texture, "MATERIAL_NORMAL_TEXTURE");
+    update_def(def, emission_texture, "MATERIAL_EMISSION_TEXTURE");
 }
 
-void material::apply(shader* s)
+void material::apply(shader* s) const
 {
-    if(metallic.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(metallic);
-        if(tex.first && tex.second)
-        {
-            s->set("material.metallic", tex.first->bind(*tex.second, 0));
-        }
-    } else s->set("material.metallic", std::get<1>(metallic));
+    s->set("material.color_factor", color_factor);
+    if(color_texture.first) s->set(
+        "material.color",
+        color_texture.first->bind(*color_texture.second, 0)
+    );
 
-    if(color.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(color);
-        if(tex.first && tex.second)
-        {
-            s->set("material.color", tex.first->bind(*tex.second, 1));
-        }
-    } else s->set("material.color", std::get<1>(color));
+    s->set("material.metallic_factor", metallic_factor);
+    s->set("material.roughness_factor", roughness_factor);
+    if(metallic_roughness_texture.first) s->set(
+        "material.metallic_roughness",
+        metallic_roughness_texture.first->bind(
+            *metallic_roughness_texture.second,
+            1
+        )
+    );
 
-    if(roughness.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(roughness);
-        if(tex.first && tex.second)
-        {
-            s->set("material.roughness", tex.first->bind(*tex.second, 2));
-        }
-    } else s->set("material.roughness", std::get<1>(roughness));
-
-    if(normal.first && normal.second)
-    {
-        s->set("material.normal", normal.first->bind(*normal.second, 3));
-    }
+    s->set("material.normal_factor", normal_factor);
+    if(normal_texture.first) s->set(
+        "material.normal",
+        normal_texture.first->bind(*normal_texture.second, 2)
+    );
 
     s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
 
-    if(emission.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(emission);
-        if(tex.first && tex.second)
-        {
-            s->set("material.emission", tex.first->bind(*tex.second, 4));
-        }
-    } else s->set("material.emission", std::get<1>(emission));
-
-    if(subsurface_scattering.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(subsurface_scattering);
-        if(tex.first && tex.second)
-        {
-            s->set(
-                "material.subsurface_scattering",
-                tex.first->bind(*tex.second, 5)
-            );
-        }
-    } else s->set(
-        "material.subsurface_scattering",
-        std::get<1>(subsurface_scattering)
-    );
-
-    if(subsurface_depth.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(subsurface_depth);
-        if(tex.first && tex.second)
-        {
-            s->set(
-                "material.subsurface_depth",
-                tex.first->bind(*tex.second, 6)
-            );
-        }
-    } else s->set(
-        "material.subsurface_depth",
-        std::get<1>(subsurface_depth)
+    s->set("material.emission_factor", emission_factor);
+    if(emission_texture.first) s->set(
+        "material.emission",
+        emission_texture.first->bind(*emission_texture.second, 3)
     );
 }
 
 bool material::potentially_transparent() const
 {
-    if(color.index() == 0)
-    {
-        sampler_tex tex = std::get<0>(color);
-        if(tex.second) return tex.second->get_external_format() == GL_RGBA;
-        return false;
-    } else return std::get<1>(color).a < 1.0f;
+    return color_factor.a < 1.0f || (color_texture.second && 
+        color_texture.second->get_external_format() == GL_RGBA);
 }

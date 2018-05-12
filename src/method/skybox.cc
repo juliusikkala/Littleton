@@ -1,7 +1,7 @@
 #include "skybox.hh"
 #include "common_resources.hh"
 #include "scene.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "shader.hh"
 #include "resource_pool.hh"
 #include "environment_map.hh"
@@ -18,7 +18,7 @@ method::skybox::skybox(
     scene(scene),
     skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     exposure(1.0f),
-    quad(common::ensure_quad_vertex_buffer(pool))
+    quad(common::ensure_quad_primitive(pool))
 {
     set_stencil_cull(0);
 }

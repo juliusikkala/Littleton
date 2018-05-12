@@ -2,7 +2,7 @@
 #define METHOD_SKY_HH
 #include "pipeline.hh"
 #include "transformable.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 
 class texture;
@@ -72,7 +72,7 @@ namespace method
         render_scene* scene;
         texture* depth_buffer;
         const sampler& depth_sampler;
-        const vertex_buffer& quad;
+        const primitive& quad;
 
         transformable_node origin_node;
         unsigned view_samples, light_samples;

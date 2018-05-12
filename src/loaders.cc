@@ -1,287 +1,404 @@
 #include "loaders.hh"
 #include "resource_pool.hh"
 #include "scene_graph.hh"
-#include "dfo.h"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "texture.hh"
 #include "material.hh"
 #include "model.hh"
 #include "object.hh"
+#include "tiny_gltf.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <stdexcept>
 #include <memory>
 #include <map>
 
-class dfo_file_wrapper
-{
-public:
-    dfo_file_wrapper(const std::string& path)
+static void load_gltf_node(
+    resource_pool& pool,
+    tinygltf::Model& model,
+    tinygltf::Scene& scene,
+    tinygltf::Node& node,
+    scene_graph& graph,
+    bool ignore_duplicates,
+    transformable_node* parent = nullptr
+){
+    // TODO: Add camera support to scene graph
+    if(node.mesh == -1) return;
+
+    object obj;
+    obj.set_parent(parent);
+
+    // Set transformation for object
+    if(node.matrix.size())
+        obj.set_transform(glm::make_mat4(node.matrix.data()));
+    else
     {
-        if(!dfo_open_file(&file, path.c_str(), 0))
-        {
-            throw std::runtime_error("Failed to open " + path);
-        }
+        if(node.translation.size())
+            obj.set_position(glm::make_vec3(node.translation.data()));
+
+        if(node.scale.size())
+            obj.set_scaling(glm::make_vec3(node.scale.data()));
+
+        if(node.rotation.size())
+            obj.set_orientation(glm::make_quat(node.rotation.data()));
     }
 
-    ~dfo_file_wrapper()
+    tinygltf::Mesh& mesh = model.meshes[node.mesh];
+    obj.set_model(pool.get_model(mesh.name));
+
+    // Add object to graph
+    object* obj_ref = graph.add_object(
+        node.name,
+        std::move(obj),
+        ignore_duplicates
+    );
+
+    // Load child nodes
+    for(int node_index: node.children)
     {
-        dfo_close(&file);
+        load_gltf_node(
+            pool,
+            model,
+            scene,
+            model.nodes[node_index],
+            graph,
+            ignore_duplicates,
+            obj_ref
+        );
     }
+}
 
-    const dfo_file* get_file() const
+static material::sampler_tex get_material_texture_parameter(
+    resource_pool& pool,
+    tinygltf::Model& model,
+    tinygltf::ParameterMap& values,
+    const std::string& name,
+    float* scale = nullptr
+){
+    auto it = values.find(name);
+    if(it != values.end())
     {
-        return &file;
+        tinygltf::Parameter& param = it->second;
+        tinygltf::Texture& tex = model.textures[param.TextureIndex()];
+        tinygltf::Sampler& sampler = model.samplers[tex.sampler];
+        tinygltf::Image& image = model.images[tex.source];
+        if(scale)
+        {
+            auto it = param.json_double_value.find("scale");
+            if(it != param.json_double_value.end())
+                *scale = it->second;
+            else
+                *scale = 1.0f;
+        }
+        return material::sampler_tex(
+            pool.get_sampler(sampler.name),
+            pool.get_texture(image.name)
+        );
     }
-private:
-    dfo_file file;
-};
+    if(scale) *scale = 0;
+    return material::sampler_tex(nullptr, nullptr);
+}
 
-class vertex_buffer_dfo: public vertex_buffer
-{
-public:
-    vertex_buffer_dfo(
-        context& ctx,
-        const std::shared_ptr<dfo_file_wrapper>& res,
-        dfo_buffer* buf
-    ): vertex_buffer(ctx), res(res), buf(buf) {}
-
-protected:
-    void load_impl() const override
+static glm::vec4 get_material_factor_parameter(
+    tinygltf::ParameterMap& values,
+    const std::string& name,
+    glm::vec4 fallback = glm::vec4(1)
+){
+    auto it = values.find(name);
+    if(it != values.end())
     {
-        if(vao) return;
-
-        float* vertices = nullptr;
-        uint32_t* indices = new uint32_t[buf->index_count];
-
-        if(buf->type == DFO_VERTEX_PN)
-        {
-            vertices = new float[6 * buf->vertex_count];
-
-            if(!dfo_read_buffer(res->get_file(), buf, vertices, indices))
-            {
-                delete [] vertices;
-                delete [] indices;
-                throw std::runtime_error("Failed to read DFO buffer");
-            }
-        }
-        else if(buf->type == DFO_VERTEX_PNT)
-        {
-            vertices = new float[12 * buf->vertex_count];
-
-            if(!dfo_read_buffer_tangent(
-                res->get_file(),
-                buf,
-                12,
-                vertices, vertices+3, vertices+6, vertices+10,
-                indices
-            )){
-                delete [] vertices;
-                delete [] indices;
-                throw std::runtime_error("Failed to read DFO buffer");
-            }
-        }
+        tinygltf::Parameter& param = it->second;
+        if(param.has_number_value) return glm::vec4(param.number_value);
         else
         {
-            throw std::runtime_error(
-                "Unknown DFO buffer type " + std::to_string((int)buf->type)
+            return glm::vec4(
+                param.number_array[0],
+                param.number_array[1],
+                param.number_array[2],
+                param.number_array.size() == 4 ? param.number_array[3] : 1.0f
             );
         }
-
-        basic_load(
-            (vertex_buffer::vertex_type)buf->type,
-            buf->vertex_count,
-            vertices,
-            buf->index_count,
-            indices
-        );
-
-        delete [] vertices;
-        delete [] indices;
     }
-
-    void unload_impl() const override
-    {
-        basic_unload();
-    }
-
-private:
-    std::shared_ptr<dfo_file_wrapper> res;
-    dfo_buffer* buf;
-};
-
-static glm::vec4 dfo_rgba_to_vec4(dfo_rgba rgba)
-{
-    return glm::vec4(rgba.r, rgba.g, rgba.b, rgba.a) / 255.0f;
+    return fallback;
 }
 
-static GLint dfo_interpolation_to_gl(dfo_interpolation_type interpolation)
-{
-    switch(interpolation)
+template<typename T>
+static void ensure_gltf_uniquely_named(
+    std::vector<T>& array,
+    const std::string& prefix
+){
+    unsigned index = 0;
+    for(T& item: array)
     {
-    case DFO_INTERPOLATE_NEAREST:
-        return GL_NEAREST;
-    case DFO_INTERPOLATE_LINEAR:
-        return GL_LINEAR_MIPMAP_LINEAR;
-    default:
-        throw std::runtime_error("Unknown DFO interpolation type!");
+        if(item.name == "")
+            item.name = prefix + "[" + std::to_string(index++) + "]";
     }
 }
 
-static GLint dfo_extension_to_gl(dfo_extension_type extension)
-{
-    switch(extension)
-    {
-    case DFO_EXTENSION_REPEAT:
-        return GL_REPEAT;
-    case DFO_EXTENSION_CLAMP:
-        return GL_CLAMP_TO_EDGE;
-    case DFO_EXTENSION_CLIP:
-        return GL_CLAMP_TO_BORDER;
-    default:
-        throw std::runtime_error("Unknown DFO extension type!");
-    }
-}
-
-void load_dfo(
+std::unordered_map<std::string, scene_graph> load_gltf(
     resource_pool& pool,
-    scene_graph& graph,
-    const std::string& dfo_path,
+    const std::string& path,
     const std::string& data_prefix,
     bool ignore_duplicates
 ){
-    std::shared_ptr<dfo_file_wrapper> res(new dfo_file_wrapper(dfo_path));
-
-    const dfo_file* file = res->get_file();
-
-    // Add all vertex buffers
-    std::map<dfo_buffer*, vertex_buffer*> vertex_buffers;
+    std::unordered_map<std::string, scene_graph> scenes;
     context& ctx = pool.get_context();
 
-    for(uint32_t i = 0; i < file->buffer_count; ++i)
+    std::string err;
+    tinygltf::Model model;
+    tinygltf::TinyGLTF loader;
+
+    if(!loader.LoadBinaryFromFile(&model, &err, path))
     {
-        dfo_buffer* buf = file->buffer_table[i];
-        vertex_buffers[buf] = pool.add_vertex_buffer(
-            dfo_path + "/buffer_" + std::to_string(i),
-            new vertex_buffer_dfo(ctx, res, buf)
+        throw std::runtime_error(err);
+    }
+
+    ensure_gltf_uniquely_named(model.accessors, path+"/unnamed_accessor");
+    ensure_gltf_uniquely_named(model.animations, path+"/unnamed_animation");
+    ensure_gltf_uniquely_named(model.buffers, path+"/unnamed_buffer");
+    ensure_gltf_uniquely_named(model.bufferViews, path+"/unnamed_buffer_view");
+    ensure_gltf_uniquely_named(model.materials, path+"/unnamed_material");
+    ensure_gltf_uniquely_named(model.meshes, path+"/unnamed_mesh");
+    ensure_gltf_uniquely_named(model.nodes, path+"/unnamed_node");
+    ensure_gltf_uniquely_named(model.images, path+"/unnamed_image");
+    ensure_gltf_uniquely_named(model.skins, path+"/unnamed_skin");
+    ensure_gltf_uniquely_named(model.samplers, path+"/unnamed_sampler");
+    ensure_gltf_uniquely_named(model.cameras, path+"/unnamed_camera");
+    ensure_gltf_uniquely_named(model.scenes, path+"/unnamed_scene");
+    ensure_gltf_uniquely_named(model.lights, path+"/unnamed_light");
+
+    // Add samplers
+    for(tinygltf::Sampler& s: model.samplers)
+    {
+        if(ignore_duplicates && pool.contains_sampler(s.name))
+            continue;
+
+        pool.add_sampler(
+            s.name,
+            new sampler(ctx, s.magFilter, s.minFilter, s.wrapS)
         );
     }
 
-    // Add all textures
-    std::map<dfo_texture*, material::sampler_tex> textures;
-
-    for(uint32_t i = 0; i < file->texture_count; ++i)
+    // Add textures
+    for(tinygltf::Image& image: model.images)
     {
-        dfo_texture* tex = file->texture_table[i];
-        if(ignore_duplicates && pool.contains_texture(tex->name)) continue;
+        if(ignore_duplicates && pool.contains_texture(image.name))
+            continue;
 
-        GLint interpolation = dfo_interpolation_to_gl(tex->interpolation);
-        GLint extension = dfo_extension_to_gl(tex->extension);
+        if(image.bufferView != -1)
+        {// Embedded image
+            GLint format;
 
-        material::sampler_tex sampler_texture(
-            pool.add_sampler(
-                std::string(tex->name) + "_sampler",
-                new sampler(
-                    ctx,
-                    interpolation,
-                    interpolation,
-                    extension
-                )
-            ),
+            switch(image.component)
+            {
+            case 1:
+                format = GL_R8;
+                break;
+            case 2:
+                format = GL_RG8;
+                break;
+            default:
+            case 3:
+                format = GL_SRGB8;
+                break;
+            case 4:
+                format = GL_SRGB8_ALPHA8;
+                break;
+            }
+
             pool.add_texture(
-                tex->name,
+                image.name,
                 texture::create(
                     ctx,
-                    data_prefix.empty() ? 
-                        tex->path :
-                        data_prefix + "/" + tex->path,
-                    tex->type == DFO_TEX_SRGB_COLOR
+                    glm::uvec2(image.width, image.height),
+                    format,
+                    GL_UNSIGNED_BYTE,
+                    0,
+                    GL_TEXTURE_2D,
+                    image.image.size(),
+                    image.image.data()
                 )
-            )
-        );
-
-        textures[tex] = sampler_texture;
-
+            );
+        }
+        else
+        {// URI
+            pool.add_texture(
+                image.name,
+                texture::create(ctx, image.uri, true)
+            );
+        }
     }
 
-    // Add all materials
-    std::map<dfo_material*, material*> materials;
-
-    for(uint32_t i = 0; i < file->material_count; ++i)
+    // Add materials
+    for(tinygltf::Material& mat: model.materials)
     {
-        dfo_material* mat = file->material_table[i];
-        if(ignore_duplicates && pool.contains_material(mat->name)) continue;
+        if(ignore_duplicates && pool.contains_texture(mat.name))
+            continue;
 
         material* m = new material;
 
-        if(mat->metallic_type == DFO_COMPONENT_CONSTANT)
-            m->metallic = mat->metallic.value;
-        else if(mat->metallic.tex)
-            m->metallic = textures.at(mat->metallic.tex);
+        m->color_factor = get_material_factor_parameter(
+            mat.values, "baseColorFactor"
+        );
+        m->color_texture = get_material_texture_parameter(
+            pool, model, mat.values, "baseColorTexture"
+        );
 
-        if(mat->color_type == DFO_COMPONENT_CONSTANT)
-            m->color = dfo_rgba_to_vec4(mat->color.value);
-        else if(mat->color.tex)
-            m->color = textures.at(mat->color.tex);
+        m->metallic_factor = get_material_factor_parameter(
+            mat.values, "metallicFactor"
+        ).x;
 
-        if(mat->roughness_type == DFO_COMPONENT_CONSTANT)
-            m->roughness = mat->roughness.value;
-        else if(mat->roughness.tex)
-            m->roughness = textures.at(mat->roughness.tex);
+        m->roughness_factor = get_material_factor_parameter(
+            mat.values, "roughnessFactor"
+        ).x;
 
-        m->ior = mat->ior;
-        m->normal = textures[mat->normal];
+        m->metallic_roughness_texture = get_material_texture_parameter(
+            pool, model, mat.values, "metallicRoughnessTexture"
+        );
 
-        if(mat->emission_type == DFO_COMPONENT_CONSTANT)
-            m->emission = mat->emission.value;
-        else if(mat->emission.tex)
-            m->emission = textures.at(mat->emission.tex);
+        m->normal_texture = get_material_texture_parameter(
+            pool, model, mat.additionalValues, "normalTexture",
+            &m->normal_factor
+        );
 
-        if(mat->subsurface_scattering_type == DFO_COMPONENT_CONSTANT)
-            m->subsurface_scattering =
-                dfo_rgba_to_vec4(mat->subsurface_scattering.value);
-        else if(mat->subsurface_scattering.tex)
-            m->subsurface_scattering =
-                textures.at(mat->subsurface_scattering.tex);
+        m->ior = 1.45f;
 
-        if(mat->subsurface_depth_type == DFO_COMPONENT_CONSTANT)
-            m->subsurface_depth = mat->subsurface_depth.value;
-        else if(mat->subsurface_depth.tex)
-            m->subsurface_depth = textures.at(mat->subsurface_depth.tex);
+        m->emission_factor = get_material_factor_parameter(
+            mat.additionalValues, "emissiveFactor", glm::vec4(0)
+        );
 
-        materials[mat] = pool.add_material(mat->name, m);
+        m->emission_texture = get_material_texture_parameter(
+            pool, model, mat.additionalValues, "emissiveTexture"
+        );
+
+        pool.add_material(mat.name, m);
     }
 
-    // Add all models.
-    std::map<dfo_model*, model*> models;
-
-    for(uint32_t i = 0; i < file->model_count; ++i)
+    // Load buffers
+    for(tinygltf::BufferView& view: model.bufferViews)
     {
-        dfo_model* mod = file->model_table[i];
-
-        model* m = new model;
-        for(uint32_t j = 0; j < mod->group_count; ++j)
+        tinygltf::Buffer& buf = model.buffers[view.buffer];
+        if(view.target == 0)
         {
-            dfo_vertex_group* group = mod->group_table + j;
+            // For some reason, the Blender glTF2 plugin exports a targetless
+            // bufferView when using .glb (not when using .gltf). As far as I
+            // know, it seems to be completely unused...
+            continue;
+        }
+        pool.add_gpu_buffer(
+            view.name,
+            gpu_buffer::create(
+                ctx,
+                view.target,
+                view.byteLength,
+                buf.data.data() + view.byteOffset
+            )
+        );
+    }
+
+    // Load models
+    for(tinygltf::Mesh& mesh: model.meshes)
+    {
+        ::model* m = new ::model();
+
+        unsigned primitive_index = 0;
+        for(tinygltf::Primitive& p: mesh.primitives)
+        {
+            tinygltf::Accessor& indices_accessor = model.accessors[p.indices];
+
+            tinygltf::BufferView& indices_view =
+                model.bufferViews[indices_accessor.bufferView];
+            const gpu_buffer* indices_buf =
+                pool.get_gpu_buffer(indices_view.name);
+
+            gpu_buffer_accessor indices_gpu_accessor(
+                *indices_buf,
+                indices_accessor.type,
+                indices_accessor.componentType,
+                indices_accessor.normalized,
+                indices_accessor.ByteStride(indices_view),
+                indices_accessor.byteOffset
+            );
+
+            std::map<primitive::attribute, gpu_buffer_accessor> attribs;
+            const std::map<
+                std::string,
+                primitive::attribute
+            > known_attributes = {
+                {"POSITION", primitive::POSITION},
+                {"NORMAL", primitive::NORMAL},
+                {"TANGENT", primitive::TANGENT},
+                {"TEXCOORD_0", primitive::UV0},
+                {"TEXCOORD_1", primitive::UV1},
+                {"TEXCOORD_2", primitive::UV2},
+                {"TEXCOORD_3", primitive::UV3}
+            };
+
+            unsigned user_index = primitive::USER_INDEX;
+
+            for(const auto& pair: p.attributes)
+            {
+                tinygltf::Accessor& accessor = model.accessors[pair.second];
+                tinygltf::BufferView& view =
+                    model.bufferViews[accessor.bufferView];
+                const gpu_buffer* buf = pool.get_gpu_buffer(view.name);
+                
+                primitive::attribute attrib;
+                auto it = known_attributes.find(pair.first);
+                if(it == known_attributes.end())
+                    attrib = primitive::attribute{
+                        user_index++, "VERTEX_" + pair.first
+                    };
+                else attrib = it->second;
+
+                attribs[attrib] = gpu_buffer_accessor(
+                    *buf,
+                    accessor.type,
+                    accessor.componentType,
+                    accessor.normalized,
+                    accessor.ByteStride(view),
+                    accessor.byteOffset
+                );
+            }
+
+            primitive* prim = pool.add_primitive(
+                mesh.name + "[" + std::to_string(primitive_index++) + "]",
+                primitive::create(
+                    ctx,
+                    indices_accessor.count,
+                    p.mode,
+                    indices_gpu_accessor,
+                    attribs
+                )
+            );
+
             m->add_vertex_group(
-                materials.at(group->material),
-                vertex_buffers.at(group->buffer)
+                p.material < 0 ?
+                    nullptr :
+                    pool.get_material(model.materials[p.material].name),
+                prim
             );
         }
 
-        models[mod] = pool.add_model(mod->name, m);
+        pool.add_model(mesh.name, m);
     }
 
-    // Add objects.
-    std::map<dfo_object*, object*> objects;
-    for(uint32_t i = 0; i < file->object_count; ++i)
+    // Add objects
+    for(tinygltf::Scene& scene: model.scenes)
     {
-        dfo_object* obj = file->object_table[i];
+        scene_graph& graph = scenes[scene.name];
 
-        object o;
-        if(obj->parent) o.set_parent(objects.at(obj->parent));
-        if(obj->model) o.set_model(models.at(obj->model));
-        o.set_transform(glm::make_mat4(obj->transform));
-
-        objects[obj] = graph.add_object(obj->name, std::move(o));
+        for(int node_index: scene.nodes)
+        {
+            load_gltf_node(
+                pool,
+                model,
+                scene,
+                model.nodes[node_index],
+                graph,
+                ignore_duplicates
+            );
+        }
     }
+
+    return scenes;
 }

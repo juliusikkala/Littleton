@@ -6,8 +6,8 @@ size_t model::group_count() const
 }
 
 void model::add_vertex_group(
-    material* mat,
-    vertex_buffer* mesh
+    const material* mat,
+    const primitive* mesh
 ){
     groups.emplace_back(vertex_group{mat, mesh});
 }
@@ -27,12 +27,22 @@ model::iterator model::begin()
     return groups.begin();
 }
 
+model::const_iterator model::begin() const
+{
+    return groups.begin();
+}
+
 model::const_iterator model::cbegin() const
 {
     return groups.cbegin();
 }
 
 model::iterator model::end()
+{
+    return groups.end();
+}
+
+model::const_iterator model::end() const
 {
     return groups.end();
 }

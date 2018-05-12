@@ -1,7 +1,7 @@
 #ifndef METHOD_VISUALIZE_GBUFFER_HH
 #define METHOD_VISUALIZE_GBUFFER_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "shader.hh"
 #include "sampler.hh"
 
@@ -54,7 +54,7 @@ namespace method
 
         multishader* visualize_shader;
         render_scene* scene;
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;        
 
         std::vector<visualizer> visualizers;

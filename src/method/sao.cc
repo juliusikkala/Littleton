@@ -32,7 +32,7 @@ method::sao::sao(
     scene(scene),
     radius(radius), samples(samples), bias(bias), intensity(intensity),
     ao(get_context(), target.get_size(), GL_R8),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     mipmap_sampler(
         get_context(),
@@ -157,10 +157,7 @@ void method::sao::execute()
     get_target().bind();
 
     ambient_shader->bind();
-    ambient_shader->set(
-        "in_color_emission",
-        fb_sampler.bind(*buf->get_color_emission(), 0)
-    );
+    ambient_shader->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
 
     ambient_shader->set("ambient", scene->get_ambient());
     ambient_shader->set("occlusion", fb_sampler.bind(ao.output(), 1));

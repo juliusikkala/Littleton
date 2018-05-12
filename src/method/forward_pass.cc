@@ -8,7 +8,7 @@
 #include "multishader.hh"
 #include "resource_pool.hh"
 #include "scene.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "shadow_map.hh"
 #include "gbuffer.hh"
 #include "shadow_method.hh"
@@ -38,7 +38,7 @@ method::forward_pass::forward_pass(
     scene(scene), gbuf(nullptr),
     opaque(true), transparent(true), apply_ambient(apply_ambient),
     apply_transmittance(apply_transmittance),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
 
@@ -158,7 +158,7 @@ static void render_pass(
 
     for(object* obj: scene->get_objects())
     {
-        model* mod = obj->get_model();
+        const model* mod = obj->get_model();
         if(!mod) continue;
 
         glm::mat4 m = obj->get_global_transform();
@@ -166,7 +166,7 @@ static void render_pass(
         glm::mat3 n_m(glm::inverseTranspose(mv));
         glm::mat4 mvp = p * mv;
 
-        for(model::vertex_group& group: *mod)
+        for(const model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
             if(!group.mat->potentially_transparent() &&
@@ -488,14 +488,14 @@ static void render_unshadowed_lights(
 
     for(object* obj: scene->get_objects())
     {
-        model* mod = obj->get_model();
+        const model* mod = obj->get_model();
         if(!mod) continue;
 
         glm::mat4 mv = v * obj->get_global_transform();
         glm::mat3 n_m(glm::inverseTranspose(mv));
         glm::mat4 mvp = p * mv;
 
-        for(model::vertex_group& group: *mod)
+        for(const model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
             if(!group.mat->potentially_transparent() &&
@@ -549,14 +549,14 @@ static void depth_pass(
 
     for(object* obj: scene->get_objects())
     {
-        model* mod = obj->get_model();
+        const model* mod = obj->get_model();
         if(!mod) continue;
 
         glm::mat4 mv = v * obj->get_global_transform();
         glm::mat3 n_m(glm::inverseTranspose(mv));
         glm::mat4 mvp = p * mv;
 
-        for(model::vertex_group& group: *mod)
+        for(const model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
             if(!group.mat->potentially_transparent() &&

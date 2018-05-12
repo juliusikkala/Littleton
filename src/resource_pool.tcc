@@ -8,15 +8,38 @@ template<typename T>
 generic_resource_pool<T>::~generic_resource_pool() { }
 
 template<typename T>
-T* generic_resource_pool<T>::add(const std::string& name, T* tex)
-{
+T* generic_resource_pool<T>::add(
+    const std::string& name,
+    T* tex,
+    bool ignore_duplicate
+){
+    auto it = resources.find(name);
+    if(it != resources.end())
+    {
+        if(ignore_duplicate)
+        {
+            delete tex;
+            return it->second.get();
+        }
+        else throw std::runtime_error("Resource " + name + " already exists!");
+    }
     resources.emplace(name, tex);
     return tex;
 }
 
 template<typename T>
-T* generic_resource_pool<T>::add(const std::string& name, T&& tex)
-{
+T* generic_resource_pool<T>::add(
+    const std::string& name,
+    T&& tex,
+    bool ignore_duplicate
+){
+    auto it = resources.find(name);
+    if(it != resources.end())
+    {
+        if(ignore_duplicate) return it->second.get();
+        else throw std::runtime_error("Resource " + name + " already exists!");
+    }
+
     T* new_tex = new T(std::move(tex));
     resources.emplace(name, new_tex);
     return new_tex;
@@ -42,6 +65,15 @@ bool generic_resource_pool<T>::contains(const std::string& name)
 {
     auto it = resources.find(name);
     return it != resources.end();
+}
+
+template<typename T>
+void generic_resource_pool<T>::load_all()
+{
+    for(auto& pair: resources)
+    {
+        pair.second->load();
+    }
 }
 
 template<typename T>

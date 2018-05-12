@@ -64,7 +64,7 @@ method::ssao::ssao(
         common::ensure_spherical_random_texture(pool, glm::uvec2(4))
     ),
     kernel(generate_ssao_kernel(get_context(), samples)),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     noise_sampler(get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
@@ -170,10 +170,7 @@ void method::ssao::execute()
     get_target().bind();
 
     ambient_shader->bind();
-    ambient_shader->set(
-        "in_color_emission",
-        fb_sampler.bind(*buf->get_color_emission(), 0)
-    );
+    ambient_shader->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
 
     ambient_shader->set("ambient", scene->get_ambient());
     ambient_shader->set("occlusion", fb_sampler.bind(ssao_buffer.output(), 2));

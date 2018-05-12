@@ -9,7 +9,7 @@ class multishader;
 class shader;
 class gbuffer;
 class sampler;
-class vertex_buffer;
+class primitive;
 
 namespace method
 {
@@ -68,7 +68,7 @@ namespace method
 
         bool apply_ambient;
         bool apply_transmittance;
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
     };
 }

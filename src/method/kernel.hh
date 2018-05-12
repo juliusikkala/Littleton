@@ -1,7 +1,7 @@
 #ifndef METHOD_KERNEL_HH
 #define METHOD_KERNEL_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 
 class texture;
 class resource_pool;
@@ -34,7 +34,7 @@ namespace method
     private:
         texture* src;
         shader* kernel_shader;
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
         glm::mat3 k;
     };

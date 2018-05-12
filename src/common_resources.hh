@@ -15,7 +15,12 @@ namespace common
 
     // Adds vertex buffer "common_quad", a square buffer with coordinates at
     // (1,1), (1,-1), (-1,1) and (-1,-1).
-    const vertex_buffer& ensure_quad_vertex_buffer(vertex_buffer_pool& pool);
+    const primitive& ensure_quad_primitive(
+        primitive_pool& prim_pool,
+        gpu_buffer_pool& buf_pool
+    );
+
+    const primitive& ensure_quad_primitive(resource_pool& pool);
 
     // Adds texture "circular_random_<size.x>x<size.y>", a texture with
     // random 2d unit vectors.

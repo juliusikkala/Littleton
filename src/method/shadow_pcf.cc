@@ -230,13 +230,13 @@ void method::shadow_pcf::execute()
 
             for(object* obj: scene->get_objects())
             {
-                model* mod = obj->get_model();
+                const model* mod = obj->get_model();
                 if(!mod) continue;
 
                 glm::mat4 mvp = vp * obj->get_global_transform();
                 depth_shader->set("mvp", mvp);
 
-                for(model::vertex_group& group: *mod)
+                for(const model::vertex_group& group: *mod)
                 {
                     if(!group.mesh) continue;
 
@@ -272,14 +272,14 @@ void method::shadow_pcf::execute()
 
             for(object* obj: scene->get_objects())
             {
-                model* mod = obj->get_model();
+                const model* mod = obj->get_model();
                 if(!mod) continue;
 
                 glm::mat4 m = obj->get_global_transform();
                 cubemap_depth_shader->set("m", m);
                 cubemap_depth_shader->set("mvp", m);
 
-                for(model::vertex_group& group: *mod)
+                for(const model::vertex_group& group: *mod)
                 {
                     if(!group.mesh) continue;
 
@@ -310,7 +310,7 @@ void method::shadow_pcf::execute()
 
             for(object* obj: scene->get_objects())
             {
-                model* mod = obj->get_model();
+                const model* mod = obj->get_model();
                 if(!mod) continue;
 
                 glm::mat4 m = obj->get_global_transform();
@@ -318,7 +318,7 @@ void method::shadow_pcf::execute()
                 perspective_depth_shader->set("m", m);
                 perspective_depth_shader->set("mvp", mvp);
 
-                for(model::vertex_group& group: *mod)
+                for(const model::vertex_group& group: *mod)
                 {
                     if(!group.mesh) continue;
 

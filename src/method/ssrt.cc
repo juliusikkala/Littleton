@@ -28,7 +28,7 @@ method::ssrt::ssrt(
         shader::path{"fullscreen.vert", "blit_texture.frag"}, {}
     )),
     scene(scene),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     mipmap_sampler(
         pool.get_context(),
@@ -101,8 +101,8 @@ void method::ssrt::execute()
     texture* lighting = buf->get_lighting();
     texture* normal = buf->get_normal();
     texture* material = buf->get_material();
-    texture* color_emission = buf->get_color_emission();
-    if(!linear_depth || !lighting || !normal || !material || !color_emission)
+    texture* color = buf->get_color();
+    if(!linear_depth || !lighting || !normal || !material || !color)
         return;
 
     glDisable(GL_DEPTH_TEST);
@@ -127,7 +127,7 @@ void method::ssrt::execute()
     ssrt_shader->set("in_lighting", fb_sampler.bind(*lighting, 1));
     ssrt_shader->set("in_normal", fb_sampler.bind(*normal, 2));
     ssrt_shader->set("in_material", fb_sampler.bind(*material, 3));
-    ssrt_shader->set("in_color_emission", fb_sampler.bind(*color_emission, 4));
+    ssrt_shader->set("in_color", fb_sampler.bind(*color, 4));
 
     ssrt_shader->set("proj", p);
     ssrt_shader->set("projection_info", cam->get_projection_info());

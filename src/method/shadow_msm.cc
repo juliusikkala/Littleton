@@ -31,7 +31,7 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
     horizontal_blur_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blur.frag"}, {{"HORIZONTAL", ""}}
     )),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     moment_sampler(
        pool.get_context(),
        GL_LINEAR,
@@ -130,7 +130,7 @@ static void render_single(
     L* msm,
     resource_pool& pool,
     render_scene* scene,
-    const vertex_buffer& quad,
+    const primitive& quad,
     shader* depth_shader,
     shader* horizontal_blur_shader,
     shader* vertical_blur_shader,
@@ -174,7 +174,7 @@ static void render_single(
 
     for(object* obj: scene->get_objects())
     {
-        model* mod = obj->get_model();
+        const model* mod = obj->get_model();
         if(!mod) continue;
 
         glm::mat4 m = obj->get_global_transform();
@@ -182,7 +182,7 @@ static void render_single(
         depth_shader->set("m", m);
         depth_shader->set("mvp", mvp);
 
-        for(model::vertex_group& group: *mod)
+        for(const model::vertex_group& group: *mod)
         {
             if(!group.mesh) continue;
 
@@ -264,6 +264,8 @@ void method::shadow_msm::execute()
     if(directional_shadow_maps)
     {
         depth_shader->bind();
+        //TODO: Handle transparency correctly by setting the material.
+        depth_shader->set("material.color_factor", glm::vec4(1.0f));
         for(directional_shadow_map* sm: *directional_shadow_maps)
         {
             directional_shadow_map_msm* msm =
@@ -284,6 +286,8 @@ void method::shadow_msm::execute()
     if(perspective_shadow_maps)
     {
         perspective_depth_shader->bind();
+        //TODO: Handle transparency correctly by setting the material.
+        perspective_depth_shader->set("material.color_factor", glm::vec4(1.0f));
         for(perspective_shadow_map* sm: *perspective_shadow_maps)
         {
             perspective_shadow_map_msm* msm =
@@ -310,6 +314,8 @@ void method::shadow_msm::execute()
         glEnable(GL_DEPTH_TEST);
 
         cubemap_depth_shader->bind();
+        //TODO: Handle transparency correctly by setting the material.
+        cubemap_depth_shader->set("material.color_factor", glm::vec4(1.0f));
 
         for(omni_shadow_map* sm: *omni_shadow_maps)
         {
@@ -335,14 +341,14 @@ void method::shadow_msm::execute()
 
             for(object* obj: scene->get_objects())
             {
-                model* mod = obj->get_model();
+                const model* mod = obj->get_model();
                 if(!mod) continue;
 
                 glm::mat4 m = obj->get_global_transform();
                 cubemap_depth_shader->set("m", m);
                 cubemap_depth_shader->set("mvp", m);
 
-                for(model::vertex_group& group: *mod)
+                for(const model::vertex_group& group: *mod)
                 {
                     if(!group.mesh) continue;
 

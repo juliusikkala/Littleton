@@ -1,7 +1,7 @@
 #ifndef METHOD_BLOOM_HH
 #define METHOD_BLOOM_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 
 class texture;
@@ -54,7 +54,7 @@ namespace method
         unsigned level;
         std::vector<float> gaussian_kernel;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         sampler smooth_sampler;
     };
 }

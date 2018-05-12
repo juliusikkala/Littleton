@@ -7,7 +7,7 @@
 class shader;
 class resource_pool;
 class render_scene;
-class vertex_buffer;
+class primitive;
 
 namespace method
 {
@@ -36,7 +36,7 @@ namespace method
         sampler skybox_sampler;
         float exposure;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
     };
 }
 #endif

@@ -38,7 +38,7 @@ method::kernel::kernel(
     kernel_shader(
         pool.get_shader(shader::path{"fullscreen.vert", "kernel.frag"}, {})
     ),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     k(k) 
 {

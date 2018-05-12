@@ -1,7 +1,7 @@
 #ifndef METHOD_FULLSCREEN_EFFECT_HH
 #define METHOD_FULLSCREEN_EFFECT_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include <map>
 #include <string>
 
@@ -31,7 +31,7 @@ namespace method
 
     private:
         shader* effect;
-        const vertex_buffer& quad;
+        const primitive& quad;
     };
 }
 

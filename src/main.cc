@@ -29,6 +29,7 @@
 #include "helpers.hh"
 #include "gbuffer.hh"
 #include "doublebuffer.hh"
+#include "common_resources.hh"
 #include <iostream>
 #include <algorithm>
 #include <glm/gtc/random.hpp>
@@ -42,7 +43,7 @@ public:
         resource_pool& pool,
         render_scene* main_scene
     ):  normal(w, resolution, GL_RG16_SNORM, GL_UNSIGNED_BYTE),
-        color_emission(w, resolution, GL_RGBA8, GL_UNSIGNED_BYTE),
+        color(w, resolution, GL_RGB8, GL_UNSIGNED_BYTE),
         material(w, resolution, GL_RGBA8, GL_UNSIGNED_BYTE),
         lighting(w, resolution, GL_RGB16F, GL_FLOAT),
         linear_depth(w, resolution, GL_RG16F, GL_FLOAT),
@@ -52,7 +53,7 @@ public:
             w,
             resolution,
             &normal,
-            &color_emission,
+            &color,
             &material,
             &lighting,
             &linear_depth,
@@ -66,8 +67,8 @@ public:
         pcf(pool, main_scene),
         msm(pool, main_scene),
 
-        gp(buf, pool, main_scene),
-        lp(buf, buf, pool, main_scene, false),
+        gp(buf, pool, main_scene, false),
+        lp(buf, buf, pool, main_scene),
         fp(buf, pool, main_scene, false),
         transparency_pass(buf, pool, main_scene, false),
         visualizer(buf, buf, pool, main_scene),
@@ -155,8 +156,11 @@ public:
     {
         transparency_pass.render_transparent(true);
         transparency_pass.render_opaque(false);
+        ssrt.set_thickness(0.5f);
+        ssrt.set_ray_offset(0.1f);
+        // TODO: Fix when this is false
         ssrt.use_fallback_cubemap(true);
-        dt.set_texture(&linear_depth);
+        dt.set_texture(&material);
     }
 
     method::shadow_msm& get_msm() { return msm; }
@@ -175,7 +179,7 @@ public:
 
 private:
     texture normal;
-    texture color_emission;
+    texture color;
     texture material;
     texture lighting;
     texture linear_depth;
@@ -232,8 +236,11 @@ public:
 
     void load()
     {
-        load_dfo(resources, graph, "data/test_scene.dfo", "data");
-        load_dfo(resources, graph, "data/earth.dfo", "data");
+        auto scenes = load_gltf(resources, "data/test_scene.glb", "data");
+        for(const auto& pair: scenes) graph.merge(pair.second);
+
+        scenes = load_gltf(resources, "data/earth.glb", "data");
+        for(const auto& pair: scenes) graph.merge(pair.second);
 
         environment.reset(environment_map::create(
             win, "data/environment/venice.hdr"
@@ -310,7 +317,7 @@ public:
             )
         );
 
-        //pipelines->set_texture(&spot_shadow->get_moments());
+        pipelines->set_texture(&spot_shadow->get_moments());
         current_pipeline = pipelines->get_hybrid_pipeline();
     }
 

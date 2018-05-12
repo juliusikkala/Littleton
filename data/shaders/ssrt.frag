@@ -36,10 +36,10 @@ void main(void)
     vec3 view = normalize(-o);
     vec3 d = normalize(reflect(-view, normal));
 
-    vec4 surface_color = decode_color_emission(uv);
+    vec3 surface_color = decode_color(uv);
     vec3 att = brdf_reflection(
         d,
-        surface_color.rgb,
+        surface_color,
         view,
         normal,
         roughness,
@@ -65,6 +65,6 @@ void main(void)
             vec4(0);
         if(fade == 0.0f && !fallback_cubemap) discard;
         else color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
-        out_color = vec4(color.rgb * att, surface_color.a);
+        out_color = vec4(color.rgb * att, 1.0f);
     }
 }

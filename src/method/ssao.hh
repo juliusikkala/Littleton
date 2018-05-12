@@ -1,7 +1,7 @@
 #ifndef METHOD_SSAO_HH
 #define METHOD_SSAO_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 #include "doublebuffer.hh"
 #include "resource.hh"
@@ -64,7 +64,7 @@ namespace method
         const texture& random_rotation;
         std::unique_ptr<texture> kernel;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
         sampler noise_sampler;
     };

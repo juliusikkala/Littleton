@@ -1,7 +1,7 @@
 #ifndef METHOD_SAO_HH
 #define METHOD_SAO_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 #include "shadow_method.hh"
 #include "framebuffer.hh"
@@ -62,7 +62,7 @@ namespace method
 
         doublebuffer ao;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
         sampler mipmap_sampler;
     };

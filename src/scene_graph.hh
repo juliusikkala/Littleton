@@ -14,12 +14,20 @@ public:
     scene_graph();
     scene_graph(scene_graph&& other);
 
-    object* add_object(const std::string& name, object&& obj);
+    object* add_object(
+        const std::string& name,
+        object&& obj,
+        bool ignore_if_exists = false
+    );
+    bool has_object(const std::string& name);
+
     object* get_object(const std::string& name);
     const object* get_object(const std::string& name) const;
     void remove_object(const std::string& name);
 
     void add_to_scene(render_scene* scene);
+
+    void merge(const scene_graph& other);
 
 private:
     std::unordered_map<std::string, object> objects;

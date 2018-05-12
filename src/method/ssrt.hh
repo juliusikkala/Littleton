@@ -1,7 +1,7 @@
 #ifndef METHOD_SSRT_HH
 #define METHOD_SSRT_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 #include "doublebuffer.hh"
 #include "resource.hh"
@@ -55,7 +55,7 @@ namespace method
 
         render_scene* scene;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
         sampler mipmap_sampler;
         sampler cubemap_sampler;

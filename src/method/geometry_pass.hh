@@ -8,7 +8,7 @@ class sampler;
 class render_scene;
 class multishader;
 class shader;
-class vertex_buffer;
+class primitive;
 class resource_pool;
 
 namespace method
@@ -19,11 +19,15 @@ namespace method
         geometry_pass(
             gbuffer& buf,
             resource_pool& store,
-            render_scene* scene
+            render_scene* scene,
+            bool apply_ambient = true
         );
 
         void set_scene(render_scene* scene);
         render_scene* get_scene() const;
+
+        void set_apply_ambient(bool apply_ambient);
+        bool get_apply_ambient() const;
 
         void execute() override;
 
@@ -33,8 +37,10 @@ namespace method
         multishader* geometry_shader;
         shader* min_max_shader;
         render_scene* scene;
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
+
+        bool apply_ambient;
     };
 };
 #endif

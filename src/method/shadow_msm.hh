@@ -9,7 +9,7 @@
 
 class resource_pool;
 class shader;
-class vertex_buffer;
+class primitive;
 namespace method { class shadow_msm; }
 
 class directional_shadow_map_msm: public directional_shadow_map
@@ -162,7 +162,7 @@ namespace method
         shader* vertical_blur_shader;
         shader* horizontal_blur_shader;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         sampler moment_sampler;
         sampler cubemap_moment_sampler;
     };

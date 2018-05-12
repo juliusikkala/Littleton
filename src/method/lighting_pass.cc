@@ -15,15 +15,13 @@ method::lighting_pass::lighting_pass(
     gbuffer& buf,
     resource_pool& pool,
     render_scene* scene,
-    bool apply_ambient,
     float cutoff
 ):  target_method(target), buf(&buf),
     lighting_shader(pool.get_shader(
         shader::path{"generic.vert", "lighting.frag"}
     )),
-    scene(scene), apply_ambient(apply_ambient), cutoff(cutoff),
-    light_test(TEST_NEAR), visualize_light_volumes(false),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    scene(scene), cutoff(cutoff), light_test(TEST_NEAR),
+    visualize_light_volumes(false), quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
@@ -57,16 +55,6 @@ method::lighting_pass::depth_test
 method::lighting_pass::get_light_depth_test() const
 {
     return light_test;
-}
-
-void method::lighting_pass::set_apply_ambient(bool apply_ambient)
-{
-    this->apply_ambient = apply_ambient;
-}
-
-bool method::lighting_pass::get_apply_ambient() const
-{
-    return apply_ambient;
 }
 
 void method::lighting_pass::set_visualize_light_volumes(bool visualize)
@@ -201,7 +189,7 @@ static void render_shadowed(
     const camera* cam,
     float cutoff,
     method::lighting_pass::depth_test light_test,
-    const vertex_buffer& quad
+    const primitive& quad
 ){
     for(const auto& pair: shadows)
     {
@@ -251,7 +239,7 @@ static void render_shadowed(
     const camera* cam,
     float cutoff,
     method::lighting_pass::depth_test light_test,
-    const vertex_buffer& quad
+    const primitive& quad
 ){
     for(const auto& pair: shadows)
     {
@@ -296,7 +284,7 @@ static void render_point_lights(
     render_scene* scene,
     float cutoff,
     method::lighting_pass::depth_test light_test,
-    const vertex_buffer& quad,
+    const primitive& quad,
     bool visualize_light_volumes
 ){
     const std::vector<point_light*>& lights = 
@@ -354,7 +342,7 @@ static void render_spotlights(
     render_scene* scene,
     float cutoff,
     method::lighting_pass::depth_test light_test,
-    const vertex_buffer& quad,
+    const primitive& quad,
     bool visualize_light_volumes
 ){
     const std::vector<spotlight*>& lights = scene->get_spotlights();
@@ -409,7 +397,7 @@ static void render_directional_lights(
     gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
-    const vertex_buffer& quad
+    const primitive& quad
 ){
     const std::vector<directional_light*>& lights = 
         scene->get_directional_lights();
@@ -470,29 +458,6 @@ static void render_directional_lights(
     }
 }
 
-static void render_emission(
-    gbuffer* buf,
-    multishader* lighting_shader,
-    const vertex_buffer& quad,
-    const glm::vec3& ambient,
-    const camera* cam
-){
-    shader::definition_map def({{"EMISSION", ""}});
-    quad.update_definitions(def);
-
-    shader* s = lighting_shader->get(def);
-    s->bind();
-
-    set_gbuf(s, buf, cam);
-    s->set("ambient", ambient);
-
-    glm::mat4 m = glm::mat4(1.0f);
-    s->set("m", m);
-    s->set("mvp", m);
-
-    quad.draw();
-}
-
 void method::lighting_pass::execute()
 {
     target_method::execute();
@@ -542,13 +507,6 @@ void method::lighting_pass::execute()
     }
 
     render_directional_lights(buf, lighting_shader, scene, quad);
-
-    render_emission(
-        buf, lighting_shader,
-        quad,
-        apply_ambient ? scene->get_ambient() : glm::vec3(0),
-        scene->get_camera()
-    );
 }
 
 std::string method::lighting_pass::get_name() const

@@ -10,7 +10,7 @@
 class directional_shadow_map_pcf;
 class resource_pool;
 class shader;
-class vertex_buffer;
+class primitive;
 namespace method { class shadow_pcf; }
 
 class directional_shadow_map_pcf: public directional_shadow_map

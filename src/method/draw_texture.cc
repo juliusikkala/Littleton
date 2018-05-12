@@ -9,7 +9,7 @@ method::draw_texture::draw_texture(
     resource_pool& pool,
     texture* tex
 ):  target_method(target),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     color_sampler(
         target.get_context(),
         GL_LINEAR,

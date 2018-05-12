@@ -10,7 +10,7 @@ in VERTEX_OUT {
     vec3 bitangent;
 #endif
 #endif
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
     vec2 uv;
 #endif
 } g_in[];
@@ -27,7 +27,7 @@ out VERTEX_OUT {
     vec3 bitangent;
 #endif
 #endif
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
     vec2 uv;
 #endif
 } g_out;

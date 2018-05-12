@@ -7,7 +7,7 @@
 
 class sampler;
 class shader_pool;
-class vertex_buffer;
+class primitive;
 
 class gbuffer: public render_target
 {
@@ -17,7 +17,7 @@ public:
         context& ctx,
         glm::uvec2 size,
         texture* normal = nullptr,
-        texture* color_emission = nullptr,
+        texture* color = nullptr,
         texture* material = nullptr,
         texture* lighting = nullptr,
         texture* linear_depth = nullptr,
@@ -27,7 +27,7 @@ public:
     ~gbuffer();
 
     texture* get_normal() const;
-    texture* get_color_emission() const;
+    texture* get_color() const;
     texture* get_material() const;
     texture* get_linear_depth() const;
     texture* get_lighting() const;
@@ -35,7 +35,7 @@ public:
 
     // -1 if not bound on drawBuffers
     int get_normal_index() const;
-    int get_color_emission_index() const;
+    int get_color_index() const;
     int get_material_index() const;
     int get_linear_depth_index() const;
     int get_lighting_index() const;
@@ -62,7 +62,7 @@ public:
     // Warning: modifies OpenGL state variables
     void render_depth_mipmaps(
         shader* min_max,
-        const vertex_buffer& quad,
+        const primitive& quad,
         const sampler& fb_sampler
     );
 
@@ -70,16 +70,15 @@ private:
     draw_mode mode;
 
     texture* normal;
-    texture* color_emission;
-    texture* material;//roughness, metallic, ior, subsurface depth
-    //texture* subsurface;
+    texture* color;
+    texture* material;//roughness, metallic, ior
     texture* linear_depth;
     texture* lighting;
     texture* depth_stencil;
     GLuint depth_stencil_rbo;
 
     int normal_index;
-    int color_emission_index;
+    int color_index;
     int material_index;
     int linear_depth_index;
     int lighting_index;

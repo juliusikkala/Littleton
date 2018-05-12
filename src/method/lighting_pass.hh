@@ -1,7 +1,7 @@
 #ifndef METHOD_LIGHTING_PASS_HH
 #define METHOD_LIGHTING_PASS_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include "sampler.hh"
 #include "shadow_method.hh"
 #include "stencil_handler.hh"
@@ -22,7 +22,6 @@ namespace method
             gbuffer& buf,
             resource_pool& pool,
             render_scene* scene,
-            bool apply_ambient = true,
             float cutoff = 5/256.0f // Set to negative to not use light volumes
         );
 
@@ -42,9 +41,6 @@ namespace method
         void set_light_depth_test(depth_test test);
         depth_test get_light_depth_test() const;
 
-        void set_apply_ambient(bool apply_ambient);
-        bool get_apply_ambient() const;
-
         void set_visualize_light_volumes(bool visualize);
 
         void execute() override;
@@ -57,12 +53,11 @@ namespace method
         multishader* lighting_shader;
         render_scene* scene;
 
-        bool apply_ambient;
         float cutoff;
         depth_test light_test;
         bool visualize_light_volumes;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
     };
 }

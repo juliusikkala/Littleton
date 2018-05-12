@@ -17,7 +17,7 @@ method::visualize_gbuffer::visualize_gbuffer(
         shader::path{"fullscreen.vert", "visualize.frag"}
     )),
     scene(scene),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     visualizers({POSITION, NORMAL, COLOR, MATERIAL})
 {
@@ -51,7 +51,7 @@ static void render_visualizer(
     const gbuffer* buf,
     method::visualize_gbuffer::visualizer v,
     multishader* ms,
-    const vertex_buffer& quad,
+    const primitive& quad,
     camera* cam
 ){
     shader* s;

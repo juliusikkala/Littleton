@@ -2,19 +2,13 @@
 #include "depth.glsl"
 #include "projection.glsl"
 
-uniform sampler2D in_color_emission;
+uniform sampler2D in_color;
 uniform sampler2D in_normal;
 uniform sampler2D in_material;
 
-vec4 decode_color_emission(vec2 uv)
+vec3 decode_color(vec2 uv)
 {
-    vec4 d = texture(in_color_emission, uv);
-    return vec4(d.rgb, 1.0f/d.w - 1.0f);
-}
-
-vec3 decode_color_only(vec2 uv)
-{
-    return texture(in_color_emission, uv).rgb;
+    return texture(in_color, uv).rgb;
 }
 
 vec3 decode_normal(vec2 uv)

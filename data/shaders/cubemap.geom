@@ -22,7 +22,7 @@ void main(void)
             g_out.tangent = g_in[i].tangent;
             g_out.bitangent = g_in[i].bitangent;
 #endif
-#ifdef VERTEX_UV
+#ifdef VERTEX_UV0
             g_out.uv = g_in[i].uv;
 #endif
 

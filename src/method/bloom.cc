@@ -24,7 +24,7 @@ method::bloom::bloom(
         shader::path{"fullscreen.vert", "blend_texture.frag"}, {}
     )),
     threshold(threshold), radius(radius), strength(strength), level(level),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     smooth_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE)
 {
     set_radius(radius);

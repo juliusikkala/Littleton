@@ -31,7 +31,7 @@ method::sky::sky(
     scene(scene),
     depth_buffer(depth_buffer),
     depth_sampler(common::ensure_depth_sampler(pool)),
-    quad(common::ensure_quad_vertex_buffer(pool)),
+    quad(common::ensure_quad_primitive(pool)),
     sun(sun)
 {
     set_parent(&defaults.parent);

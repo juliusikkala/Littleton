@@ -16,7 +16,7 @@ void main(void)
 {
 #ifdef DISCARD_ALPHA
     vec4 surface_color = get_material_color();
-    if(surface_color.a < DISCARD_ALPHA) discard;
+    if(surface_color.r < DISCARD_ALPHA) discard;
 #endif
 
     float z = (distance(f_in.position, pos)/far_plane) * 2.0f - 1.0f;

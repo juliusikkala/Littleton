@@ -1,7 +1,7 @@
 #ifndef METHOD_GAMMA_HH
 #define METHOD_GAMMA_HH
 #include "pipeline.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 
 class shader_pool;
 class texture;
@@ -33,7 +33,7 @@ namespace method
         float g;
         shader* gamma_shader;
 
-        const vertex_buffer& quad;
+        const primitive& quad;
         const sampler& fb_sampler;
     };
 }

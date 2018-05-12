@@ -16,7 +16,7 @@ uniform directional_light light;
 
 out vec4 out_color;
 
-#ifdef EMISSION
+#ifdef AMBIENT
 uniform vec3 ambient;
 #endif
 
@@ -30,7 +30,7 @@ uniform mat4 inv_view;
 void main(void)
 {
     vec2 uv = gl_FragCoord.xy / textureSize(in_depth, 0);
-    vec4 surface_color = decode_color_emission(uv);
+    vec3 surface_color = decode_color(uv);
     vec3 normal = decode_normal(uv);
     float roughness, metallic, f0;
     decode_material(uv, roughness, metallic, f0);
@@ -43,7 +43,7 @@ void main(void)
     vec3 lighting = calc_point_light(
         light,
         pos,
-        surface_color.rgb,
+        surface_color,
         view_dir,
         normal,
         roughness,
@@ -71,7 +71,7 @@ void main(void)
     vec3 lighting = calc_spotlight(
         light,
         pos,
-        surface_color.rgb,
+        surface_color,
         view_dir,
         normal,
         roughness,
@@ -98,7 +98,7 @@ void main(void)
 #elif defined(DIRECTIONAL_LIGHT)
     vec3 lighting = calc_directional_light(
         light,
-        surface_color.rgb,
+        surface_color,
         view_dir,
         normal,
         roughness,
@@ -115,8 +115,8 @@ void main(void)
 #endif
 #endif
 
-#ifdef EMISSION
-    vec3 lighting = surface_color.rgb * (ambient + surface_color.w);
+#ifdef AMBIENT
+    vec3 lighting = surface_color * ambient;
 #endif
 
 #ifdef VISUALIZE

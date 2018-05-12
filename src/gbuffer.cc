@@ -2,7 +2,7 @@
 #include "sampler.hh"
 #include "shader.hh"
 #include "shader_pool.hh"
-#include "vertex_buffer.hh"
+#include "primitive.hh"
 #include <stdexcept>
 #include <cmath>
 
@@ -10,13 +10,13 @@ gbuffer::gbuffer(
     context& ctx,
     glm::uvec2 size,
     texture* normal,
-    texture* color_emission,
+    texture* color,
     texture* material,
     texture* lighting,
     texture* linear_depth,
     texture* depth_stencil
 ):  render_target(ctx, size),
-    normal(normal), color_emission(color_emission), material(material),
+    normal(normal), color(color), material(material),
     linear_depth(linear_depth), lighting(lighting),
     depth_stencil(depth_stencil), depth_stencil_rbo(0)
 {
@@ -28,10 +28,10 @@ gbuffer::gbuffer(
     ) throw std::runtime_error("Incompatible normal");
 
     if(
-        color_emission != nullptr && (
-        color_emission->get_size() != size ||
-        color_emission->get_external_format() != GL_RGBA)
-    ) throw std::runtime_error("Incompatible color_emission");
+        color != nullptr && (
+        color->get_size() != size ||
+        color->get_external_format() != GL_RGB)
+    ) throw std::runtime_error("Incompatible color");
 
     if(
         material != nullptr && (
@@ -84,13 +84,13 @@ gbuffer::gbuffer(
         );
     }
 
-    if(color_emission)
+    if(color)
     {
         glFramebufferTexture2D(
             GL_FRAMEBUFFER,
             GL_COLOR_ATTACHMENT0,
-            color_emission->get_target(),
-            color_emission->get_texture(),
+            color->get_target(),
+            color->get_texture(),
             0
         );
     }
@@ -150,12 +150,11 @@ gbuffer::gbuffer(
 
 gbuffer::gbuffer(gbuffer&& other)
 :   render_target(other), mode(other.mode),
-    normal(other.normal), color_emission(other.color_emission),
-    material(other.material), linear_depth(other.linear_depth),
-    lighting(other.lighting), depth_stencil(other.depth_stencil),
+    normal(other.normal), color(other.color), material(other.material),
+    linear_depth(other.linear_depth), lighting(other.lighting),
+    depth_stencil(other.depth_stencil),
     depth_stencil_rbo(other.depth_stencil_rbo),
-    normal_index(other.normal_index),
-    color_emission_index(other.color_emission_index),
+    normal_index(other.normal_index), color_index(other.color_index),
     material_index(other.material_index),
     linear_depth_index(other.linear_depth_index),
     lighting_index(other.lighting_index)
@@ -171,14 +170,14 @@ gbuffer::~gbuffer()
 }
 
 texture* gbuffer::get_normal() const { return normal; }
-texture* gbuffer::get_color_emission() const { return color_emission; }
+texture* gbuffer::get_color() const { return color; }
 texture* gbuffer::get_material() const { return material; }
 texture* gbuffer::get_linear_depth() const { return linear_depth; }
 texture* gbuffer::get_lighting() const { return lighting; }
 texture* gbuffer::get_depth_stencil() const { return depth_stencil; }
 
 int gbuffer::get_normal_index() const { return normal_index; }
-int gbuffer::get_color_emission_index() const { return color_emission_index; }
+int gbuffer::get_color_index() const { return color_index; }
 int gbuffer::get_material_index() const { return material_index; }
 int gbuffer::get_linear_depth_index() const { return linear_depth_index; }
 int gbuffer::get_lighting_index() const { return lighting_index; }
@@ -186,7 +185,7 @@ int gbuffer::get_lighting_index() const { return lighting_index; }
 void gbuffer::bind_textures(const sampler& fb_sampler) const
 {
     if(depth_stencil) fb_sampler.bind(*depth_stencil, 0);
-    if(color_emission) fb_sampler.bind(*color_emission, 1);
+    if(color) fb_sampler.bind(*color, 1);
     if(normal) fb_sampler.bind(*normal, 2);
     if(material) fb_sampler.bind(*material, 3);
     if(linear_depth) fb_sampler.bind(*linear_depth, 4);
@@ -196,7 +195,7 @@ void gbuffer::bind_textures(const sampler& fb_sampler) const
 void gbuffer::set_uniforms(shader* s) const
 {
     if(depth_stencil) s->set("in_depth", 0);
-    if(color_emission) s->set("in_color_emission", 1);
+    if(color) s->set("in_color", 1);
     if(normal) s->set("in_normal", 2);
     if(material) s->set("in_material", 3);
     if(linear_depth) s->set("in_linear_depth", 4);
@@ -208,9 +207,9 @@ void gbuffer::update_definitions(shader::definition_map& def) const
     if(normal_index >= 0) def["NORMAL_INDEX"] = std::to_string(normal_index);
     else def.erase("NORMAL_INDEX");
 
-    if(color_emission_index >= 0)
-        def["COLOR_EMISSION_INDEX"] = std::to_string(color_emission_index);
-    else def.erase("COLOR_EMISSION_INDEX");
+    if(color_index >= 0)
+        def["COLOR_INDEX"] = std::to_string(color_index);
+    else def.erase("COLOR_INDEX");
 
     if(material_index >= 0)
         def["MATERIAL_INDEX"] = std::to_string(material_index);
@@ -240,8 +239,8 @@ void gbuffer::clear()
 
     if(normal_index >= 0)
         glClearBufferfv(GL_COLOR, normal_index, zero);
-    if(color_emission_index >= 0)
-        glClearBufferfv(GL_COLOR, color_emission_index, zero);
+    if(color_index >= 0)
+        glClearBufferfv(GL_COLOR, color_index, zero);
     if(material_index >= 0)
         glClearBufferfv(GL_COLOR, material_index, zero);
     if(linear_depth_index >= 0)
@@ -266,9 +265,9 @@ void gbuffer::set_draw(draw_mode mode)
     switch(mode)
     {
     case DRAW_ALL:
-        if(color_emission)
+        if(color)
         {
-            color_emission_index = index++;
+            color_index = index++;
             attachments.push_back(GL_COLOR_ATTACHMENT0);
         }
 
@@ -298,9 +297,9 @@ void gbuffer::set_draw(draw_mode mode)
 
         break;
     case DRAW_GEOMETRY:
-        if(color_emission)
+        if(color)
         {
-            color_emission_index = index++;
+            color_index = index++;
             attachments.push_back(GL_COLOR_ATTACHMENT0);
         }
 
@@ -324,7 +323,7 @@ void gbuffer::set_draw(draw_mode mode)
         lighting_index = -1;
         break;
     case DRAW_LIGHTING:
-        color_emission_index = -1;
+        color_index = -1;
         normal_index = -1;
         material_index = -1;
         linear_depth_index = -1;
@@ -370,7 +369,7 @@ shader* gbuffer::get_min_max_shader(shader_pool& pool) const
 
 void gbuffer::render_depth_mipmaps(
     shader* min_max,
-    const vertex_buffer& quad,
+    const primitive& quad,
     const sampler& fb_sampler
 ){
     if(!min_max || !linear_depth) return;
