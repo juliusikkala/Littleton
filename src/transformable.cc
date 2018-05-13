@@ -5,7 +5,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 transformable::transformable()
-: position(0), scaling(1)
+: orientation(1,0,0,0), position(0), scaling(1)
 {
 }
 

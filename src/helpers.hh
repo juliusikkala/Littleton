@@ -4,6 +4,8 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <boost/functional/hash.hpp>
