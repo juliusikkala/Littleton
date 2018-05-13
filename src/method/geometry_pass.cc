@@ -111,7 +111,8 @@ void geometry_pass::execute()
             s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
 
-            group.mat->apply(s);
+            unsigned texture_index = 0;
+            group.mat->apply(s, texture_index);
             group.mesh->draw();
         }
     }

@@ -6,6 +6,116 @@
 #include "scene.hh"
 #include "common_resources.hh"
 
+namespace
+{
+using namespace lt;
+using namespace lt::method;
+
+template<typename L>
+void render_single(
+    L* msm,
+    resource_pool& pool,
+    render_scene* scene,
+    const primitive& quad,
+    shader* depth_shader,
+    shader* horizontal_blur_shader,
+    shader* vertical_blur_shader,
+    sampler& moment_sampler
+){
+    texture& moments = msm->get_moments();
+    framebuffer& moments_buffer = msm->get_framebuffer();
+
+    render_target* target = nullptr;
+
+    framebuffer_pool::loaner postprocess_buffer(pool.loan_framebuffer(
+        moments.get_size(),
+        {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+         {GL_COLOR_ATTACHMENT0, {GL_RGBA16, true}}},
+        0
+    ));
+    framebuffer_pool::loaner multisample_buffer(nullptr);
+    if(msm->get_samples() != 0)
+    {
+        multisample_buffer = pool.loan_framebuffer(
+            moments.get_size(),
+            {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+             {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
+            msm->get_samples()
+        );
+        target = multisample_buffer.get();
+    }
+    else
+    {
+        target = postprocess_buffer.get();
+    }
+
+    // Render depth data
+    glEnable(GL_DEPTH_TEST);
+
+    target->bind();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glm::mat4 vp = msm->get_projection() * msm->get_view();
+
+    for(object* obj: scene->get_objects())
+    {
+        const model* mod = obj->get_model();
+        if(!mod) continue;
+
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mvp = vp * m;
+        depth_shader->set("m", m);
+        depth_shader->set("mvp", mvp);
+
+        for(const model::vertex_group& group: *mod)
+        {
+            if(!group.mesh) continue;
+
+            group.mesh->draw();
+        }
+    }
+
+    target->bind(GL_READ_FRAMEBUFFER);
+    moments_buffer.bind(GL_DRAW_FRAMEBUFFER);
+
+    glm::uvec2 target_size = moments.get_size();
+    glBlitFramebuffer(
+        0, 0, target_size.x, target_size.y,
+        0, 0, target_size.x, target_size.y,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST
+    );
+
+    // Blur the depth (thanks to moment magic this can be done!)
+    unsigned radius = msm->get_radius();
+    if(radius == 0) return;
+
+    vertical_blur_shader->bind();
+
+    glDisable(GL_DEPTH_TEST);
+
+    postprocess_buffer->bind();
+    vertical_blur_shader->set(
+        "tex",
+        moment_sampler.bind(moments, 0)
+    );
+    vertical_blur_shader->set("samples", (int)(2 * radius + 1));
+    quad.draw();
+
+    moments_buffer.bind();
+    horizontal_blur_shader->set(
+        "tex",
+        moment_sampler.bind(
+            *postprocess_buffer->get_texture_target(GL_COLOR_ATTACHMENT0), 0
+        )
+    );
+    horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
+    quad.draw();
+}
+
+}
+
 namespace lt::method
 {
 
@@ -126,109 +236,6 @@ void shadow_msm::set_shadow_map_uniforms(
     );
     s->set(prefix + "mvp", lvp * pos_to_world);
     s->set(prefix + "far_plane", sm->get_range().y);
-}
-
-template<typename L>
-static void render_single(
-    L* msm,
-    resource_pool& pool,
-    render_scene* scene,
-    const primitive& quad,
-    shader* depth_shader,
-    shader* horizontal_blur_shader,
-    shader* vertical_blur_shader,
-    sampler& moment_sampler
-){
-    texture& moments = msm->get_moments();
-    framebuffer& moments_buffer = msm->get_framebuffer();
-
-    render_target* target = nullptr;
-
-    framebuffer_pool::loaner postprocess_buffer(pool.loan_framebuffer(
-        moments.get_size(),
-        {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
-         {GL_COLOR_ATTACHMENT0, {GL_RGBA16, true}}},
-        0
-    ));
-    framebuffer_pool::loaner multisample_buffer(nullptr);
-    if(msm->get_samples() != 0)
-    {
-        multisample_buffer = pool.loan_framebuffer(
-            moments.get_size(),
-            {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
-             {GL_COLOR_ATTACHMENT0, {GL_RGBA16}}},
-            msm->get_samples()
-        );
-        target = multisample_buffer.get();
-    }
-    else
-    {
-        target = postprocess_buffer.get();
-    }
-
-    // Render depth data
-    glEnable(GL_DEPTH_TEST);
-
-    target->bind();
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glm::mat4 vp = msm->get_projection() * msm->get_view();
-
-    for(object* obj: scene->get_objects())
-    {
-        const model* mod = obj->get_model();
-        if(!mod) continue;
-
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mvp = vp * m;
-        depth_shader->set("m", m);
-        depth_shader->set("mvp", mvp);
-
-        for(const model::vertex_group& group: *mod)
-        {
-            if(!group.mesh) continue;
-
-            group.mesh->draw();
-        }
-    }
-
-    target->bind(GL_READ_FRAMEBUFFER);
-    moments_buffer.bind(GL_DRAW_FRAMEBUFFER);
-
-    glm::uvec2 target_size = moments.get_size();
-    glBlitFramebuffer(
-        0, 0, target_size.x, target_size.y,
-        0, 0, target_size.x, target_size.y,
-        GL_COLOR_BUFFER_BIT,
-        GL_NEAREST
-    );
-
-    // Blur the depth (thanks to moment magic this can be done!)
-    unsigned radius = msm->get_radius();
-    if(radius == 0) return;
-
-    vertical_blur_shader->bind();
-
-    glDisable(GL_DEPTH_TEST);
-
-    postprocess_buffer->bind();
-    vertical_blur_shader->set(
-        "tex",
-        moment_sampler.bind(moments, 0)
-    );
-    vertical_blur_shader->set("samples", (int)(2 * radius + 1));
-    quad.draw();
-
-    moments_buffer.bind();
-    horizontal_blur_shader->set(
-        "tex",
-        moment_sampler.bind(
-            *postprocess_buffer->get_texture_target(GL_COLOR_ATTACHMENT0), 0
-        )
-    );
-    horizontal_blur_shader->set("samples", (int)(2 * radius + 1));
-    quad.draw();
 }
 
 void shadow_msm::execute()

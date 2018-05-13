@@ -8,8 +8,9 @@
 #include "common_resources.hh"
 #include "math.hh"
 
-namespace lt::method
+namespace
 {
+using namespace lt;
 
 static texture* generate_ssao_kernel(
     context& ctx,
@@ -36,6 +37,11 @@ static texture* generate_ssao_kernel(
         (float*)samples.data()
     );
 }
+
+}
+
+namespace lt::method
+{
 
 ssao::ssao(
     render_target& target,

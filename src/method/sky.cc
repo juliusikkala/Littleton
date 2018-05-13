@@ -9,10 +9,11 @@
 #include "light.hh"
 #include "scene.hh"
 
-namespace lt::method
+namespace
 {
+using namespace lt;
 
-static struct sky_defaults
+struct sky_defaults
 {
     sky_defaults()
     {
@@ -21,6 +22,11 @@ static struct sky_defaults
 
     transformable_node parent;
 } defaults;
+
+}
+
+namespace lt::method
+{
 
 sky::sky(
     render_target& target,

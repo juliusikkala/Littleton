@@ -14,52 +14,12 @@
 #include "shadow_method.hh"
 #include "common_resources.hh"
 
-namespace lt::method
+namespace
 {
+using namespace lt;
+using namespace lt::method;
 
-// Make sure that the shadow maps are not overridden by material textures.
-// The last texture index set by 'material' is 6, so start shadow maps
-// from 7.
-// TODO: Make material report the number of used texture indices like shadow
-// maps do.
-static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
-
-forward_pass::forward_pass(
-    render_target& target,
-    resource_pool& pool,
-    render_scene* scene,
-    bool apply_ambient,
-    bool apply_transmittance
-):  target_method(target),
-    forward_shader(pool.get_shader(
-        shader::path{"generic.vert", "forward.frag"})
-    ),
-    depth_shader(pool.get_shader(shader::path{"generic.vert", "forward.frag"})),
-    min_max_shader(nullptr),
-    scene(scene), gbuf(nullptr),
-    opaque(true), transparent(true), apply_ambient(apply_ambient),
-    apply_transmittance(apply_transmittance),
-    quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
-{}
-
-forward_pass::forward_pass(
-    gbuffer& buf,
-    resource_pool& pool,
-    render_scene* scene,
-    bool apply_ambient,
-    bool apply_transmittance
-):  forward_pass(
-        (render_target&)buf, pool, scene, apply_ambient, apply_transmittance
-    )
-{
-    min_max_shader = buf.get_min_max_shader(pool);
-    gbuf = &buf;
-}
-
-forward_pass::~forward_pass() {}
-
-static void set_light(
+void set_light(
     shader* s,
     point_light* light,
     const glm::mat4& view
@@ -71,7 +31,7 @@ static void set_light(
     s->set("light.color", light->get_color());
 }
 
-static void set_light(
+void set_light(
     shader* s,
     spotlight* light,
     const glm::mat4& view
@@ -95,7 +55,7 @@ static void set_light(
     s->set("light.exponent", light->get_falloff_exponent());
 }
 
-static void set_light(
+void set_light(
     shader* s,
     directional_light* light,
     const glm::mat4& view
@@ -109,7 +69,7 @@ static void set_light(
     );
 }
 
-static void set_shadow(
+void set_shadow(
     shadow_method* met,
     shader* s,
     unsigned& texture_index,
@@ -120,7 +80,7 @@ static void set_shadow(
     met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
 }
 
-static void set_shadow(
+void set_shadow(
     shadow_method* met,
     shader* s,
     unsigned& texture_index,
@@ -131,7 +91,7 @@ static void set_shadow(
     met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
 }
 
-static void set_shadow(
+void set_shadow(
     shadow_method* met,
     shader* s,
     unsigned& texture_index,
@@ -143,7 +103,7 @@ static void set_shadow(
 }
 
 template<typename L, typename S>
-static void render_pass(
+void render_pass(
     shadow_method* met,
     const shader::definition_map& scene_definitions,
     render_scene* scene,
@@ -180,9 +140,10 @@ static void render_pass(
             shader* s = forward_shader->get(def);
             s->bind();
 
-            unsigned texture_index = SHADOW_MAP_INDEX_OFFSET;
-
+            unsigned texture_index = 0;
+            group.mat->apply(s, texture_index);
             set_shadow(met, s, texture_index, sm, m);
+
             set_light(s, light, v);
 
             s->set("mvp", mvp);
@@ -190,13 +151,12 @@ static void render_pass(
             s->set("n_m", n_m);
             s->set("inv_view", inv_view);
 
-            group.mat->apply(s);
             group.mesh->draw();
         }
     }
 }
 
-static void render_shadowed_lights(
+void render_shadowed_lights(
     multishader* forward_shader,
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
@@ -359,7 +319,7 @@ static void render_shadowed_lights(
     }
 }
 
-static std::unique_ptr<uniform_block> create_light_block(
+std::unique_ptr<uniform_block> create_light_block(
     const std::string& block_name,
     render_scene* scene,
     shader* compatible_shader,
@@ -456,7 +416,7 @@ static std::unique_ptr<uniform_block> create_light_block(
 }
 
 
-static void update_scene_definitions(
+void update_scene_definitions(
     shader::definition_map& def,
     render_scene* scene
 ){
@@ -469,7 +429,7 @@ static void update_scene_definitions(
         next_power_of_two(scene->spotlight_count()));
 }
 
-static void render_unshadowed_lights(
+void render_unshadowed_lights(
     multishader* forward_shader,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
@@ -532,13 +492,14 @@ static void render_unshadowed_lights(
             s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
 
-            group.mat->apply(s);
+            unsigned texture_index = 0;
+            group.mat->apply(s, texture_index);
             group.mesh->draw();
         }
     }
 }
 
-static void depth_pass(
+void depth_pass(
     multishader* depth_shader,
     render_scene* scene,
     const shader::definition_map& common,
@@ -575,15 +536,15 @@ static void depth_pass(
             s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
 
-            group.mat->apply(s);
+            unsigned texture_index = 0;
+            group.mat->apply(s, texture_index);
 
-            group.mat->apply(s);
             group.mesh->draw();
         }
     }
 }
 
-static void render_forward_pass(
+void render_forward_pass(
     render_scene* scene,
     bool opaque,
     bool apply_ambient,
@@ -705,6 +666,45 @@ static void render_forward_pass(
     );
 }
 
+}
+
+namespace lt::method
+{
+forward_pass::forward_pass(
+    render_target& target,
+    resource_pool& pool,
+    render_scene* scene,
+    bool apply_ambient,
+    bool apply_transmittance
+):  target_method(target),
+    forward_shader(pool.get_shader(
+        shader::path{"generic.vert", "forward.frag"})
+    ),
+    depth_shader(pool.get_shader(shader::path{"generic.vert", "forward.frag"})),
+    min_max_shader(nullptr),
+    scene(scene), gbuf(nullptr),
+    opaque(true), transparent(true), apply_ambient(apply_ambient),
+    apply_transmittance(apply_transmittance),
+    quad(common::ensure_quad_primitive(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
+{}
+
+forward_pass::forward_pass(
+    gbuffer& buf,
+    resource_pool& pool,
+    render_scene* scene,
+    bool apply_ambient,
+    bool apply_transmittance
+):  forward_pass(
+        (render_target&)buf, pool, scene, apply_ambient, apply_transmittance
+    )
+{
+    min_max_shader = buf.get_min_max_shader(pool);
+    gbuf = &buf;
+}
+
+forward_pass::~forward_pass() {}
+
 void forward_pass::execute()
 {
     target_method::execute();
@@ -743,6 +743,7 @@ void forward_pass::execute()
 }
 
 void forward_pass::set_scene(render_scene* s) { scene = s; }
+
 render_scene* forward_pass::get_scene() const { return scene; }
 
 void forward_pass::set_apply_ambient(bool apply_ambient)

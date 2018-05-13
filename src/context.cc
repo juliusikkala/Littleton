@@ -2,10 +2,10 @@
 #include <cstring>
 #include <unordered_map>
 
-namespace lt
+namespace
 {
 
-static const std::unordered_map<GLenum, unsigned> cacheable_params({
+const std::unordered_map<GLenum, unsigned> cacheable_params({
     // Context related
     {GL_CONTEXT_FLAGS, 1},
     {GL_MAJOR_VERSION, 1},
@@ -198,6 +198,30 @@ static const std::unordered_map<GLenum, unsigned> cacheable_params({
     {GL_MAX_ELEMENTS_VERTICES, 1}
 });
 
+void get_gl_value(
+    GLenum pname,
+    size_t size,
+    void* value,
+    const GLuint* index
+){
+    if(size == 1)
+    {
+        if(index) glGetInteger64i_v(pname, *index, (GLint64*)value);
+        else glGetInteger64v(pname, (GLint64*)value);
+    }
+    else
+    {
+        if(index) glGetIntegeri_v(pname, *index, (GLint*)value);
+        else glGetIntegerv(pname, (GLint*)value);
+    }
+}
+
+
+}
+
+namespace lt
+{
+
 context::context()
 {
 }
@@ -272,24 +296,6 @@ glm::ivec4 context::get4(GLenum pname, GLuint index) const
     glm::ivec4 value;
     get(pname, 4, &value, &index);
     return value;
-}
-
-static void get_gl_value(
-    GLenum pname,
-    size_t size,
-    void* value,
-    const GLuint* index
-){
-    if(size == 1)
-    {
-        if(index) glGetInteger64i_v(pname, *index, (GLint64*)value);
-        else glGetInteger64v(pname, (GLint64*)value);
-    }
-    else
-    {
-        if(index) glGetIntegeri_v(pname, *index, (GLint*)value);
-        else glGetIntegerv(pname, (GLint*)value);
-    }
 }
 
 void context::get(

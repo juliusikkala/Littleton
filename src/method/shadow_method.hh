@@ -46,8 +46,8 @@ public:
     virtual shader::definition_map get_omni_definitions() const;
     virtual shader::definition_map get_perspective_definitions() const;
 
-    // Sets shadow map uniforms. The given shadow map is assumed to be a
-    // type compatible with the method.
+    // Sets shadow map uniforms. The given shadow map is assumed to be a  type
+    // compatible with the method.
     virtual void set_shadow_map_uniforms(
         shader* s,
         unsigned& texture_index,

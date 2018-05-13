@@ -9,76 +9,26 @@
 #include "shadow_map.hh"
 #include "shadow_method.hh"
 
-namespace lt::method
+namespace 
 {
+using namespace lt;
+using namespace lt::method;
 
-lighting_pass::lighting_pass(
-    render_target& target,
-    gbuffer& buf,
-    resource_pool& pool,
-    render_scene* scene,
-    float cutoff
-):  target_method(target), buf(&buf),
-    lighting_shader(pool.get_shader(
-        shader::path{"generic.vert", "lighting.frag"}
-    )),
-    scene(scene), cutoff(cutoff), light_test(TEST_NEAR),
-    visualize_light_volumes(false), quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
-{
-}
-
-void lighting_pass::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* lighting_pass::get_scene() const
-{
-    return scene;
-}
-
-void lighting_pass::set_cutoff(float cutoff)
-{
-    this->cutoff = cutoff;
-}
-
-float lighting_pass::get_cutoff() const
-{
-    return cutoff;
-}
-
-void lighting_pass::set_light_depth_test(depth_test test)
-{
-    this->light_test = test;
-}
-
-lighting_pass::depth_test
-lighting_pass::get_light_depth_test() const
-{
-    return light_test;
-}
-
-void lighting_pass::set_visualize_light_volumes(bool visualize)
-{
-    visualize_light_volumes = visualize;
-}
-
-static void set_gbuf(shader* s, gbuffer* buf, const camera* cam)
+void set_gbuf(shader* s, gbuffer* buf, const camera* cam)
 {
     buf->set_uniforms(s);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
 }
 
-static float compute_cutoff_radius(light* light, float cutoff)
+float compute_cutoff_radius(light* light, float cutoff)
 {
     glm::vec3 radius2 = light->get_color()/cutoff;
     return sqrt(glm::max(glm::max(radius2.x, radius2.y), radius2.z));
 }
 
 // Returns false if the light shouldn't be rendered at all.
-static bool set_bounding_rect(
+bool set_bounding_rect(
     shader* s, point_light* light, glm::vec3 light_pos,
     const camera* cam, float cutoff,
     lighting_pass::depth_test light_test
@@ -106,7 +56,7 @@ static bool set_bounding_rect(
     return true;
 }
 
-static bool set_light(
+bool set_light(
     shader* s,
     point_light* light,
     const camera* cam,
@@ -123,7 +73,7 @@ static bool set_light(
     return set_bounding_rect(s, light, pos, cam, cutoff, light_test);
 }
 
-static bool set_light(
+bool set_light(
     shader* s,
     spotlight* light,
     const camera* cam,
@@ -159,7 +109,7 @@ static bool set_light(
     return set_bounding_rect(s, light, pos, cam, cutoff, light_test);
 }
 
-static bool set_light(
+bool set_light(
     shader* s,
     directional_light* light,
     const camera* cam
@@ -181,7 +131,7 @@ static bool set_light(
 }
 
 template<typename L>
-static void render_shadowed(
+void render_shadowed(
     gbuffer* buf,
     multishader* lighting_shader,
     const shadow_scene::omni_map& shadows,
@@ -231,7 +181,7 @@ static void render_shadowed(
 }
 
 template<typename L>
-static void render_shadowed(
+void render_shadowed(
     gbuffer* buf,
     multishader* lighting_shader,
     const shadow_scene::perspective_map& shadows,
@@ -280,7 +230,7 @@ static void render_shadowed(
     }
 }
 
-static void render_point_lights(
+void render_point_lights(
     gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
@@ -338,7 +288,7 @@ static void render_point_lights(
     }
 }
 
-static void render_spotlights(
+void render_spotlights(
     gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
@@ -395,7 +345,7 @@ static void render_spotlights(
     }
 }
 
-static void render_directional_lights(
+void render_directional_lights(
     gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
@@ -458,6 +408,63 @@ static void render_directional_lights(
         if(!set_light(s, lights[i], cam)) continue;
         quad.draw();
     }
+}
+
+}
+
+namespace lt::method
+{
+
+lighting_pass::lighting_pass(
+    render_target& target,
+    gbuffer& buf,
+    resource_pool& pool,
+    render_scene* scene,
+    float cutoff
+):  target_method(target), buf(&buf),
+    lighting_shader(pool.get_shader(
+        shader::path{"generic.vert", "lighting.frag"}
+    )),
+    scene(scene), cutoff(cutoff), light_test(TEST_NEAR),
+    visualize_light_volumes(false), quad(common::ensure_quad_primitive(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
+{
+}
+
+void lighting_pass::set_scene(render_scene* scene)
+{
+    this->scene = scene;
+}
+
+render_scene* lighting_pass::get_scene() const
+{
+    return scene;
+}
+
+void lighting_pass::set_cutoff(float cutoff)
+{
+    this->cutoff = cutoff;
+}
+
+float lighting_pass::get_cutoff() const
+{
+    return cutoff;
+}
+
+void lighting_pass::set_light_depth_test(depth_test test)
+{
+    this->light_test = test;
+}
+
+lighting_pass::depth_test
+lighting_pass::get_light_depth_test() const
+{
+    return light_test;
+}
+
+void lighting_pass::set_visualize_light_volumes(bool visualize)
+{
+    visualize_light_volumes = visualize;
 }
 
 void lighting_pass::execute()

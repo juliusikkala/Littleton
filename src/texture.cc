@@ -5,10 +5,11 @@
 #include <algorithm>
 #include <cstring>
 
-namespace lt
+namespace
 {
+using namespace lt;
 
-static unsigned choose_alignment(unsigned line_bytes)
+unsigned choose_alignment(unsigned line_bytes)
 {
     if((line_bytes & 7) == 0) return 8;
     if((line_bytes & 3) == 0) return 4;
@@ -16,7 +17,7 @@ static unsigned choose_alignment(unsigned line_bytes)
     return 1;
 }
 
-static GLuint create_texture_from_data(
+GLuint create_texture_from_data(
     GLenum target,
     GLenum type,
     glm::uvec2 size,
@@ -104,7 +105,7 @@ static GLuint create_texture_from_data(
     return tex;
 }
 
-static GLuint load_texture(
+GLuint load_texture(
     context& ctx,
     const std::string& path,
     bool srgb,
@@ -179,6 +180,11 @@ static GLuint load_texture(
     stbi_image_free(data);
     return tex;
 }
+
+}
+
+namespace lt
+{
 
 texture::texture(context& ctx)
 : glresource(ctx), tex(0), target(GL_TEXTURE_2D) {}

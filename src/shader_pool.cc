@@ -3,10 +3,10 @@
 #include "helpers.hh"
 #include <boost/filesystem.hpp>
 
-namespace lt
+namespace
 {
 
-static std::string find_file(
+std::string find_file(
     const std::vector<std::string> prefixes,
     const std::string& suffix
 ){
@@ -22,6 +22,10 @@ static std::string find_file(
     throw std::runtime_error("Unable to find shader source " + suffix);
 }
 
+}
+
+namespace lt
+{
 shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,

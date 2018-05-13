@@ -12,10 +12,11 @@
 #include <memory>
 #include <map>
 
-namespace lt
+namespace
 {
+using namespace lt;
 
-static void load_gltf_node(
+void load_gltf_node(
     resource_pool& pool,
     tinygltf::Model& model,
     tinygltf::Scene& scene,
@@ -70,7 +71,7 @@ static void load_gltf_node(
     }
 }
 
-static material::sampler_tex get_material_texture_parameter(
+material::sampler_tex get_material_texture_parameter(
     resource_pool& pool,
     tinygltf::Model& model,
     tinygltf::ParameterMap& values,
@@ -101,7 +102,7 @@ static material::sampler_tex get_material_texture_parameter(
     return material::sampler_tex(nullptr, nullptr);
 }
 
-static glm::vec4 get_material_factor_parameter(
+glm::vec4 get_material_factor_parameter(
     tinygltf::ParameterMap& values,
     const std::string& name,
     glm::vec4 fallback = glm::vec4(1)
@@ -125,7 +126,7 @@ static glm::vec4 get_material_factor_parameter(
 }
 
 template<typename T>
-static void ensure_gltf_uniquely_named(
+void ensure_gltf_uniquely_named(
     std::vector<T>& array,
     const std::string& prefix
 ){
@@ -136,6 +137,11 @@ static void ensure_gltf_uniquely_named(
             item.name = prefix + "[" + std::to_string(index++) + "]";
     }
 }
+
+}
+
+namespace lt
+{
 
 std::unordered_map<std::string, scene_graph> load_gltf(
     resource_pool& pool,

@@ -2,10 +2,10 @@
 #include "context.hh"
 #include <algorithm>
 
-namespace lt
+namespace
 {
 
-static GLint interpolation_without_mipmap(GLint interpolation)
+GLint interpolation_without_mipmap(GLint interpolation)
 {
     if(
         interpolation == GL_LINEAR_MIPMAP_LINEAR ||
@@ -17,6 +17,11 @@ static GLint interpolation_without_mipmap(GLint interpolation)
     ) return GL_NEAREST; 
     else return interpolation;
 }
+
+}
+
+namespace lt
+{
 
 sampler::sampler(
     context& ctx,

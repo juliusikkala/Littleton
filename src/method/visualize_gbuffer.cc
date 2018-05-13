@@ -7,50 +7,12 @@
 #include "common_resources.hh"
 #include "scene.hh"
 
-namespace lt::method
+namespace
 {
+using namespace lt;
+using namespace lt::method;
 
-visualize_gbuffer::visualize_gbuffer(
-    render_target& target,
-    gbuffer& buf,
-    resource_pool& pool,
-    render_scene* scene
-):  target_method(target), buf(&buf),
-    visualize_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "visualize.frag"}
-    )),
-    scene(scene),
-    quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    visualizers({POSITION, NORMAL, COLOR, MATERIAL})
-{
-}
-
-void visualize_gbuffer::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* visualize_gbuffer::get_scene() const
-{
-    return scene;
-}
-
-void visualize_gbuffer::show(visualizer full)
-{
-    visualizers = {full};
-}
-
-void visualize_gbuffer::show(
-    visualizer topleft,
-    visualizer topright,
-    visualizer bottomleft,
-    visualizer bottomright
-){
-    visualizers = {topleft, topright, bottomleft, bottomright};
-}
-
-static void render_visualizer(
+void render_visualizer(
     const gbuffer* buf,
     visualize_gbuffer::visualizer v,
     multishader* ms,
@@ -92,6 +54,51 @@ static void render_visualizer(
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
     quad.draw();
+}
+
+}
+
+namespace lt::method
+{
+
+visualize_gbuffer::visualize_gbuffer(
+    render_target& target,
+    gbuffer& buf,
+    resource_pool& pool,
+    render_scene* scene
+):  target_method(target), buf(&buf),
+    visualize_shader(pool.get_shader(
+        shader::path{"fullscreen.vert", "visualize.frag"}
+    )),
+    scene(scene),
+    quad(common::ensure_quad_primitive(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool)),
+    visualizers({POSITION, NORMAL, COLOR, MATERIAL})
+{
+}
+
+void visualize_gbuffer::set_scene(render_scene* scene)
+{
+    this->scene = scene;
+}
+
+render_scene* visualize_gbuffer::get_scene() const
+{
+    return scene;
+}
+
+void visualize_gbuffer::show(visualizer full)
+{
+    visualizers = {full};
+}
+
+void visualize_gbuffer::show(
+    visualizer topleft,
+    visualizer topright,
+    visualizer bottomleft,
+    visualizer bottomright
+){
+    visualizers = {topleft, topright, bottomleft, bottomright};
 }
 
 void visualize_gbuffer::execute()

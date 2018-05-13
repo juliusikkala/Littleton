@@ -2,6 +2,21 @@
 #include "texture.hh"
 #include "shader.hh"
 
+namespace
+{
+using namespace lt;
+
+void update_def(
+    shader::definition_map& def,
+    const material::sampler_tex& v,
+    const char* key
+){
+    if(v.first == nullptr) def.erase(key);
+    else def[key];
+}
+
+}
+
 namespace lt
 {
 
@@ -18,15 +33,6 @@ material::material()
     emission_texture(nullptr, nullptr)
 {}
 
-static void update_def(
-    shader::definition_map& def,
-    const material::sampler_tex& v,
-    const char* key
-){
-    if(v.first == nullptr) def.erase(key);
-    else def[key];
-}
-
 void material::update_definitions(shader::definition_map& def) const
 {
     update_def(def, color_texture, "MATERIAL_COLOR_TEXTURE");
@@ -39,12 +45,12 @@ void material::update_definitions(shader::definition_map& def) const
     update_def(def, emission_texture, "MATERIAL_EMISSION_TEXTURE");
 }
 
-void material::apply(shader* s) const
+void material::apply(shader* s, unsigned& texture_index) const
 {
     s->set("material.color_factor", color_factor);
     if(color_texture.first) s->set(
         "material.color",
-        color_texture.first->bind(*color_texture.second, 0)
+        color_texture.first->bind(*color_texture.second, texture_index++)
     );
 
     s->set("material.metallic_factor", metallic_factor);
@@ -53,14 +59,14 @@ void material::apply(shader* s) const
         "material.metallic_roughness",
         metallic_roughness_texture.first->bind(
             *metallic_roughness_texture.second,
-            1
+            texture_index++
         )
     );
 
     s->set("material.normal_factor", normal_factor);
     if(normal_texture.first) s->set(
         "material.normal",
-        normal_texture.first->bind(*normal_texture.second, 2)
+        normal_texture.first->bind(*normal_texture.second, texture_index++)
     );
 
     s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
@@ -68,7 +74,7 @@ void material::apply(shader* s) const
     s->set("material.emission_factor", emission_factor);
     if(emission_texture.first) s->set(
         "material.emission",
-        emission_texture.first->bind(*emission_texture.second, 3)
+        emission_texture.first->bind(*emission_texture.second, texture_index++)
     );
 }
 

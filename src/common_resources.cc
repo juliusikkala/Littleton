@@ -3,10 +3,11 @@
 #include "glheaders.hh"
 #include "math.hh"
 
-namespace lt::common
+namespace
 {
+using namespace lt;
 
-static texture* generate_circular_random(context& ctx, glm::uvec2 size)
+texture* generate_circular_random(context& ctx, glm::uvec2 size)
 {
     std::vector<glm::vec2> circular_samples;
     circular_samples.resize(size.x * size.y);
@@ -27,7 +28,7 @@ static texture* generate_circular_random(context& ctx, glm::uvec2 size)
     );
 }
 
-static texture* generate_spherical_random(context& ctx, glm::uvec2 size)
+texture* generate_spherical_random(context& ctx, glm::uvec2 size)
 {
     std::vector<glm::vec3> spherical_samples;
     spherical_samples.resize(size.x * size.y);
@@ -48,7 +49,7 @@ static texture* generate_spherical_random(context& ctx, glm::uvec2 size)
     );
 }
 
-static texture* generate_circular_poisson(context& ctx, unsigned size)
+texture* generate_circular_poisson(context& ctx, unsigned size)
 {
     std::vector<glm::vec2> poisson;
 
@@ -70,7 +71,7 @@ static texture* generate_circular_poisson(context& ctx, unsigned size)
     );
 }
 
-static texture* generate_spherical_poisson(context& ctx, unsigned size)
+texture* generate_spherical_poisson(context& ctx, unsigned size)
 {
     std::vector<glm::vec3> poisson;
 
@@ -92,6 +93,19 @@ static texture* generate_spherical_poisson(context& ctx, unsigned size)
     );
 }
 
+const GLfloat quad_vertices[] = {
+    1.0f, 1.0f, 0, 1.0f, 1.0f,
+    1.0f, -1.0f, 0, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0, 0.0f, 0.0f
+};
+
+const GLuint quad_indices[] = {0,2,1,1,2,3};
+
+}
+
+namespace lt::common
+{
 const sampler& ensure_framebuffer_sampler(sampler_pool& pool)
 {
     std::string name = "common_framebuffer";
@@ -116,15 +130,6 @@ const sampler& ensure_depth_sampler(sampler_pool& pool)
         )
     );
 }
-
-static const GLfloat quad_vertices[] = {
-    1.0f, 1.0f, 0, 1.0f, 1.0f,
-    1.0f, -1.0f, 0, 1.0f, 0.0f,
-    -1.0f, 1.0f, 0, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0, 0.0f, 0.0f
-};
-
-static const GLuint quad_indices[] = {0,2,1,1,2,3};
 
 const primitive& ensure_quad_primitive(
     primitive_pool& prim_pool,

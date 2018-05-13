@@ -1,5 +1,45 @@
 #include "math.hh"
 
+namespace
+{
+using namespace lt;
+
+vec2 circle_projection_range(vec2 dir, float r, float p, float big)
+{
+    float d2 = glm::dot(dir, dir);
+    float r2 = r * r;
+
+    if(d2 <= r2) { return glm::vec2(-1, 1) * big; }
+
+    float len = sqrt(d2 - r2);
+    vec2 n = dir / dir.y;
+
+    vec2 h(-n.y, n.x);
+    h *= r / len;
+
+    vec2 up = n + h;
+    float top = up.x / fabs(up.y) * p;
+
+    vec2 down = n - h;
+    float bottom = down.x / fabs(down.y) * p;
+
+    if(dir.x > 0 && dir.y <= r)
+    {
+        bottom = big;
+        if(dir.y <= 0) top = -top;
+    }
+
+    if(dir.x < 0 && dir.y <= r)
+    {
+        top = -big;
+        if(dir.y <= 0) bottom = -bottom;
+    }
+
+    return vec2(top, bottom);
+}
+
+}
+
 namespace lt
 {
 
@@ -158,44 +198,6 @@ unsigned factorize(unsigned n)
         if((n % i) == 0) return i;
 
     return 0;
-}
-
-static glm::vec2 circle_projection_range(
-    glm::vec2 dir,
-    float r,
-    float p,
-    float big
-){
-    float d2 = glm::dot(dir, dir);
-    float r2 = r * r;
-
-    if(d2 <= r2) { return glm::vec2(-1, 1) * big; }
-
-    float len = sqrt(d2 - r2);
-    glm::vec2 n = dir / dir.y;
-
-    glm::vec2 h(-n.y, n.x);
-    h *= r / len;
-
-    glm::vec2 up = n + h;
-    float top = up.x / fabs(up.y) * p;
-
-    glm::vec2 down = n - h;
-    float bottom = down.x / fabs(down.y) * p;
-
-    if(dir.x > 0 && dir.y <= r)
-    {
-        bottom = big;
-        if(dir.y <= 0) top = -top;
-    }
-
-    if(dir.x < 0 && dir.y <= r)
-    {
-        top = -big;
-        if(dir.y <= 0) bottom = -bottom;
-    }
-
-    return glm::vec2(top, bottom);
 }
 
 glm::mat4 sphere_projection_quad_matrix(

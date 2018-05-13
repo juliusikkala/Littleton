@@ -7,10 +7,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/functional/hash.hpp>
 
-namespace lt
+namespace
 {
+using namespace lt;
 
-static void throw_shader_error(
+void throw_shader_error(
     GLuint shader,
     const std::string& name,
     const std::string& src
@@ -32,7 +33,7 @@ static void throw_shader_error(
     }
 }
 
-static void throw_program_error(
+void throw_program_error(
     GLuint program,
     const std::string& name
 ){
@@ -51,7 +52,7 @@ static void throw_program_error(
     }
 }
 
-static std::string generate_definition_src(
+std::string generate_definition_src(
     const shader::definition_map& definitions
 ){
     std::stringstream ss;
@@ -60,7 +61,7 @@ static std::string generate_definition_src(
     return ss.str();
 }
 
-static std::string remove_comments(const std::string& source)
+std::string remove_comments(const std::string& source)
 {
     std::string processed = source;
     while(1)
@@ -85,7 +86,7 @@ static std::string remove_comments(const std::string& source)
     return processed;
 }
 
-static std::string splice_definitions(
+std::string splice_definitions(
     const std::string& source,
     const shader::definition_map& definitions
 ){
@@ -99,7 +100,7 @@ static std::string splice_definitions(
     return source.substr(0, offset) + definition_src + source.substr(offset);
 }
 
-static std::string process_source(
+std::string process_source(
     const std::string& source,
     const shader::definition_map& definitions,
     const std::vector<std::string>& include_path
@@ -188,6 +189,19 @@ static std::string process_source(
     return processed;
 }
 
+void remove_index_brackets(std::string& name)
+{
+    // Remove [0]
+    if(name.length() > 3 && name.compare(name.length()-3, 3, "[0]") == 0)
+    {
+        name = name.substr(0, name.length()-3);
+    }
+}
+
+}
+
+namespace lt
+{
 
 bool shader::path::operator==(const path& other) const
 {
@@ -409,15 +423,6 @@ void shader::set_block(
     bind();
     block.bind(bind_point);
     glUniformBlockBinding(program, it->second.index, bind_point);
-}
-
-static void remove_index_brackets(std::string& name)
-{
-    // Remove [0]
-    if(name.length() > 3 && name.compare(name.length()-3, 3, "[0]") == 0)
-    {
-        name = name.substr(0, name.length()-3);
-    }
 }
 
 void shader::basic_load(

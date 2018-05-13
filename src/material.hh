@@ -16,7 +16,7 @@ public:
     material();
 
     void update_definitions(shader::definition_map& def) const;
-    void apply(shader* s) const;
+    void apply(shader* s, unsigned& texture_index) const;
 
     bool potentially_transparent() const;
 
