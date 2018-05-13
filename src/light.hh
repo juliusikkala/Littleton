@@ -1,8 +1,6 @@
 #ifndef POINT_LIGHT_HH
 #define POINT_LIGHT_HH
 #include "transformable.hh"
-#include <glm/glm.hpp>
-
 
 class light
 {

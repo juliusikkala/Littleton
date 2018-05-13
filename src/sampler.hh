@@ -3,7 +3,7 @@
 #include "glheaders.hh"
 #include "resource.hh"
 #include "texture.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class sampler: public glresource
 {

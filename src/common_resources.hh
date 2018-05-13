@@ -1,7 +1,7 @@
 #ifndef COMMON_RESOURCES_HH
 #define COMMON_RESOURCES_HH
-#include <glm/glm.hpp>
 #include "resource_pool.hh"
+#include "math.hh"
 
 // These make sure that the pool contains the requested common resource, such
 // as many kinds of lookup textures, vertex buffers and samplers.

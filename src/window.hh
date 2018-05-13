@@ -2,8 +2,8 @@
 #define WINDOW_HH
 #include "render_target.hh"
 #include "context.hh"
+#include "math.hh"
 #include <SDL.h>
-#include <glm/glm.hpp>
 
 class window: public context, public render_target
 {

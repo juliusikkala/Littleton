@@ -1,4 +1,3 @@
-#include <glm/glm.hpp>
 #include <stdexcept>
 
 template<typename T>

@@ -32,7 +32,7 @@
 #include "common_resources.hh"
 #include <iostream>
 #include <algorithm>
-#include <glm/gtc/random.hpp>
+#include "math.hh"
 
 class game_pipelines
 {

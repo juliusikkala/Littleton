@@ -7,7 +7,7 @@
 #include "model.hh"
 #include "object.hh"
 #include "tiny_gltf.h"
-#include <glm/gtc/type_ptr.hpp>
+#include "math.hh"
 #include <stdexcept>
 #include <memory>
 #include <map>

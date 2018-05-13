@@ -2,7 +2,7 @@
 #define SCENE_HH
 #include <vector>
 #include <map>
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class object;
 class camera;

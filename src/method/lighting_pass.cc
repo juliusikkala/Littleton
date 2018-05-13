@@ -1,14 +1,13 @@
 #include "lighting_pass.hh"
 #include "multishader.hh"
 #include "camera.hh"
-#include "helpers.hh"
+#include "math.hh"
 #include "gbuffer.hh"
 #include "resource_pool.hh"
 #include "scene.hh"
 #include "common_resources.hh"
 #include "shadow_map.hh"
 #include "shadow_method.hh"
-#include <glm/gtx/transform.hpp>
 
 method::lighting_pass::lighting_pass(
     render_target& target,

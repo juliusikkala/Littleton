@@ -1,7 +1,7 @@
 #ifndef CAMERA_HH
 #define CAMERA_HH
 #include "transformable.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class camera: public transformable_node
 {

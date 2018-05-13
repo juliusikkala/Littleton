@@ -2,8 +2,8 @@
 #define ENVIRONMENT_MAP_HH
 #include "glheaders.hh"
 #include "texture.hh"
+#include "math.hh"
 #include <string>
-#include <glm/glm.hpp>
 
 class environment_map: public texture
 {

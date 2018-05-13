@@ -1,8 +1,5 @@
 #include "transformable.hh"
 #include "helpers.hh"
-#include <glm/gtx/transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 
 transformable::transformable()
 : orientation(1,0,0,0), position(0), scaling(1)

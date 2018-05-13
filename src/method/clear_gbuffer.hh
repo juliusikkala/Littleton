@@ -1,7 +1,6 @@
 #ifndef METHOD_CLEAR_GBUFFER_HH
 #define METHOD_CLEAR_GBUFFER_HH
 #include "pipeline.hh"
-#include <glm/glm.hpp>
 
 class gbuffer;
 

@@ -4,7 +4,7 @@
 #include "model.hh"
 #include "object.hh"
 #include "material.hh"
-#include "helpers.hh"
+#include "math.hh"
 #include "multishader.hh"
 #include "resource_pool.hh"
 #include "scene.hh"
@@ -13,8 +13,6 @@
 #include "gbuffer.hh"
 #include "shadow_method.hh"
 #include "common_resources.hh"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 
 // Make sure that the shadow maps are not overridden by material textures.
 // The last texture index set by 'material' is 6, so start shadow maps

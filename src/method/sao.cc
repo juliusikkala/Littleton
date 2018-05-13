@@ -1,13 +1,11 @@
 #include "sao.hh"
 #include "shader.hh"
-#include "helpers.hh"
+#include "math.hh"
 #include "gbuffer.hh"
 #include "resource_pool.hh"
 #include "camera.hh"
 #include "scene.hh"
 #include "common_resources.hh"
-#include <glm/gtc/random.hpp>
-#include <cmath>
 
 method::sao::sao(
     render_target& target,

@@ -3,7 +3,7 @@
 #include "texture.hh"
 #include "shader.hh"
 #include "render_target.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class sampler;
 class shader_pool;

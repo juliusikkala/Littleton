@@ -1,9 +1,9 @@
 #ifndef CONTEXT_HH
 #define CONTEXT_HH
 #include "glheaders.hh"
+#include "math.hh"
 #include <unordered_map>
 #include <string>
-#include <glm/glm.hpp>
 
 class context
 {

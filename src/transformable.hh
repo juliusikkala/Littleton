@@ -1,7 +1,6 @@
 #ifndef TRANSFORMABLE_HH
 #define TRANSFORMABLE_HH
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include "math.hh"
 
 class transformable
 {

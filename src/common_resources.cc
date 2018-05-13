@@ -1,8 +1,7 @@
 #include "common_resources.hh"
 #include "texture.hh"
 #include "glheaders.hh"
-#include "helpers.hh"
-#include <glm/gtc/random.hpp>
+#include "math.hh"
 
 static texture* generate_circular_random(context& ctx, glm::uvec2 size)
 {

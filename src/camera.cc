@@ -1,6 +1,4 @@
 #include "camera.hh"
-#include "helpers.hh"
-#include <glm/gtc/matrix_transform.hpp>
 #include <limits>
 
 camera::camera(transformable_node* parent): transformable_node(parent) {}

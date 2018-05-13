@@ -1,4 +1,5 @@
 #include "framebuffer_pool.hh"
+#include <boost/functional/hash.hpp>
 
 framebuffer_pool::framebuffer_pool(context& ctx)
 : glresource(ctx)

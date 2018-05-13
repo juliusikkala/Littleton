@@ -3,7 +3,7 @@
 #include "glheaders.hh"
 #include "resource.hh"
 #include <string>
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class texture: public resource, public glresource
 {

@@ -1,8 +1,6 @@
-#define _USE_MATH_DEFINES
 #include "shadow_map.hh"
 #include "helpers.hh"
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "math.hh"
 
 directional_shadow_map::directional_shadow_map(
     method::shadow_method* method,

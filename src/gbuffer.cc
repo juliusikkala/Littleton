@@ -4,7 +4,6 @@
 #include "shader_pool.hh"
 #include "primitive.hh"
 #include <stdexcept>
-#include <cmath>
 
 gbuffer::gbuffer(
     context& ctx,

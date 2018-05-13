@@ -8,8 +8,6 @@
 #include "multishader.hh"
 #include "common_resources.hh"
 #include "environment_map.hh"
-#include <glm/gtc/random.hpp>
-#include <cmath>
 #include <stdexcept>
 
 static unsigned max_mipmap_index(glm::uvec2 size)

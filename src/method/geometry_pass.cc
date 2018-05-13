@@ -10,9 +10,8 @@
 #include "gbuffer.hh"
 #include "shader_pool.hh"
 #include "scene.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 #include <utility>
-#include <glm/gtc/matrix_inverse.hpp>
 
 method::geometry_pass::geometry_pass(
     gbuffer& buf,

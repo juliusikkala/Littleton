@@ -2,7 +2,7 @@
 #define RENDER_TARGET_HH
 #include "glheaders.hh"
 #include "resource.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 
 class render_target: public glresource
 {

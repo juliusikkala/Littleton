@@ -1,9 +1,9 @@
 #ifndef MATERIAL_HH
 #define MATERIAL_HH
-#include <glm/glm.hpp>
-#include <variant>
 #include "shader.hh"
 #include "sampler.hh"
+#include "math.hh"
+#include <variant>
 
 class texture;
 

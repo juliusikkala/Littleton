@@ -1,7 +1,7 @@
 #ifndef UNIFORM_HH
 #define UNIFORM_HH
 #include "glheaders.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 #include <unordered_map>
 #include <string>
 

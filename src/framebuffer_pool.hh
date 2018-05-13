@@ -2,7 +2,7 @@
 #define FRAMEBUFFER_POOL_HH
 #include "resource.hh"
 #include "framebuffer.hh"
-#include "helpers.hh"
+#include "loaner.hh"
 #include <unordered_map>
 #include <set>
 #include <memory>

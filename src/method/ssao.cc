@@ -6,8 +6,7 @@
 #include "camera.hh"
 #include "scene.hh"
 #include "common_resources.hh"
-#include <glm/gtc/random.hpp>
-#include <cmath>
+#include "math.hh"
 
 static texture* generate_ssao_kernel(
     context& ctx,

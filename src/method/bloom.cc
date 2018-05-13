@@ -3,7 +3,7 @@
 #include "shader.hh"
 #include "multishader.hh"
 #include "common_resources.hh"
-#include "helpers.hh"
+#include "math.hh"
 
 method::bloom::bloom(
     render_target& target,

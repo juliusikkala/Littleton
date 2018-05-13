@@ -1,7 +1,7 @@
 #ifndef METHOD_CLEAR_HH
 #define METHOD_CLEAR_HH
 #include "pipeline.hh"
-#include <glm/glm.hpp>
+#include "math.hh"
 
 namespace method
 {
