@@ -1,9 +1,12 @@
-#ifndef ENVIRONMENT_MAP_HH
-#define ENVIRONMENT_MAP_HH
+#ifndef LT_ENVIRONMENT_MAP_HH
+#define LT_ENVIRONMENT_MAP_HH
 #include "glheaders.hh"
 #include "texture.hh"
 #include "math.hh"
 #include <string>
+
+namespace lt
+{
 
 class environment_map: public texture
 {
@@ -43,5 +46,7 @@ public:
 protected:
     environment_map(context& ctx);
 };
+
+} // namespace lt
 
 #endif

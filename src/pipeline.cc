@@ -5,6 +5,9 @@
 #include <typeinfo>
 #include <string>
 
+namespace lt
+{
+
 pipeline_method::~pipeline_method() {}
 std::string pipeline_method::get_name() const
 {
@@ -91,3 +94,5 @@ std::string pipeline::get_name() const
 {
     return "pipeline";
 }
+
+} // namespace lt

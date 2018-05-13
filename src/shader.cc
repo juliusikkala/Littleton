@@ -7,6 +7,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/functional/hash.hpp>
 
+namespace lt
+{
+
 static void throw_shader_error(
     GLuint shader,
     const std::string& name,
@@ -189,15 +192,6 @@ static std::string process_source(
 bool shader::path::operator==(const path& other) const
 {
     return vert == other.vert && frag == other.frag && geom == other.geom;
-}
-
-size_t boost::hash_value(const shader::path& p)
-{
-    std::size_t seed = 0;
-    boost::hash_combine(seed, p.vert);
-    boost::hash_combine(seed, p.frag);
-    boost::hash_combine(seed, p.geom);
-    return seed;
 }
 
 shader::path::path(
@@ -650,3 +644,15 @@ void shader::basic_unload() const
         program = 0;
     }
 }
+
+} // namespace lt
+
+size_t boost::hash_value(const lt::shader::path& p)
+{
+    std::size_t seed = 0;
+    boost::hash_combine(seed, p.vert);
+    boost::hash_combine(seed, p.frag);
+    boost::hash_combine(seed, p.geom);
+    return seed;
+}
+

@@ -4,7 +4,10 @@
 #include "resource_pool.hh"
 #include "common_resources.hh"
 
-method::draw_texture::draw_texture(
+namespace lt::method
+{
+
+draw_texture::draw_texture(
     render_target& target,
     resource_pool& pool,
     texture* tex
@@ -28,21 +31,21 @@ method::draw_texture::draw_texture(
     );
 }
 
-method::draw_texture::~draw_texture()
+draw_texture::~draw_texture()
 {
 }
 
-void method::draw_texture::set_transform(glm::mat4 transform)
+void draw_texture::set_transform(glm::mat4 transform)
 {
     this->transform = transform;
 }
 
-void method::draw_texture::set_texture(texture* tex)
+void draw_texture::set_texture(texture* tex)
 {
     this->tex = tex;
 }
 
-void method::draw_texture::execute()
+void draw_texture::execute()
 {
     target_method::execute();
 
@@ -59,7 +62,9 @@ void method::draw_texture::execute()
     quad.draw();
 }
 
-std::string method::draw_texture::get_name() const
+std::string draw_texture::get_name() const
 {
     return "draw_texture";
 }
+
+} // namespace lt::method

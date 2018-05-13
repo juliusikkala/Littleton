@@ -1,9 +1,12 @@
-#ifndef WINDOW_HH
-#define WINDOW_HH
+#ifndef LT_WINDOW_HH
+#define LT_WINDOW_HH
 #include "render_target.hh"
 #include "context.hh"
 #include "math.hh"
 #include <SDL.h>
+
+namespace lt
+{
 
 class window: public context, public render_target
 {
@@ -45,4 +48,6 @@ private:
     SDL_Window* win;
     SDL_GLContext ctx;
 };
+
+} // namespace lt
 #endif

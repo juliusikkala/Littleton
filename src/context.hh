@@ -1,9 +1,12 @@
-#ifndef CONTEXT_HH
-#define CONTEXT_HH
+#ifndef LT_CONTEXT_HH
+#define LT_CONTEXT_HH
 #include "glheaders.hh"
 #include "math.hh"
 #include <unordered_map>
 #include <string>
+
+namespace lt
+{
 
 class context
 {
@@ -47,5 +50,7 @@ private:
         void*  /*value*/
     > param_cache;
 };
+
+} // namespace lt
 
 #endif

@@ -1,11 +1,14 @@
-#ifndef FRAMEBUFFER_POOL_HH
-#define FRAMEBUFFER_POOL_HH
+#ifndef LT_FRAMEBUFFER_POOL_HH
+#define LT_FRAMEBUFFER_POOL_HH
 #include "resource.hh"
 #include "framebuffer.hh"
 #include "loaner.hh"
 #include <unordered_map>
 #include <set>
 #include <memory>
+
+namespace lt
+{
 
 class framebuffer_pool: public virtual glresource
 {
@@ -23,7 +26,7 @@ public:
 
     void give(framebuffer* fb);
 
-    using loaner = ::loaner<framebuffer, framebuffer_pool>;
+    using loaner = lt::loaner<framebuffer, framebuffer_pool>;
 
     loaner loan(
         glm::uvec2 size,
@@ -56,5 +59,7 @@ private:
 
     map_type framebuffers;
 };
+
+} // namespace lt
 
 #endif

@@ -1,5 +1,8 @@
 #include "model.hh"
 
+namespace lt
+{
+
 size_t model::group_count() const
 {
     return groups.size();
@@ -51,3 +54,5 @@ model::const_iterator model::cend() const
 {
     return groups.cend();
 }
+
+} // namespace lt

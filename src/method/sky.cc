@@ -9,6 +9,9 @@
 #include "light.hh"
 #include "scene.hh"
 
+namespace lt::method
+{
+
 static struct sky_defaults
 {
     sky_defaults()
@@ -19,7 +22,7 @@ static struct sky_defaults
     transformable_node parent;
 } defaults;
 
-method::sky::sky(
+sky::sky(
     render_target& target,
     resource_pool& pool,
     render_scene* scene,
@@ -41,48 +44,48 @@ method::sky::sky(
     set_scale_height();
 }
 
-void method::sky::set_scene(render_scene* s)
+void sky::set_scene(render_scene* s)
 {
     scene = s;
 }
 
-render_scene* method::sky::get_scene() const
+render_scene* sky::get_scene() const
 {
     return scene;
 }
 
-void method::sky::set_parent(transformable_node* parent)
+void sky::set_parent(transformable_node* parent)
 {
     origin_node.set_parent(parent);
 }
 
-void method::sky::set_origin(glm::vec3 origin)
+void sky::set_origin(glm::vec3 origin)
 {
     origin_node.set_position(origin);
 }
 
-void method::sky::set_scaling(float scale)
+void sky::set_scaling(float scale)
 {
     origin_node.set_scaling(glm::vec3(scale));
 }
 
-void method::sky::set_samples(unsigned view_samples, unsigned light_samples)
+void sky::set_samples(unsigned view_samples, unsigned light_samples)
 {
     this->view_samples = view_samples;
     this->light_samples = light_samples;
 }
 
-void method::sky::set_intensity(float intensity)
+void sky::set_intensity(float intensity)
 {
     this->intensity = intensity;
 }
 
-void method::sky::set_sun(directional_light* sun)
+void sky::set_sun(directional_light* sun)
 {
     this->sun = sun;
 }
 
-glm::vec3 method::sky::get_attenuated_sun_color(glm::vec3 pos)
+glm::vec3 sky::get_attenuated_sun_color(glm::vec3 pos)
 {
     if(!sun) return glm::vec3(0);
 
@@ -125,13 +128,13 @@ glm::vec3 method::sky::get_attenuated_sun_color(glm::vec3 pos)
     return attenuation * sun->get_color();
 }
 
-void method::sky::set_radius(double ground_radius, double atmosphere_height)
+void sky::set_radius(double ground_radius, double atmosphere_height)
 {
     this->ground_radius = ground_radius;
     this->atmosphere_height = atmosphere_height;
 }
 
-void method::sky::set_conditions(double pressure, double temperature)
+void sky::set_conditions(double pressure, double temperature)
 {
     set_conditions(
         pressure,
@@ -140,7 +143,7 @@ void method::sky::set_conditions(double pressure, double temperature)
     );
 }
 
-void method::sky::set_conditions(
+void sky::set_conditions(
     double pressure,
     double temperature,
     double ior,
@@ -161,7 +164,7 @@ void method::sky::set_conditions(
     this->mie_anisotropy = mie_anisotropy;
 }
 
-void method::sky::set_scale_height(
+void sky::set_scale_height(
     double rayleigh_scale_height,
     double mie_scale_height
 ){
@@ -169,7 +172,7 @@ void method::sky::set_scale_height(
     this->mie_scale_height = mie_scale_height;
 }
 
-void method::sky::execute()
+void sky::execute()
 {
     target_method::execute();
 
@@ -225,7 +228,9 @@ void method::sky::execute()
     quad.draw();
 }
 
-std::string method::sky::get_name() const
+std::string sky::get_name() const
 {
     return "sky";
 }
+
+} // namespace lt::method

@@ -2,6 +2,9 @@
 #include <stdexcept>
 #include <cstring>
 
+namespace lt
+{
+
 template<>
 void uniform_set_value<float>(
     GLint location, size_t count, const float* value
@@ -244,3 +247,5 @@ void uniform_block::basic_unload()
         buffer = nullptr;
     }
 }
+
+} // namespace lt

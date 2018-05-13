@@ -1,5 +1,8 @@
 #include "light.hh"
 
+namespace lt
+{
+
 light::light(glm::vec3 color)
 : color(color) {}
 
@@ -63,3 +66,4 @@ glm::vec3 spotlight::get_global_direction() const
     return get_global_orientation() * glm::vec3(0, 0, -1);
 }
 
+} // namespace lt

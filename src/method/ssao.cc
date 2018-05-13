@@ -8,6 +8,9 @@
 #include "common_resources.hh"
 #include "math.hh"
 
+namespace lt::method
+{
+
 static texture* generate_ssao_kernel(
     context& ctx,
     unsigned size
@@ -34,7 +37,7 @@ static texture* generate_ssao_kernel(
     );
 }
 
-method::ssao::ssao(
+ssao::ssao(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
@@ -69,48 +72,48 @@ method::ssao::ssao(
 {
 }
 
-void method::ssao::set_radius(float radius)
+void ssao::set_radius(float radius)
 {
     this->radius = radius;
 }
 
-float method::ssao::get_radius() const
+float ssao::get_radius() const
 {
     return radius;
 }
 
-void method::ssao::set_samples(unsigned samples)
+void ssao::set_samples(unsigned samples)
 {
     kernel.reset(generate_ssao_kernel(get_context(), samples)),
     this->samples = samples;
 }
 
-unsigned method::ssao::get_samples() const
+unsigned ssao::get_samples() const
 {
     return samples;
 }
 
-void method::ssao::set_blur(unsigned blur_radius)
+void ssao::set_blur(unsigned blur_radius)
 {
     this->blur_radius = blur_radius;
 }
 
-unsigned method::ssao::get_blur() const
+unsigned ssao::get_blur() const
 {
     return blur_radius;
 }
 
-void method::ssao::set_bias(float bias)
+void ssao::set_bias(float bias)
 {
     this->bias = bias;
 }
 
-float method::ssao::get_bias() const
+float ssao::get_bias() const
 {
     return bias;
 }
 
-void method::ssao::execute()
+void ssao::execute()
 {
     if(!ssao_shader || radius <= 0.0f || !scene ||
         scene->get_ambient() == glm::vec3(0))
@@ -177,7 +180,9 @@ void method::ssao::execute()
     quad.draw();
 }
 
-std::string method::ssao::get_name() const
+std::string ssao::get_name() const
 {
     return "ssao";
 }
+
+} // namespace lt::method

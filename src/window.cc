@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <SDL_opengl.h>
 
+namespace lt
+{
+
 bool window::initialized = false;
 
 window::window(const params& p)
@@ -146,3 +149,5 @@ float window::get_delta() const
 {
     return delta/1000.0f;
 }
+
+} // namespace lt

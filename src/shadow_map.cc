@@ -2,6 +2,9 @@
 #include "helpers.hh"
 #include "math.hh"
 
+namespace lt
+{
+
 directional_shadow_map::directional_shadow_map(
     method::shadow_method* method,
     glm::vec3 offset,
@@ -217,4 +220,6 @@ method::shadow_method* perspective_shadow_map::get_method() const
 {
     return method;
 }
+
+} // namespace lt
 

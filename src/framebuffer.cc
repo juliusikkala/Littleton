@@ -6,6 +6,9 @@
 #include <string>
 #include <boost/functional/hash.hpp>
 
+namespace lt
+{
+
 framebuffer::target_specifier::target_specifier(
     GLint format,
     bool as_texture
@@ -189,8 +192,9 @@ texture* framebuffer::get_texture_target(GLenum attachment) const
     );
 }
 
+} // namespace lt
 
-size_t boost::hash_value(const framebuffer::target_specifier& t)
+size_t boost::hash_value(const lt::framebuffer::target_specifier& t)
 {
     std::size_t seed = 0;
     boost::hash_combine(seed, t.format);

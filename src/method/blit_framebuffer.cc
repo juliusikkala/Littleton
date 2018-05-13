@@ -1,22 +1,25 @@
 #include "blit_framebuffer.hh"
 
-method::blit_framebuffer::blit_framebuffer(
+namespace lt::method
+{
+
+blit_framebuffer::blit_framebuffer(
     render_target& dst,
     render_target& src,
     blit_type type
 ): target_method(dst), src(&src), type(type) {}
 
-void method::blit_framebuffer::set_blit_type(blit_type type)
+void blit_framebuffer::set_blit_type(blit_type type)
 {
     this->type = type;    
 }
 
-void method::blit_framebuffer::set_src(render_target& src)
+void blit_framebuffer::set_src(render_target& src)
 {
     this->src = &src;
 }
 
-void method::blit_framebuffer::execute()
+void blit_framebuffer::execute()
 {
     target_method::execute();
 
@@ -36,7 +39,9 @@ void method::blit_framebuffer::execute()
     );
 }
 
-std::string method::blit_framebuffer::get_name() const
+std::string blit_framebuffer::get_name() const
 {
     return "blit_framebuffer";
 }
+
+} // namespace lt::method

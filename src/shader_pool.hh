@@ -1,5 +1,5 @@
-#ifndef SHADER_POOL_HH
-#define SHADER_POOL_HH
+#ifndef LT_SHADER_POOL_HH
+#define LT_SHADER_POOL_HH
 #include "resource.hh"
 #include "shader.hh"
 #include <memory>
@@ -8,6 +8,9 @@
 #include <vector>
 #include <optional>
 #include <boost/functional/hash.hpp>
+
+namespace lt
+{
 
 class multishader;
 class shader_pool: public virtual glresource
@@ -61,6 +64,8 @@ private:
     std::optional<std::string> shader_binary_path;
     map_type shaders;
 };
+
+} // namespace lt
 
 #endif
 

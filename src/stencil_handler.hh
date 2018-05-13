@@ -1,5 +1,8 @@
-#ifndef STENCIL_HANDLER_HH
-#define STENCIL_HANDLER_HH
+#ifndef LT_STENCIL_HANDLER_HH
+#define LT_STENCIL_HANDLER_HH
+
+namespace lt
+{
 
 // To be used by methods for providing an interface for managing what is
 // written to the stencil buffer and what is passed.
@@ -21,5 +24,7 @@ private:
     unsigned value;
     unsigned ref;
 };
+
+} // namespace lt
 
 #endif

@@ -6,7 +6,10 @@
 #include "scene.hh"
 #include "common_resources.hh"
 
-method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
+namespace lt::method
+{
+
+shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
 :   glresource(pool.get_context()),
     shadow_method(scene),
     pool(pool),
@@ -46,7 +49,7 @@ method::shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
     )
 {}
 
-shader::definition_map method::shadow_msm::get_directional_definitions() const
+shader::definition_map shadow_msm::get_directional_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/directional_msm.glsl"},
@@ -54,7 +57,7 @@ shader::definition_map method::shadow_msm::get_directional_definitions() const
     };
 }
 
-shader::definition_map method::shadow_msm::get_omni_definitions() const
+shader::definition_map shadow_msm::get_omni_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/omni_msm.glsl"},
@@ -62,7 +65,7 @@ shader::definition_map method::shadow_msm::get_omni_definitions() const
     };
 }
 
-shader::definition_map method::shadow_msm::get_perspective_definitions() const
+shader::definition_map shadow_msm::get_perspective_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/perspective_msm.glsl"},
@@ -70,7 +73,7 @@ shader::definition_map method::shadow_msm::get_perspective_definitions() const
     };
 }
 
-void method::shadow_msm::set_shadow_map_uniforms(
+void shadow_msm::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     directional_shadow_map* shadow_map,
@@ -89,7 +92,7 @@ void method::shadow_msm::set_shadow_map_uniforms(
     s->set(prefix + "mvp", lvp * pos_to_world);
 }
 
-void method::shadow_msm::set_shadow_map_uniforms(
+void shadow_msm::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     omni_shadow_map* shadow_map,
@@ -105,7 +108,7 @@ void method::shadow_msm::set_shadow_map_uniforms(
     s->set(prefix + "far_plane", sm->get_range().y);
 }
 
-void method::shadow_msm::set_shadow_map_uniforms(
+void shadow_msm::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     perspective_shadow_map* shadow_map,
@@ -228,7 +231,7 @@ static void render_single(
     quad.draw();
 }
 
-void method::shadow_msm::execute()
+void shadow_msm::execute()
 {
     if(!scene) return;
 
@@ -359,10 +362,15 @@ void method::shadow_msm::execute()
     }
 }
 
-std::string method::shadow_msm::get_name() const
+std::string shadow_msm::get_name() const
 {
     return "shadow_msm";
 }
+
+} // namespace lt::method
+
+namespace lt
+{
 
 directional_shadow_map_msm::directional_shadow_map_msm(
     method::shadow_msm* method,
@@ -538,3 +546,6 @@ const framebuffer& perspective_shadow_map_msm::get_framebuffer() const
 {
     return moments_buffer;
 }
+
+} // namespace lt
+

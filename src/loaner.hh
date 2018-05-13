@@ -1,6 +1,9 @@
-#ifndef LOANER_HH
-#define LOANER_HH
+#ifndef LT_LOANER_HH
+#define LT_LOANER_HH
 #include <memory>
+
+namespace lt
+{
 
 template<typename Resource, typename Pool>
 class loan_returner
@@ -17,6 +20,8 @@ private:
 
 template<typename Resource, typename Pool>
 using loaner = std::unique_ptr<Resource, loan_returner<Resource, Pool>>;
+
+} // namespace lt
 
 #include "loaner.tcc"
 #endif

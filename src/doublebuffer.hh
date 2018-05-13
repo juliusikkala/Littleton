@@ -1,8 +1,11 @@
-#ifndef DOUBLEBUFFER_HH
-#define DOUBLEBUFFER_HH
+#ifndef LT_DOUBLEBUFFER_HH
+#define LT_DOUBLEBUFFER_HH
 #include "resource.hh"
 #include "render_target.hh"
 #include "texture.hh"
+
+namespace lt
+{
 
 class doublebuffer: public glresource
 {
@@ -42,6 +45,8 @@ private:
     texture buffers[2];
     target targets[2];
 };
+
+} // namespace lt
 
 #endif
 

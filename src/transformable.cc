@@ -1,6 +1,9 @@
 #include "transformable.hh"
 #include "helpers.hh"
 
+namespace lt
+{
+
 transformable::transformable()
 : orientation(1,0,0,0), position(0), scaling(1)
 {
@@ -204,3 +207,5 @@ void transformable_node::lookat(
 ){
     lookat(other->get_global_position(), up, forward, angle_limit);
 }
+
+} // namespace lt

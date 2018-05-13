@@ -1,3 +1,8 @@
+#include "loaner.hh"
+
+namespace lt
+{
+
 template<typename Resource, typename Pool>
 loan_returner<Resource, Pool>::loan_returner()
 : return_target(nullptr) { }
@@ -11,3 +16,5 @@ void loan_returner<Resource, Pool>::operator()(Resource* res)
 {
     if(return_target) return_target->give(res);
 }
+
+} // namespace lt

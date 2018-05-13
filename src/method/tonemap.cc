@@ -4,7 +4,10 @@
 #include "resource_pool.hh"
 #include "common_resources.hh"
 
-method::tonemap::tonemap(
+namespace lt::method
+{
+
+tonemap::tonemap(
     render_target& target,
     resource_pool& pool,
     texture* src,
@@ -19,17 +22,17 @@ method::tonemap::tonemap(
 {
 }
 
-void method::tonemap::set_exposure(float exposure)
+void tonemap::set_exposure(float exposure)
 {
     this->exposure = exposure;
 }
 
-float method::tonemap::get_exposure() const
+float tonemap::get_exposure() const
 {
     return exposure;
 }
 
-void method::tonemap::execute()
+void tonemap::execute()
 {
     target_method::execute();
 
@@ -47,7 +50,9 @@ void method::tonemap::execute()
     quad.draw();
 }
 
-std::string method::tonemap::get_name() const
+std::string tonemap::get_name() const
 {
     return "tonemap";
 }
+
+} // namespace lt::method

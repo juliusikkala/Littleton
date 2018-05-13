@@ -1,7 +1,10 @@
-#ifndef LOADERS_HH
-#define LOADERS_HH
+#ifndef LT_LOADERS_HH
+#define LT_LOADERS_HH
 #include <string>
 #include <unordered_map>
+
+namespace lt
+{
 
 class resource_pool;
 class scene_graph;
@@ -13,5 +16,7 @@ std::unordered_map<std::string, scene_graph> load_gltf(
     const std::string& data_prefix = "",
     bool ignore_duplicates = true
 );
+
+} // namespace lt
 
 #endif

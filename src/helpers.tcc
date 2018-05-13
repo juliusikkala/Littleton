@@ -2,6 +2,9 @@
 #include <boost/filesystem.hpp>
 #include <algorithm>
 
+namespace lt
+{
+
 template<typename T, typename Hash>
 std::string append_hash_to_path(
     const std::string& prefix,
@@ -40,3 +43,5 @@ bool sorted_erase(
     }
     return false;
 }
+
+} // namespace lt

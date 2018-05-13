@@ -1,6 +1,9 @@
 #include "framebuffer_pool.hh"
 #include <boost/functional/hash.hpp>
 
+namespace lt
+{
+
 framebuffer_pool::framebuffer_pool(context& ctx)
 : glresource(ctx)
 {
@@ -105,3 +108,5 @@ void framebuffer_pool::confirm_specifications(
             );
     }
 }
+
+} // namespace lt

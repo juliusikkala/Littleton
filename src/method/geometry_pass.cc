@@ -13,7 +13,10 @@
 #include "math.hh"
 #include <utility>
 
-method::geometry_pass::geometry_pass(
+namespace lt::method
+{
+
+geometry_pass::geometry_pass(
     gbuffer& buf,
     resource_pool& pool,
     render_scene* scene,
@@ -29,27 +32,27 @@ method::geometry_pass::geometry_pass(
     apply_ambient(apply_ambient)
 {}
 
-void method::geometry_pass::set_scene(render_scene* scene)
+void geometry_pass::set_scene(render_scene* scene)
 {
     this->scene = scene;
 }
 
-render_scene* method::geometry_pass::get_scene() const
+render_scene* geometry_pass::get_scene() const
 {
     return scene;
 }
 
-void method::geometry_pass::set_apply_ambient(bool apply_ambient)
+void geometry_pass::set_apply_ambient(bool apply_ambient)
 {
     this->apply_ambient = apply_ambient;
 }
 
-bool method::geometry_pass::get_apply_ambient() const
+bool geometry_pass::get_apply_ambient() const
 {
     return apply_ambient;
 }
 
-void method::geometry_pass::execute()
+void geometry_pass::execute()
 {
     target_method::execute();
     if(!geometry_shader || !scene)
@@ -117,7 +120,9 @@ void method::geometry_pass::execute()
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
-std::string method::geometry_pass::get_name() const
+std::string geometry_pass::get_name() const
 {
     return "geometry_pass";
 }
+
+} // namespace lt::method

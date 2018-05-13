@@ -3,6 +3,9 @@
 #include "helpers.hh"
 #include <boost/filesystem.hpp>
 
+namespace lt
+{
+
 static std::string find_file(
     const std::vector<std::string> prefixes,
     const std::string& suffix
@@ -110,3 +113,5 @@ shader_pool::const_iterator shader_pool::cend() const
 {
     return shaders.cend();
 }
+
+} // namespace lt

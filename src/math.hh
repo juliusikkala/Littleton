@@ -11,39 +11,46 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/integer.hpp>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
 
+namespace lt
+{
+
+// Add  stuff directly to lt namespace
+using namespace glm;
+
 void decompose_matrix(
-    const glm::mat4& transform,
-    glm::vec3& translation,
-    glm::vec3& scaling,
-    glm::quat& orientation
+    const mat4& transform,
+    vec3& translation,
+    vec3& scaling,
+    quat& orientation
 );
 
-glm::vec3 get_matrix_translation(const glm::mat4& transform);
-glm::vec3 get_matrix_scaling(const glm::mat4& transform);
-glm::quat get_matrix_orientation(const glm::mat4& transform);
+vec3 get_matrix_translation(const mat4& transform);
+vec3 get_matrix_scaling(const mat4& transform);
+quat get_matrix_orientation(const mat4& transform);
 
 void decompose_perspective(
-    const glm::mat4& perspective,
+    const mat4& perspective,
     float& near,
     float& far,
     float& fov,
     float& aspect
 );
 
-glm::quat rotate_towards(
-    glm::quat orig,
-    glm::quat dest,
+quat rotate_towards(
+    quat orig,
+    quat dest,
     float angle_limit
 );
 
-glm::quat quat_lookat(
-    glm::vec3 dir,
-    glm::vec3 up,
-    glm::vec3 forward = glm::vec3(0,0,-1)
+quat quat_lookat(
+    vec3 dir,
+    vec3 up,
+    vec3 forward = vec3(0,0,-1)
 );
 
 #define sign(x) ((x > 0) - (x < 0))
@@ -51,9 +58,9 @@ glm::quat quat_lookat(
 bool solve_quadratic(float a, float b, float c, float& x0, float& x1);
 
 bool intersect_sphere(
-    glm::vec3 pos,
-    glm::vec3 dir,
-    glm::vec3 origin,
+    vec3 pos,
+    vec3 dir,
+    vec3 origin,
     float radius,
     float& t0,
     float& t1
@@ -65,8 +72,8 @@ unsigned factorize(unsigned n);
 // Computes a modelview matrix for a quad such that it completely covers the
 // surface area of a sphere. use_near_radius determines whether the resulting
 // depth value is picked from the near edge of the sphere or the furthest edge.
-glm::mat4 sphere_projection_quad_matrix(
-    glm::vec3 pos,
+mat4 sphere_projection_quad_matrix(
+    vec3 pos,
     float r,
     float near,
     float far,
@@ -79,7 +86,7 @@ glm::mat4 sphere_projection_quad_matrix(
 // a previous call to this function with the same r.
 // Circular version
 void mitchell_best_candidate(
-    std::vector<glm::vec2>& samples,
+    std::vector<vec2>& samples,
     float r,
     unsigned candidate_count,
     unsigned count
@@ -87,7 +94,7 @@ void mitchell_best_candidate(
 
 // Rectangular version
 void mitchell_best_candidate(
-    std::vector<glm::vec2>& samples,
+    std::vector<vec2>& samples,
     float w,
     float h,
     unsigned candidate_count,
@@ -96,19 +103,19 @@ void mitchell_best_candidate(
 
 // Spherical version
 void mitchell_best_candidate(
-    std::vector<glm::vec3>& samples,
+    std::vector<vec3>& samples,
     float r,
     unsigned candidate_count,
     unsigned count
 );
 
-std::vector<glm::vec2> grid_samples(
+std::vector<vec2> grid_samples(
     unsigned w,
     unsigned h,
     float step
 );
 
-std::vector<glm::vec2> poisson_samples(
+std::vector<vec2> poisson_samples(
     float w,
     float h,
     float mindist
@@ -119,5 +126,9 @@ std::vector<float> generate_gaussian_kernel(
     float sigma
 );
 
+
+unsigned calculate_mipmap_count(uvec2 size);
+
+} // namespace lt
 
 #endif

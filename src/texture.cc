@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <cstring>
 
+namespace lt
+{
+
 static unsigned choose_alignment(unsigned line_bytes)
 {
     if((line_bytes & 7) == 0) return 8;
@@ -21,7 +24,7 @@ static GLuint create_texture_from_data(
     const void* data,
     unsigned samples = 0
 ){
-    unsigned mipmap_count = floor(log2(std::max(size.x, size.y)))+1;
+    unsigned mipmap_count = calculate_mipmap_count(size);
 
     GLint external_format = internal_format_to_external_format(internal_format);
 
@@ -427,3 +430,5 @@ void texture::basic_unload() const
         tex = 0;
     }
 }
+
+} // namespace lt

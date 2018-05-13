@@ -2,6 +2,9 @@
 #include "texture.hh"
 #include "shader.hh"
 
+namespace lt
+{
+
 material::material()
 :   color_factor(glm::vec4(1.0f)),
     color_texture(nullptr, nullptr),
@@ -74,3 +77,5 @@ bool material::potentially_transparent() const
     return color_factor.a < 1.0f || (color_texture.second && 
         color_texture.second->get_external_format() == GL_RGBA);
 }
+
+} // namespace lt

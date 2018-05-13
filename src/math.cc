@@ -1,5 +1,8 @@
 #include "math.hh"
 
+namespace lt
+{
+
 void decompose_matrix(
     const glm::mat4& transform,
     glm::vec3& translation,
@@ -345,3 +348,9 @@ std::vector<float> generate_gaussian_kernel(
     return result;
 }
 
+unsigned calculate_mipmap_count(uvec2 size)
+{
+    return floor(log2(std::max(size.x, size.y)))+1;
+}
+
+} // namespace lt

@@ -1,6 +1,9 @@
 #include "stencil_handler.hh"
 #include "glheaders.hh"
 
+namespace lt
+{
+
 stencil_handler::stencil_handler(): value(1), ref(1) {}
 
 void stencil_handler::set_stencil_draw(unsigned value)
@@ -32,3 +35,5 @@ void stencil_handler::stencil_cull()
     glStencilFunc(GL_EQUAL, ref, 0xFF);
     glStencilMask(0x00);
 }
+
+} // namespace lt

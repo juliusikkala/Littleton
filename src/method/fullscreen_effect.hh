@@ -1,38 +1,45 @@
-#ifndef METHOD_FULLSCREEN_EFFECT_HH
-#define METHOD_FULLSCREEN_EFFECT_HH
+#ifndef LT_METHOD_FULLSCREEN_EFFECT_HH
+#define LT_METHOD_FULLSCREEN_EFFECT_HH
 #include "pipeline.hh"
 #include "primitive.hh"
 #include <map>
 #include <string>
 
+namespace lt
+{
+
 class texture;
 class shader;
 class resource_pool;
 
-namespace method
+} // namespace lt
+
+namespace lt::method
 {
-    // Assumes the vertex shader is data/shaders/fullscreen.vert
-    class fullscreen_effect: public target_method
-    {
-    public:
-        fullscreen_effect(
-            render_target& target,
-            resource_pool& pool,
-            shader* effect = nullptr
-        );
-        ~fullscreen_effect();
 
-        void execute() override;
+// Assumes the vertex shader is data/shaders/fullscreen.vert
+class fullscreen_effect: public target_method
+{
+public:
+    fullscreen_effect(
+        render_target& target,
+        resource_pool& pool,
+        shader* effect = nullptr
+    );
+    ~fullscreen_effect();
 
-        void set_shader(shader* effect);
-        shader* get_shader() const;
+    void execute() override;
 
-        std::string get_name() const override;
+    void set_shader(shader* effect);
+    shader* get_shader() const;
 
-    private:
-        shader* effect;
-        const primitive& quad;
-    };
-}
+    std::string get_name() const override;
+
+private:
+    shader* effect;
+    const primitive& quad;
+};
+
+} // namespace lt::method
 
 #endif

@@ -1,6 +1,9 @@
 #include "render_target.hh"
 #include <stdexcept>
 
+namespace lt
+{
+
 GLint render_target::current_read_fbo = -1;
 GLint render_target::current_write_fbo = -1;
 
@@ -106,3 +109,5 @@ void render_target::reinstate_current_fbo()
     if(current_write_fbo != -1)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, current_write_fbo);
 }
+
+} // namespace lt

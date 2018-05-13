@@ -1,6 +1,9 @@
 #include "camera.hh"
 #include <limits>
 
+namespace lt
+{
+
 camera::camera(transformable_node* parent): transformable_node(parent) {}
 camera::~camera() {}
 
@@ -99,3 +102,5 @@ glm::vec2 camera::pixels_per_unit(glm::uvec2 target_size) const
         top_projection.y - bottom_projection.y
     ) * glm::vec2(target_size);
 }
+
+} // namespace lt

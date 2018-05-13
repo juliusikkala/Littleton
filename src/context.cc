@@ -2,6 +2,9 @@
 #include <cstring>
 #include <unordered_map>
 
+namespace lt
+{
+
 static const std::unordered_map<GLenum, unsigned> cacheable_params({
     // Context related
     {GL_CONTEXT_FLAGS, 1},
@@ -351,3 +354,5 @@ void context::init()
     vendor = std::string((const char*)glGetString(GL_VENDOR));
     renderer = std::string((const char*)glGetString(GL_RENDERER));
 }
+
+} // namespace lt

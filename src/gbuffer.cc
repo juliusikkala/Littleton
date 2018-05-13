@@ -5,6 +5,9 @@
 #include "primitive.hh"
 #include <stdexcept>
 
+namespace lt
+{
+
 gbuffer::gbuffer(
     context& ctx,
     glm::uvec2 size,
@@ -380,7 +383,7 @@ void gbuffer::render_depth_mipmaps(
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     glm::uvec2 size = get_size();
-    unsigned mipmap_count = floor(log2(std::max(size.x, size.y)))+1;
+    unsigned mipmap_count = calculate_mipmap_count(size);
 
     GLenum target = linear_depth->get_target();
     GLuint tex = linear_depth->get_texture();
@@ -426,3 +429,5 @@ void gbuffer::render_depth_mipmaps(
 
     reinstate_current_fbo();
 }
+
+} // namespace lt

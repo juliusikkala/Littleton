@@ -1,5 +1,8 @@
 #include "resource_pool.hh"
 
+namespace lt
+{
+
 resource_pool::resource_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
@@ -75,3 +78,4 @@ void resource_pool::unload_all()
     primitive_pool::unload_all();
 }
 
+} // namespace lt

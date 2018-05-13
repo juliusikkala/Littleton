@@ -10,12 +10,10 @@
 #include "environment_map.hh"
 #include <stdexcept>
 
-static unsigned max_mipmap_index(glm::uvec2 size)
+namespace lt::method
 {
-    return floor(log2(std::max(size.x, size.y)));
-}
 
-method::ssrt::ssrt(
+ssrt::ssrt(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
@@ -45,22 +43,22 @@ method::ssrt::ssrt(
     set_thickness();
 }
 
-void method::ssrt::set_max_steps(unsigned max_steps)
+void ssrt::set_max_steps(unsigned max_steps)
 {
     this->max_steps = max_steps;
 }
 
-void method::ssrt::set_roughness_cutoff(float cutoff)
+void ssrt::set_roughness_cutoff(float cutoff)
 {
     roughness_cutoff = cutoff;
 }
 
-void method::ssrt::set_brdf_cutoff(float cutoff)
+void ssrt::set_brdf_cutoff(float cutoff)
 {
     brdf_cutoff = cutoff;
 }
 
-void method::ssrt::set_thickness(float thickness)
+void ssrt::set_thickness(float thickness)
 {
     this->thickness = thickness;
     texture* linear_depth = buf->get_linear_depth();
@@ -78,17 +76,17 @@ void method::ssrt::set_thickness(float thickness)
     refresh_shader();
 }
 
-void method::ssrt::set_ray_offset(float offset)
+void ssrt::set_ray_offset(float offset)
 {
     ray_offset = offset;
 }
 
-void method::ssrt::use_fallback_cubemap(bool use)
+void ssrt::use_fallback_cubemap(bool use)
 {
     this->fallback_cubemap = use;
 }
 
-void method::ssrt::execute()
+void ssrt::execute()
 {
     if(!ssrt_shader || !scene || !buf) return;
 
@@ -164,20 +162,22 @@ void method::ssrt::execute()
     quad.draw();
 }
 
-std::string method::ssrt::get_name() const
+std::string ssrt::get_name() const
 {
     return "ssrt";
 }
 
-void method::ssrt::refresh_shader()
+void ssrt::refresh_shader()
 {
     shader::definition_map def = {
         {
             "RAY_MAX_LEVEL",
-            std::to_string(max_mipmap_index(get_target().get_size()))
+            std::to_string(calculate_mipmap_count(get_target().get_size())-1)
         }
     };
     if(thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
 
     ssrt_shader = ssrt_shaders->get(def);
 }
+
+} // namespace lt::method

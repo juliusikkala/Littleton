@@ -1,5 +1,5 @@
-#ifndef GLHEADERS_HH
-#define GLHEADERS_HH
+#ifndef LT_GLHEADERS_HH
+#define LT_GLHEADERS_HH
 
 //#define GLEW_STATIC
 #include <GL/glew.h>

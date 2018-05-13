@@ -1,5 +1,8 @@
-#ifndef RESOURCE_HH
-#define RESOURCE_HH
+#ifndef LT_RESOURCE_HH
+#define LT_RESOURCE_HH
+
+namespace lt
+{
 
 // Only useful for lazily loadable resources.
 // Since OpenGL should only be used from the main thread, this class doesn't
@@ -54,5 +57,7 @@ public:
 private:
     context* ctx;
 };
+
+} // namespace lt
 
 #endif

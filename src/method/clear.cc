@@ -1,16 +1,19 @@
 #include "clear.hh"
 #include "glheaders.hh"
 
-method::clear::clear(
+namespace lt::method
+{
+
+clear::clear(
     render_target& target,
     glm::vec4 color,
     double depth,
     int stencil
 ): target_method(target), color(color), depth(depth), stencil(stencil) {}
 
-method::clear::~clear(){}
+clear::~clear(){}
 
-void method::clear::execute()
+void clear::execute()
 {
     target_method::execute();
 
@@ -21,7 +24,9 @@ void method::clear::execute()
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 }
 
-std::string method::clear::get_name() const
+std::string clear::get_name() const
 {
     return "clear";
 }
+
+} // namespace lt::method

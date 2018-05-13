@@ -1,14 +1,17 @@
-#ifndef SHADOW_MAP_HH
-#define SHADOW_MAP_HH
+#ifndef LT_SHADOW_MAP_HH
+#define LT_SHADOW_MAP_HH
 #include "light.hh"
 #include "resource.hh"
 #include "shader.hh"
 #include <set>
 
+namespace lt
+{
+
 namespace method
 {
     class shadow_method;
-};
+}
 
 class directional_shadow_map
 {
@@ -109,4 +112,6 @@ private:
 
     point_light* l;
 };
+
+} // namespace lt
 #endif

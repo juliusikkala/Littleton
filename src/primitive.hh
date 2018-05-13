@@ -1,10 +1,13 @@
-#ifndef PRIMITIVE_HH
-#define PRIMITIVE_HH
+#ifndef LT_PRIMITIVE_HH
+#define LT_PRIMITIVE_HH
 #include "glheaders.hh"
 #include "resource.hh"
 #include "shader.hh"
 #include "gpu_buffer.hh"
 #include <map>
+
+namespace lt
+{
 
 class gpu_buffer_accessor
 {
@@ -98,5 +101,7 @@ protected:
     mutable gpu_buffer_accessor index;
     mutable std::map<attribute, gpu_buffer_accessor> attribs;
 };
+
+} // namespace lt
 
 #endif

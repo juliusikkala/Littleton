@@ -12,6 +12,9 @@
 #include <memory>
 #include <map>
 
+namespace lt
+{
+
 static void load_gltf_node(
     resource_pool& pool,
     tinygltf::Model& model,
@@ -298,7 +301,7 @@ std::unordered_map<std::string, scene_graph> load_gltf(
     // Load models
     for(tinygltf::Mesh& mesh: model.meshes)
     {
-        ::model* m = new ::model();
+        lt::model* m = new lt::model();
 
         unsigned primitive_index = 0;
         for(tinygltf::Primitive& p: mesh.primitives)
@@ -402,3 +405,5 @@ std::unordered_map<std::string, scene_graph> load_gltf(
 
     return scenes;
 }
+
+} // namespace lt

@@ -1,5 +1,5 @@
-#ifndef METHOD_SHADOW_PCF_HH
-#define METHOD_SHADOW_PCF_HH
+#ifndef LT_METHOD_SHADOW_PCF_HH
+#define LT_METHOD_SHADOW_PCF_HH
 #include "pipeline.hh"
 #include "render_target.hh"
 #include "shadow_method.hh"
@@ -7,11 +7,19 @@
 #include "framebuffer.hh"
 #include "sampler.hh"
 
+namespace lt
+{
+
 class directional_shadow_map_pcf;
 class resource_pool;
 class shader;
 class primitive;
 namespace method { class shadow_pcf; }
+
+}
+
+namespace lt
+{
 
 class directional_shadow_map_pcf: public directional_shadow_map
 {
@@ -121,68 +129,73 @@ private:
     unsigned samples;
 };
 
-namespace method
+} // namespace lt
+
+namespace lt::method
 {
-    class shadow_pcf: public shadow_method
-    {
-    public:
-        shadow_pcf(resource_pool& pool, render_scene* scene);
 
-        void set_directional_uniforms(
-            shader* s,
-            unsigned& texture_index
-        ) override;
+class shadow_pcf: public shadow_method
+{
+public:
+    shadow_pcf(resource_pool& pool, render_scene* scene);
 
-        void set_omni_uniforms(
-            shader* s,
-            unsigned& texture_index
-        ) override;
+    void set_directional_uniforms(
+        shader* s,
+        unsigned& texture_index
+    ) override;
 
-        void set_perspective_uniforms(
-            shader* s,
-            unsigned& texture_index
-        ) override;
+    void set_omni_uniforms(
+        shader* s,
+        unsigned& texture_index
+    ) override;
 
-        shader::definition_map get_directional_definitions() const override;
-        shader::definition_map get_omni_definitions() const override;
-        shader::definition_map get_perspective_definitions() const override;
+    void set_perspective_uniforms(
+        shader* s,
+        unsigned& texture_index
+    ) override;
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            directional_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    shader::definition_map get_directional_definitions() const override;
+    shader::definition_map get_omni_definitions() const override;
+    shader::definition_map get_perspective_definitions() const override;
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            omni_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        directional_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            perspective_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        omni_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        void execute() override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        perspective_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        std::string get_name() const override;
+    void execute() override;
 
-    private:
-        shader* depth_shader;
-        shader* cubemap_depth_shader;
-        shader* perspective_depth_shader;
-        const texture& shadow_noise_2d;
-        const texture& shadow_noise_3d;
-        const texture& kernel;
-        sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
-    };
+    std::string get_name() const override;
+
+private:
+    shader* depth_shader;
+    shader* cubemap_depth_shader;
+    shader* perspective_depth_shader;
+    const texture& shadow_noise_2d;
+    const texture& shadow_noise_3d;
+    const texture& kernel;
+    sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
 };
+
+} // namespace lt::method
+
 #endif

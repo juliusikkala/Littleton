@@ -5,7 +5,10 @@
 #include "common_resources.hh"
 #include "math.hh"
 
-method::bloom::bloom(
+namespace lt::method
+{
+
+bloom::bloom(
     render_target& target,
     resource_pool& pool,
     texture* src,
@@ -30,17 +33,17 @@ method::bloom::bloom(
     set_radius(radius);
 }
 
-void method::bloom::set_threshold(float threshold)
+void bloom::set_threshold(float threshold)
 {
     this->threshold = threshold;
 }
 
-float method::bloom::get_threshold() const
+float bloom::get_threshold() const
 {
     return threshold;
 }
 
-void method::bloom::set_radius(unsigned radius)
+void bloom::set_radius(unsigned radius)
 {
     this->radius = radius;
 
@@ -49,22 +52,22 @@ void method::bloom::set_radius(unsigned radius)
     );
 }
 
-unsigned method::bloom::get_radius() const
+unsigned bloom::get_radius() const
 {
     return radius;
 }
 
-void method::bloom::set_strength(float strength)
+void bloom::set_strength(float strength)
 {
     this->strength = strength;
 }
 
-float method::bloom::get_strength() const
+float bloom::get_strength() const
 {
     return strength;
 }
 
-void method::bloom::set_level(unsigned level)
+void bloom::set_level(unsigned level)
 {
     this->level = level;
 
@@ -73,12 +76,12 @@ void method::bloom::set_level(unsigned level)
     );
 }
 
-unsigned method::bloom::get_level() const
+unsigned bloom::get_level() const
 {
     return level;
 }
 
-void method::bloom::execute()
+void bloom::execute()
 {
     if(radius <= 0.0f || strength <= 0.0f || !src)
         return;
@@ -150,7 +153,9 @@ void method::bloom::execute()
     quad.draw();
 }
 
-std::string method::bloom::get_name() const
+std::string bloom::get_name() const
 {
     return "bloom";
 }
+
+} // namespace lt::method

@@ -1,7 +1,10 @@
-#ifndef CAMERA_HH
-#define CAMERA_HH
+#ifndef LT_CAMERA_HH
+#define LT_CAMERA_HH
 #include "transformable.hh"
 #include "math.hh"
+
+namespace lt
+{
 
 class camera: public transformable_node
 {
@@ -33,5 +36,7 @@ private:
     float tan_fov;
     glm::vec2 inverse_cos_fov;
 };
+
+} // namespace lt
 
 #endif

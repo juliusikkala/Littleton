@@ -1,7 +1,10 @@
-#ifndef PIPELINE_HH
-#define PIPELINE_HH
+#ifndef LT_PIPELINE_HH
+#define LT_PIPELINE_HH
 #include <vector>
 #include <string>
+
+namespace lt
+{
 
 class pipeline_method
 {
@@ -44,5 +47,7 @@ public:
 private:
     std::vector<pipeline_method*> methods;
 };
+
+} // namespace lt
 
 #endif

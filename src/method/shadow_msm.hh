@@ -1,5 +1,5 @@
-#ifndef METHOD_SHADOW_MSM_HH
-#define METHOD_SHADOW_MSM_HH
+#ifndef LT_METHOD_SHADOW_MSM_HH
+#define LT_METHOD_SHADOW_MSM_HH
 #include "pipeline.hh"
 #include "render_target.hh"
 #include "shadow_method.hh"
@@ -7,10 +7,19 @@
 #include "framebuffer.hh"
 #include "sampler.hh"
 
+namespace lt
+{
+
 class resource_pool;
 class shader;
 class primitive;
 namespace method { class shadow_msm; }
+
+}
+
+
+namespace lt
+{
 
 class directional_shadow_map_msm: public directional_shadow_map
 {
@@ -113,59 +122,63 @@ private:
     unsigned radius;
 };
 
-namespace method
+} // namespace lt
+
+namespace lt::method
 {
-    class shadow_msm: public glresource, public shadow_method
-    {
-    public:
-        shadow_msm(resource_pool& pool, render_scene* scene);
 
-        shader::definition_map get_directional_definitions() const override;
-        shader::definition_map get_omni_definitions() const override;
-        shader::definition_map get_perspective_definitions() const override;
+class shadow_msm: public glresource, public shadow_method
+{
+public:
+    shadow_msm(resource_pool& pool, render_scene* scene);
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            directional_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    shader::definition_map get_directional_definitions() const override;
+    shader::definition_map get_omni_definitions() const override;
+    shader::definition_map get_perspective_definitions() const override;
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            omni_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        directional_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        void set_shadow_map_uniforms(
-            shader* s,
-            unsigned& texture_index,
-            perspective_shadow_map* shadow_map,
-            const std::string& prefix,
-            const glm::mat4& pos_to_world
-        ) override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        omni_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        void execute() override;
+    void set_shadow_map_uniforms(
+        shader* s,
+        unsigned& texture_index,
+        perspective_shadow_map* shadow_map,
+        const std::string& prefix,
+        const glm::mat4& pos_to_world
+    ) override;
 
-        std::string get_name() const override;
+    void execute() override;
 
-    private:
-        resource_pool& pool;
+    std::string get_name() const override;
 
-        shader* depth_shader;
-        shader* cubemap_depth_shader;
-        shader* perspective_depth_shader;
+private:
+    resource_pool& pool;
 
-        shader* vertical_blur_shader;
-        shader* horizontal_blur_shader;
+    shader* depth_shader;
+    shader* cubemap_depth_shader;
+    shader* perspective_depth_shader;
 
-        const primitive& quad;
-        sampler moment_sampler;
-        sampler cubemap_moment_sampler;
-    };
+    shader* vertical_blur_shader;
+    shader* horizontal_blur_shader;
+
+    const primitive& quad;
+    sampler moment_sampler;
+    sampler cubemap_moment_sampler;
 };
+
+} // namespace lt::method
 
 #endif

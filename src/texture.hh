@@ -1,9 +1,12 @@
-#ifndef TEXTURE_HH
-#define TEXTURE_HH
+#ifndef LT_TEXTURE_HH
+#define LT_TEXTURE_HH
 #include "glheaders.hh"
 #include "resource.hh"
 #include <string>
 #include "math.hh"
+
+namespace lt
+{
 
 class texture: public resource, public glresource
 {
@@ -82,5 +85,7 @@ protected:
     mutable GLenum type;
     mutable glm::uvec2 size;
 };
+
+} // namespace lt
 
 #endif

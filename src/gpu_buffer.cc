@@ -2,6 +2,9 @@
 #include <cstring>
 #include <stdexcept>
 
+namespace lt
+{
+
 gpu_buffer::gpu_buffer(context& ctx)
 : glresource(ctx), buf(0), size(0)
 {
@@ -123,3 +126,5 @@ void gpu_buffer::basic_unload() const
         buf = 0;
     }
 }
+
+} // namespace lt

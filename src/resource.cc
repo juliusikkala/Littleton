@@ -1,5 +1,8 @@
 #include "resource.hh"
 
+namespace lt
+{
+
 resource::resource(): loaded(false), do_unload(false), references(0) {}
 resource::~resource() {}
 
@@ -57,3 +60,4 @@ void resource::unlink() const
 glresource::glresource(context& ctx): ctx(&ctx) {}
 context& glresource::get_context() const { return *ctx; }
 
+} // namespace lt

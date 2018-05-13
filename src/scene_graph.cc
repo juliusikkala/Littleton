@@ -2,6 +2,9 @@
 #include "scene.hh"
 #include <stdexcept>
 
+namespace lt
+{
+
 scene_graph::scene_graph() { }
 
 scene_graph::scene_graph(scene_graph&& other)
@@ -84,4 +87,6 @@ void scene_graph::merge(const scene_graph& other)
         }
     }
 }
+
+} // namespace lt
 

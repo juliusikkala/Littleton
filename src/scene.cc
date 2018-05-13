@@ -3,6 +3,9 @@
 #include "light.hh"
 #include "shadow_map.hh"
 
+namespace lt
+{
+
 camera_scene::camera_scene(camera* cam)
 : cam(cam) {}
 
@@ -292,3 +295,5 @@ environment_map* environment_scene::get_skybox() const
 }
 
 render_scene::render_scene() {}
+
+} // namespace lt

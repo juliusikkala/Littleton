@@ -6,7 +6,10 @@
 #include "scene.hh"
 #include "common_resources.hh"
 
-method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
+namespace lt::method
+{
+
+shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
 :   shadow_method(scene),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "empty.frag"},
@@ -53,7 +56,7 @@ method::shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
     cubemap_depth_shader->load();
 }
 
-void method::shadow_pcf::set_directional_uniforms(
+void shadow_pcf::set_directional_uniforms(
     shader* s,
     unsigned& texture_index
 ){
@@ -64,7 +67,7 @@ void method::shadow_pcf::set_directional_uniforms(
     s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
-void method::shadow_pcf::set_omni_uniforms(
+void shadow_pcf::set_omni_uniforms(
     shader* s,
     unsigned& texture_index
 ){
@@ -75,7 +78,7 @@ void method::shadow_pcf::set_omni_uniforms(
     s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
-void method::shadow_pcf::set_perspective_uniforms(
+void shadow_pcf::set_perspective_uniforms(
     shader* s,
     unsigned& texture_index
 ){
@@ -86,7 +89,7 @@ void method::shadow_pcf::set_perspective_uniforms(
     s->set("shadow_kernel", noise_sampler.bind(kernel, texture_index++));
 }
 
-shader::definition_map method::shadow_pcf::get_directional_definitions() const
+shader::definition_map shadow_pcf::get_directional_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/directional_pcf.glsl"},
@@ -94,7 +97,7 @@ shader::definition_map method::shadow_pcf::get_directional_definitions() const
     };
 }
 
-shader::definition_map method::shadow_pcf::get_omni_definitions() const
+shader::definition_map shadow_pcf::get_omni_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/omni_pcf.glsl"},
@@ -102,7 +105,7 @@ shader::definition_map method::shadow_pcf::get_omni_definitions() const
     };
 }
 
-shader::definition_map method::shadow_pcf::get_perspective_definitions() const
+shader::definition_map shadow_pcf::get_perspective_definitions() const
 {
     return {
         {"SHADOW_MAPPING", "shadow/perspective_pcf.glsl"},
@@ -110,7 +113,7 @@ shader::definition_map method::shadow_pcf::get_perspective_definitions() const
     };
 }
 
-void method::shadow_pcf::set_shadow_map_uniforms(
+void shadow_pcf::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     directional_shadow_map* shadow_map,
@@ -133,7 +136,7 @@ void method::shadow_pcf::set_shadow_map_uniforms(
     s->set<int>(prefix + "samples", (int)sm->samples);
 }
 
-void method::shadow_pcf::set_shadow_map_uniforms(
+void shadow_pcf::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     omni_shadow_map* shadow_map,
@@ -155,7 +158,7 @@ void method::shadow_pcf::set_shadow_map_uniforms(
     s->set<int>(prefix + "samples", (int)sm->samples);
 }
 
-void method::shadow_pcf::set_shadow_map_uniforms(
+void shadow_pcf::set_shadow_map_uniforms(
     shader* s,
     unsigned& texture_index,
     perspective_shadow_map* shadow_map,
@@ -180,7 +183,7 @@ void method::shadow_pcf::set_shadow_map_uniforms(
     s->set<int>(prefix + "samples", (int)sm->samples);
 }
 
-void method::shadow_pcf::execute()
+void shadow_pcf::execute()
 {
     if(!scene) return;
 
@@ -329,10 +332,15 @@ void method::shadow_pcf::execute()
     }
 }
 
-std::string method::shadow_pcf::get_name() const
+std::string shadow_pcf::get_name() const
 {
     return "shadow_pcf";
 }
+
+} // namespace lt::method
+
+namespace lt
+{
 
 directional_shadow_map_pcf::directional_shadow_map_pcf(
     method::shadow_pcf* method,
@@ -556,3 +564,5 @@ const texture& perspective_shadow_map_pcf::get_depth() const
 {
     return depth;
 }
+
+} // namespace lt

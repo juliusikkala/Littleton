@@ -1,8 +1,11 @@
-#ifndef RENDER_TARGET_HH
-#define RENDER_TARGET_HH
+#ifndef LT_RENDER_TARGET_HH
+#define LT_RENDER_TARGET_HH
 #include "glheaders.hh"
 #include "resource.hh"
 #include "math.hh"
+
+namespace lt
+{
 
 class render_target: public glresource
 {
@@ -33,5 +36,7 @@ protected:
     static GLint current_read_fbo;
     static GLint current_write_fbo;
 };
+
+} // namespace lt
 
 #endif

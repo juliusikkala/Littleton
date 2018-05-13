@@ -1,7 +1,10 @@
-#ifndef METHOD_GEOMETRY_PASS_HH
-#define METHOD_GEOMETRY_PASS_HH
+#ifndef LT_METHOD_GEOMETRY_PASS_HH
+#define LT_METHOD_GEOMETRY_PASS_HH
 #include "pipeline.hh"
 #include "stencil_handler.hh"
+
+namespace lt
+{
 
 class gbuffer;
 class sampler;
@@ -11,36 +14,41 @@ class shader;
 class primitive;
 class resource_pool;
 
-namespace method
+}
+
+namespace lt::method
 {
-    class geometry_pass: public target_method, public stencil_handler
-    {
-    public:
-        geometry_pass(
-            gbuffer& buf,
-            resource_pool& store,
-            render_scene* scene,
-            bool apply_ambient = true
-        );
 
-        void set_scene(render_scene* scene);
-        render_scene* get_scene() const;
+class geometry_pass: public target_method, public stencil_handler
+{
+public:
+    geometry_pass(
+        gbuffer& buf,
+        resource_pool& store,
+        render_scene* scene,
+        bool apply_ambient = true
+    );
 
-        void set_apply_ambient(bool apply_ambient);
-        bool get_apply_ambient() const;
+    void set_scene(render_scene* scene);
+    render_scene* get_scene() const;
 
-        void execute() override;
+    void set_apply_ambient(bool apply_ambient);
+    bool get_apply_ambient() const;
 
-        std::string get_name() const override;
+    void execute() override;
 
-    private:
-        multishader* geometry_shader;
-        shader* min_max_shader;
-        render_scene* scene;
-        const primitive& quad;
-        const sampler& fb_sampler;
+    std::string get_name() const override;
 
-        bool apply_ambient;
-    };
+private:
+    multishader* geometry_shader;
+    shader* min_max_shader;
+    render_scene* scene;
+    const primitive& quad;
+    const sampler& fb_sampler;
+
+    bool apply_ambient;
 };
+
+} // namespace lt::method
+
 #endif

@@ -1,9 +1,12 @@
-#ifndef GBUFFER_HH
-#define GBUFFER_HH
+#ifndef LT_GBUFFER_HH
+#define LT_GBUFFER_HH
 #include "texture.hh"
 #include "shader.hh"
 #include "render_target.hh"
 #include "math.hh"
+
+namespace lt
+{
 
 class sampler;
 class shader_pool;
@@ -83,5 +86,7 @@ private:
     int linear_depth_index;
     int lighting_index;
 };
+
+} // namespace lt
 
 #endif

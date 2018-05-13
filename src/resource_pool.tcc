@@ -1,4 +1,8 @@
 #include <algorithm>
+#include "resource_pool.hh"
+
+namespace lt
+{
 
 template<typename T>
 generic_resource_pool<T>::generic_resource_pool(context& ctx)
@@ -98,3 +102,5 @@ generic_resource_pool<T>::cend() const
 {
     return resources.cend();
 }
+
+} // namespace lt

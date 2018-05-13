@@ -5,7 +5,10 @@
 #include "texture.hh"
 #include "common_resources.hh"
 
-method::fullscreen_effect::fullscreen_effect(
+namespace lt::method
+{
+
+fullscreen_effect::fullscreen_effect(
     render_target& target,
     resource_pool& pool,
     shader* effect
@@ -13,9 +16,9 @@ method::fullscreen_effect::fullscreen_effect(
    quad(common::ensure_quad_primitive(pool))
 {}
 
-method::fullscreen_effect::~fullscreen_effect() { }
+fullscreen_effect::~fullscreen_effect() { }
 
-void method::fullscreen_effect::execute()
+void fullscreen_effect::execute()
 {
     target_method::execute();
 
@@ -29,17 +32,19 @@ void method::fullscreen_effect::execute()
     quad.draw();
 }
 
-void method::fullscreen_effect::set_shader(shader* effect)
+void fullscreen_effect::set_shader(shader* effect)
 {
     this->effect = effect;
 }
 
-shader* method::fullscreen_effect::get_shader() const
+shader* fullscreen_effect::get_shader() const
 {
     return effect;
 }
 
-std::string method::fullscreen_effect::get_name() const
+std::string fullscreen_effect::get_name() const
 {
     return "fullscreen_effect";
 }
+
+} // namespace lt::method

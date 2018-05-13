@@ -1,9 +1,12 @@
-#ifndef SAMPLER_HH
-#define SAMPLER_HH
+#ifndef LT_SAMPLER_HH
+#define LT_SAMPLER_HH
 #include "glheaders.hh"
 #include "resource.hh"
 #include "texture.hh"
 #include "math.hh"
+
+namespace lt
+{
 
 class sampler: public glresource
 {
@@ -42,5 +45,6 @@ private:
     GLuint sampler_object;
 };
 
+} // namespace lt
 
 #endif

@@ -5,31 +5,34 @@
 #include "resource_pool.hh"
 #include "common_resources.hh"
 
-const glm::mat3 method::kernel::SHARPEN = glm::mat3(
+namespace lt::method
+{
+
+const glm::mat3 kernel::SHARPEN = glm::mat3(
      0, -1, 0,
     -1, 5, -1,
      0, -1, 0
 );
 
-const glm::mat3 method::kernel::EDGE_DETECT = glm::mat3(
+const glm::mat3 kernel::EDGE_DETECT = glm::mat3(
     -1, -1, -1,
     -1, 8, -1,
     -1, -1, -1
 )/16.0f;
 
-const glm::mat3 method::kernel::GAUSSIAN_BLUR = glm::mat3(
+const glm::mat3 kernel::GAUSSIAN_BLUR = glm::mat3(
     1, 2, 1,
     2, 4, 2,
     1, 2, 1
 )/16.0f;
 
-const glm::mat3 method::kernel::BOX_BLUR = glm::mat3(
+const glm::mat3 kernel::BOX_BLUR = glm::mat3(
     1, 1, 1,
     1, 1, 1,
     1, 1, 1
 )/9.0f;
 
-method::kernel::kernel(
+kernel::kernel(
     render_target& target,
     texture& src,
     resource_pool& pool,
@@ -44,17 +47,17 @@ method::kernel::kernel(
 {
 }
 
-void method::kernel::set_kernel(const glm::mat3& kernel)
+void kernel::set_kernel(const glm::mat3& kernel)
 {
     k = kernel;
 }
 
-glm::mat3 method::kernel::get_kernel() const
+glm::mat3 kernel::get_kernel() const
 {
     return k;
 }
 
-void method::kernel::execute()
+void kernel::execute()
 {
     target_method::execute();
 
@@ -72,7 +75,9 @@ void method::kernel::execute()
     quad.draw();
 }
 
-std::string method::kernel::get_name() const
+std::string kernel::get_name() const
 {
     return "kernel";
 }
+
+} // namespace lt::method

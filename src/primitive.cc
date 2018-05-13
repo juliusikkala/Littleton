@@ -2,6 +2,9 @@
 #include <stdexcept>
 #include <string>
 
+namespace lt
+{
+
 gpu_buffer_accessor::gpu_buffer_accessor()
 :   buf(nullptr), components(0), type(GL_INT), normalized(false),
     stride(0), offset(0)
@@ -222,3 +225,4 @@ void primitive::basic_unload() const
     }
 }
 
+} // namespace lt

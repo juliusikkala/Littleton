@@ -1,6 +1,9 @@
 #include "environment_map.hh"
 #include <cstring>
 
+namespace lt
+{
+
 environment_map::environment_map(context& ctx)
 : texture(ctx)
 {
@@ -126,3 +129,5 @@ environment_map* environment_map::create(
         ctx, size, internal_format, type, data_size, data
     );
 }
+
+} // namespace lt

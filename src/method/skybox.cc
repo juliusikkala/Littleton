@@ -7,7 +7,10 @@
 #include "environment_map.hh"
 #include "camera.hh"
 
-method::skybox::skybox(
+namespace lt::method
+{
+
+skybox::skybox(
     render_target& target,
     resource_pool& pool,
     render_scene* scene
@@ -23,27 +26,27 @@ method::skybox::skybox(
     set_stencil_cull(0);
 }
 
-void method::skybox::set_scene(render_scene* s)
+void skybox::set_scene(render_scene* s)
 {
     this->scene = s;
 }
 
-render_scene* method::skybox::get_scene() const
+render_scene* skybox::get_scene() const
 {
     return scene;
 }
 
-void method::skybox::set_exposure(float exposure)
+void skybox::set_exposure(float exposure)
 {
     this->exposure = exposure;
 }
 
-float method::skybox::get_exposure() const
+float skybox::get_exposure() const
 {
     return exposure;
 }
 
-void method::skybox::execute()
+void skybox::execute()
 {
     target_method::execute();
 
@@ -70,7 +73,9 @@ void method::skybox::execute()
     quad.draw();
 }
 
-std::string method::skybox::get_name() const
+std::string skybox::get_name() const
 {
     return "skybox";
 }
+
+} // namespace lt::method

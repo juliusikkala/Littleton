@@ -1,8 +1,11 @@
-#ifndef SCENE_GRAPH_HH
-#define SCENE_GRAPH_HH
+#ifndef LT_SCENE_GRAPH_HH
+#define LT_SCENE_GRAPH_HH
 #include "object.hh"
 #include <unordered_map>
 #include <string>
+
+namespace lt
+{
 
 class render_scene;
 // The naming might be a bit off, this scene_graph simply acts as a container
@@ -32,4 +35,7 @@ public:
 private:
     std::unordered_map<std::string, object> objects;
 };
+
+} // namespace lt
+
 #endif

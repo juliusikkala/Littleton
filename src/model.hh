@@ -1,7 +1,10 @@
-#ifndef MODEL_HH
-#define MODEL_HH
+#ifndef LT_MODEL_HH
+#define LT_MODEL_HH
 #include <vector>
 #include <cstddef>
+
+namespace lt
+{
 
 class material;
 class primitive;
@@ -36,5 +39,7 @@ public:
 private:
     std::vector<vertex_group> groups;
 }; 
+
+} // namespace lt
 
 #endif

@@ -14,6 +14,9 @@
 #include "shadow_method.hh"
 #include "common_resources.hh"
 
+namespace lt::method
+{
+
 // Make sure that the shadow maps are not overridden by material textures.
 // The last texture index set by 'material' is 6, so start shadow maps
 // from 7.
@@ -21,7 +24,7 @@
 // maps do.
 static constexpr int SHADOW_MAP_INDEX_OFFSET = 7;
 
-method::forward_pass::forward_pass(
+forward_pass::forward_pass(
     render_target& target,
     resource_pool& pool,
     render_scene* scene,
@@ -40,7 +43,7 @@ method::forward_pass::forward_pass(
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
 
-method::forward_pass::forward_pass(
+forward_pass::forward_pass(
     gbuffer& buf,
     resource_pool& pool,
     render_scene* scene,
@@ -54,7 +57,7 @@ method::forward_pass::forward_pass(
     gbuf = &buf;
 }
 
-method::forward_pass::~forward_pass() {}
+forward_pass::~forward_pass() {}
 
 static void set_light(
     shader* s,
@@ -107,7 +110,7 @@ static void set_light(
 }
 
 static void set_shadow(
-    method::shadow_method* met,
+    shadow_method* met,
     shader* s,
     unsigned& texture_index,
     directional_shadow_map* sm,
@@ -118,7 +121,7 @@ static void set_shadow(
 }
 
 static void set_shadow(
-    method::shadow_method* met,
+    shadow_method* met,
     shader* s,
     unsigned& texture_index,
     omni_shadow_map* sm,
@@ -129,7 +132,7 @@ static void set_shadow(
 }
 
 static void set_shadow(
-    method::shadow_method* met,
+    shadow_method* met,
     shader* s,
     unsigned& texture_index,
     perspective_shadow_map* sm,
@@ -141,7 +144,7 @@ static void set_shadow(
 
 template<typename L, typename S>
 static void render_pass(
-    method::shadow_method* met,
+    shadow_method* met,
     const shader::definition_map& scene_definitions,
     render_scene* scene,
     multishader* forward_shader,
@@ -214,7 +217,7 @@ static void render_shadowed_lights(
 
     for(const auto& pair: scene->get_directional_shadows())
     {
-        method::shadow_method* met = pair.first;
+        shadow_method* met = pair.first;
 
         shader::definition_map scene_definitions(
             met->get_directional_definitions()
@@ -259,7 +262,7 @@ static void render_shadowed_lights(
 
     for(const auto& pair: scene->get_omni_shadows())
     {
-        method::shadow_method* met = pair.first;
+        shadow_method* met = pair.first;
 
         shader::definition_map scene_definitions(met->get_omni_definitions());
         shader::definition_map point_definitions(scene_definitions);
@@ -307,7 +310,7 @@ static void render_shadowed_lights(
 
     for(const auto& pair: scene->get_perspective_shadows())
     {
-        method::shadow_method* met = pair.first;
+        shadow_method* met = pair.first;
 
         shader::definition_map scene_definitions(
             met->get_perspective_definitions()
@@ -702,7 +705,7 @@ static void render_forward_pass(
     );
 }
 
-void method::forward_pass::execute()
+void forward_pass::execute()
 {
     target_method::execute();
     if(!forward_shader || !scene)
@@ -739,30 +742,32 @@ void method::forward_pass::execute()
     if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }
 
-void method::forward_pass::set_scene(render_scene* s) { scene = s; }
-render_scene* method::forward_pass::get_scene() const { return scene; }
+void forward_pass::set_scene(render_scene* s) { scene = s; }
+render_scene* forward_pass::get_scene() const { return scene; }
 
-void method::forward_pass::set_apply_ambient(bool apply_ambient)
+void forward_pass::set_apply_ambient(bool apply_ambient)
 {
     this->apply_ambient = apply_ambient;
 }
 
-bool method::forward_pass::get_apply_ambient() const
+bool forward_pass::get_apply_ambient() const
 {
     return apply_ambient;
 }
 
-void method::forward_pass::render_opaque(bool opaque)
+void forward_pass::render_opaque(bool opaque)
 {
     this->opaque = opaque;
 }
 
-void method::forward_pass::render_transparent(bool transparent)
+void forward_pass::render_transparent(bool transparent)
 {
     this->transparent = transparent;
 }
 
-std::string method::forward_pass::get_name() const
+std::string forward_pass::get_name() const
 {
     return "forward_pass";
 }
+
+} // namespace lt::method

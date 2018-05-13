@@ -1,8 +1,11 @@
-#ifndef SCENE_HH
-#define SCENE_HH
+#ifndef LT_SCENE_HH
+#define LT_SCENE_HH
 #include <vector>
 #include <map>
 #include "math.hh"
+
+namespace lt
+{
 
 class object;
 class camera;
@@ -159,5 +162,7 @@ class render_scene
 public:
     render_scene();
 };
+
+} // namespace lt
 
 #endif

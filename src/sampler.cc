@@ -2,6 +2,9 @@
 #include "context.hh"
 #include <algorithm>
 
+namespace lt
+{
+
 static GLint interpolation_without_mipmap(GLint interpolation)
 {
     if(
@@ -108,3 +111,5 @@ GLint sampler::bind(GLuint tex, unsigned index, GLenum target) const
     glBindSampler(index, sampler_object);
     return index;
 }
+
+} // namespace lt

@@ -1,9 +1,12 @@
-#ifndef UNIFORM_HH
-#define UNIFORM_HH
+#ifndef LT_UNIFORM_HH
+#define LT_UNIFORM_HH
 #include "glheaders.hh"
 #include "math.hh"
 #include <unordered_map>
 #include <string>
+
+namespace lt
+{
 
 template<typename T>
 bool uniform_is_compatible(GLenum type, GLint size, size_t count = 1);
@@ -116,6 +119,8 @@ private:
     GLuint ubo;
     uint8_t* buffer;
 };
+
+} // namespace lt
 
 #include "uniform.tcc"
 

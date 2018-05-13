@@ -9,7 +9,10 @@
 #include "shadow_map.hh"
 #include "shadow_method.hh"
 
-method::lighting_pass::lighting_pass(
+namespace lt::method
+{
+
+lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
@@ -25,38 +28,38 @@ method::lighting_pass::lighting_pass(
 {
 }
 
-void method::lighting_pass::set_scene(render_scene* scene)
+void lighting_pass::set_scene(render_scene* scene)
 {
     this->scene = scene;
 }
 
-render_scene* method::lighting_pass::get_scene() const
+render_scene* lighting_pass::get_scene() const
 {
     return scene;
 }
 
-void method::lighting_pass::set_cutoff(float cutoff)
+void lighting_pass::set_cutoff(float cutoff)
 {
     this->cutoff = cutoff;
 }
 
-float method::lighting_pass::get_cutoff() const
+float lighting_pass::get_cutoff() const
 {
     return cutoff;
 }
 
-void method::lighting_pass::set_light_depth_test(depth_test test)
+void lighting_pass::set_light_depth_test(depth_test test)
 {
     this->light_test = test;
 }
 
-method::lighting_pass::depth_test
-method::lighting_pass::get_light_depth_test() const
+lighting_pass::depth_test
+lighting_pass::get_light_depth_test() const
 {
     return light_test;
 }
 
-void method::lighting_pass::set_visualize_light_volumes(bool visualize)
+void lighting_pass::set_visualize_light_volumes(bool visualize)
 {
     visualize_light_volumes = visualize;
 }
@@ -78,7 +81,7 @@ static float compute_cutoff_radius(light* light, float cutoff)
 static bool set_bounding_rect(
     shader* s, point_light* light, glm::vec3 light_pos,
     const camera* cam, float cutoff,
-    method::lighting_pass::depth_test light_test
+    lighting_pass::depth_test light_test
 ){
     glm::mat4 m = glm::mat4(1.0f);
 
@@ -94,7 +97,7 @@ static bool set_bounding_rect(
             r,
             cam->get_near(),
             cam->get_far(),
-            light_test == method::lighting_pass::TEST_NEAR
+            light_test == lighting_pass::TEST_NEAR
         );
     }
 
@@ -108,7 +111,7 @@ static bool set_light(
     point_light* light,
     const camera* cam,
     float cutoff,
-    method::lighting_pass::depth_test light_test
+    lighting_pass::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::vec3 pos = glm::vec3(
@@ -125,7 +128,7 @@ static bool set_light(
     spotlight* light,
     const camera* cam,
     float cutoff,
-    method::lighting_pass::depth_test light_test
+    lighting_pass::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::mat4 view = glm::inverse(inv_view);
@@ -187,12 +190,12 @@ static void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
-    method::lighting_pass::depth_test light_test,
+    lighting_pass::depth_test light_test,
     const primitive& quad
 ){
     for(const auto& pair: shadows)
     {
-        method::shadow_method* m = pair.first;
+        shadow_method* m = pair.first;
         shader::definition_map def(m->get_omni_definitions());
 
         def.insert(light_definitions.begin(), light_definitions.end());
@@ -237,12 +240,12 @@ static void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
-    method::lighting_pass::depth_test light_test,
+    lighting_pass::depth_test light_test,
     const primitive& quad
 ){
     for(const auto& pair: shadows)
     {
-        method::shadow_method* m = pair.first;
+        shadow_method* m = pair.first;
         shader::definition_map def(m->get_perspective_definitions());
 
         def.insert(light_definitions.begin(), light_definitions.end());
@@ -282,7 +285,7 @@ static void render_point_lights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    method::lighting_pass::depth_test light_test,
+    lighting_pass::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes
 ){
@@ -340,7 +343,7 @@ static void render_spotlights(
     multishader* lighting_shader,
     render_scene* scene,
     float cutoff,
-    method::lighting_pass::depth_test light_test,
+    lighting_pass::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes
 ){
@@ -410,7 +413,7 @@ static void render_directional_lights(
     // Render shadowed lights
     for(const auto& pair: scene->get_directional_shadows())
     {
-        method::shadow_method* m = pair.first;
+        shadow_method* m = pair.first;
         shader::definition_map def(m->get_directional_definitions());
 
         def.insert(definitions.begin(), definitions.end());
@@ -457,7 +460,7 @@ static void render_directional_lights(
     }
 }
 
-void method::lighting_pass::execute()
+void lighting_pass::execute()
 {
     target_method::execute();
 
@@ -508,7 +511,9 @@ void method::lighting_pass::execute()
     render_directional_lights(buf, lighting_shader, scene, quad);
 }
 
-std::string method::lighting_pass::get_name() const
+std::string lighting_pass::get_name() const
 {
     return "lighting_pass";
 }
+
+} // namespace lt::method

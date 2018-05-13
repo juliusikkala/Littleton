@@ -1,7 +1,10 @@
-#ifndef GPU_BUFFER_HH
-#define GPU_BUFFER_HH
+#ifndef LT_GPU_BUFFER_HH
+#define LT_GPU_BUFFER_HH
 #include "glheaders.hh"
 #include "resource.hh"
+
+namespace lt
+{
 
 class gpu_buffer: public resource, public glresource
 {
@@ -38,6 +41,8 @@ protected:
     mutable GLenum target;
     mutable size_t size;
 };
+
+} // namespace lt
 
 #endif
 

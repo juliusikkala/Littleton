@@ -1,6 +1,9 @@
-#ifndef OBJECT_HH
-#define OBJECT_HH
+#ifndef LT_OBJECT_HH
+#define LT_OBJECT_HH
 #include "transformable.hh"
+
+namespace lt
+{
 
 class model;
 class object: public transformable_node
@@ -18,6 +21,8 @@ public:
 private:
     const model* mod;
 };
+
+} // namespace lt
 
 #endif
 

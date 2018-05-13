@@ -1,10 +1,13 @@
-#ifndef HELPERS_HH
-#define HELPERS_HH
+#ifndef LT_HELPERS_HH
+#define LT_HELPERS_HH
 #include <string>
 #include <vector>
 #include <functional>
 #include <boost/functional/hash.hpp>
 #include "glheaders.hh"
+
+namespace lt
+{
 
 std::string read_text_file(const std::string& path);
 bool read_binary_file(const std::string& path, uint8_t*& data, size_t& bytes);
@@ -38,6 +41,8 @@ bool sorted_erase(
     std::vector<T>& vec,
     const T& value
 );
+
+} // namespace lt
 
 #include "helpers.tcc"
 

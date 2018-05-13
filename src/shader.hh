@@ -1,5 +1,5 @@
-#ifndef SHADER_HH
-#define SHADER_HH
+#ifndef LT_SHADER_HH
+#define LT_SHADER_HH
 #include "glheaders.hh"
 #include "resource.hh"
 #include "uniform.hh"
@@ -7,7 +7,8 @@
 #include <vector>
 #include <initializer_list>
 
-class shader;
+namespace lt
+{
 
 class shader: public resource, public glresource
 {
@@ -143,9 +144,11 @@ protected:
     mutable std::unordered_map<std::string, block_data> blocks;
 };
 
+} // namespace lt
+
 namespace boost 
 {
-    size_t hash_value(const shader::path& p);
+    size_t hash_value(const lt::shader::path& p);
 }
 
 #include "shader.tcc"

@@ -3,6 +3,9 @@
 #include "shader.hh"
 #include <boost/filesystem.hpp>
 
+namespace lt
+{
+
 multishader::multishader(
     context& ctx,
     const shader::source& source,
@@ -88,3 +91,5 @@ shader* multishader::get(const shader::definition_map& definitions) const
     }
     return it->second.get();
 }
+
+} // namespace lt

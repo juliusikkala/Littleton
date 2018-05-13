@@ -1,6 +1,9 @@
-#ifndef POINT_LIGHT_HH
-#define POINT_LIGHT_HH
+#ifndef LT_POINT_LIGHT_HH
+#define LT_POINT_LIGHT_HH
 #include "transformable.hh"
+
+namespace lt
+{
 
 class light
 {
@@ -56,5 +59,7 @@ private:
     float cutoff_angle;
     float falloff_exponent;
 };
+
+} // namespace lt
 
 #endif

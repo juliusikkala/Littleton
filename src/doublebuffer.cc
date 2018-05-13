@@ -2,6 +2,9 @@
 #include "helpers.hh"
 #include <stdexcept>
 
+namespace lt
+{
+
 doublebuffer::doublebuffer(
     context& ctx,
     glm::uvec2 size,
@@ -118,3 +121,5 @@ void doublebuffer::swap()
 {
     cur_index = 1-cur_index;
 }
+
+} // namespace lt

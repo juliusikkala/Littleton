@@ -1,9 +1,12 @@
-#ifndef MATERIAL_HH
-#define MATERIAL_HH
+#ifndef LT_MATERIAL_HH
+#define LT_MATERIAL_HH
 #include "shader.hh"
 #include "sampler.hh"
 #include "math.hh"
 #include <variant>
+
+namespace lt
+{
 
 class texture;
 
@@ -34,6 +37,8 @@ public:
     glm::vec3 emission_factor;
     sampler_tex emission_texture;
 };
+
+} // namespace lt
 
 #endif
 

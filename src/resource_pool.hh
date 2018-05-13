@@ -1,5 +1,5 @@
-#ifndef RESOURCE_POOL_HH
-#define RESOURCE_POOL_HH
+#ifndef LT_RESOURCE_POOL_HH
+#define LT_RESOURCE_POOL_HH
 #include "resource.hh"
 #include "shader_pool.hh"
 #include "framebuffer_pool.hh"
@@ -15,6 +15,9 @@
 #include <typeindex>
 #include <type_traits>
 #include <iterator>
+
+namespace lt
+{
 
 template<typename T>
 class generic_resource_pool: public virtual glresource
@@ -112,6 +115,7 @@ public:
     void unload_all();
 };
 #undef generic_resource_alias_decl
+} // namespace lt
 
 #include "resource_pool.tcc"
 #endif

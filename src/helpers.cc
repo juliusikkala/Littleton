@@ -5,6 +5,9 @@
 #include <sstream>
 #include <iomanip>
 
+namespace lt
+{
+
 std::string read_text_file(const std::string& path)
 {
     FILE* f = fopen(path.c_str(), "rb");
@@ -398,3 +401,4 @@ GLenum get_binding_name(GLenum target)
     }
 }
 
+} // namespace lt

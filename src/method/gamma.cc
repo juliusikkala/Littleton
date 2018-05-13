@@ -5,7 +5,10 @@
 #include "resource_pool.hh"
 #include "common_resources.hh"
 
-method::gamma::gamma(
+namespace lt::method
+{
+
+gamma::gamma(
     render_target& target,
     texture& src,
     resource_pool& pool,
@@ -19,17 +22,17 @@ method::gamma::gamma(
 {
 }
 
-void method::gamma::set_gamma(float g)
+void gamma::set_gamma(float g)
 {
     this->g = g;
 }
 
-float method::gamma::get_gamma() const
+float gamma::get_gamma() const
 {
     return g;
 }
 
-void method::gamma::execute()
+void gamma::execute()
 {
     target_method::execute();
 
@@ -47,7 +50,9 @@ void method::gamma::execute()
     quad.draw();
 }
 
-std::string method::gamma::get_name() const
+std::string gamma::get_name() const
 {
     return "gamma";
 }
+
+} // namespace lt::method

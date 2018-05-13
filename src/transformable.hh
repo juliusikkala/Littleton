@@ -1,6 +1,9 @@
-#ifndef TRANSFORMABLE_HH
-#define TRANSFORMABLE_HH
+#ifndef LT_TRANSFORMABLE_HH
+#define LT_TRANSFORMABLE_HH
 #include "math.hh"
+
+namespace lt
+{
 
 class transformable
 {
@@ -92,5 +95,7 @@ public:
 protected:
     transformable_node* parent;
 };
+
+} // namespace lt
 
 #endif

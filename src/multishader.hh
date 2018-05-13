@@ -1,11 +1,14 @@
-#ifndef MULTISHADER_HH
-#define MULTISHADER_HH
+#ifndef LT_MULTISHADER_HH
+#define LT_MULTISHADER_HH
 #include "resource.hh"
 #include "shader.hh"
 #include <unordered_map>
 #include <memory>
 #include <optional>
 #include <boost/functional/hash.hpp>
+
+namespace lt
+{
 
 class multishader: public glresource
 {
@@ -47,5 +50,7 @@ private:
         boost::hash<shader::definition_map>
     > cache;
 };
+
+} // namespace lt
 
 #endif

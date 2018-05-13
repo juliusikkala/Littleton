@@ -1,10 +1,13 @@
-#ifndef FRAMEBUFFER_HH
-#define FRAMEBUFFER_HH
+#ifndef LT_FRAMEBUFFER_HH
+#define LT_FRAMEBUFFER_HH
 #include "render_target.hh"
 #include <vector>
 #include <map>
 #include <memory>
 #include <variant>
+
+namespace lt
+{
 
 class texture;
 class framebuffer: public render_target
@@ -55,9 +58,11 @@ private:
     std::map<GLenum, std::variant<texture*, GLuint>> targets;
 };
 
+} // namespace lt
+
 namespace boost
 {
-    size_t hash_value(const framebuffer::target_specifier& t);
+    size_t hash_value(const lt::framebuffer::target_specifier& t);
 }
 
 #endif

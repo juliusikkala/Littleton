@@ -7,7 +7,10 @@
 #include "common_resources.hh"
 #include "scene.hh"
 
-method::visualize_gbuffer::visualize_gbuffer(
+namespace lt::method
+{
+
+visualize_gbuffer::visualize_gbuffer(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
@@ -23,22 +26,22 @@ method::visualize_gbuffer::visualize_gbuffer(
 {
 }
 
-void method::visualize_gbuffer::set_scene(render_scene* scene)
+void visualize_gbuffer::set_scene(render_scene* scene)
 {
     this->scene = scene;
 }
 
-render_scene* method::visualize_gbuffer::get_scene() const
+render_scene* visualize_gbuffer::get_scene() const
 {
     return scene;
 }
 
-void method::visualize_gbuffer::show(visualizer full)
+void visualize_gbuffer::show(visualizer full)
 {
     visualizers = {full};
 }
 
-void method::visualize_gbuffer::show(
+void visualize_gbuffer::show(
     visualizer topleft,
     visualizer topright,
     visualizer bottomleft,
@@ -49,7 +52,7 @@ void method::visualize_gbuffer::show(
 
 static void render_visualizer(
     const gbuffer* buf,
-    method::visualize_gbuffer::visualizer v,
+    visualize_gbuffer::visualizer v,
     multishader* ms,
     const primitive& quad,
     camera* cam
@@ -57,28 +60,28 @@ static void render_visualizer(
     shader* s;
     switch(v)
     {
-    case method::visualize_gbuffer::DEPTH:
+    case visualize_gbuffer::DEPTH:
         s = ms->get({{"SHOW_DEPTH", ""}});
         break;
-    case method::visualize_gbuffer::POSITION:
+    case visualize_gbuffer::POSITION:
         s = ms->get({{"SHOW_POSITION", ""}});
         break;
-    case method::visualize_gbuffer::NORMAL:
+    case visualize_gbuffer::NORMAL:
         s = ms->get({{"SHOW_NORMAL", ""}});
         break;
-    case method::visualize_gbuffer::COLOR:
+    case visualize_gbuffer::COLOR:
         s = ms->get({{"SHOW_COLOR", ""}});
         break;
-    case method::visualize_gbuffer::ROUGHNESS:
+    case visualize_gbuffer::ROUGHNESS:
         s = ms->get({{"SHOW_ROUGHNESS", ""}});
         break;
-    case method::visualize_gbuffer::METALLIC:
+    case visualize_gbuffer::METALLIC:
         s = ms->get({{"SHOW_METALLIC", ""}});
         break;
-    case method::visualize_gbuffer::IOR:
+    case visualize_gbuffer::IOR:
         s = ms->get({{"SHOW_IOR", ""}});
         break;
-    case method::visualize_gbuffer::MATERIAL:
+    case visualize_gbuffer::MATERIAL:
         s = ms->get({{"SHOW_MATERIAL", ""}});
         break;
     default:
@@ -91,7 +94,7 @@ static void render_visualizer(
     quad.draw();
 }
 
-void method::visualize_gbuffer::execute()
+void visualize_gbuffer::execute()
 {
     target_method::execute();
 
@@ -132,7 +135,9 @@ void method::visualize_gbuffer::execute()
     }
 }
 
-std::string method::visualize_gbuffer::get_name() const
+std::string visualize_gbuffer::get_name() const
 {
     return "visualize_gbuffer";
 }
+
+} // namespace lt::method

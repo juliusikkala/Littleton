@@ -1,4 +1,8 @@
 #include <stdexcept>
+#include "shader.hh"
+
+namespace lt
+{
 
 template<typename T>
 bool shader::is_compatible(const std::string& name, size_t count) const
@@ -47,3 +51,4 @@ void shader::set(
     uniform_set_value<T>(data.location, data.size, value);
 }
 
+} // namespace lt

@@ -1,5 +1,8 @@
 #include <cstring>
 
+namespace lt
+{
+
 template<typename T>
 bool uniform_is_compatible(GLenum type, GLint size, size_t count)
 {
@@ -142,3 +145,4 @@ void uniform_block::set(const std::string& name, size_t count, const T* value)
     }
 }
 
+} // namespace lt

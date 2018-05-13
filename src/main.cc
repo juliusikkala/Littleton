@@ -33,6 +33,7 @@
 #include <iostream>
 #include <algorithm>
 #include "math.hh"
+using namespace lt;
 
 class game_pipelines
 {

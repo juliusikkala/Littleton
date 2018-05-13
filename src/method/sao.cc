@@ -7,7 +7,10 @@
 #include "scene.hh"
 #include "common_resources.hh"
 
-method::sao::sao(
+namespace lt::method
+{
+
+sao::sao(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
@@ -42,17 +45,17 @@ method::sao::sao(
     set_samples(samples);
 }
 
-void method::sao::set_radius(float radius)
+void sao::set_radius(float radius)
 {
     this->radius = radius;
 }
 
-float method::sao::get_radius() const
+float sao::get_radius() const
 {
     return radius;
 }
 
-void method::sao::set_samples(unsigned samples)
+void sao::set_samples(unsigned samples)
 {
     this->samples = samples;
 
@@ -67,32 +70,32 @@ void method::sao::set_samples(unsigned samples)
     }
 }
 
-unsigned method::sao::get_samples() const
+unsigned sao::get_samples() const
 {
     return samples;
 }
 
-void method::sao::set_bias(float bias)
+void sao::set_bias(float bias)
 {
     this->bias = bias;
 }
 
-float method::sao::get_bias() const
+float sao::get_bias() const
 {
     return bias;
 }
 
-void method::sao::set_intensity(float intensity)
+void sao::set_intensity(float intensity)
 {
     this->intensity = intensity;
 }
 
-float method::sao::get_intensity() const
+float sao::get_intensity() const
 {
     return intensity;
 }
 
-void method::sao::execute()
+void sao::execute()
 {
     if(!scene || scene->get_ambient() == glm::vec3(0))
         return;
@@ -163,8 +166,9 @@ void method::sao::execute()
     quad.draw();
 }
 
-std::string method::sao::get_name() const
+std::string sao::get_name() const
 {
     return "sao";
 }
 
+} // namespace lt::method
