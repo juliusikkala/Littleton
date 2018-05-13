@@ -13,7 +13,7 @@ class window: public context, public render_target
 public:
     struct params
     {
-        std::string title = "dflowers";
+        std::string title = "Littleton";
         glm::uvec2 size = glm::uvec2(640, 480);
         bool fullscreen = false;
         bool vsync = true;

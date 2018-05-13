@@ -1,12 +1,12 @@
 project(
-  'DarkFlowers',
+  'Littleton',
   ['cpp', 'c'],
   default_options : ['cpp_std=c++1z', 'buildtype=debugoptimized']
 )
 
 src = [
-  'lib/stb_image.c',
-  'lib/tiny_gltf.cc',
+  'extern/stb_image.c',
+  'extern/tiny_gltf.cc',
   'src/camera.cc',
   'src/common_resources.cc',
   'src/context.cc',
@@ -19,7 +19,6 @@ src = [
   'src/helpers.cc',
   'src/light.cc',
   'src/loaders.cc',
-  'src/main.cc',
   'src/material.cc',
   'src/math.cc',
   'src/method/blit_framebuffer.cc',
@@ -71,11 +70,10 @@ glew_dep = dependency('glew')
 glm_dep = dependency('glm', version: '>=0.9.8')
 thread_dep = dependency('threads')
 boost_dep = dependency('boost', modules : ['filesystem', 'system'])
-srcdir = include_directories('src')
-libdir = include_directories('lib')
+incdir = include_directories(['src', 'extern', 'include', 'include/method'])
 
-executable(
-  'dflowers',
+library(
+  'littleton',
   src,
   dependencies: [
     m_dep,
@@ -85,8 +83,7 @@ executable(
     thread_dep,
     boost_dep
   ],
-  include_directories: [srcdir, libdir],
+  include_directories: [incdir],
   install: true,
-  gui_app: true,
 )
 
