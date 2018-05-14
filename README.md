@@ -93,7 +93,7 @@ documentation. If you still want to try it out, here's what you need to do:
 
 ## Wishlist
 
-## General
+### General
 
 - Documentation!!!
 - Abstract OpenGL and SDL constants away from the user
