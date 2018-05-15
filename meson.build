@@ -89,7 +89,7 @@ thread_dep = dependency('threads')
 boost_dep = dependency('boost', modules : ['filesystem', 'system'])
 incdir = include_directories(['src', 'extern', 'include', 'include/method'])
 
-library(
+liblittleton = library(
   'littleton',
   src,
   dependencies: [
@@ -104,3 +104,7 @@ library(
   install: true,
 )
 
+littleton_dep = declare_dependency(
+  include_directories : incdir,
+  link_with : liblittleton
+)
