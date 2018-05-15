@@ -51,7 +51,7 @@ vec2 get_material_metallic_roughness()
 #else
         vec2(0.0f)
 #endif
-    ).yz * vec2(material.metallic_factor, material.roughness_factor);
+    ).bg * vec2(material.metallic_factor, material.roughness_factor);
 #else
     return vec2(material.metallic_factor, material.roughness_factor);
 #endif

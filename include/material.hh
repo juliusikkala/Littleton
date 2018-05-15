@@ -45,6 +45,7 @@ public:
 
     float metallic_factor;
     float roughness_factor;
+    // metalness on B-channel, roughness on G-channel.
     sampler_tex metallic_roughness_texture;
 
     float normal_factor;
