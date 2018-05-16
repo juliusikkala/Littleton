@@ -61,6 +61,16 @@ ssrt::ssrt(
     set_thickness();
 }
 
+void ssrt::set_scene(render_scene* scene)
+{
+    this->scene = scene;
+}
+
+render_scene* ssrt::get_scene() const
+{
+    return scene;
+}
+
 void ssrt::set_max_steps(unsigned max_steps)
 {
     this->max_steps = max_steps;

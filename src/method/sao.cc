@@ -63,6 +63,16 @@ sao::sao(
     set_samples(samples);
 }
 
+void sao::set_scene(render_scene* scene)
+{
+    this->scene = scene;
+}
+
+render_scene* sao::get_scene() const
+{
+    return scene;
+}
+
 void sao::set_radius(float radius)
 {
     this->radius = radius;

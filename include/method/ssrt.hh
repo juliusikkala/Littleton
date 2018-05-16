@@ -50,6 +50,9 @@ public:
         render_scene* scene
     );
 
+    void set_scene(render_scene* scene);
+    render_scene* get_scene() const;
+
     // Limiting max steps improves worst-case performance, but limits
     // reflected range near geometry boundaries. When thickness is finite,
     // this should be larger. 

@@ -54,6 +54,9 @@ public:
         float intensity = 1.0f
     );
 
+    void set_scene(render_scene* scene);
+    render_scene* get_scene() const;
+
     void set_radius(float radius);
     float get_radius() const;
 
