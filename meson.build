@@ -24,6 +24,7 @@ project(
 src = [
   'extern/stb_image.c',
   'extern/tiny_gltf.cc',
+  'extern/mikktspace.c',
   'src/camera.cc',
   'src/common_resources.cc',
   'src/context.cc',

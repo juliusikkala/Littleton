@@ -110,6 +110,7 @@ primitive::primitive(primitive&& other)
     vao = other.vao;
     index_count = other.index_count;
     mode = other.mode;
+    index = other.index;
     attribs = other.attribs;
 
     other.vao = 0;
@@ -138,7 +139,19 @@ void primitive::draw() const
 {
     load();
     glBindVertexArray(vao);
-    glDrawElements(mode, index_count, index.type, (const GLvoid*)index.offset);
+    if(index.is_valid())
+        glDrawElements(
+            mode,
+            index_count,
+            index.type,
+            (const GLvoid*)index.offset
+        );
+    else
+        glDrawArrays(
+            mode,
+            0,
+            index_count
+        );
     glBindVertexArray(0);
 }
 
@@ -197,7 +210,7 @@ void primitive::basic_load(
 {
     if(vao) return;
 
-    if(index.buf->get_target() != GL_ELEMENT_ARRAY_BUFFER)
+    if(index.is_valid() && index.buf->get_target() != GL_ELEMENT_ARRAY_BUFFER)
         throw std::runtime_error(
             "Attempt to load index buffer with target "
             + std::to_string(index.buf->get_target())
@@ -217,8 +230,11 @@ void primitive::basic_load(
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    index.buf->link();
-    index.buf->bind();
+    if(index.is_valid())
+    {
+        index.buf->link();
+        index.buf->bind();
+    }
     for(auto& pair: attribs)
     {
         pair.second.buf->link();
@@ -237,7 +253,9 @@ void primitive::basic_unload() const
         glDeleteVertexArrays(1, &vao);
         vao = 0;
 
-        index.buf->unlink();
+        if(index.is_valid())
+            index.buf->unlink();
+
         for(const auto& pair: attribs)
             pair.second.buf->unlink();
     }

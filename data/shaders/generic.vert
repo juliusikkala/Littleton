@@ -29,7 +29,7 @@ void main(void)
 
 #ifdef VERTEX_TANGENT
     v_out.tangent = n_m * v_tangent.xyz;
-    v_out.bitangent = n_m * (cross(v_normal, v_tangent.xyz) * v_tangent.w);
+    v_out.bitangent = (cross(v_out.normal, v_out.tangent) * v_tangent.w);
 #endif
 #endif
 
