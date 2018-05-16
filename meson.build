@@ -89,22 +89,25 @@ thread_dep = dependency('threads')
 boost_dep = dependency('boost', modules : ['filesystem', 'system'])
 incdir = include_directories(['src', 'extern', 'include', 'include/method'])
 
+deps = [
+  m_dep,
+  sdl2_dep,
+  glew_dep,
+  glm_dep,
+  thread_dep,
+  boost_dep
+]
+
 liblittleton = library(
   'littleton',
   src,
-  dependencies: [
-    m_dep,
-    sdl2_dep,
-    glew_dep,
-    glm_dep,
-    thread_dep,
-    boost_dep
-  ],
+  dependencies: deps,
   include_directories: [incdir],
   install: true,
 )
 
 littleton_dep = declare_dependency(
   include_directories : incdir,
-  link_with : liblittleton
+  link_with : liblittleton,
+  dependencies: deps
 )
