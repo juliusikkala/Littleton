@@ -47,9 +47,6 @@ public:
     void set_scene(render_scene* s);
     render_scene* get_scene() const;
 
-    void set_exposure(float exposure);
-    float get_exposure() const;
-
     void execute() override;
 
     std::string get_name() const override;
@@ -58,7 +55,6 @@ private:
     shader* sky_shader;
     render_scene* scene;
     sampler skybox_sampler;
-    float exposure;
 
     const primitive& quad;
 };

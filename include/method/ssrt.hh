@@ -78,6 +78,7 @@ private:
 
     multishader* ssrt_shaders;
     shader* ssrt_shader;
+    shader* ssrt_shader_env;
     shader* blit_shader;
 
     render_scene* scene;

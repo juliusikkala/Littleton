@@ -8,7 +8,7 @@ out vec3 out_color;
 
 void main(void)
 {
-    vec3 c = texture(in_color, uv).rgb * exposure;
+    vec3 c = clamp(texture(in_color, uv).rgb * exposure, vec3(0), vec3(1000));
     c = max(vec3(0.0f), c-0.004f);
     out_color = (c * (6.2f * c + 0.5f))/(c * (6.2f * c + 1.7f) + 0.06f);
 }

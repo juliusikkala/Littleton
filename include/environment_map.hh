@@ -32,7 +32,8 @@ public:
     environment_map(
         context& ctx,
         const std::string& path,
-        bool srgb = false
+        bool srgb = false,
+        float exposure = 1.0f
     );
 
     environment_map(
@@ -40,17 +41,22 @@ public:
         glm::uvec2 size,
         GLint format,
         GLenum type,
-        const void* data = nullptr
+        const void* data = nullptr,
+        float exposure = 1.0f
     );
 
     environment_map(const environment_map& other) = delete;
     environment_map(environment_map&& other);
     ~environment_map();
 
+    void set_exposure(float exposure);
+    float get_exposure() const;
+
     static environment_map* create(
         context& ctx,
         const std::string& path,
-        bool srgb = false
+        bool srgb = false,
+        float exposure = 1.0f
     );
 
     static environment_map* create(
@@ -59,10 +65,13 @@ public:
         GLint internal_format,
         GLenum type,
         size_t data_size = 0,
-        const void* data = nullptr
+        const void* data = nullptr,
+        float exposure = 1.0f
     );
 protected:
     environment_map(context& ctx);
+private:
+    float exposure;
 };
 
 } // namespace lt

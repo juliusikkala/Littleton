@@ -146,34 +146,37 @@ void ssrt::execute()
     glClearColor(0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ssrt_shader->bind();
-    ssrt_shader->set("in_linear_depth", mipmap_sampler.bind(*linear_depth, 0));
-    ssrt_shader->set("in_lighting", fb_sampler.bind(*lighting, 1));
-    ssrt_shader->set("in_normal", fb_sampler.bind(*normal, 2));
-    ssrt_shader->set("in_material", fb_sampler.bind(*material, 3));
-    ssrt_shader->set("in_color", fb_sampler.bind(*color, 4));
-
-    ssrt_shader->set("proj", p);
-    ssrt_shader->set("projection_info", cam->get_projection_info());
-    ssrt_shader->set("clip_info", cam->get_clip_info());
-    ssrt_shader->set("near", -cam->get_near());
-
-    ssrt_shader->set<int>("ray_max_steps", max_steps);
-    ssrt_shader->set("thickness", thickness);
-    ssrt_shader->set("roughness_cutoff", roughness_cutoff);
-    ssrt_shader->set("brdf_cutoff", brdf_cutoff);
-    ssrt_shader->set("ray_offset", ray_offset);
-
     environment_map* skybox = scene->get_skybox();
+    shader* s = fallback_cubemap && skybox ? ssrt_shader_env : ssrt_shader;
+
+    s->bind();
+    s->set("in_linear_depth", mipmap_sampler.bind(*linear_depth, 0));
+    s->set("in_lighting", fb_sampler.bind(*lighting, 1));
+    s->set("in_normal", fb_sampler.bind(*normal, 2));
+    s->set("in_material", fb_sampler.bind(*material, 3));
+    s->set("in_color", fb_sampler.bind(*color, 4));
+
+    s->set("proj", p);
+    s->set("projection_info", cam->get_projection_info());
+    s->set("clip_info", cam->get_clip_info());
+    s->set("near", -cam->get_near());
+
+    s->set<int>("ray_max_steps", max_steps);
+    s->set("thickness", thickness);
+    s->set("roughness_cutoff", roughness_cutoff);
+    s->set("brdf_cutoff", brdf_cutoff);
+    s->set("ray_offset", ray_offset);
+
     if(fallback_cubemap && skybox)
     {
-        ssrt_shader->set("fallback_cubemap", true);
-        ssrt_shader->set("inv_view", cam->get_global_transform());
-        ssrt_shader->set("env", cubemap_sampler.bind(*skybox, 5));
+        s->set("fallback_cubemap", true);
+        s->set("inv_view", cam->get_global_transform());
+        s->set("env", cubemap_sampler.bind(*skybox, 5));
+        s->set("exposure", skybox->get_exposure());
     }
     else
     {
-        ssrt_shader->set("fallback_cubemap", false);
+        s->set("fallback_cubemap", false);
     }
 
     quad.draw();
@@ -206,6 +209,8 @@ void ssrt::refresh_shader()
     if(thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
 
     ssrt_shader = ssrt_shaders->get(def);
+    def["FALLBACK_CUBEMAP"];
+    ssrt_shader_env= ssrt_shaders->get(def);
 }
 
 } // namespace lt::method

@@ -152,6 +152,7 @@ void primitive::draw() const
             0,
             index_count
         );
+
     glBindVertexArray(0);
 }
 

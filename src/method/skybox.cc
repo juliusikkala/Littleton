@@ -38,7 +38,6 @@ skybox::skybox(
     )),
     scene(scene),
     skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
-    exposure(1.0f),
     quad(common::ensure_quad_primitive(pool))
 {
     set_stencil_cull(0);
@@ -52,16 +51,6 @@ void skybox::set_scene(render_scene* s)
 render_scene* skybox::get_scene() const
 {
     return scene;
-}
-
-void skybox::set_exposure(float exposure)
-{
-    this->exposure = exposure;
-}
-
-float skybox::get_exposure() const
-{
-    return exposure;
 }
 
 void skybox::execute()
@@ -84,7 +73,7 @@ void skybox::execute()
     sky_shader->bind();
 
     sky_shader->set("skybox", skybox_sampler.bind(*skybox));
-    sky_shader->set("exposure", exposure);
+    sky_shader->set("exposure", skybox->get_exposure());
     sky_shader->set("inv_view", cam->get_global_transform());
     sky_shader->set("projection", glm::inverse(p));
 

@@ -17,9 +17,11 @@ uniform int ray_max_steps;
 out vec4 out_color;
 
 // TODO: Parallax envmaps
-uniform bool fallback_cubemap;
+#ifdef FALLBACK_CUBEMAP
 uniform samplerCube env;
+uniform float exposure;
 uniform mat4 inv_view;
+#endif
 
 void main(void)
 {
@@ -60,11 +62,13 @@ void main(void)
             1.0f
         );
 
-        vec4 color = fallback_cubemap ? 
-            texture(env, (inv_view * vec4(-d, 0)).xyz) : 
-            vec4(0);
-        if(fade == 0.0f && !fallback_cubemap) discard;
-        else color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
+#ifdef FALLBACK_CUBEMAP
+        vec4 color = texture(env, (inv_view * vec4(-d, 0)).xyz) * exposure;
+        color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
+#else
+        if(fade == 0.0f) discard;
+        vec4 color = texelFetch(in_lighting, ivec2(tp), 0) * fade;
+#endif
         out_color = vec4(color.rgb * att, 1.0f);
     }
 }
