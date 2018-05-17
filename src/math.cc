@@ -152,16 +152,15 @@ glm::quat quat_lookat(
     glm::vec3 up,
     glm::vec3 forward
 ){
-    dir = normalize(dir);
-    glm::quat towards = glm::rotation(forward, dir);
-    glm::vec3 right = glm::cross(dir, up);
+    dir = glm::normalize(dir);
+    up = glm::normalize(up);
+    forward = glm::normalize(forward);
 
-    glm::quat fix_up = glm::rotation(
-        towards * glm::vec3(0,1,0),
-        cross(right, dir)
+    glm::quat towards = glm::rotation(
+        glm::vec3(0,0,-1),
+        forward
     );
-
-    return glm::normalize(fix_up * towards);
+    return towards * glm::quatLookAt(dir, up);
 }
 
 bool solve_quadratic(float a, float b, float c, float& x0, float& x1)
