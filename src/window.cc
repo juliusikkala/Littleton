@@ -102,7 +102,6 @@ window::window(const params& p)
     initialized = true;
 
     SDL_GL_SetSwapInterval(p.vsync);
-    last_frame = SDL_GetTicks();
 
     context::init();
 
@@ -129,6 +128,7 @@ void window::present()
 {
     SDL_GL_SwapWindow(win);
 
+    if(last_frame == 0) last_frame = SDL_GetTicks();
     if(framerate_limit)
     {
         int frame_ticks = SDL_GetTicks() - last_frame;
