@@ -60,9 +60,15 @@ public:
     // Unsafe, deletes the pointer to the resource. Make sure there are no
     // references to it left. You are probably looking for resource::unload().
     void remove(const std::string& name);
-    const T* get(const std::string& name);
 
-    bool contains(const std::string& name);
+    const T* get(const std::string& name) const;
+
+    // Use this only if you are sure that modifying the resource globally is
+    // fine. Typically, it isn't, but this may be useful if you need to modify
+    // resources fresh from a loader.
+    T* get_mutable(const std::string& name);
+
+    bool contains(const std::string& name) const;
 
     // Loads all resources in this pool.
     void load_all();
@@ -90,8 +96,9 @@ type* add_ ## type (\
 type* add_ ## type (\
     const std::string& name, type&& t, bool ignore_duplicate = false); \
 void remove_ ## type(const std::string& name); \
-const type* get_ ## type(const std::string& name); \
-bool contains_ ## type(const std::string& name); \
+const type* get_ ## type(const std::string& name) const; \
+type* get_ ## type ## _mutable(const std::string& name); \
+bool contains_ ## type(const std::string& name) const; \
 
 class resource_pool
 : public virtual glresource, public shader_pool, public texture_pool,

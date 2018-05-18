@@ -68,9 +68,11 @@ type* resource_pool::add_ ## type (const std::string& name, type&& t, bool id) \
 { return base ::add(name, std::move(t), id); } \
 void resource_pool::remove_ ## type(const std::string& name) \
 { base ::remove(name); } \
-const type* resource_pool::get_ ## type(const std::string& name) \
+const type* resource_pool::get_ ## type(const std::string& name) const\
 { return base ::get(name); } \
-bool resource_pool::contains_ ## type(const std::string& name) \
+type* resource_pool::get_ ## type ## _mutable(const std::string& name)\
+{ return base ::get_mutable(name); } \
+bool resource_pool::contains_ ## type(const std::string& name) const\
 { return base ::contains(name); }
 
 generic_resource_alias_impl(texture, texture_pool);

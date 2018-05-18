@@ -56,7 +56,7 @@ void generic_resource_pool<T>::remove(const std::string& name)
 }
 
 template<typename T>
-const T* generic_resource_pool<T>::get(const std::string& name)
+const T* generic_resource_pool<T>::get(const std::string& name) const
 {
     auto it = resources.find(name);
     if(it == resources.end())
@@ -65,7 +65,16 @@ const T* generic_resource_pool<T>::get(const std::string& name)
 }
 
 template<typename T>
-bool generic_resource_pool<T>::contains(const std::string& name)
+T* generic_resource_pool<T>::get_mutable(const std::string& name)
+{
+    auto it = resources.find(name);
+    if(it == resources.end())
+        throw std::runtime_error("Unable to get generic_resource " + name);
+    return it->second.get();
+}
+
+template<typename T>
+bool generic_resource_pool<T>::contains(const std::string& name) const
 {
     auto it = resources.find(name);
     return it != resources.end();
