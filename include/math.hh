@@ -71,8 +71,6 @@ quat quat_lookat(
     vec3 forward = vec3(0,0,-1)
 );
 
-#define sign(x) ((x > 0) - (x < 0))
-
 bool solve_quadratic(float a, float b, float c, float& x0, float& x1);
 
 bool intersect_sphere(
