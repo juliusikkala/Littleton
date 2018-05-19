@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_VISUALIZE_GBUFFER_HH
 #define LT_METHOD_VISUALIZE_GBUFFER_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../shader.hh"
@@ -36,7 +37,7 @@ class multishader;
 namespace lt::method
 {
 
-class visualize_gbuffer: public target_method
+class LT_API visualize_gbuffer: public target_method
 {
 public:
     visualize_gbuffer(

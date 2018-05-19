@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SSRT_HH
 #define LT_METHOD_SSRT_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -40,7 +41,7 @@ class render_scene;
 namespace lt::method
 {
 
-class ssrt: public target_method, public stencil_handler
+class LT_API ssrt: public target_method, public stencil_handler
 {
 public:
     ssrt(

@@ -18,6 +18,7 @@
 */
 #ifndef LT_MODEL_HH
 #define LT_MODEL_HH
+#include "../api.hh"
 #include <vector>
 #include <cstddef>
 
@@ -26,7 +27,7 @@ namespace lt
 
 class material;
 class primitive;
-class model
+class LT_API model
 {
 public:
     struct vertex_group

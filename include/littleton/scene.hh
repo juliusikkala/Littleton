@@ -18,6 +18,7 @@
 */
 #ifndef LT_SCENE_HH
 #define LT_SCENE_HH
+#include "../api.hh"
 #include <vector>
 #include <map>
 #include "math.hh"
@@ -38,7 +39,7 @@ class environment_map;
 
 namespace method { class shadow_method; }
 
-class camera_scene
+class LT_API camera_scene
 {
 public:
     camera_scene(camera* cam = nullptr);
@@ -51,7 +52,7 @@ private:
     camera* cam;
 };
 
-class object_scene
+class LT_API object_scene
 {
 public:
     object_scene(std::vector<object*>&& objects = {});
@@ -69,7 +70,7 @@ private:
     std::vector<object*> objects;
 };
 
-class light_scene
+class LT_API light_scene
 {
 public:
     light_scene(
@@ -116,7 +117,7 @@ private:
     std::vector<directional_light*> directional_lights;
 };
 
-class shadow_scene
+class LT_API shadow_scene
 {
 public:
     shadow_scene();
@@ -161,7 +162,7 @@ private:
     perspective_map perspective_shadows;
 };
 
-class environment_scene
+class LT_API environment_scene
 {
 public:
     environment_scene();

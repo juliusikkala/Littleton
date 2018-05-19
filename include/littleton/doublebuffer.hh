@@ -18,6 +18,7 @@
 */
 #ifndef LT_DOUBLEBUFFER_HH
 #define LT_DOUBLEBUFFER_HH
+#include "../api.hh"
 #include "resource.hh"
 #include "render_target.hh"
 #include "texture.hh"
@@ -25,7 +26,7 @@
 namespace lt
 {
 
-class doublebuffer: public glresource
+class LT_API doublebuffer: public glresource
 {
 public:
     doublebuffer(

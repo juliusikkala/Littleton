@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_FORWARD_PASS_HH
 #define LT_METHOD_FORWARD_PASS_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../stencil_handler.hh"
 
@@ -38,7 +39,7 @@ namespace lt::method
 {
 
 class shadow_method;
-class forward_pass: public target_method, public stencil_handler
+class LT_API forward_pass: public target_method, public stencil_handler
 {
 public:
     forward_pass(

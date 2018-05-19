@@ -18,6 +18,7 @@
 */
 #ifndef LT_TEXTURE_HH
 #define LT_TEXTURE_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include <string>
@@ -26,7 +27,7 @@
 namespace lt
 {
 
-class texture: public resource, public glresource
+class LT_API texture: public resource, public glresource
 {
 public:
     texture(

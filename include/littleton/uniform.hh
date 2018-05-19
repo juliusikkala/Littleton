@@ -18,6 +18,7 @@
 */
 #ifndef LT_UNIFORM_HH
 #define LT_UNIFORM_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "math.hh"
 #include <unordered_map>
@@ -32,41 +33,41 @@ bool uniform_is_compatible(GLenum type, GLint size, size_t count = 1);
 template<typename T>
 void uniform_set_value(GLint location, size_t count, const T* value);
 
-template<> void uniform_set_value<float>(
+template<> LT_API void uniform_set_value<float>(
     GLint location, size_t count, const float* value);
-template<> void uniform_set_value<glm::vec2>(
+template<> LT_API void uniform_set_value<glm::vec2>(
     GLint location, size_t count, const glm::vec2* value);
-template<> void uniform_set_value<glm::vec3>(
+template<> LT_API void uniform_set_value<glm::vec3>(
     GLint location, size_t count, const glm::vec3* value);
-template<> void uniform_set_value<glm::vec4>(
+template<> LT_API void uniform_set_value<glm::vec4>(
     GLint location, size_t count, const glm::vec4* value);
-template<> void uniform_set_value<int>(
+template<> LT_API void uniform_set_value<int>(
     GLint location, size_t count, const int* value);
-template<> void uniform_set_value<glm::ivec2>(
+template<> LT_API void uniform_set_value<glm::ivec2>(
     GLint location, size_t count, const glm::ivec2* value);
-template<> void uniform_set_value<glm::ivec3>(
+template<> LT_API void uniform_set_value<glm::ivec3>(
     GLint location, size_t count, const glm::ivec3* value);
-template<> void uniform_set_value<glm::ivec4>(
+template<> LT_API void uniform_set_value<glm::ivec4>(
     GLint location, size_t count, const glm::ivec4* value);
-template<> void uniform_set_value<unsigned>(
+template<> LT_API void uniform_set_value<unsigned>(
     GLint location, size_t count, const unsigned* value);
-template<> void uniform_set_value<glm::uvec2>(
+template<> LT_API void uniform_set_value<glm::uvec2>(
     GLint location, size_t count, const glm::uvec2* value);
-template<> void uniform_set_value<glm::uvec3>(
+template<> LT_API void uniform_set_value<glm::uvec3>(
     GLint location, size_t count, const glm::uvec3* value);
-template<> void uniform_set_value<glm::uvec4>(
+template<> LT_API void uniform_set_value<glm::uvec4>(
     GLint location, size_t count, const glm::uvec4* value);
-template<> void uniform_set_value<bool>(
+template<> LT_API void uniform_set_value<bool>(
     GLint location, size_t count, const bool* value);
-template<> void uniform_set_value<glm::mat2>(
+template<> LT_API void uniform_set_value<glm::mat2>(
     GLint location, size_t count, const glm::mat2* value);
-template<> void uniform_set_value<glm::mat3>(
+template<> LT_API void uniform_set_value<glm::mat3>(
     GLint location, size_t count, const glm::mat3* value);
-template<> void uniform_set_value<glm::mat4>(
+template<> LT_API void uniform_set_value<glm::mat4>(
     GLint location, size_t count, const glm::mat4* value);
 
 
-class uniform_block_type
+class LT_API uniform_block_type
 {
 friend class uniform_block;
 public:
@@ -107,7 +108,7 @@ private:
     size_t size;
 };
 
-class uniform_block
+class LT_API uniform_block
 {
 public:
     uniform_block(const uniform_block_type& type);

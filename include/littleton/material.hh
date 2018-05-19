@@ -18,6 +18,7 @@
 */
 #ifndef LT_MATERIAL_HH
 #define LT_MATERIAL_HH
+#include "../api.hh"
 #include "shader.hh"
 #include "sampler.hh"
 #include "math.hh"
@@ -28,7 +29,7 @@ namespace lt
 
 class texture;
 
-class material
+class LT_API material
 {
 public:
     material();

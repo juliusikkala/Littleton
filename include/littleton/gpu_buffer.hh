@@ -18,13 +18,14 @@
 */
 #ifndef LT_GPU_BUFFER_HH
 #define LT_GPU_BUFFER_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 
 namespace lt
 {
 
-class gpu_buffer: public resource, public glresource
+class LT_API gpu_buffer: public resource, public glresource
 {
 public:
     explicit gpu_buffer(context& ctx);

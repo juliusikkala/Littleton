@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_FULLSCREEN_EFFECT_HH
 #define LT_METHOD_FULLSCREEN_EFFECT_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include <map>
@@ -36,7 +37,7 @@ namespace lt::method
 {
 
 // Assumes the vertex shader is data/shaders/fullscreen.vert
-class fullscreen_effect: public target_method
+class LT_API fullscreen_effect: public target_method
 {
 public:
     fullscreen_effect(

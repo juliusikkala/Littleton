@@ -18,6 +18,7 @@
 */
 #ifndef LT_PRIMITIVE_HH
 #define LT_PRIMITIVE_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "shader.hh"
@@ -27,7 +28,7 @@
 namespace lt
 {
 
-class gpu_buffer_accessor
+class LT_API gpu_buffer_accessor
 {
 friend class primitive;
 public:
@@ -57,7 +58,7 @@ private:
     size_t offset;
 };
 
-class primitive: public resource, public glresource
+class LT_API primitive: public resource, public glresource
 {
 public:
     struct attribute

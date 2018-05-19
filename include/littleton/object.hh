@@ -18,13 +18,14 @@
 */
 #ifndef LT_OBJECT_HH
 #define LT_OBJECT_HH
+#include "../api.hh"
 #include "transformable.hh"
 
 namespace lt
 {
 
 class model;
-class object: public transformable_node
+class LT_API object: public transformable_node
 {
 public:
     object(const model* mod = nullptr, transformable_node* parent = nullptr);

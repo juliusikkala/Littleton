@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SKYBOX_HH
 #define LT_METHOD_SKYBOX_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../sampler.hh"
 #include "../stencil_handler.hh"
@@ -35,7 +36,7 @@ class primitive;
 namespace lt::method
 {
 
-class skybox: public target_method, public stencil_handler
+class LT_API skybox: public target_method, public stencil_handler
 {
 public:
     skybox(

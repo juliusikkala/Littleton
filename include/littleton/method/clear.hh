@@ -18,13 +18,14 @@
 */
 #ifndef LT_METHOD_CLEAR_HH
 #define LT_METHOD_CLEAR_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../math.hh"
 
 namespace lt::method
 {
 
-class clear: public target_method
+class LT_API clear: public target_method
 {
 public:
     clear(

@@ -71,7 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;LT_API_EXPORT;_DEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -90,7 +90,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;LT_API_EXPORT;NDEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -113,6 +113,7 @@
       <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>LT_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -124,6 +125,7 @@
       <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>LT_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -190,6 +192,7 @@
     <ClCompile Include="src\window.cc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\littleton\api.hh" />
     <ClInclude Include="include\littleton\camera.hh" />
     <ClInclude Include="include\littleton\common_resources.hh" />
     <ClInclude Include="include\littleton\context.hh" />
@@ -201,6 +204,7 @@
     <ClInclude Include="include\littleton\glheaders.hh" />
     <ClInclude Include="include\littleton\gpu_buffer.hh" />
     <ClInclude Include="include\littleton\light.hh" />
+    <ClInclude Include="include\littleton\littleton.hh" />
     <ClInclude Include="include\littleton\loaders.hh" />
     <ClInclude Include="include\littleton\loaner.hh" />
     <ClInclude Include="include\littleton\material.hh" />
@@ -245,13 +249,14 @@
     <ClInclude Include="include\littleton\transformable.hh" />
     <ClInclude Include="include\littleton\uniform.hh" />
     <ClInclude Include="include\littleton\window.hh" />
+    <ClInclude Include="src\helpers.hh" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="include\littleton\helpers.tcc" />
     <None Include="include\littleton\loaner.tcc" />
     <None Include="include\littleton\resource_pool.tcc" />
     <None Include="include\littleton\shader.tcc" />
     <None Include="include\littleton\uniform.tcc" />
+    <None Include="src\helpers.tcc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

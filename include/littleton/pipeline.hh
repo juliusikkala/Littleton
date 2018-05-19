@@ -18,13 +18,14 @@
 */
 #ifndef LT_PIPELINE_HH
 #define LT_PIPELINE_HH
+#include "../api.hh"
 #include <vector>
 #include <string>
 
 namespace lt
 {
 
-class pipeline_method
+class LT_API pipeline_method
 {
 public:
     virtual ~pipeline_method();
@@ -34,7 +35,7 @@ public:
 };
 
 class render_target;
-class target_method: public pipeline_method
+class LT_API target_method: public pipeline_method
 {
 public:
     target_method(render_target& target);
@@ -49,7 +50,7 @@ private:
     render_target* target;
 };
 
-class pipeline: public pipeline_method
+class LT_API pipeline: public pipeline_method
 {
 public:
     pipeline(const std::vector<pipeline_method*>& methods);

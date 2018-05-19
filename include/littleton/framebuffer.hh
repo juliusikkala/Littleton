@@ -18,6 +18,7 @@
 */
 #ifndef LT_FRAMEBUFFER_HH
 #define LT_FRAMEBUFFER_HH
+#include "../api.hh"
 #include "render_target.hh"
 #include <vector>
 #include <map>
@@ -28,7 +29,7 @@ namespace lt
 {
 
 class texture;
-class framebuffer: public render_target
+class LT_API framebuffer: public render_target
 {
 public:
     struct target_specifier

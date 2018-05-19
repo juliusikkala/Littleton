@@ -18,6 +18,7 @@
 */
 #ifndef LT_SHADER_POOL_HH
 #define LT_SHADER_POOL_HH
+#include "../api.hh"
 #include "resource.hh"
 #include "shader.hh"
 #include <memory>
@@ -31,7 +32,7 @@ namespace lt
 {
 
 class multishader;
-class shader_pool: public virtual glresource
+class LT_API shader_pool: public virtual glresource
 {
 private:
     using map_type = std::unordered_map<

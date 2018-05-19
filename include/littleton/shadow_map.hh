@@ -18,6 +18,7 @@
 */
 #ifndef LT_SHADOW_MAP_HH
 #define LT_SHADOW_MAP_HH
+#include "../api.hh"
 #include "light.hh"
 #include "resource.hh"
 #include "shader.hh"
@@ -31,7 +32,7 @@ namespace method
     class shadow_method;
 }
 
-class directional_shadow_map
+class LT_API directional_shadow_map
 {
 public:
     directional_shadow_map(
@@ -68,7 +69,7 @@ private:
     directional_light* l;
 };
 
-class omni_shadow_map
+class LT_API omni_shadow_map
 {
 public:
     omni_shadow_map(
@@ -97,7 +98,7 @@ private:
     point_light* l;
 };
 
-class perspective_shadow_map
+class LT_API perspective_shadow_map
 {
 public:
     perspective_shadow_map(

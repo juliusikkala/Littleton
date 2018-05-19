@@ -18,6 +18,7 @@
 */
 #ifndef LT_RESOURCE_POOL_HH
 #define LT_RESOURCE_POOL_HH
+#include "../api.hh"
 #include "resource.hh"
 #include "shader_pool.hh"
 #include "framebuffer_pool.hh"
@@ -70,22 +71,29 @@ public:
 
     bool contains(const std::string& name) const;
 
+    const_iterator cbegin() const;
+    const_iterator cend() const;
+
+protected:
+    map_type resources;
+};
+
+template<typename T>
+class lazy_resource_pool: public generic_resource_pool<T>
+{
+public:
+    explicit lazy_resource_pool(context& ctx);
+
     // Loads all resources in this pool.
     void load_all();
 
     // Unloads all resources in this pool.
     void unload_all();
-
-    const_iterator cbegin() const;
-    const_iterator cend() const;
-
-private:
-    map_type resources;
 };
 
-using texture_pool = generic_resource_pool<texture>;
-using gpu_buffer_pool = generic_resource_pool<gpu_buffer>;
-using primitive_pool = generic_resource_pool<primitive>;
+using texture_pool = lazy_resource_pool<texture>;
+using gpu_buffer_pool = lazy_resource_pool<gpu_buffer>;
+using primitive_pool = lazy_resource_pool<primitive>;
 using sampler_pool = generic_resource_pool<sampler>;
 using material_pool = generic_resource_pool<material>;
 using model_pool = generic_resource_pool<model>;
@@ -100,7 +108,7 @@ const type* get_ ## type(const std::string& name) const; \
 type* get_ ## type ## _mutable(const std::string& name); \
 bool contains_ ## type(const std::string& name) const; \
 
-class resource_pool
+class LT_API resource_pool
 : public virtual glresource, public shader_pool, public texture_pool,
   public gpu_buffer_pool, public primitive_pool, public sampler_pool,
   public material_pool, public model_pool, public framebuffer_pool

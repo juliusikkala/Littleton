@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_CLEAR_GBUFFER_HH
 #define LT_METHOD_CLEAR_GBUFFER_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 
 namespace lt
@@ -30,7 +31,7 @@ class gbuffer;
 namespace lt::method
 {
 
-class clear_gbuffer: public pipeline_method
+class LT_API clear_gbuffer: public pipeline_method
 {
 public:
     clear_gbuffer(gbuffer& gbuf);

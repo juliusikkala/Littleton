@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SHADOW_METHOD_HH
 #define LT_METHOD_SHADOW_METHOD_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../render_target.hh"
 #include "../shadow_map.hh"
@@ -33,7 +34,7 @@ class render_scene;
 namespace lt::method
 {
 
-class shadow_method: public pipeline_method
+class LT_API shadow_method: public pipeline_method
 {
 public:
     shadow_method(render_scene* scene = nullptr);

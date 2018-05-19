@@ -18,6 +18,7 @@
 */
 #ifndef LT_RESOURCE_HH
 #define LT_RESOURCE_HH
+#include "../api.hh"
 
 namespace lt
 {
@@ -27,7 +28,7 @@ namespace lt
 // concern itself with thread safety.
 // Deriving classes should call unload_impl() themselves at the end of their
 // destructors, if necessary.
-class resource
+class LT_API resource
 {
 public:
     resource();
@@ -66,7 +67,7 @@ private:
 };
 
 class context;
-class glresource
+class LT_API glresource
 {
 public:
     explicit glresource(context& ctx);

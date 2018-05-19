@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SAO_HH
 #define LT_METHOD_SAO_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -40,7 +41,7 @@ namespace lt::method
 {
 
 // Scalable ambient obsurance (McGuire, HPG 2012)
-class sao: public target_method, public glresource
+class LT_API sao: public target_method, public glresource
 {
 public:
     sao(

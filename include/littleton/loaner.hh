@@ -18,6 +18,7 @@
 */
 #ifndef LT_LOANER_HH
 #define LT_LOANER_HH
+#include "../api.hh"
 #include <memory>
 
 namespace lt

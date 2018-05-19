@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SSAO_HH
 #define LT_METHOD_SSAO_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -38,7 +39,7 @@ class render_scene;
 namespace lt::method
 {
 
-class ssao: public target_method, public glresource
+class LT_API ssao: public target_method, public glresource
 {
 public:
     ssao(

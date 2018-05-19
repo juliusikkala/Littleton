@@ -18,6 +18,7 @@
 */
 #ifndef LT_WINDOW_HH
 #define LT_WINDOW_HH
+#include "../api.hh"
 #include "render_target.hh"
 #include "context.hh"
 #include "math.hh"
@@ -26,7 +27,7 @@
 namespace lt
 {
 
-class window: public context, public render_target
+class LT_API window: public context, public render_target
 {
 public:
     struct params

@@ -18,6 +18,7 @@
 */
 #ifndef LT_SHADER_HH
 #define LT_SHADER_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "uniform.hh"
@@ -28,7 +29,7 @@
 namespace lt
 {
 
-class shader: public resource, public glresource
+class LT_API shader: public resource, public glresource
 {
 public:
     using definition_map = std::map<std::string, std::string>;

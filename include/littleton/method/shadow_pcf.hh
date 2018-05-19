@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SHADOW_PCF_HH
 #define LT_METHOD_SHADOW_PCF_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../render_target.hh"
 #include "../texture.hh"
@@ -39,7 +40,7 @@ namespace method { class shadow_pcf; }
 namespace lt
 {
 
-class directional_shadow_map_pcf: public directional_shadow_map
+class LT_API directional_shadow_map_pcf: public directional_shadow_map
 {
 friend class method::shadow_pcf;
 public:

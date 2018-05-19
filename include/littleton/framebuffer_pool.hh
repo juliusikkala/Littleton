@@ -18,6 +18,7 @@
 */
 #ifndef LT_FRAMEBUFFER_POOL_HH
 #define LT_FRAMEBUFFER_POOL_HH
+#include "../api.hh"
 #include "resource.hh"
 #include "framebuffer.hh"
 #include "loaner.hh"
@@ -28,7 +29,7 @@
 namespace lt
 {
 
-class framebuffer_pool: public virtual glresource
+class LT_API framebuffer_pool: public virtual glresource
 {
 public:
     framebuffer_pool(context& ctx);

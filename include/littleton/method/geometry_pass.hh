@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_GEOMETRY_PASS_HH
 #define LT_METHOD_GEOMETRY_PASS_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../stencil_handler.hh"
 
@@ -37,7 +38,7 @@ class resource_pool;
 namespace lt::method
 {
 
-class geometry_pass: public target_method, public stencil_handler
+class LT_API geometry_pass: public target_method, public stencil_handler
 {
 public:
     geometry_pass(

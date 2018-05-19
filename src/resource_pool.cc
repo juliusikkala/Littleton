@@ -31,6 +31,7 @@ resource_pool::resource_pool(
     framebuffer_pool(ctx)
 {
 }
+
 resource_pool::~resource_pool() {}
 
 framebuffer_pool::loaner resource_pool::loan_framebuffer(

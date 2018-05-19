@@ -18,13 +18,14 @@
 */
 #ifndef LT_METHOD_BLIT_FRAMEBUFFER_HH
 #define LT_METHOD_BLIT_FRAMEBUFFER_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../render_target.hh"
 
 namespace lt::method
 {
 
-class blit_framebuffer: public target_method
+class LT_API blit_framebuffer: public target_method
 {
 public:
     enum blit_type

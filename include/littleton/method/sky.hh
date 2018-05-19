@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_SKY_HH
 #define LT_METHOD_SKY_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../transformable.hh"
 #include "../primitive.hh"
@@ -36,7 +37,7 @@ class directional_light;
 namespace lt::method
 {
 
-class sky: public target_method
+class LT_API sky: public target_method
 {
 public:
     sky(

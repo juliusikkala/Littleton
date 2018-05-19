@@ -18,13 +18,14 @@
 */
 #ifndef LT_CAMERA_HH
 #define LT_CAMERA_HH
+#include "../api.hh"
 #include "transformable.hh"
 #include "math.hh"
 
 namespace lt
 {
 
-class camera: public transformable_node
+class LT_API camera: public transformable_node
 {
 public:
     camera(transformable_node* parent = nullptr);

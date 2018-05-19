@@ -18,12 +18,13 @@
 */
 #ifndef LT_POINT_LIGHT_HH
 #define LT_POINT_LIGHT_HH
+#include "../api.hh"
 #include "transformable.hh"
 
 namespace lt
 {
 
-class light
+class LT_API light
 {
 public:
     light(glm::vec3 color = glm::vec3(1.0));
@@ -35,7 +36,7 @@ private:
     glm::vec3 color;
 };
 
-class directional_light: public light
+class LT_API directional_light: public light
 {
 public:
     directional_light(
@@ -50,13 +51,13 @@ private:
     glm::vec3 direction;
 };
 
-class point_light: public light, public transformable_node
+class LT_API point_light: public light, public transformable_node
 {
 public:
     point_light(glm::vec3 color = glm::vec3(1.0));
 };
 
-class spotlight: public point_light
+class LT_API spotlight: public point_light
 {
 public:
     spotlight(

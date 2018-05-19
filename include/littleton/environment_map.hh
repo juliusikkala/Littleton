@@ -18,6 +18,7 @@
 */
 #ifndef LT_ENVIRONMENT_MAP_HH
 #define LT_ENVIRONMENT_MAP_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "texture.hh"
 #include "math.hh"
@@ -26,7 +27,7 @@
 namespace lt
 {
 
-class environment_map: public texture
+class LT_API environment_map: public texture
 {
 public:
     environment_map(

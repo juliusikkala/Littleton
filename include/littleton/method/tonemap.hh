@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_TONEMAP_HH
 #define LT_METHOD_TONEMAP_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -33,7 +34,7 @@ class resource_pool;
 namespace lt::method
 {
 
-class tonemap: public target_method
+class LT_API tonemap: public target_method
 {
 public:
     tonemap(

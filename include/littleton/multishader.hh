@@ -18,6 +18,7 @@
 */
 #ifndef LT_MULTISHADER_HH
 #define LT_MULTISHADER_HH
+#include "../api.hh"
 #include "resource.hh"
 #include "shader.hh"
 #include <unordered_map>
@@ -28,7 +29,7 @@
 namespace lt
 {
 
-class multishader: public glresource
+class LT_API multishader: public glresource
 {
 public:
     multishader(

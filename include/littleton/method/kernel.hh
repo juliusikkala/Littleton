@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_KERNEL_HH
 #define LT_METHOD_KERNEL_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 
@@ -33,7 +34,7 @@ class sampler;
 namespace lt::method
 {
 
-class kernel: public target_method
+class LT_API kernel: public target_method
 {
 public:
     static const glm::mat3 SHARPEN;

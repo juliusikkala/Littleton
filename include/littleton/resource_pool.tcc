@@ -81,24 +81,6 @@ bool generic_resource_pool<T>::contains(const std::string& name) const
 }
 
 template<typename T>
-void generic_resource_pool<T>::load_all()
-{
-    for(auto& pair: resources)
-    {
-        pair.second->load();
-    }
-}
-
-template<typename T>
-void generic_resource_pool<T>::unload_all()
-{
-    for(auto& pair: resources)
-    {
-        pair.second->unload();
-    }
-}
-
-template<typename T>
 typename generic_resource_pool<T>::const_iterator
 generic_resource_pool<T>::cbegin() const
 {
@@ -110,6 +92,28 @@ typename generic_resource_pool<T>::const_iterator
 generic_resource_pool<T>::cend() const
 {
     return resources.cend();
+}
+
+template<typename T>
+lazy_resource_pool<T>::lazy_resource_pool(context& ctx)
+: glresource(ctx), generic_resource_pool<T>(ctx) {}
+
+template<typename T>
+void lazy_resource_pool<T>::load_all()
+{
+    for(auto& pair: resources)
+    {
+        pair.second->load();
+    }
+}
+
+template<typename T>
+void lazy_resource_pool<T>::unload_all()
+{
+    for(auto& pair: resources)
+    {
+        pair.second->unload();
+    }
 }
 
 } // namespace lt

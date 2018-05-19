@@ -18,13 +18,14 @@
 */
 #ifndef LT_STENCIL_HANDLER_HH
 #define LT_STENCIL_HANDLER_HH
+#include "../api.hh"
 
 namespace lt
 {
 
 // To be used by methods for providing an interface for managing what is
 // written to the stencil buffer and what is passed.
-class stencil_handler
+class LT_API stencil_handler
 {
 public:
     stencil_handler();

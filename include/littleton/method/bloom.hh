@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_BLOOM_HH
 #define LT_METHOD_BLOOM_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -33,7 +34,7 @@ class multishader;
 
 namespace lt::method
 {
-class bloom: public target_method
+class LT_API bloom: public target_method
 {
 public:
     bloom(

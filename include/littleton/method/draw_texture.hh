@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_DRAW_TEXTURE_HH
 #define LT_METHOD_DRAW_TEXTURE_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -33,7 +34,7 @@ class resource_pool;
 namespace lt::method
 {
 
-class draw_texture: public target_method
+class LT_API draw_texture: public target_method
 {
 public:
     draw_texture(

@@ -18,6 +18,7 @@
 */
 #ifndef LT_GBUFFER_HH
 #define LT_GBUFFER_HH
+#include "../api.hh"
 #include "texture.hh"
 #include "shader.hh"
 #include "render_target.hh"
@@ -30,7 +31,7 @@ class sampler;
 class shader_pool;
 class primitive;
 
-class gbuffer: public render_target
+class LT_API gbuffer: public render_target
 {
 public:
     // If depth_stencil isn't provided, an RBO is created for it.

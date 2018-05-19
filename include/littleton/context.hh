@@ -18,6 +18,7 @@
 */
 #ifndef LT_CONTEXT_HH
 #define LT_CONTEXT_HH
+#include "../api.hh"
 #include "glheaders.hh"
 #include "math.hh"
 #include <unordered_map>
@@ -26,7 +27,7 @@
 namespace lt
 {
 
-class context
+class LT_API context
 {
 public:
     context();

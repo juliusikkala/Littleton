@@ -18,6 +18,7 @@
 */
 #ifndef LT_METHOD_LIGHTING_PASS_HH
 #define LT_METHOD_LIGHTING_PASS_HH
+#include "../api.hh"
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
@@ -38,7 +39,7 @@ namespace lt::method
 {
 
 class shadow_method;
-class lighting_pass: public target_method, public stencil_handler
+class LT_API lighting_pass: public target_method, public stencil_handler
 {
 public:
     lighting_pass(
