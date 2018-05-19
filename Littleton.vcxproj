@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{EF934E10-7B40-4C12-92F5-8DA2BB83FC9F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalLibraryDirectories>C:\SDL2-2.0.8\lib\x86;C:\glew-2.1.0\lib\Release\Win32;C:\boost_1_67_0\stage\VS2017\win32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LITTLETON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\SDL2-2.0.8\lib\x86;C:\glew-2.1.0\lib\Release\Win32;C:\boost_1_67_0\stage\VS2017\win32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="extern\mikktspace.c" />
+    <ClCompile Include="extern\stb_image.c" />
+    <ClCompile Include="extern\tiny_gltf.cc" />
+    <ClCompile Include="src\camera.cc" />
+    <ClCompile Include="src\common_resources.cc" />
+    <ClCompile Include="src\context.cc" />
+    <ClCompile Include="src\doublebuffer.cc" />
+    <ClCompile Include="src\environment_map.cc" />
+    <ClCompile Include="src\framebuffer.cc" />
+    <ClCompile Include="src\framebuffer_pool.cc" />
+    <ClCompile Include="src\gbuffer.cc" />
+    <ClCompile Include="src\gpu_buffer.cc" />
+    <ClCompile Include="src\helpers.cc" />
+    <ClCompile Include="src\light.cc" />
+    <ClCompile Include="src\loaders.cc" />
+    <ClCompile Include="src\material.cc" />
+    <ClCompile Include="src\math.cc" />
+    <ClCompile Include="src\method\blit_framebuffer.cc" />
+    <ClCompile Include="src\method\bloom.cc" />
+    <ClCompile Include="src\method\clear.cc" />
+    <ClCompile Include="src\method\clear_gbuffer.cc" />
+    <ClCompile Include="src\method\draw_texture.cc" />
+    <ClCompile Include="src\method\forward_pass.cc" />
+    <ClCompile Include="src\method\fullscreen_effect.cc" />
+    <ClCompile Include="src\method\gamma.cc" />
+    <ClCompile Include="src\method\geometry_pass.cc" />
+    <ClCompile Include="src\method\kernel.cc" />
+    <ClCompile Include="src\method\lighting_pass.cc" />
+    <ClCompile Include="src\method\sao.cc" />
+    <ClCompile Include="src\method\shadow_method.cc" />
+    <ClCompile Include="src\method\shadow_msm.cc" />
+    <ClCompile Include="src\method\shadow_pcf.cc" />
+    <ClCompile Include="src\method\sky.cc" />
+    <ClCompile Include="src\method\skybox.cc" />
+    <ClCompile Include="src\method\ssao.cc" />
+    <ClCompile Include="src\method\ssrt.cc" />
+    <ClCompile Include="src\method\tonemap.cc" />
+    <ClCompile Include="src\method\visualize_gbuffer.cc" />
+    <ClCompile Include="src\model.cc" />
+    <ClCompile Include="src\multishader.cc" />
+    <ClCompile Include="src\object.cc" />
+    <ClCompile Include="src\pipeline.cc" />
+    <ClCompile Include="src\primitive.cc" />
+    <ClCompile Include="src\render_target.cc" />
+    <ClCompile Include="src\resource.cc" />
+    <ClCompile Include="src\resource_pool.cc" />
+    <ClCompile Include="src\sampler.cc" />
+    <ClCompile Include="src\scene.cc" />
+    <ClCompile Include="src\scene_graph.cc" />
+    <ClCompile Include="src\shader.cc" />
+    <ClCompile Include="src\shader_pool.cc" />
+    <ClCompile Include="src\shadow_map.cc" />
+    <ClCompile Include="src\stencil_handler.cc" />
+    <ClCompile Include="src\texture.cc" />
+    <ClCompile Include="src\transformable.cc" />
+    <ClCompile Include="src\uniform.cc" />
+    <ClCompile Include="src\window.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\littleton\camera.hh" />
+    <ClInclude Include="include\littleton\common_resources.hh" />
+    <ClInclude Include="include\littleton\context.hh" />
+    <ClInclude Include="include\littleton\doublebuffer.hh" />
+    <ClInclude Include="include\littleton\environment_map.hh" />
+    <ClInclude Include="include\littleton\framebuffer.hh" />
+    <ClInclude Include="include\littleton\framebuffer_pool.hh" />
+    <ClInclude Include="include\littleton\gbuffer.hh" />
+    <ClInclude Include="include\littleton\glheaders.hh" />
+    <ClInclude Include="include\littleton\gpu_buffer.hh" />
+    <ClInclude Include="include\littleton\light.hh" />
+    <ClInclude Include="include\littleton\loaders.hh" />
+    <ClInclude Include="include\littleton\loaner.hh" />
+    <ClInclude Include="include\littleton\material.hh" />
+    <ClInclude Include="include\littleton\math.hh" />
+    <ClInclude Include="include\littleton\method\blit_framebuffer.hh" />
+    <ClInclude Include="include\littleton\method\bloom.hh" />
+    <ClInclude Include="include\littleton\method\clear.hh" />
+    <ClInclude Include="include\littleton\method\clear_gbuffer.hh" />
+    <ClInclude Include="include\littleton\method\draw_texture.hh" />
+    <ClInclude Include="include\littleton\method\forward_pass.hh" />
+    <ClInclude Include="include\littleton\method\fullscreen_effect.hh" />
+    <ClInclude Include="include\littleton\method\gamma.hh" />
+    <ClInclude Include="include\littleton\method\geometry_pass.hh" />
+    <ClInclude Include="include\littleton\method\kernel.hh" />
+    <ClInclude Include="include\littleton\method\lighting_pass.hh" />
+    <ClInclude Include="include\littleton\method\sao.hh" />
+    <ClInclude Include="include\littleton\method\shadow_method.hh" />
+    <ClInclude Include="include\littleton\method\shadow_msm.hh" />
+    <ClInclude Include="include\littleton\method\shadow_pcf.hh" />
+    <ClInclude Include="include\littleton\method\sky.hh" />
+    <ClInclude Include="include\littleton\method\skybox.hh" />
+    <ClInclude Include="include\littleton\method\ssao.hh" />
+    <ClInclude Include="include\littleton\method\ssrt.hh" />
+    <ClInclude Include="include\littleton\method\tonemap.hh" />
+    <ClInclude Include="include\littleton\method\visualize_gbuffer.hh" />
+    <ClInclude Include="include\littleton\model.hh" />
+    <ClInclude Include="include\littleton\multishader.hh" />
+    <ClInclude Include="include\littleton\object.hh" />
+    <ClInclude Include="include\littleton\pipeline.hh" />
+    <ClInclude Include="include\littleton\primitive.hh" />
+    <ClInclude Include="include\littleton\render_target.hh" />
+    <ClInclude Include="include\littleton\resource.hh" />
+    <ClInclude Include="include\littleton\resource_pool.hh" />
+    <ClInclude Include="include\littleton\sampler.hh" />
+    <ClInclude Include="include\littleton\scene.hh" />
+    <ClInclude Include="include\littleton\scene_graph.hh" />
+    <ClInclude Include="include\littleton\shader.hh" />
+    <ClInclude Include="include\littleton\shader_pool.hh" />
+    <ClInclude Include="include\littleton\shadow_map.hh" />
+    <ClInclude Include="include\littleton\stencil_handler.hh" />
+    <ClInclude Include="include\littleton\texture.hh" />
+    <ClInclude Include="include\littleton\transformable.hh" />
+    <ClInclude Include="include\littleton\uniform.hh" />
+    <ClInclude Include="include\littleton\window.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\littleton\helpers.tcc" />
+    <None Include="include\littleton\loaner.tcc" />
+    <None Include="include\littleton\resource_pool.tcc" />
+    <None Include="include\littleton\shader.tcc" />
+    <None Include="include\littleton\uniform.tcc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -30,9 +30,11 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/integer.hpp>
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
+
+#undef M_PI
+#define M_PI 3.14159265359
 
 namespace lt
 {

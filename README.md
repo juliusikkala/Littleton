@@ -33,13 +33,15 @@ $ ninja -C build
 
 **Note that windows build files are currently missing**
 
-Visual Studio 2017 is used for compiling on Windows. Place the necessary
-libraries in extern in the following paths:
+Visual Studio 2017 is used for compiling on Windows. The build files assume the
+libraries are installed in:
+C:\boost\_1\_67\_0
+C:\SDL2-2.0.8
+C:\glew-2.1.0
+C:\glm-0.9.9-a2
 
-- extern/boost\_1\_66\_0
-- extern/glew-2.1.0
-- extern/glm
-- extern/SDL2-2.0.7
+If they aren't, you should modify both include directories and linker settings
+accordingly.
 
 ## Usage
 

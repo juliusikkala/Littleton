@@ -17,6 +17,7 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "math.hh"
+#include <algorithm>
 
 namespace
 {
@@ -369,7 +370,7 @@ std::vector<float> generate_gaussian_kernel(
 
 unsigned calculate_mipmap_count(uvec2 size)
 {
-    return floor(log2(std::max(size.x, size.y)))+1;
+    return std::floor(std::log2(std::max(size.x, size.y)))+1;
 }
 
 } // namespace lt
