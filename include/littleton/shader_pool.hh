@@ -50,7 +50,7 @@ public:
         const std::optional<std::string>& shader_binary_path = {}
     );
     shader_pool(const shader_pool& other) = delete;
-    shader_pool(shader_pool& other) = delete;
+    shader_pool(shader_pool&& other) = delete;
     ~shader_pool();
 
     multishader* add(const shader::path& path);

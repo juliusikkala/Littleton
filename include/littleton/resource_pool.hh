@@ -52,7 +52,7 @@ public:
 
     explicit generic_resource_pool(context& ctx);
     generic_resource_pool(const generic_resource_pool& other) = delete;
-    generic_resource_pool(generic_resource_pool& other) = delete;
+    generic_resource_pool(generic_resource_pool&& other) = delete;
     ~generic_resource_pool();
 
     T* add(const std::string& name, T* t, bool ignore_duplicate = false);
@@ -112,7 +112,7 @@ public:
         const std::optional<std::string>& shader_binary_path = {}
     );
     resource_pool(const resource_pool& other) = delete;
-    resource_pool(resource_pool& other) = delete;
+    resource_pool(resource_pool&& other) = delete;
     ~resource_pool();
 
     framebuffer_pool::loaner loan_framebuffer(
