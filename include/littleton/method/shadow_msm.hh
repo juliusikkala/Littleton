@@ -16,135 +16,128 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_SHADOW_PCF_HH
-#define LT_METHOD_SHADOW_PCF_HH
-#include "pipeline.hh"
-#include "render_target.hh"
+#ifndef LT_METHOD_SHADOW_MSM_HH
+#define LT_METHOD_SHADOW_MSM_HH
+#include "../pipeline.hh"
+#include "../render_target.hh"
+#include "../texture.hh"
+#include "../framebuffer.hh"
+#include "../sampler.hh"
 #include "shadow_method.hh"
-#include "texture.hh"
-#include "framebuffer.hh"
-#include "sampler.hh"
 
 namespace lt
 {
 
-class directional_shadow_map_pcf;
 class resource_pool;
 class shader;
 class primitive;
-namespace method { class shadow_pcf; }
+namespace method { class shadow_msm; }
 
 }
+
 
 namespace lt
 {
 
-class directional_shadow_map_pcf: public directional_shadow_map
+class directional_shadow_map_msm: public directional_shadow_map
 {
-friend class method::shadow_pcf;
+friend class method::shadow_msm;
 public:
-    directional_shadow_map_pcf(
-        method::shadow_pcf* method,
+    directional_shadow_map_msm(
+        method::shadow_msm* method,
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
-        float radius = 4.0f,
+        unsigned radius = 4,
         glm::vec3 offset = glm::vec3(0),
         glm::vec2 area = glm::vec2(1.0f),
         glm::vec2 depth_range = glm::vec2(1.0f, -1.0f),
         directional_light* light = nullptr
     );
-    directional_shadow_map_pcf(directional_shadow_map_pcf&& other);
 
-    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
-    glm::vec2 get_bias() const;
+    directional_shadow_map_msm(directional_shadow_map_msm&& other);
 
-    void set_samples(unsigned samples);
     unsigned get_samples() const;
 
-    void set_radius(float radius);
-    float set_radius() const;
+    void set_radius(unsigned radius);
+    unsigned get_radius() const;
 
-    texture& get_depth();
-    const texture& get_depth() const;
+    texture& get_moments();
+    const texture& get_moments() const;
+
+    framebuffer& get_framebuffer();
+    const framebuffer& get_framebuffer() const;
 
 private:
-    texture depth;
-    framebuffer depth_buffer;
-    float min_bias, max_bias;
-    float radius;
+    texture moments;
+    framebuffer moments_buffer;
     unsigned samples;
+    unsigned radius;
 };
 
-class omni_shadow_map_pcf: public omni_shadow_map
+class omni_shadow_map_msm: public omni_shadow_map
 {
-friend class method::shadow_pcf;
+friend class method::shadow_msm;
 public:
-    omni_shadow_map_pcf(
-        method::shadow_pcf* method,
+    omni_shadow_map_msm(
+        method::shadow_msm* method,
         context& ctx,
         glm::uvec2 size,
-        unsigned samples = 16,
-        float radius = 0.1f,
+        unsigned samples = 4,
+        // Currently unused due to difficulties in cube map blurring
+        float radius = 1,
         glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
-    omni_shadow_map_pcf(omni_shadow_map_pcf&& other);
+    omni_shadow_map_msm(omni_shadow_map_msm&& other);
 
-    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
-    glm::vec2 get_bias() const;
-
-    void set_samples(unsigned samples);
     unsigned get_samples() const;
 
-    void set_radius(float radius);
-    float set_radius() const;
+    texture& get_moments();
+    const texture& get_moments() const;
 
-    texture& get_depth();
-    const texture& get_depth() const;
+    framebuffer& get_framebuffer();
+    const framebuffer& get_framebuffer() const;
 
 private:
-    texture depth;
-    framebuffer depth_buffer;
-    float min_bias, max_bias;
-    float radius;
+    texture moments;
+    framebuffer moments_buffer;
     unsigned samples;
 };
 
-class perspective_shadow_map_pcf: public perspective_shadow_map
+class perspective_shadow_map_msm: public perspective_shadow_map
 {
-friend class method::shadow_pcf;
+friend class method::shadow_msm;
 public:
-    perspective_shadow_map_pcf(
-        method::shadow_pcf* method,
+    perspective_shadow_map_msm(
+        method::shadow_msm* method,
         context& ctx,
         glm::uvec2 size,
         unsigned samples = 16,
-        float radius = 0.1f,
+        unsigned radius = 4,
         double fov = 30,
         glm::vec2 depth_range = glm::vec2(0.01f, 10.0f),
         point_light* light = nullptr
     );
-    perspective_shadow_map_pcf(perspective_shadow_map_pcf&& other);
 
-    void set_bias(float min_bias = 0.001, float max_bias = 0.02);
-    glm::vec2 get_bias() const;
+    perspective_shadow_map_msm(perspective_shadow_map_msm&& other);
 
-    void set_samples(unsigned samples);
     unsigned get_samples() const;
 
-    void set_radius(float radius);
-    float set_radius() const;
+    void set_radius(unsigned radius);
+    unsigned get_radius() const;
 
-    texture& get_depth();
-    const texture& get_depth() const;
+    texture& get_moments();
+    const texture& get_moments() const;
+
+    framebuffer& get_framebuffer();
+    const framebuffer& get_framebuffer() const;
 
 private:
-    texture depth;
-    framebuffer depth_buffer;
-    float min_bias, max_bias;
-    float radius;
+    texture moments;
+    framebuffer moments_buffer;
     unsigned samples;
+    unsigned radius;
 };
 
 } // namespace lt
@@ -152,25 +145,10 @@ private:
 namespace lt::method
 {
 
-class shadow_pcf: public shadow_method
+class shadow_msm: public glresource, public shadow_method
 {
 public:
-    shadow_pcf(resource_pool& pool, render_scene* scene);
-
-    void set_directional_uniforms(
-        shader* s,
-        unsigned& texture_index
-    ) override;
-
-    void set_omni_uniforms(
-        shader* s,
-        unsigned& texture_index
-    ) override;
-
-    void set_perspective_uniforms(
-        shader* s,
-        unsigned& texture_index
-    ) override;
+    shadow_msm(resource_pool& pool, render_scene* scene);
 
     shader::definition_map get_directional_definitions() const override;
     shader::definition_map get_omni_definitions() const override;
@@ -205,13 +183,18 @@ public:
     std::string get_name() const override;
 
 private:
+    resource_pool& pool;
+
     shader* depth_shader;
     shader* cubemap_depth_shader;
     shader* perspective_depth_shader;
-    const texture& shadow_noise_2d;
-    const texture& shadow_noise_3d;
-    const texture& kernel;
-    sampler shadow_sampler, cubemap_shadow_sampler, noise_sampler;
+
+    shader* vertical_blur_shader;
+    shader* horizontal_blur_shader;
+
+    const primitive& quad;
+    sampler moment_sampler;
+    sampler cubemap_moment_sampler;
 };
 
 } // namespace lt::method

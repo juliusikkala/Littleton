@@ -16,35 +16,52 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_CLEAR_HH
-#define LT_METHOD_CLEAR_HH
-#include "pipeline.hh"
-#include "math.hh"
+#ifndef LT_METHOD_KERNEL_HH
+#define LT_METHOD_KERNEL_HH
+#include "../pipeline.hh"
+#include "../primitive.hh"
+
+namespace lt
+{
+
+class texture;
+class resource_pool;
+class sampler;
+
+}
 
 namespace lt::method
 {
 
-class clear: public target_method
+class kernel: public target_method
 {
 public:
-    clear(
+    static const glm::mat3 SHARPEN;
+    static const glm::mat3 EDGE_DETECT;
+    static const glm::mat3 GAUSSIAN_BLUR;
+    static const glm::mat3 BOX_BLUR;
+
+    kernel(
         render_target& target,
-        glm::vec4 color = glm::vec4(0),
-        double depth = 1,
-        int stencil = 0
+        texture& src,
+        resource_pool& store,
+        const glm::mat3& k = SHARPEN
     );
-    ~clear();
+
+    void set_kernel(const glm::mat3& kernel);
+    glm::mat3 get_kernel() const;
 
     void execute() override;
 
     std::string get_name() const override;
 
 private:
-    glm::vec4 color;
-    double depth;
-    int stencil;
+    texture* src;
+    shader* kernel_shader;
+    const primitive& quad;
+    const sampler& fb_sampler;
+    glm::mat3 k;
 };
 
 } // namespace lt::method
-
 #endif

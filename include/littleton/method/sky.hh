@@ -18,10 +18,10 @@
 */
 #ifndef LT_METHOD_SKY_HH
 #define LT_METHOD_SKY_HH
-#include "pipeline.hh"
-#include "transformable.hh"
-#include "primitive.hh"
-#include "sampler.hh"
+#include "../pipeline.hh"
+#include "../transformable.hh"
+#include "../primitive.hh"
+#include "../sampler.hh"
 
 namespace lt
 {

@@ -16,58 +16,56 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_SAO_HH
-#define LT_METHOD_SAO_HH
-#include "pipeline.hh"
-#include "primitive.hh"
-#include "sampler.hh"
+#ifndef LT_METHOD_LIGHTING_PASS_HH
+#define LT_METHOD_LIGHTING_PASS_HH
+#include "../pipeline.hh"
+#include "../primitive.hh"
+#include "../sampler.hh"
+#include "../stencil_handler.hh"
 #include "shadow_method.hh"
-#include "framebuffer.hh"
-#include "doublebuffer.hh"
-#include "resource.hh"
-#include <memory>
 
 namespace lt
 {
 
 class gbuffer;
 class resource_pool;
-class shader;
+class render_scene;
+class multishader;
 
 }
 
 namespace lt::method
 {
 
-// Scalable ambient obsurance (McGuire, HPG 2012)
-class sao: public target_method, public glresource
+class shadow_method;
+class lighting_pass: public target_method, public stencil_handler
 {
 public:
-    sao(
+    lighting_pass(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
         render_scene* scene,
-        float radius = 0.5f,
-        unsigned samples = 8,
-        float bias = 0.01f,
-        float intensity = 1.0f
+        float cutoff = 5/256.0f // Set to negative to not use light volumes
     );
 
     void set_scene(render_scene* scene);
     render_scene* get_scene() const;
 
-    void set_radius(float radius);
-    float get_radius() const;
+    void set_cutoff(float cutoff);
+    float get_cutoff() const;
 
-    void set_samples(unsigned samples);
-    unsigned get_samples() const;
+    enum depth_test
+    {
+        TEST_NONE = 0,
+        TEST_NEAR,
+        TEST_FAR
+    };
 
-    void set_bias(float bias);
-    float get_bias() const;
+    void set_light_depth_test(depth_test test);
+    depth_test get_light_depth_test() const;
 
-    void set_intensity(float intensity);
-    float get_intensity() const;
+    void set_visualize_light_volumes(bool visualize);
 
     void execute() override;
 
@@ -76,25 +74,17 @@ public:
 private:
     gbuffer* buf;
 
-    shader* ao_sample_pass_shader;
-    shader* blur_shader;
-    shader* ambient_shader;
+    multishader* lighting_shader;
     render_scene* scene;
 
-    float radius;
-    unsigned samples;
-    float bias;
-    float intensity;
-    float spiral_turns;
-
-    doublebuffer ao;
+    float cutoff;
+    depth_test light_test;
+    bool visualize_light_volumes;
 
     const primitive& quad;
     const sampler& fb_sampler;
-    sampler mipmap_sampler;
 };
 
 } // namespace lt::method
 
 #endif
-

@@ -18,9 +18,9 @@
 */
 #ifndef LT_METHOD_SHADOW_METHOD_HH
 #define LT_METHOD_SHADOW_METHOD_HH
-#include "pipeline.hh"
-#include "render_target.hh"
-#include "shadow_map.hh"
+#include "../pipeline.hh"
+#include "../render_target.hh"
+#include "../shadow_map.hh"
 
 namespace lt
 {

@@ -16,55 +16,46 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_GEOMETRY_PASS_HH
-#define LT_METHOD_GEOMETRY_PASS_HH
-#include "pipeline.hh"
-#include "stencil_handler.hh"
+#ifndef LT_METHOD_FULLSCREEN_EFFECT_HH
+#define LT_METHOD_FULLSCREEN_EFFECT_HH
+#include "../pipeline.hh"
+#include "../primitive.hh"
+#include <map>
+#include <string>
 
 namespace lt
 {
 
-class gbuffer;
-class sampler;
-class render_scene;
-class multishader;
+class texture;
 class shader;
-class primitive;
 class resource_pool;
 
-}
+} // namespace lt
 
 namespace lt::method
 {
 
-class geometry_pass: public target_method, public stencil_handler
+// Assumes the vertex shader is data/shaders/fullscreen.vert
+class fullscreen_effect: public target_method
 {
 public:
-    geometry_pass(
-        gbuffer& buf,
-        resource_pool& store,
-        render_scene* scene,
-        bool apply_ambient = true
+    fullscreen_effect(
+        render_target& target,
+        resource_pool& pool,
+        shader* effect = nullptr
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
-
-    void set_apply_ambient(bool apply_ambient);
-    bool get_apply_ambient() const;
+    ~fullscreen_effect();
 
     void execute() override;
+
+    void set_shader(shader* effect);
+    shader* get_shader() const;
 
     std::string get_name() const override;
 
 private:
-    multishader* geometry_shader;
-    shader* min_max_shader;
-    render_scene* scene;
+    shader* effect;
     const primitive& quad;
-    const sampler& fb_sampler;
-
-    bool apply_ambient;
 };
 
 } // namespace lt::method

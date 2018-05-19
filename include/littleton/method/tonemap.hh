@@ -16,72 +16,47 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_VISUALIZE_GBUFFER_HH
-#define LT_METHOD_VISUALIZE_GBUFFER_HH
-#include "pipeline.hh"
-#include "primitive.hh"
-#include "shader.hh"
-#include "sampler.hh"
+#ifndef LT_METHOD_TONEMAP_HH
+#define LT_METHOD_TONEMAP_HH
+#include "../pipeline.hh"
+#include "../primitive.hh"
+#include "../sampler.hh"
 
 namespace lt
 {
 
-class gbuffer;
+class texture;
 class resource_pool;
-class render_scene;
-class multishader;
 
 }
 
 namespace lt::method
 {
 
-class visualize_gbuffer: public target_method
+class tonemap: public target_method
 {
 public:
-    visualize_gbuffer(
+    tonemap(
         render_target& target,
-        gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene
+        texture* src,
+        float exposure = 1.0f
     );
 
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
-
-    enum visualizer
-    {
-        DEPTH,
-        POSITION,
-        NORMAL,
-        COLOR,
-        ROUGHNESS,
-        METALLIC,
-        IOR,
-        MATERIAL
-    };
-
-    void show(visualizer full);
-    void show(
-        visualizer topleft,
-        visualizer topright,
-        visualizer bottomleft,
-        visualizer bottomright
-    );
+    void set_exposure(float exposure);
+    float get_exposure() const;
 
     void execute() override;
 
     std::string get_name() const override;
 
 private:
-    gbuffer* buf;
-
-    multishader* visualize_shader;
-    render_scene* scene;
+    texture* src;
+    shader* tonemap_shader;
     const primitive& quad;
-    const sampler& fb_sampler;        
+    const sampler& fb_sampler;
 
-    std::vector<visualizer> visualizers;
+    float exposure;
 };
 
 } // namespace lt::method

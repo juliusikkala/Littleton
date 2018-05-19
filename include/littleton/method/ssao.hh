@@ -18,11 +18,11 @@
 */
 #ifndef LT_METHOD_SSAO_HH
 #define LT_METHOD_SSAO_HH
-#include "pipeline.hh"
-#include "primitive.hh"
-#include "sampler.hh"
-#include "doublebuffer.hh"
-#include "resource.hh"
+#include "../pipeline.hh"
+#include "../primitive.hh"
+#include "../sampler.hh"
+#include "../doublebuffer.hh"
+#include "../resource.hh"
 #include <memory>
 
 namespace lt

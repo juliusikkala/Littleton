@@ -16,51 +16,49 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_DRAW_TEXTURE_HH
-#define LT_METHOD_DRAW_TEXTURE_HH
-#include "pipeline.hh"
-#include "primitive.hh"
-#include "sampler.hh"
+#ifndef LT_METHOD_SKYBOX_HH
+#define LT_METHOD_SKYBOX_HH
+#include "../pipeline.hh"
+#include "../sampler.hh"
+#include "../stencil_handler.hh"
 
 namespace lt
 {
 
-class texture;
+class shader;
 class resource_pool;
+class render_scene;
+class primitive;
 
 }
 
 namespace lt::method
 {
 
-class draw_texture: public target_method
+class skybox: public target_method, public stencil_handler
 {
 public:
-    draw_texture(
+    skybox(
         render_target& target,
-        resource_pool& shaders,
-        texture* tex = nullptr
+        resource_pool& pool,
+        render_scene* scene = nullptr
     );
-    ~draw_texture();
 
-    void set_transform(glm::mat4 transform);
-
-    void set_texture(texture* tex = nullptr);
+    void set_scene(render_scene* s);
+    render_scene* get_scene() const;
 
     void execute() override;
 
     std::string get_name() const override;
 
 private:
-    const primitive& quad;
-    sampler color_sampler;
+    shader* sky_shader;
+    render_scene* scene;
+    sampler skybox_sampler;
 
-    shader* draw_shader;
-    glm::mat4 transform;
-    texture* tex;
+    const primitive& quad;
 };
 
 } // namespace lt::method
 
 #endif
-

@@ -16,32 +16,48 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_CLEAR_GBUFFER_HH
-#define LT_METHOD_CLEAR_GBUFFER_HH
-#include "pipeline.hh"
+#ifndef LT_METHOD_DRAW_TEXTURE_HH
+#define LT_METHOD_DRAW_TEXTURE_HH
+#include "../pipeline.hh"
+#include "../primitive.hh"
+#include "../sampler.hh"
 
 namespace lt
 {
 
-class gbuffer;
+class texture;
+class resource_pool;
 
 }
 
 namespace lt::method
 {
 
-class clear_gbuffer: public pipeline_method
+class draw_texture: public target_method
 {
 public:
-    clear_gbuffer(gbuffer& gbuf);
-    ~clear_gbuffer();
+    draw_texture(
+        render_target& target,
+        resource_pool& shaders,
+        texture* tex = nullptr
+    );
+    ~draw_texture();
+
+    void set_transform(glm::mat4 transform);
+
+    void set_texture(texture* tex = nullptr);
 
     void execute() override;
 
     std::string get_name() const override;
 
 private:
-    gbuffer* gbuf;
+    const primitive& quad;
+    sampler color_sampler;
+
+    shader* draw_shader;
+    glm::mat4 transform;
+    texture* tex;
 };
 
 } // namespace lt::method

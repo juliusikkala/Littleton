@@ -18,8 +18,8 @@
 */
 #ifndef LT_METHOD_FORWARD_PASS_HH
 #define LT_METHOD_FORWARD_PASS_HH
-#include "pipeline.hh"
-#include "stencil_handler.hh"
+#include "../pipeline.hh"
+#include "../stencil_handler.hh"
 
 namespace lt
 {

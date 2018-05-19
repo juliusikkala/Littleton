@@ -88,7 +88,12 @@ glew_dep = dependency('glew')
 glm_dep = dependency('glm', version: '>=0.9.8')
 thread_dep = dependency('threads')
 boost_dep = dependency('boost', modules : ['filesystem', 'system'])
-incdir = include_directories(['src', 'extern', 'include', 'include/method'])
+incdir = include_directories([
+  'src',
+  'extern',
+  'include/littleton',
+  'include/littleton/method'
+])
 
 deps = [
   m_dep,
@@ -99,6 +104,8 @@ deps = [
   boost_dep
 ]
 
+dep_inc = include_directories([ 'include' ])
+
 liblittleton = library(
   'littleton',
   src,
@@ -108,7 +115,7 @@ liblittleton = library(
 )
 
 littleton_dep = declare_dependency(
-  include_directories : incdir,
+  include_directories : dep_inc,
   link_with : liblittleton,
   dependencies: deps
 )

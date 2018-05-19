@@ -16,47 +16,33 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef LT_METHOD_SKYBOX_HH
-#define LT_METHOD_SKYBOX_HH
-#include "pipeline.hh"
-#include "sampler.hh"
-#include "stencil_handler.hh"
-
-namespace lt
-{
-
-class shader;
-class resource_pool;
-class render_scene;
-class primitive;
-
-}
+#ifndef LT_METHOD_CLEAR_HH
+#define LT_METHOD_CLEAR_HH
+#include "../pipeline.hh"
+#include "../math.hh"
 
 namespace lt::method
 {
 
-class skybox: public target_method, public stencil_handler
+class clear: public target_method
 {
 public:
-    skybox(
+    clear(
         render_target& target,
-        resource_pool& pool,
-        render_scene* scene = nullptr
+        glm::vec4 color = glm::vec4(0),
+        double depth = 1,
+        int stencil = 0
     );
-
-    void set_scene(render_scene* s);
-    render_scene* get_scene() const;
+    ~clear();
 
     void execute() override;
 
     std::string get_name() const override;
 
 private:
-    shader* sky_shader;
-    render_scene* scene;
-    sampler skybox_sampler;
-
-    const primitive& quad;
+    glm::vec4 color;
+    double depth;
+    int stencil;
 };
 
 } // namespace lt::method
