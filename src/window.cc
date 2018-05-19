@@ -35,7 +35,7 @@ window::window(const params& p)
         throw std::runtime_error("There can be only one window.");
     }
 
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS))
+    if(SDL_Init(SDL_INIT_EVERYTHING))
     {
         throw std::runtime_error(SDL_GetError());
     }
