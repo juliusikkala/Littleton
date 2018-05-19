@@ -18,7 +18,7 @@
 */
 #ifndef LT_SAMPLER_HH
 #define LT_SAMPLER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "texture.hh"

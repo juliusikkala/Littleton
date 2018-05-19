@@ -18,7 +18,7 @@
 */
 #ifndef LT_MATERIAL_HH
 #define LT_MATERIAL_HH
-#include "../api.hh"
+#include "api.hh"
 #include "shader.hh"
 #include "sampler.hh"
 #include "math.hh"

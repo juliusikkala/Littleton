@@ -18,7 +18,7 @@
 */
 #ifndef LT_UNIFORM_HH
 #define LT_UNIFORM_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "math.hh"
 #include <unordered_map>

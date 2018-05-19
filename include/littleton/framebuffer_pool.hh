@@ -18,7 +18,7 @@
 */
 #ifndef LT_FRAMEBUFFER_POOL_HH
 #define LT_FRAMEBUFFER_POOL_HH
-#include "../api.hh"
+#include "api.hh"
 #include "resource.hh"
 #include "framebuffer.hh"
 #include "loaner.hh"

@@ -18,7 +18,7 @@
 */
 #ifndef LT_COMMON_RESOURCES_HH
 #define LT_COMMON_RESOURCES_HH
-#include "../api.hh"
+#include "api.hh"
 #include "resource_pool.hh"
 #include "math.hh"
 

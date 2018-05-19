@@ -18,7 +18,7 @@
 */
 #ifndef LT_PIPELINE_HH
 #define LT_PIPELINE_HH
-#include "../api.hh"
+#include "api.hh"
 #include <vector>
 #include <string>
 

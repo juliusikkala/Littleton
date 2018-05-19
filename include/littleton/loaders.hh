@@ -18,7 +18,7 @@
 */
 #ifndef LT_LOADERS_HH
 #define LT_LOADERS_HH
-#include "../api.hh"
+#include "api.hh"
 #include <string>
 #include <unordered_map>
 

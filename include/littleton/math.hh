@@ -18,7 +18,7 @@
 */
 #ifndef LT_MATH_HH
 #define LT_MATH_HH
-#include "../api.hh"
+#include "api.hh"
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>

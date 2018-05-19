@@ -18,7 +18,7 @@
 */
 #ifndef LT_POINT_LIGHT_HH
 #define LT_POINT_LIGHT_HH
-#include "../api.hh"
+#include "api.hh"
 #include "transformable.hh"
 
 namespace lt

@@ -18,7 +18,7 @@
 */
 #ifndef LT_RESOURCE_POOL_HH
 #define LT_RESOURCE_POOL_HH
-#include "../api.hh"
+#include "api.hh"
 #include "resource.hh"
 #include "shader_pool.hh"
 #include "framebuffer_pool.hh"

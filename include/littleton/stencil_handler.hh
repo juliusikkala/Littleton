@@ -18,7 +18,7 @@
 */
 #ifndef LT_STENCIL_HANDLER_HH
 #define LT_STENCIL_HANDLER_HH
-#include "../api.hh"
+#include "api.hh"
 
 namespace lt
 {

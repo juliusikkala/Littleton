@@ -18,7 +18,7 @@
 */
 #ifndef LT_SCENE_GRAPH_HH
 #define LT_SCENE_GRAPH_HH
-#include "../api.hh"
+#include "api.hh"
 #include "object.hh"
 #include <unordered_map>
 #include <string>

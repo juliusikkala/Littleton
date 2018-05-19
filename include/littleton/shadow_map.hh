@@ -18,7 +18,7 @@
 */
 #ifndef LT_SHADOW_MAP_HH
 #define LT_SHADOW_MAP_HH
-#include "../api.hh"
+#include "api.hh"
 #include "light.hh"
 #include "resource.hh"
 #include "shader.hh"

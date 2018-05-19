@@ -18,7 +18,7 @@
 */
 #ifndef LT_DOUBLEBUFFER_HH
 #define LT_DOUBLEBUFFER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "resource.hh"
 #include "render_target.hh"
 #include "texture.hh"

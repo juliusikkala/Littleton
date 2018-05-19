@@ -18,7 +18,7 @@
 */
 #ifndef LT_TEXTURE_HH
 #define LT_TEXTURE_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include <string>

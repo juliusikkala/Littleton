@@ -18,7 +18,7 @@
 */
 #ifndef LT_CAMERA_HH
 #define LT_CAMERA_HH
-#include "../api.hh"
+#include "api.hh"
 #include "transformable.hh"
 #include "math.hh"
 

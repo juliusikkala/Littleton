@@ -18,7 +18,7 @@
 */
 #ifndef LT_GPU_BUFFER_HH
 #define LT_GPU_BUFFER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 

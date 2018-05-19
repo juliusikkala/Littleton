@@ -18,7 +18,7 @@
 */
 #ifndef LT_RESOURCE_HH
 #define LT_RESOURCE_HH
-#include "../api.hh"
+#include "api.hh"
 
 namespace lt
 {

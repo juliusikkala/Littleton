@@ -18,7 +18,7 @@
 */
 #ifndef LT_RENDER_TARGET_HH
 #define LT_RENDER_TARGET_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "math.hh"

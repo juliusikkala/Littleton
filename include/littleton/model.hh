@@ -18,7 +18,7 @@
 */
 #ifndef LT_MODEL_HH
 #define LT_MODEL_HH
-#include "../api.hh"
+#include "api.hh"
 #include <vector>
 #include <cstddef>
 

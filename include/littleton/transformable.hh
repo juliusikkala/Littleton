@@ -18,7 +18,7 @@
 */
 #ifndef LT_TRANSFORMABLE_HH
 #define LT_TRANSFORMABLE_HH
-#include "../api.hh"
+#include "api.hh"
 #include "math.hh"
 
 namespace lt

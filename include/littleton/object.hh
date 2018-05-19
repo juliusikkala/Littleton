@@ -18,7 +18,7 @@
 */
 #ifndef LT_OBJECT_HH
 #define LT_OBJECT_HH
-#include "../api.hh"
+#include "api.hh"
 #include "transformable.hh"
 
 namespace lt

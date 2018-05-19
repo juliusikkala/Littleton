@@ -18,7 +18,7 @@
 */
 #ifndef LT_MULTISHADER_HH
 #define LT_MULTISHADER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "resource.hh"
 #include "shader.hh"
 #include <unordered_map>

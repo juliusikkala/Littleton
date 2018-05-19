@@ -18,7 +18,7 @@
 */
 #ifndef LT_SCENE_HH
 #define LT_SCENE_HH
-#include "../api.hh"
+#include "api.hh"
 #include <vector>
 #include <map>
 #include "math.hh"

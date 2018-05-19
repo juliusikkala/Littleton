@@ -18,7 +18,7 @@
 */
 #ifndef LT_FRAMEBUFFER_HH
 #define LT_FRAMEBUFFER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "render_target.hh"
 #include <vector>
 #include <map>

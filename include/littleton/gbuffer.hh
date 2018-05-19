@@ -18,7 +18,7 @@
 */
 #ifndef LT_GBUFFER_HH
 #define LT_GBUFFER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "texture.hh"
 #include "shader.hh"
 #include "render_target.hh"

@@ -18,7 +18,7 @@
 */
 #ifndef LT_PRIMITIVE_HH
 #define LT_PRIMITIVE_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "shader.hh"

@@ -18,7 +18,7 @@
 */
 #ifndef LT_SHADER_HH
 #define LT_SHADER_HH
-#include "../api.hh"
+#include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
 #include "uniform.hh"
