@@ -76,7 +76,7 @@ private:
     unsigned radius;
 };
 
-class omni_shadow_map_msm: public omni_shadow_map
+class LT_API omni_shadow_map_msm: public omni_shadow_map
 {
 friend class method::shadow_msm;
 public:
@@ -106,7 +106,7 @@ private:
     unsigned samples;
 };
 
-class perspective_shadow_map_msm: public perspective_shadow_map
+class LT_API perspective_shadow_map_msm: public perspective_shadow_map
 {
 friend class method::shadow_msm;
 public:
@@ -146,7 +146,7 @@ private:
 namespace lt::method
 {
 
-class shadow_msm: public glresource, public shadow_method
+class LT_API shadow_msm: public glresource, public shadow_method
 {
 public:
     shadow_msm(resource_pool& pool, render_scene* scene);

@@ -77,7 +77,7 @@ private:
     unsigned samples;
 };
 
-class omni_shadow_map_pcf: public omni_shadow_map
+class LT_API omni_shadow_map_pcf: public omni_shadow_map
 {
 friend class method::shadow_pcf;
 public:
@@ -112,7 +112,7 @@ private:
     unsigned samples;
 };
 
-class perspective_shadow_map_pcf: public perspective_shadow_map
+class LT_API perspective_shadow_map_pcf: public perspective_shadow_map
 {
 friend class method::shadow_pcf;
 public:
@@ -153,7 +153,7 @@ private:
 namespace lt::method
 {
 
-class shadow_pcf: public shadow_method
+class LT_API shadow_pcf: public shadow_method
 {
 public:
     shadow_pcf(resource_pool& pool, render_scene* scene);

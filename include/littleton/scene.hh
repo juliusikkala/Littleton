@@ -174,7 +174,7 @@ private:
     environment_map* skybox;
 };
 
-class render_scene
+class LT_API render_scene
 : public camera_scene, public object_scene, public light_scene,
   public shadow_scene, public environment_scene
 {

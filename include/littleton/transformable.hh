@@ -78,7 +78,7 @@ protected:
     glm::vec3 position, scaling;
 };
 
-class transformable_node: public transformable
+class LT_API transformable_node: public transformable
 {
 public:
     transformable_node(transformable_node* parent = nullptr);
