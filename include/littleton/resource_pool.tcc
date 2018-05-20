@@ -101,7 +101,7 @@ lazy_resource_pool<T>::lazy_resource_pool(context& ctx)
 template<typename T>
 void lazy_resource_pool<T>::load_all()
 {
-    for(auto& pair: resources)
+    for(auto& pair: this->resources)
     {
         pair.second->load();
     }
@@ -110,7 +110,7 @@ void lazy_resource_pool<T>::load_all()
 template<typename T>
 void lazy_resource_pool<T>::unload_all()
 {
-    for(auto& pair: resources)
+    for(auto& pair: this->resources)
     {
         pair.second->unload();
     }
