@@ -106,7 +106,7 @@ deps = [
 
 dep_inc = include_directories([ 'include' ])
 
-liblittleton = library(
+liblittleton = shared_library(
   'littleton',
   src,
   dependencies: deps,
