@@ -44,31 +44,39 @@ gbuffer::gbuffer(
     if(
         normal != nullptr && (
         normal->get_size() != size ||
-        normal->get_external_format() != GL_RG)
+        normal->get_external_format() != GL_RG ||
+        normal->get_target() != GL_TEXTURE_2D)
     ) throw std::runtime_error("Incompatible normal");
 
     if(
         color != nullptr && (
         color->get_size() != size ||
-        color->get_external_format() != GL_RGB)
+        color->get_external_format() != GL_RGB ||
+        color->get_target() != GL_TEXTURE_2D)
     ) throw std::runtime_error("Incompatible color");
 
     if(
         material != nullptr && (
         material->get_size() != size ||
-        material->get_external_format() != GL_RGBA)
+        material->get_external_format() != GL_RGBA ||
+        material->get_target() != GL_TEXTURE_2D)
     ) throw std::runtime_error("Incompatible material");
 
-    if(lighting != nullptr && lighting->get_size() != size)
-        throw std::runtime_error("Incompatible lighting");
+    if(lighting != nullptr && (
+        lighting->get_size() != size ||
+        lighting->get_target() != GL_TEXTURE_2D)
+    ) throw std::runtime_error("Incompatible lighting");
 
-    if(linear_depth != nullptr && linear_depth->get_size() != size)
-        throw std::runtime_error("Incompatible linear_depth");
+    if(linear_depth != nullptr && (
+        linear_depth->get_size() != size ||
+        linear_depth->get_target() != GL_TEXTURE_2D)
+    ) throw std::runtime_error("Incompatible linear_depth");
 
     if(
         depth_stencil != nullptr && (
         depth_stencil->get_size() != size ||
-        depth_stencil->get_internal_format() != GL_DEPTH24_STENCIL8)
+        depth_stencil->get_internal_format() != GL_DEPTH24_STENCIL8 ||
+        depth_stencil->get_target() != GL_TEXTURE_2D)
     ) throw std::runtime_error("Incompatible depth_stencil");
 
     glGenFramebuffers(1, &fbo);
