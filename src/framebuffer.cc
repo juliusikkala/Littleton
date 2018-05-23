@@ -54,8 +54,9 @@ framebuffer::framebuffer(
     const target_specification_map& target_specifications,
     unsigned samples,
     GLenum target
-):  render_target(ctx, size), target_specifications(target_specifications),
-    samples(samples), target(target)
+):  render_target(ctx, target, size),
+    target_specifications(target_specifications), samples(samples),
+    target(target)
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);

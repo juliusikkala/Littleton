@@ -10,6 +10,6 @@ void main(void)
 {
     gl_Position = vec4(vertex, 0.0f, 1.0f);
     vec4 pp = projection * vec4(vertex, -1.0f, 1.0f);
-    view_dir = -(inv_view * vec4(pp.xyz, 0)).xyz;
+    view_dir = (inv_view * vec4(pp.xyz, 0)).xyz;
 }
 

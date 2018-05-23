@@ -33,9 +33,13 @@ public:
 
     void perspective(float fov, float aspect, float near);
     void perspective(float fov, float aspect, float near, float far);
+    void cube_perspective(float near, float far);
     glm::mat4 get_projection() const;
     glm::vec3 get_clip_info() const;
     glm::vec2 get_projection_info() const;
+
+    // Assumes the camera was set using cube_perspective
+    glm::mat4 get_view_projection(unsigned face) const;
 
     float get_near() const;
     float get_far() const;

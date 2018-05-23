@@ -27,8 +27,8 @@ namespace lt
 bool window::initialized = false;
 
 window::window(const params& p)
-: render_target(*this, p.size), framerate_limit(p.framerate_limit),
-  last_frame(0), delta(0)
+: render_target(*this, GL_TEXTURE_2D, p.size),
+  framerate_limit(p.framerate_limit), last_frame(0), delta(0)
 {
     if(initialized)
     {

@@ -82,7 +82,7 @@ public:
 
 private:
     multishader* forward_shader;
-    multishader* depth_shader;
+    multishader* cubemap_forward_shader;
     shader* min_max_shader;
 
     render_scene* scene; 

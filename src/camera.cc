@@ -57,6 +57,11 @@ void camera::perspective(float fov, float aspect, float near, float far)
     this->aspect = aspect;
 }
 
+void camera::cube_perspective(float near, float far)
+{
+    perspective(90.0f, 1.0f, near, far);
+}
+
 glm::mat4 camera::get_projection() const
 {
     return projection;
@@ -70,6 +75,21 @@ glm::vec3 camera::get_clip_info() const
 glm::vec2 camera::get_projection_info() const
 {
     return projection_info;
+}
+
+glm::mat4 camera::get_view_projection(unsigned face) const
+{
+    static const glm::mat4 face_rotations[6] = {
+        glm::lookAt(glm::vec3(0), glm::vec3(1,0,0), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,1,0), glm::vec3(0,0,1)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,-1)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,0,1), glm::vec3(0,-1,0)),
+        glm::lookAt(glm::vec3(0), glm::vec3(0,0,-1), glm::vec3(0,-1,0))
+    };
+    glm::mat4 transform = glm::inverse(get_global_transform());
+
+    return projection * face_rotations[face] * transform;
 }
 
 float camera::get_near() const

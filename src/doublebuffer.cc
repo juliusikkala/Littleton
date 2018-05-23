@@ -62,7 +62,7 @@ doublebuffer::doublebuffer(doublebuffer&& other)
 doublebuffer::~doublebuffer(){}
 
 doublebuffer::target::target(context& ctx, texture& tex)
-: render_target(ctx, tex.get_size())
+: render_target(ctx, tex.get_target(), tex.get_size())
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);

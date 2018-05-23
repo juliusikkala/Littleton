@@ -25,8 +25,8 @@ namespace lt
 GLint render_target::current_read_fbo = -1;
 GLint render_target::current_write_fbo = -1;
 
-render_target::render_target(context& ctx, glm::uvec2 size)
-: glresource(ctx), fbo(0), size(size) {}
+render_target::render_target(context& ctx, GLenum target, glm::uvec2 size)
+: glresource(ctx), fbo(0), target(target), size(size) {}
 
 render_target::~render_target() {}
 
@@ -92,6 +92,11 @@ bool render_target::is_bound(GLenum target) const
         throw std::runtime_error("Unknown render_target unbind target");
     }
     return false;
+}
+
+GLenum render_target::get_target() const
+{
+    return target;
 }
 
 glm::uvec2 render_target::get_size() const

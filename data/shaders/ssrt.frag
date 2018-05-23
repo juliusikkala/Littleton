@@ -63,7 +63,7 @@ void main(void)
         );
 
 #ifdef FALLBACK_CUBEMAP
-        vec4 color = texture(env, (inv_view * vec4(-d, 0)).xyz) * exposure;
+        vec4 color = texture(env, (inv_view * vec4(d, 0)).xyz) * exposure;
         color = mix(color, texelFetch(in_lighting, ivec2(tp), 0), fade);
 #else
         if(fade == 0.0f) discard;

@@ -50,6 +50,10 @@ uniform mat4 inv_view;
 
 uniform vec3 ambient;
 
+#ifdef WORLD_SPACE
+uniform vec3 camera_pos;
+#endif
+
 #if defined(OUTPUT_LIGHTING) && !defined(OUTPUT_GEOMETRY)
 out vec4 out_lighting;
 #endif
@@ -74,7 +78,11 @@ void main(void)
 #endif
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
+#ifdef WORLD_SPACE
+    vec3 view_dir = normalize(camera_pos-f_in.position);
+#else
     vec3 view_dir = normalize(-f_in.position);
+#endif
     vec3 emission = get_material_emission();
     vec2 metallic_roughness = get_material_metallic_roughness();
     float metallic = metallic_roughness.x;

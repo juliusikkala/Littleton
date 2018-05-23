@@ -136,7 +136,7 @@ GLuint load_texture(
     bool hdr = stbi_is_hdr(path.c_str());
     void* data = nullptr;
 
-    stbi_set_flip_vertically_on_load(1);
+    stbi_set_flip_vertically_on_load(target != GL_TEXTURE_CUBE_MAP);
 
     if(hdr)
     {

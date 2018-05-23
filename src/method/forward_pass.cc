@@ -126,6 +126,8 @@ void render_pass(
     const shader::definition_map& scene_definitions,
     render_scene* scene,
     multishader* forward_shader,
+    bool cubemap_target,
+    bool world_space,
     L* light,
     S* sm,
     bool potentially_transparent_only
@@ -142,7 +144,7 @@ void render_pass(
 
         glm::mat4 m = obj->get_global_transform();
         glm::mat4 mv = v * m;
-        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
         glm::mat4 mvp = p * mv;
 
         for(const model::vertex_group& group: *mod)
@@ -162,12 +164,27 @@ void render_pass(
             group.mat->apply(s, texture_index);
             set_shadow(met, s, texture_index, sm, m);
 
-            set_light(s, light, v);
+            set_light(s, light, world_space ? glm::mat4(1) : v);
 
-            s->set("mvp", mvp);
-            s->set("m", mv);
+            if(cubemap_target)
+            {
+                glm::mat4 face_vps[6] = {
+                    cam->get_view_projection(0),
+                    cam->get_view_projection(1),
+                    cam->get_view_projection(2),
+                    cam->get_view_projection(3),
+                    cam->get_view_projection(4),
+                    cam->get_view_projection(5)
+                };
+                s->set("face_vps", 6, face_vps);
+                s->set("mvp", m);
+            }
+            else s->set("mvp", mvp);
+
+            s->set("m", world_space ? m : mv);
             s->set("n_m", n_m);
             s->set("inv_view", inv_view);
+            s->set("camera_pos", cam->get_position());
 
             group.mesh->draw();
         }
@@ -176,6 +193,8 @@ void render_pass(
 
 void render_shadowed_lights(
     multishader* forward_shader,
+    bool cubemap_target,
+    bool world_space,
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
@@ -219,8 +238,8 @@ void render_shadowed_lights(
             handled_directional_lights[it - directional_lights.begin()] = true;
 
             render_pass(
-                met, scene_definitions, scene, forward_shader, light, sm,
-                potentially_transparent_only
+                met, scene_definitions, scene, forward_shader, cubemap_target,
+                world_space, light, sm, potentially_transparent_only
             );
         }
     }
@@ -266,20 +285,22 @@ void render_shadowed_lights(
             );
 
             if(point_it != point_lights.end() && *point_it == point)
-            {
+            {// Handle point light
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_pass(
-                    met, point_definitions, scene, forward_shader, point, sm,
+                    met, point_definitions, scene, forward_shader,
+                    cubemap_target, world_space, point, sm,
                     potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
-            {
+            {// Handle spotlight
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_pass(
-                    met, spot_definitions, scene, forward_shader, spot, sm,
+                    met, spot_definitions, scene, forward_shader,
+                    cubemap_target, world_space, spot, sm,
                     potentially_transparent_only
                 );
             }
@@ -320,7 +341,8 @@ void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_pass(
-                    met, point_definitions, scene, forward_shader, point, sm,
+                    met, point_definitions, scene, forward_shader,
+                    cubemap_target, world_space, point, sm,
                     potentially_transparent_only
                 );
             }
@@ -329,7 +351,8 @@ void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_pass(
-                    met, spot_definitions, scene, forward_shader, spot, sm,
+                    met, spot_definitions, scene, forward_shader,
+                    cubemap_target, world_space, spot, sm,
                     potentially_transparent_only
                 );
             }
@@ -449,6 +472,8 @@ void update_scene_definitions(
 
 void render_unshadowed_lights(
     multishader* forward_shader,
+    bool cubemap_target,
+    bool world_space,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
@@ -470,8 +495,9 @@ void render_unshadowed_lights(
         const model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 mv = v * obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mv = v * m;
+        glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
         glm::mat4 mvp = p * mv;
 
         for(const model::vertex_group& group: *mod)
@@ -499,16 +525,35 @@ void render_unshadowed_lights(
                     handled_point_lights,
                     handled_spotlights,
                     handled_directional_lights,
-                    v
+                    world_space ? glm::mat4(1) : v
                 );
                 light_block->bind(0);
             }
             if(light_block) s->set_block("Lights", 0);
 
-            s->set("mvp", mvp);
-            s->set("m", mv);
+            if(cubemap_target)
+            {
+                glm::mat4 face_vps[6] = {
+                    cam->get_view_projection(0),
+                    cam->get_view_projection(1),
+                    cam->get_view_projection(2),
+                    cam->get_view_projection(3),
+                    cam->get_view_projection(4),
+                    cam->get_view_projection(5)
+                };
+                s->set("face_vps", 6, face_vps);
+                s->set("mvp", m);
+                s->set("m", m);
+            }
+            else
+            {
+                s->set("mvp", mvp);
+                s->set("m", mv);
+            }
+
             s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
+            s->set("camera_pos", cam->get_position());
 
             unsigned texture_index = 0;
             group.mat->apply(s, texture_index);
@@ -519,6 +564,8 @@ void render_unshadowed_lights(
 
 void depth_pass(
     multishader* depth_shader,
+    bool cubemap_target,
+    bool world_space,
     render_scene* scene,
     const shader::definition_map& common,
     bool potentially_transparent_only
@@ -532,8 +579,9 @@ void depth_pass(
         const model* mod = obj->get_model();
         if(!mod) continue;
 
-        glm::mat4 mv = v * obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(mv));
+        glm::mat4 m = obj->get_global_transform();
+        glm::mat4 mv = v * m;
+        glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
         glm::mat4 mvp = p * mv;
 
         for(const model::vertex_group& group: *mod)
@@ -549,10 +597,28 @@ void depth_pass(
             shader* s = depth_shader->get(def);
             s->bind();
 
-            s->set("mvp", mvp);
-            s->set("m", mv);
+            if(cubemap_target)
+            {
+                glm::mat4 face_vps[6] = {
+                    cam->get_view_projection(0),
+                    cam->get_view_projection(1),
+                    cam->get_view_projection(2),
+                    cam->get_view_projection(3),
+                    cam->get_view_projection(4),
+                    cam->get_view_projection(5)
+                };
+                s->set("face_vps", 6, face_vps);
+                s->set("mvp", m);
+                s->set("m", m);
+            }
+            else
+            {
+                s->set("mvp", mvp);
+                s->set("m", mv);
+            }
             s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
+            s->set("camera_pos", cam->get_position());
 
             unsigned texture_index = 0;
             group.mat->apply(s, texture_index);
@@ -564,12 +630,13 @@ void depth_pass(
 
 void render_forward_pass(
     render_scene* scene,
+    bool cubemap_target,
+    bool world_space,
     bool opaque,
     bool apply_ambient,
     bool transmittance,
     stencil_handler& stencil,
     gbuffer* gbuf,
-    multishader* depth_shader,
     multishader* forward_shader
 ){
     camera* cam = scene->get_camera();
@@ -585,6 +652,7 @@ void render_forward_pass(
     );
 
     shader::definition_map common_def({{"OUTPUT_LIGHTING", ""}});
+    if(world_space) common_def["WORLD_SPACE"];
     if(opaque) common_def["MIN_ALPHA"] = "1.0f";
     else
     {
@@ -615,7 +683,14 @@ void render_forward_pass(
         }
 
         stencil.stencil_draw();
-        depth_pass(depth_shader, scene, depth_def, !opaque);
+        depth_pass(
+            forward_shader,
+            cubemap_target,
+            world_space,
+            scene,
+            depth_def,
+            !opaque
+        );
         stencil.stencil_disable();
 
         if(!opaque)
@@ -636,7 +711,14 @@ void render_forward_pass(
                 GL_ONE_MINUS_SRC_ALPHA
             );
             depth_def.erase("OUTPUT_GEOMETRY");
-            depth_pass(depth_shader, scene, depth_def, !opaque);
+            depth_pass(
+                forward_shader,
+                cubemap_target,
+                world_space,
+                scene,
+                depth_def,
+                !opaque
+            );
         }
     }
     else
@@ -644,7 +726,14 @@ void render_forward_pass(
         if(!opaque) glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         stencil.stencil_draw();
-        depth_pass(depth_shader, scene, depth_def, !opaque);
+        depth_pass(
+            forward_shader,
+            cubemap_target,
+            world_space,
+            scene,
+            depth_def,
+            !opaque
+        );
         stencil.stencil_disable();
 
         if(!opaque) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -653,7 +742,14 @@ void render_forward_pass(
         {
             glEnable(GL_BLEND);
             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-            depth_pass(depth_shader, scene, depth_def, !opaque);
+            depth_pass(
+                forward_shader, 
+                cubemap_target,
+                world_space,
+                scene,
+                depth_def,
+                !opaque
+            );
         }
     }
 
@@ -662,6 +758,8 @@ void render_forward_pass(
 
     render_shadowed_lights(
         forward_shader,
+        cubemap_target,
+        world_space,
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
@@ -675,6 +773,8 @@ void render_forward_pass(
 
     render_unshadowed_lights(
         forward_shader,
+        cubemap_target,
+        world_space,
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
@@ -698,7 +798,9 @@ forward_pass::forward_pass(
     forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
-    depth_shader(pool.get_shader(shader::path{"generic.vert", "forward.frag"})),
+    cubemap_forward_shader(pool.get_shader(
+        shader::path{"generic.vert", "forward.frag", "cubemap.geom"})
+    ),
     min_max_shader(nullptr),
     scene(scene), gbuf(nullptr),
     opaque(true), transparent(true), apply_ambient(apply_ambient),
@@ -729,17 +831,20 @@ void forward_pass::execute()
     if(!forward_shader || !scene)
         return;
 
+    bool cubemap = get_target().get_target() == GL_TEXTURE_CUBE_MAP;
+
     if(opaque)
     {
         render_forward_pass(
             scene,
+            cubemap,
+            cubemap,
             true,
             apply_ambient,
             apply_transmittance,
             *this,
             gbuf,
-            depth_shader,
-            forward_shader
+            cubemap ? cubemap_forward_shader : forward_shader
         );
     }
 
@@ -747,16 +852,19 @@ void forward_pass::execute()
     {
         render_forward_pass(
             scene,
+            cubemap,
+            cubemap,
             false,
             apply_ambient,
             apply_transmittance,
             *this,
             gbuf,
-            depth_shader,
-            forward_shader
+            cubemap ? cubemap_forward_shader : forward_shader
         );
     }
 
+    // TODO: Separate method for gbuffer mipmap rendering, this one might render
+    // unnecessarily in hybrid pipelines.
     if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }
 

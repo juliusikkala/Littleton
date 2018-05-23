@@ -31,7 +31,8 @@ class LT_API render_target: public glresource
 public:
     render_target(
         context& ctx,
-        glm::uvec2 size = glm::uvec2(0)
+        GLenum target,
+        glm::uvec2 size
     );
     virtual ~render_target();
 
@@ -39,6 +40,7 @@ public:
     void unbind();
     bool is_bound(GLenum target = GL_FRAMEBUFFER) const;
 
+    GLenum get_target() const;
     glm::uvec2 get_size() const;
     float get_aspect() const;
 
@@ -50,6 +52,7 @@ public:
 
 protected:
     GLuint fbo;
+    GLenum target;
     glm::uvec2 size;
 
     static GLint current_read_fbo;

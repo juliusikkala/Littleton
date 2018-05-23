@@ -14,6 +14,9 @@ void main(void)
         for(int i = 0; i < 3; ++i)
         {
             g_out.position = g_in[i].position;
+#if defined(DIRECTIONAL_SHADOW_MAPPING) || defined(PERSPECTIVE_SHADOW_MAPPING)
+            g_out.light_space_pos = g_in[i].light_space_pos;
+#endif
 #ifdef VERTEX_NORMAL
             g_out.normal = g_in[i].normal;
 #endif
