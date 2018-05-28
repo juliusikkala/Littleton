@@ -148,6 +148,48 @@ LT_API std::vector<float> generate_gaussian_kernel(
 
 LT_API unsigned calculate_mipmap_count(uvec2 size);
 
+// In-place Cholesky decomposition using Cholesky-Banachiewicz algorithm
+template<typename T>
+void cholesky_decomposition(T* matrix, unsigned n);
+
+template<typename T>
+void forward_substitution(const T* matrix, const T* b, T* x, unsigned n);
+
+template<typename T>
+void backward_substitution(const T* matrix, const T* b, T* x, unsigned n);
+
+template<typename T>
+void transpose(const T* matrix, unsigned n);
+
+template<typename T>
+void matrix_transpose_product(
+    const T* matrix,
+    unsigned n,
+    unsigned m,
+    T* product
+);
+
+template<typename T>
+void matrix_transpose_vector_product(
+    const T* matrix,
+    unsigned n,
+    unsigned m,
+    const T* vector,
+    T* product
+);
+
+template<typename F, typename S, typename T, typename U>
+std::vector<T> fit_linear_least_squares(
+    F&& f,
+    S* approx_args,
+    unsigned num_approximators,
+    U* data_locations,
+    T* data_values,
+    unsigned data_points
+);
+
 } // namespace lt
+
+#include "math.tcc"
 
 #endif
