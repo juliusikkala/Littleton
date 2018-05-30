@@ -373,4 +373,25 @@ unsigned calculate_mipmap_count(uvec2 size)
     return std::floor(std::log2(std::max(size.x, size.y)))+1;
 }
 
+std::vector<vec3> packed_sphere_points(size_t count)
+{
+    std::vector<vec3> points(count);
+    // Using Vogel's method
+    float golden_angle = 2.39996322972865332;
+    float z = 1.0f - 1.0f/count;
+    float z_step = 2.0f*z/(count - 1);
+
+    for(unsigned i = 0; i < count; ++i, z += z_step)
+    {
+        float theta = golden_angle * i;
+        float radius = sqrt(1.0f - z * z);
+        points[i] = vec3(
+            radius * cos(theta),
+            radius * sin(theta),
+            z
+        );
+    }
+    return points;
+}
+
 } // namespace lt

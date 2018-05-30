@@ -74,6 +74,7 @@ src = [
   'src/shader.cc',
   'src/shader_pool.cc',
   'src/shadow_map.cc',
+  'src/spherical_gaussians.cc',
   'src/stencil_handler.cc',
   'src/texture.cc',
   'src/transformable.cc',

@@ -188,6 +188,8 @@ std::vector<T> fit_linear_least_squares(
     unsigned data_points
 );
 
+std::vector<vec3> packed_sphere_points(size_t count);
+
 } // namespace lt
 
 #include "math.tcc"
