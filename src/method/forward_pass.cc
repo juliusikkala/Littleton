@@ -120,17 +120,15 @@ void set_shadow(
     met->set_shadow_map_uniforms(s, texture_index, sm, "shadow.", m);
 }
 
-template<typename L, typename S>
+template<typename F>
 void render_pass(
-    shadow_method* met,
-    const shader::definition_map& scene_definitions,
-    render_scene* scene,
     multishader* forward_shader,
     bool cubemap_target,
     bool world_space,
-    L* light,
-    S* sm,
-    bool potentially_transparent_only
+    render_scene* scene,
+    const shader::definition_map& common,
+    bool potentially_transparent_only,
+    F&& vertex_group_callback
 ){
     camera* cam = scene->get_camera();
     glm::mat4 inv_view = cam->get_global_transform();
@@ -153,7 +151,7 @@ void render_pass(
             if(!group.mat->potentially_transparent() &&
                potentially_transparent_only) continue;
 
-            shader::definition_map def = scene_definitions;
+            shader::definition_map def(common);
             group.mat->update_definitions(def);
             group.mesh->update_definitions(def);
 
@@ -162,9 +160,8 @@ void render_pass(
 
             unsigned texture_index = 0;
             group.mat->apply(s, texture_index);
-            set_shadow(met, s, texture_index, sm, m);
 
-            set_light(s, light, world_space ? glm::mat4(1) : v);
+            vertex_group_callback(s, texture_index, m, v);
 
             if(cubemap_target)
             {
@@ -189,6 +186,33 @@ void render_pass(
             group.mesh->draw();
         }
     }
+}
+
+template<typename L, typename S>
+void render_shadowed_light(
+    shadow_method* met,
+    const shader::definition_map& scene_definitions,
+    render_scene* scene,
+    multishader* forward_shader,
+    bool cubemap_target,
+    bool world_space,
+    L* light,
+    S* sm,
+    bool potentially_transparent_only
+){
+    render_pass(
+        forward_shader, cubemap_target, world_space, scene, scene_definitions,
+        potentially_transparent_only,
+        [&](
+            shader* s,
+            unsigned& texture_index,
+            const glm::mat4& m,
+            const glm::mat4& v
+        ){
+            set_shadow(met, s, texture_index, sm, m);
+            set_light(s, light, world_space ? glm::mat4(1) : v);
+        }
+    );
 }
 
 void render_shadowed_lights(
@@ -237,7 +261,7 @@ void render_shadowed_lights(
             if(it == directional_lights.end() || *it != light) continue;
             handled_directional_lights[it - directional_lights.begin()] = true;
 
-            render_pass(
+            render_shadowed_light(
                 met, scene_definitions, scene, forward_shader, cubemap_target,
                 world_space, light, sm, potentially_transparent_only
             );
@@ -288,7 +312,7 @@ void render_shadowed_lights(
             {// Handle point light
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
-                render_pass(
+                render_shadowed_light(
                     met, point_definitions, scene, forward_shader,
                     cubemap_target, world_space, point, sm,
                     potentially_transparent_only
@@ -298,7 +322,7 @@ void render_shadowed_lights(
             {// Handle spotlight
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
-                render_pass(
+                render_shadowed_light(
                     met, spot_definitions, scene, forward_shader,
                     cubemap_target, world_space, spot, sm,
                     potentially_transparent_only
@@ -340,7 +364,7 @@ void render_shadowed_lights(
             {
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
-                render_pass(
+                render_shadowed_light(
                     met, point_definitions, scene, forward_shader,
                     cubemap_target, world_space, point, sm,
                     potentially_transparent_only
@@ -350,7 +374,7 @@ void render_shadowed_lights(
             {
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
-                render_pass(
+                render_shadowed_light(
                     met, spot_definitions, scene, forward_shader,
                     cubemap_target, world_space, spot, sm,
                     potentially_transparent_only
@@ -481,38 +505,24 @@ void render_unshadowed_lights(
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
-    camera* cam = scene->get_camera();
-    glm::mat4 v = glm::inverse(cam->get_global_transform());
-    glm::mat4 p = cam->get_projection();
-
     shader::definition_map scene_definitions(common);
     update_scene_definitions(scene_definitions, scene);
 
     std::unique_ptr<uniform_block> light_block;
 
-    for(object* obj: scene->get_objects())
-    {
-        const model* mod = obj->get_model();
-        if(!mod) continue;
-
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mv = v * m;
-        glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
-        glm::mat4 mvp = p * mv;
-
-        for(const model::vertex_group& group: *mod)
-        {
-            if(!group.mat || !group.mesh) continue;
-            if(!group.mat->potentially_transparent() &&
-               potentially_transparent_only) continue;
-
-            shader::definition_map def = scene_definitions;
-            group.mat->update_definitions(def);
-            group.mesh->update_definitions(def);
-
-            shader* s = forward_shader->get(def);
-            s->bind();
-
+    render_pass(
+        forward_shader,
+        cubemap_target,
+        world_space,
+        scene,
+        scene_definitions,
+        potentially_transparent_only,
+        [&](
+            shader* s,
+            unsigned& texture_index,
+            const glm::mat4& m,
+            const glm::mat4& v
+        ){
             // Generate the light block when the first shader containing it
             // exists (the structure of the light block can't be known
             // beforehand)
@@ -530,36 +540,9 @@ void render_unshadowed_lights(
                 light_block->bind(0);
             }
             if(light_block) s->set_block("Lights", 0);
-
-            if(cubemap_target)
-            {
-                glm::mat4 face_vps[6] = {
-                    cam->get_view_projection(0),
-                    cam->get_view_projection(1),
-                    cam->get_view_projection(2),
-                    cam->get_view_projection(3),
-                    cam->get_view_projection(4),
-                    cam->get_view_projection(5)
-                };
-                s->set("face_vps", 6, face_vps);
-                s->set("mvp", m);
-                s->set("m", m);
-            }
-            else
-            {
-                s->set("mvp", mvp);
-                s->set("m", mv);
-            }
-
-            s->set("n_m", n_m);
             s->set("ambient", scene->get_ambient());
-            s->set("camera_pos", cam->get_position());
-
-            unsigned texture_index = 0;
-            group.mat->apply(s, texture_index);
-            group.mesh->draw();
         }
-    }
+    );
 }
 
 void depth_pass(
@@ -570,62 +553,18 @@ void depth_pass(
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
-    camera* cam = scene->get_camera();
-    glm::mat4 v = glm::inverse(cam->get_global_transform());
-    glm::mat4 p = cam->get_projection();
-
-    for(object* obj: scene->get_objects())
-    {
-        const model* mod = obj->get_model();
-        if(!mod) continue;
-
-        glm::mat4 m = obj->get_global_transform();
-        glm::mat4 mv = v * m;
-        glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
-        glm::mat4 mvp = p * mv;
-
-        for(const model::vertex_group& group: *mod)
-        {
-            if(!group.mat || !group.mesh) continue;
-            if(!group.mat->potentially_transparent() &&
-               potentially_transparent_only) continue;
-
-            shader::definition_map def(common);
-            group.mat->update_definitions(def);
-            group.mesh->update_definitions(def);
-
-            shader* s = depth_shader->get(def);
-            s->bind();
-
-            if(cubemap_target)
-            {
-                glm::mat4 face_vps[6] = {
-                    cam->get_view_projection(0),
-                    cam->get_view_projection(1),
-                    cam->get_view_projection(2),
-                    cam->get_view_projection(3),
-                    cam->get_view_projection(4),
-                    cam->get_view_projection(5)
-                };
-                s->set("face_vps", 6, face_vps);
-                s->set("mvp", m);
-                s->set("m", m);
-            }
-            else
-            {
-                s->set("mvp", mvp);
-                s->set("m", mv);
-            }
-            s->set("n_m", n_m);
+    render_pass(
+        depth_shader, cubemap_target, world_space, scene, common,
+        potentially_transparent_only,
+        [&](
+            shader* s,
+            unsigned& texture_index,
+            const glm::mat4& m,
+            const glm::mat4& v
+        ){
             s->set("ambient", scene->get_ambient());
-            s->set("camera_pos", cam->get_position());
-
-            unsigned texture_index = 0;
-            group.mat->apply(s, texture_index);
-
-            group.mesh->draw();
         }
-    }
+    );
 }
 
 void render_forward_pass(

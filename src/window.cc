@@ -27,7 +27,7 @@ namespace lt
 bool window::initialized = false;
 
 window::window(const params& p)
-: render_target(*this, GL_TEXTURE_2D, p.size),
+: render_target(*this, GL_TEXTURE_2D, glm::uvec3(p.size, 1)),
   framerate_limit(p.framerate_limit), last_frame(0), delta(0)
 {
     if(initialized)
@@ -82,7 +82,11 @@ window::window(const params& p)
         SDL_Quit();
         throw std::runtime_error(SDL_GetError());
     }
-    SDL_GetWindowSize(win, (int*)&(this->size.x), (int*)&(this->size.y));
+    SDL_GetWindowSize(
+        win,
+        (int*)&(this->dimensions.x),
+        (int*)&(this->dimensions.y)
+    );
 
     ctx = SDL_GL_CreateContext(win);
     if(!ctx)

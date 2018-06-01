@@ -32,7 +32,7 @@ namespace lt
 class LT_API framebuffer_pool: public virtual glresource
 {
 public:
-    framebuffer_pool(context& ctx);
+    explicit framebuffer_pool(context& ctx);
     framebuffer_pool(const framebuffer_pool& other) = delete;
     framebuffer_pool(framebuffer_pool&& other) = delete;
     ~framebuffer_pool();

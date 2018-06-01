@@ -32,7 +32,7 @@ public:
     render_target(
         context& ctx,
         GLenum target,
-        glm::uvec2 size
+        glm::uvec3 dimensions
     );
     virtual ~render_target();
 
@@ -42,6 +42,7 @@ public:
 
     GLenum get_target() const;
     glm::uvec2 get_size() const;
+    glm::uvec3 get_dimensions() const;
     float get_aspect() const;
 
     GLuint get_fbo() const;
@@ -53,7 +54,7 @@ public:
 protected:
     GLuint fbo;
     GLenum target;
-    glm::uvec2 size;
+    glm::uvec3 dimensions;
 
     static GLint current_read_fbo;
     static GLint current_write_fbo;

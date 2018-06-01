@@ -58,6 +58,14 @@ public:
         GLenum target = GL_TEXTURE_2D
     );
 
+    framebuffer(
+        context& ctx,
+        glm::uvec3 dimensions,
+        const target_specification_map& target_specifications,
+        unsigned samples,
+        GLenum target
+    );
+
     framebuffer(framebuffer&& f);
     ~framebuffer();
 

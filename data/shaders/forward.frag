@@ -83,7 +83,7 @@ void main(void)
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
 #ifdef WORLD_SPACE
-    vec3 view_dir = normalize(camera_pos[gl_Layer]-f_in.position);
+    vec3 view_dir = normalize(camera_pos[gl_Layer/6]-f_in.position);
 #else
     vec3 view_dir = normalize(-f_in.position);
 #endif

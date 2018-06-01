@@ -27,42 +27,42 @@ doublebuffer::doublebuffer(
     context& ctx,
     glm::uvec2 size,
     GLint internal_format
-): glresource(ctx), cur_index(0),
-   buffers{
-    texture(
-        ctx,
-        size,
-        internal_format,
-        internal_format_compatible_type(internal_format)
-    ),
-    texture(
-        ctx,
-        size,
-        internal_format,
-        internal_format_compatible_type(internal_format)
-    )
-   },
-   targets{target(ctx, buffers[0]), target(ctx, buffers[1])}
+):  glresource(ctx), cur_index(0),
+    buffers{
+        texture(
+            ctx,
+            size,
+            internal_format,
+            internal_format_compatible_type(internal_format)
+        ),
+        texture(
+            ctx,
+            size,
+            internal_format,
+            internal_format_compatible_type(internal_format)
+        )
+    },
+    targets{target(ctx, buffers[0]), target(ctx, buffers[1])}
 {
 }
 
 doublebuffer::doublebuffer(doublebuffer&& other)
-: glresource(other.get_context()), cur_index(other.cur_index),
-  buffers{
-    std::move(other.buffers[0]),
-    std::move(other.buffers[1])
-  },
-  targets{
-      std::move(other.targets[0]),
-      std::move(other.targets[1])
-  }
+:   glresource(other.get_context()), cur_index(other.cur_index),
+    buffers{
+        std::move(other.buffers[0]),
+        std::move(other.buffers[1])
+    },
+    targets{
+        std::move(other.targets[0]),
+        std::move(other.targets[1])
+    }
 {
 }
 
 doublebuffer::~doublebuffer(){}
 
 doublebuffer::target::target(context& ctx, texture& tex)
-: render_target(ctx, tex.get_target(), tex.get_size())
+: render_target(ctx, tex.get_target(), tex.get_dimensions())
 {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);

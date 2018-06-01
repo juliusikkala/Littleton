@@ -25,8 +25,8 @@ namespace lt
 GLint render_target::current_read_fbo = -1;
 GLint render_target::current_write_fbo = -1;
 
-render_target::render_target(context& ctx, GLenum target, glm::uvec2 size)
-: glresource(ctx), fbo(0), target(target), size(size) {}
+render_target::render_target(context& ctx, GLenum target, glm::uvec3 dimensions)
+: glresource(ctx), fbo(0), target(target), dimensions(dimensions) {}
 
 render_target::~render_target() {}
 
@@ -59,7 +59,7 @@ void render_target::bind(GLenum target)
     default:
         throw std::runtime_error("Unknown render_target bind target");
     }
-    glViewport(0, 0, size.x, size.y);
+    glViewport(0, 0, dimensions.x, dimensions.y);
 }
 
 void render_target::unbind()
@@ -101,12 +101,17 @@ GLenum render_target::get_target() const
 
 glm::uvec2 render_target::get_size() const
 {
-    return size;
+    return glm::uvec2(dimensions);
+}
+
+glm::uvec3 render_target::get_dimensions() const
+{
+    return dimensions;
 }
 
 float render_target::get_aspect() const
 {
-    return size.x/(float)size.y;
+    return dimensions.x/(float)dimensions.y;
 }
 
 GLuint render_target::get_fbo() const

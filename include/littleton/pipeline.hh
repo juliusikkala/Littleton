@@ -38,7 +38,7 @@ class render_target;
 class LT_API target_method: public pipeline_method
 {
 public:
-    target_method(render_target& target);
+    explicit target_method(render_target& target);
 
     void set_target(render_target& target);
     render_target& get_target();
@@ -53,7 +53,7 @@ private:
 class LT_API pipeline: public pipeline_method
 {
 public:
-    pipeline(const std::vector<pipeline_method*>& methods);
+    explicit pipeline(const std::vector<pipeline_method*>& methods);
     pipeline(pipeline&& other);
     ~pipeline();
 

@@ -54,7 +54,22 @@ framebuffer::framebuffer(
     const target_specification_map& target_specifications,
     unsigned samples,
     GLenum target
-):  render_target(ctx, target, size),
+):  framebuffer(
+        ctx,
+        glm::uvec3(size, 1),
+        target_specifications,
+        samples,
+        target
+    )
+{}
+
+framebuffer::framebuffer(
+    context& ctx,
+    glm::uvec3 dimensions,
+    const target_specification_map& target_specifications,
+    unsigned samples,
+    GLenum target
+):  render_target(ctx, target, dimensions),
     target_specifications(target_specifications), samples(samples),
     target(target)
 {
@@ -68,17 +83,21 @@ framebuffer::framebuffer(
         GLenum attachment = pair.first;
         const target_specifier& spec = pair.second;
 
-        if(spec.as_texture || target == GL_TEXTURE_CUBE_MAP)
-        {
+        if(
+            spec.as_texture ||
+            target == GL_TEXTURE_CUBE_MAP ||
+            target == GL_TEXTURE_CUBE_MAP_ARRAY
+        ){
             texture* tex;
 
             if(spec.use_texture)
             {
                 tex = spec.use_texture;
-                if(tex->get_size() != size)
+                if(tex->get_dimensions() != dimensions)
                 {
                     throw std::runtime_error(
-                        "Texture size does not match framebuffer size!"
+                        "Texture dimensions do not match framebuffer "
+                        "dimensions!"
                     );
                 }
             }
@@ -86,7 +105,7 @@ framebuffer::framebuffer(
             {
                 tex = new texture(
                     ctx,
-                    size,
+                    dimensions,
                     spec.format,
                     internal_format_compatible_type(spec.format),
                     samples,
@@ -118,8 +137,8 @@ framebuffer::framebuffer(
                     GL_RENDERBUFFER,
                     samples,
                     spec.format,
-                    size.x,
-                    size.y
+                    dimensions.x,
+                    dimensions.y
                 );
             }
             else
@@ -127,8 +146,8 @@ framebuffer::framebuffer(
                 glRenderbufferStorage(
                     GL_RENDERBUFFER,
                     spec.format,
-                    size.x,
-                    size.y
+                    dimensions.x,
+                    dimensions.y
                 );
             }
 

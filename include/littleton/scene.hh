@@ -19,9 +19,9 @@
 #ifndef LT_SCENE_HH
 #define LT_SCENE_HH
 #include "api.hh"
+#include "math.hh"
 #include <vector>
 #include <map>
-#include "math.hh"
 
 namespace lt
 {
@@ -42,20 +42,33 @@ namespace method { class shadow_method; }
 class LT_API camera_scene
 {
 public:
-    camera_scene(camera* cam = nullptr);
+    explicit camera_scene(
+        std::vector<camera*>&& cameras = {}
+    );
     ~camera_scene();
 
+    // These are for a single-camera setup ONLY, so set_camera clears all other
+    // cameras and get_camera returns the first camera.
     void set_camera(camera* cam);
     camera* get_camera() const;
 
+    // These are for multi-camera setups. Only useful for array render targets.
+    void add_camera(camera* cam);
+    void remove_camera(camera* cam);
+    void clear_cameras();
+    size_t camera_count() const;
+
+    void set_cameras(const std::vector<camera*>& cameras);
+    const std::vector<camera*>& get_cameras() const;
+
 private:
-    camera* cam;
+    std::vector<camera*> cameras;
 };
 
 class LT_API object_scene
 {
 public:
-    object_scene(std::vector<object*>&& objects = {});
+    explicit object_scene(std::vector<object*>&& objects = {});
     ~object_scene();
 
     void add_object(object* obj);

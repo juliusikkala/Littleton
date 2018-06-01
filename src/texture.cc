@@ -257,11 +257,30 @@ texture::texture(
     unsigned samples,
     GLenum target,
     const void* data
+):  texture(
+        ctx,
+        glm::uvec3(size, 1),
+        internal_format,
+        type,
+        samples,
+        target,
+        data
+    )
+{}
+
+texture::texture(
+    context& ctx,
+    glm::uvec3 dimensions,
+    GLint internal_format,
+    GLenum type,
+    unsigned samples,
+    GLenum target,
+    const void* data
 ): glresource(ctx), tex(0), internal_format(internal_format), target(target),
    type(type)
 {
     basic_load(
-        glm::uvec3(size, 1),
+        dimensions,
         internal_format,
         type,
         samples,

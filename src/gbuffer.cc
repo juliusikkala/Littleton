@@ -35,7 +35,7 @@ gbuffer::gbuffer(
     texture* lighting,
     texture* linear_depth,
     texture* depth_stencil
-):  render_target(ctx, GL_TEXTURE_2D, size),
+):  render_target(ctx, GL_TEXTURE_2D, glm::uvec3(size, 1)),
     normal(normal), color(color), material(material),
     linear_depth(linear_depth), lighting(lighting),
     depth_stencil(depth_stencil), depth_stencil_rbo(0)

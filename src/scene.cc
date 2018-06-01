@@ -24,19 +24,49 @@
 namespace lt
 {
 
-camera_scene::camera_scene(camera* cam)
-: cam(cam) {}
+camera_scene::camera_scene(std::vector<camera*>&& cameras)
+: cameras(std::move(cameras)) {}
 
 camera_scene::~camera_scene() {}
 
 void camera_scene::set_camera(camera* cam)
 {
-    this->cam = cam;
+    cameras = { cam };
 }
 
 camera* camera_scene::get_camera() const
 {
-    return cam;
+    return cameras.size() ? cameras[0] : nullptr;
+}
+
+void camera_scene::add_camera(camera* cam)
+{
+    sorted_insert(cameras, cam);
+}
+
+void camera_scene::remove_camera(camera* cam)
+{
+    sorted_erase(cameras, cam);
+}
+
+void camera_scene::clear_cameras()
+{
+    cameras.clear();
+}
+
+size_t camera_scene::camera_count() const
+{
+    return cameras.size();
+}
+
+void camera_scene::set_cameras(const std::vector<camera*>& cameras)
+{
+    this->cameras = cameras;
+}
+
+const std::vector<camera*>& camera_scene::get_cameras() const
+{
+    return cameras;
 }
 
 object_scene::object_scene(std::vector<object*>&& objects)
