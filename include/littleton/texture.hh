@@ -21,8 +21,8 @@
 #include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
-#include <string>
 #include "math.hh"
+#include <string>
 
 namespace lt
 {
@@ -47,6 +47,16 @@ public:
         const void* data = nullptr
     );
 
+    texture(
+        context& ctx,
+        glm::uvec3 dimensions,
+        GLint format,
+        GLenum type,
+        unsigned samples = 0,
+        GLenum target = GL_TEXTURE_2D_ARRAY,
+        const void* data = nullptr
+    );
+
     texture(const texture& other) = delete;
     texture(texture&& other);
     ~texture();
@@ -57,6 +67,7 @@ public:
     GLenum get_target() const;
     GLenum get_type() const;
     glm::uvec2 get_size() const;
+    glm::uvec3 get_dimensions() const;
 
     void generate_mipmaps();
 
@@ -78,8 +89,19 @@ public:
         const void* data = nullptr
     );
 
+    static texture* create(
+        context& ctx,
+        glm::uvec3 dimensions,
+        GLint internal_format,
+        GLenum type,
+        unsigned samples = 0,
+        GLenum target = GL_TEXTURE_2D_ARRAY,
+        size_t data_size = 0,
+        const void* data = nullptr
+    );
+
 protected:
-    texture(context& ctx);
+    explicit texture(context& ctx);
 
     void basic_load(
         const std::string& path,
@@ -88,7 +110,7 @@ protected:
     ) const;
 
     void basic_load(
-        glm::uvec2 size,
+        glm::uvec3 dimensions,
         GLint internal_format,
         GLenum type,
         unsigned samples,
@@ -102,7 +124,7 @@ protected:
     mutable GLint internal_format;
     mutable GLint target;
     mutable GLenum type;
-    mutable glm::uvec2 size;
+    mutable glm::uvec3 dimensions;
 };
 
 } // namespace lt

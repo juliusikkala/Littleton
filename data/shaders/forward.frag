@@ -1,12 +1,16 @@
 /* This shader is meant to be used with generic.vert. It is suitable for
  * forward rendering and supports materials.
  */
-#version 400 core
+#version 430 core
 
 #include "generic_fragment_input.glsl"
 #include "material.glsl"
 #include "light_types.glsl"
 #include "shadow.glsl"
+
+#ifndef LAYERS
+#define LAYERS 1
+#endif
 
 #ifdef MULTIPLE_LIGHTS
 uniform Lights
@@ -51,7 +55,7 @@ uniform mat4 inv_view;
 uniform vec3 ambient;
 
 #ifdef WORLD_SPACE
-uniform vec3 camera_pos;
+uniform vec3 camera_pos[LAYERS];
 #endif
 
 #if defined(OUTPUT_LIGHTING) && !defined(OUTPUT_GEOMETRY)
@@ -79,7 +83,7 @@ void main(void)
     color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
 #ifdef WORLD_SPACE
-    vec3 view_dir = normalize(camera_pos-f_in.position);
+    vec3 view_dir = normalize(camera_pos[gl_Layer]-f_in.position);
 #else
     vec3 view_dir = normalize(-f_in.position);
 #endif

@@ -136,7 +136,7 @@ protected:
     void load_impl() const override
     {
         basic_load(
-            size,
+            glm::uvec3(size, 1),
             internal_format,
             type,
             0,

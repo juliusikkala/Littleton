@@ -1,16 +1,23 @@
 #version 400 core
-layout (triangles) in;
-layout (triangle_strip, max_vertices=18) out;
+#ifndef CUBEMAP_MAX_VERTICES
+// This is simply 3*6 but GLSL doesn't allow computations in layout :/
+#define CUBEMAP_MAX_VERTICES 18
+#endif
 
-uniform mat4 face_vps[6];
+#define CUBEMAP_LAYER_FACES (CUBEMAP_MAX_VERTICES/3)
+
+layout (triangles) in;
+layout (triangle_strip, max_vertices=CUBEMAP_MAX_VERTICES) out;
+
+uniform mat4 face_vps[CUBEMAP_LAYER_FACES];
 
 #include "generic_geometry_input.glsl"
 
 void main(void)
 {
-    for(int face = 0; face < 6; ++face)
+    for(int layer_face = 0; layer_face < CUBEMAP_LAYER_FACES; ++layer_face)
     {
-        gl_Layer = face;
+        gl_Layer = layer_face;
         for(int i = 0; i < 3; ++i)
         {
             g_out.position = g_in[i].position;
@@ -29,7 +36,7 @@ void main(void)
             g_out.uv = g_in[i].uv;
 #endif
 
-            gl_Position = face_vps[face] * gl_in[i].gl_Position;
+            gl_Position = face_vps[layer_face] * gl_in[i].gl_Position;
             EmitVertex();
         }
         EndPrimitive();
