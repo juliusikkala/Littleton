@@ -122,19 +122,42 @@ void set_shadow(
 
 template<typename F>
 void render_pass(
+    render_target& target,
     multishader* forward_shader,
-    bool cubemap_target,
     bool world_space,
     render_scene* scene,
     const shader::definition_map& common,
     bool potentially_transparent_only,
     F&& vertex_group_callback
 ){
+    bool cubemap_target =
+        target.get_target() == GL_TEXTURE_CUBE_MAP ||
+        target.get_target() == GL_TEXTURE_CUBE_MAP_ARRAY;
+
+    unsigned layers = min(
+        (unsigned)scene->camera_count(), target.get_dimensions().z
+    );
+
     camera* cam = scene->get_camera();
+
+    // Generate cubemap face-layer view-projection matrices
+    const std::vector<camera*> cameras = scene->get_cameras();
+    std::vector<glm::mat4> face_layer_vps;
+    if(cubemap_target)
+    {
+        face_layer_vps.reserve(layers*6);
+        for(unsigned layer = 0; layer < layers; ++layer)
+            for(unsigned face = 0; face < 6; ++face)
+                face_layer_vps.push_back(
+                    cameras[layer]->get_view_projection(face)
+                );
+    }
+
     glm::mat4 inv_view = cam->get_global_transform();
     glm::mat4 v = glm::inverse(inv_view);
     glm::mat4 p = cam->get_projection();
 
+    // Loop objects in scene
     for(object* obj: scene->get_objects())
     {
         const model* mod = obj->get_model();
@@ -145,9 +168,12 @@ void render_pass(
         glm::mat3 n_m(glm::inverseTranspose(world_space ? m : mv));
         glm::mat4 mvp = p * mv;
 
+        // Loop vertex groups in the object's model
         for(const model::vertex_group& group: *mod)
         {
             if(!group.mat || !group.mesh) continue;
+            // Skip certainly opaque objects if only transparent stuff should be
+            // rendered.
             if(!group.mat->potentially_transparent() &&
                potentially_transparent_only) continue;
 
@@ -165,15 +191,11 @@ void render_pass(
 
             if(cubemap_target)
             {
-                glm::mat4 face_vps[6] = {
-                    cam->get_view_projection(0),
-                    cam->get_view_projection(1),
-                    cam->get_view_projection(2),
-                    cam->get_view_projection(3),
-                    cam->get_view_projection(4),
-                    cam->get_view_projection(5)
-                };
-                s->set("face_vps", 6, face_vps);
+                s->set(
+                    "face_vps",
+                    face_layer_vps.size(),
+                    face_layer_vps.data()
+                );
                 s->set("mvp", m);
             }
             else s->set("mvp", mvp);
@@ -190,18 +212,18 @@ void render_pass(
 
 template<typename L, typename S>
 void render_shadowed_light(
+    render_target& target,
     shadow_method* met,
     const shader::definition_map& scene_definitions,
     render_scene* scene,
     multishader* forward_shader,
-    bool cubemap_target,
     bool world_space,
     L* light,
     S* sm,
     bool potentially_transparent_only
 ){
     render_pass(
-        forward_shader, cubemap_target, world_space, scene, scene_definitions,
+        target, forward_shader, world_space, scene, scene_definitions,
         potentially_transparent_only,
         [&](
             shader* s,
@@ -216,8 +238,8 @@ void render_shadowed_light(
 }
 
 void render_shadowed_lights(
+    render_target& target,
     multishader* forward_shader,
-    bool cubemap_target,
     bool world_space,
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
@@ -262,7 +284,7 @@ void render_shadowed_lights(
             handled_directional_lights[it - directional_lights.begin()] = true;
 
             render_shadowed_light(
-                met, scene_definitions, scene, forward_shader, cubemap_target,
+                target, met, scene_definitions, scene, forward_shader,
                 world_space, light, sm, potentially_transparent_only
             );
         }
@@ -313,9 +335,8 @@ void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_shadowed_light(
-                    met, point_definitions, scene, forward_shader,
-                    cubemap_target, world_space, point, sm,
-                    potentially_transparent_only
+                    target, met, point_definitions, scene, forward_shader,
+                    world_space, point, sm, potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -323,9 +344,8 @@ void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_shadowed_light(
-                    met, spot_definitions, scene, forward_shader,
-                    cubemap_target, world_space, spot, sm,
-                    potentially_transparent_only
+                    target, met, spot_definitions, scene, forward_shader,
+                    world_space, spot, sm, potentially_transparent_only
                 );
             }
         }
@@ -365,9 +385,8 @@ void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_shadowed_light(
-                    met, point_definitions, scene, forward_shader,
-                    cubemap_target, world_space, point, sm,
-                    potentially_transparent_only
+                    target, met, point_definitions, scene, forward_shader,
+                    world_space, point, sm, potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -375,9 +394,8 @@ void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_shadowed_light(
-                    met, spot_definitions, scene, forward_shader,
-                    cubemap_target, world_space, spot, sm,
-                    potentially_transparent_only
+                    target, met, spot_definitions, scene, forward_shader,
+                    world_space, spot, sm, potentially_transparent_only
                 );
             }
         }
@@ -495,8 +513,8 @@ void update_scene_definitions(
 }
 
 void render_unshadowed_lights(
+    render_target& target,
     multishader* forward_shader,
-    bool cubemap_target,
     bool world_space,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
@@ -511,8 +529,8 @@ void render_unshadowed_lights(
     std::unique_ptr<uniform_block> light_block;
 
     render_pass(
+        target,
         forward_shader,
-        cubemap_target,
         world_space,
         scene,
         scene_definitions,
@@ -546,15 +564,15 @@ void render_unshadowed_lights(
 }
 
 void depth_pass(
+    render_target& target,
     multishader* depth_shader,
-    bool cubemap_target,
     bool world_space,
     render_scene* scene,
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
     render_pass(
-        depth_shader, cubemap_target, world_space, scene, common,
+        target, depth_shader, world_space, scene, common,
         potentially_transparent_only,
         [&](
             shader* s,
@@ -568,8 +586,8 @@ void depth_pass(
 }
 
 void render_forward_pass(
+    render_target& target,
     render_scene* scene,
-    bool cubemap_target,
     bool world_space,
     bool opaque,
     bool apply_ambient,
@@ -599,6 +617,12 @@ void render_forward_pass(
         common_def["MIN_ALPHA"] = std::to_string(1/255.0f);
     }
 
+    unsigned layers = min(
+        (unsigned)scene->camera_count(), target.get_dimensions().z
+    );
+    common_def["LAYERS"] = std::to_string(layers);
+    common_def["CUBEMAP_MAX_VERTICES"] = std::to_string(3*6*layers);
+
     shader::definition_map depth_def(common_def);
 
     if(gbuf)
@@ -623,8 +647,8 @@ void render_forward_pass(
 
         stencil.stencil_draw();
         depth_pass(
+            target,
             forward_shader,
-            cubemap_target,
             world_space,
             scene,
             depth_def,
@@ -651,8 +675,8 @@ void render_forward_pass(
             );
             depth_def.erase("OUTPUT_GEOMETRY");
             depth_pass(
+                target,
                 forward_shader,
-                cubemap_target,
                 world_space,
                 scene,
                 depth_def,
@@ -666,8 +690,8 @@ void render_forward_pass(
 
         stencil.stencil_draw();
         depth_pass(
+            target,
             forward_shader,
-            cubemap_target,
             world_space,
             scene,
             depth_def,
@@ -682,8 +706,8 @@ void render_forward_pass(
             glEnable(GL_BLEND);
             glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
             depth_pass(
+                target,
                 forward_shader, 
-                cubemap_target,
                 world_space,
                 scene,
                 depth_def,
@@ -696,8 +720,8 @@ void render_forward_pass(
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
     render_shadowed_lights(
+        target,
         forward_shader,
-        cubemap_target,
         world_space,
         handled_point_lights,
         handled_spotlights,
@@ -711,8 +735,8 @@ void render_forward_pass(
     common_def["APPLY_EMISSION"];
 
     render_unshadowed_lights(
+        target,
         forward_shader,
-        cubemap_target,
         world_space,
         handled_point_lights,
         handled_spotlights,
@@ -770,13 +794,15 @@ void forward_pass::execute()
     if(!forward_shader || !scene)
         return;
 
-    bool cubemap = get_target().get_target() == GL_TEXTURE_CUBE_MAP;
+    bool cubemap =
+        get_target().get_target() == GL_TEXTURE_CUBE_MAP ||
+        get_target().get_target() == GL_TEXTURE_CUBE_MAP_ARRAY;
 
     if(opaque)
     {
         render_forward_pass(
+            get_target(),
             scene,
-            cubemap,
             cubemap,
             true,
             apply_ambient,
@@ -790,8 +816,8 @@ void forward_pass::execute()
     if(transparent)
     {
         render_forward_pass(
+            get_target(),
             scene,
-            cubemap,
             cubemap,
             false,
             apply_ambient,
