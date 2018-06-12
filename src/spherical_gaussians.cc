@@ -3,39 +3,15 @@
 namespace lt
 {
 
-sg_probe::sg_probe(
-    const std::vector<sg_lobe>& lobes,
-    vec3* amplitudes,
-    vec3& pos
-): lobes(lobes), amplitudes(amplitudes), pos(pos) {}
+sg_group::sg_group(
+    context& ctx,
+    uvec3 resolution,
+    vec3 size,
+    size_t lobe_count,
+    float epsilon
+){
+    set_scaling(size);
 
-const std::vector<sg_lobe>& sg_probe::get_lobes() const
-{
-    return lobes;
-}
-
-vec3 sg_probe::get_position() const
-{
-    return pos;
-}
-
-void sg_probe::set_position(vec3 pos) const
-{
-    this->pos = pos;
-}
-
-vec3 sg_probe::operator[](size_t i) const
-{
-    return amplitudes[i];
-}
-
-vec3& sg_probe::operator[](size_t i)
-{
-    return amplitudes[i];
-}
-
-sg_group::sg_group(size_t lobe_count, float epsilon)
-{
     // Always add DC entry (if we have any lobes at all)
     if(lobe_count > 0)
     {
@@ -63,51 +39,43 @@ sg_group::sg_group(size_t lobe_count, float epsilon)
     // assigned sector.
     float sharpness = log(epsilon) * lobe_count * -0.5f;
 
-    for(vec3 axis: axes) lobes.push_back({axis, sharpness});
+    // Add lobes and generate amplitude textures
+    for(vec3 axis: axes)
+    {
+        lobes.push_back({axis, sharpness});
+        amplitudes.emplace_back(
+            ctx, resolution, GL_RGB16F, GL_FLOAT, 0, GL_TEXTURE_3D
+        );
+    }
 }
 
-sg_group::sg_group(const std::vector<sg_lobe>& lobes)
-: lobes(lobes) {}
-
-sg_probe sg_group::add_probe(vec3 pos)
+uvec3 sg_group::get_resolution() const
 {
-    size_t new_size = amplitudes.size() + lobes.size();
-    amplitudes.resize(new_size, vec3(0.0f));
-    probes.push_back(pos);
-
-    return sg_probe(
-        lobes,
-        &amplitudes[lobes.size() * (probes.size() - 1)],
-        probes.back()
-    );
+    if(amplitudes.size())
+    {
+        return amplitudes[0].get_dimensions();
+    }
+    else return uvec3(0);
 }
 
-void sg_group::remove_probe(const sg_probe& probe)
+size_t sg_group::get_lobe_count() const
 {
-    remove_probe(&probe.pos - probes.data());
+    return lobes.size();
 }
 
-void sg_group::remove_probe(size_t i)
+sg_lobe sg_group::get_lobe(size_t lobe) const
 {
-    probes.erase(probes.begin() + i);
-    auto start = amplitudes.begin() + i * lobes.size();
-    amplitudes.erase(start, start + lobes.size());
+    return lobes[lobe];
 }
 
-void sg_group::clear()
+texture& sg_group::get_amplitudes(size_t lobe)
 {
-    amplitudes.clear();
-    probes.clear();
+    return amplitudes[lobe];
 }
 
-size_t sg_group::probe_count() const
+const texture& sg_group::get_amplitudes(size_t lobe) const
 {
-    return probes.size();
-}
-
-sg_probe sg_group::operator[](size_t i)
-{
-    return sg_probe(lobes, &amplitudes[lobes.size() * i], probes[i]);
+    return amplitudes[lobe];
 }
 
 }

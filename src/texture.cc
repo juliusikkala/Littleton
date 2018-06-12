@@ -96,6 +96,28 @@ GLuint create_texture_from_data(
             true
         );
         break;
+    case GL_TEXTURE_3D:
+        glTexStorage3D(
+            target,
+            mipmap_count,
+            internal_format,
+            dims.x, dims.y, dims.z
+        );
+
+        if(data)
+        {
+            glTexSubImage3D(
+                target,
+                0, 0, 0, 0,
+                dims.x, dims.y, dims.z,
+                internal_format,
+                type,
+                data
+            );
+            glGenerateMipmap(target);
+        }
+
+        break;
     case GL_TEXTURE_CUBE_MAP:
         glTexStorage2D(target, mipmap_count, internal_format, dims.x, dims.y);
 

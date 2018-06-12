@@ -20,6 +20,7 @@
 #define LT_SPHERICAL_GAUSSIANS_HH
 #include "math.hh"
 #include "transformable.hh"
+#include "texture.hh"
 
 namespace lt
 {
@@ -32,56 +33,29 @@ struct sg_lobe
 
 class sg_group;
 
-class sg_probe
-{
-friend class sg_group;
-public:
-    const std::vector<sg_lobe>& get_lobes() const;
-    vec3 get_position() const;
-    void set_position(vec3 pos) const;
-
-    vec3 operator[](size_t i) const;
-    vec3& operator[](size_t i);
-
-private:
-    sg_probe(
-        const std::vector<sg_lobe>& lobes,
-        vec3* amplitudes,
-        vec3& pos
-    );
-
-    const std::vector<sg_lobe>& lobes;
-    vec3* amplitudes;
-    vec3& pos;
-};
-
-
 class sg_group: public transformable_node
 {
 friend class sg_probe;
 public:
-    sg_group(size_t lobe_count=12, float epsilon = 0.5f);
-    explicit sg_group(const std::vector<sg_lobe>& lobes);
+    sg_group(
+        context& ctx,
+        uvec3 resolution,
+        vec3 size,
+        size_t lobe_count=12,
+        float epsilon = 0.5f
+    );
 
-    // Invalidates all existing sg_probes!
-    sg_probe add_probe(vec3 pos);
+    uvec3 get_resolution() const;
+    size_t get_lobe_count() const;
+    sg_lobe get_lobe(size_t lobe) const;
 
-    // Invalidates all existing sg_probes!
-    void remove_probe(const sg_probe& probe);
-
-    // Invalidates all existing sg_probes!
-    void remove_probe(size_t i);
-
-    void clear();
-
-    size_t probe_count() const;
-
-    sg_probe operator[](size_t i);
+    texture& get_amplitudes(size_t lobe);
+    const texture& get_amplitudes(size_t lobe) const;
 
 private:
     std::vector<sg_lobe> lobes;
-    std::vector<vec3> amplitudes; // size = lobes.size() * probes.size()
-    std::vector<vec3> probes;
+
+    std::vector<texture> amplitudes;
 };
 
 } // namespace lt
