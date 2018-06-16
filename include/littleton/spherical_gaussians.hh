@@ -18,6 +18,7 @@
 */
 #ifndef LT_SPHERICAL_GAUSSIANS_HH
 #define LT_SPHERICAL_GAUSSIANS_HH
+#include "api.hh"
 #include "math.hh"
 #include "transformable.hh"
 #include "texture.hh"
@@ -29,11 +30,13 @@ struct sg_lobe
 {
     vec3 axis;
     float sharpness;
+
+    bool operator==(const sg_lobe& other) const;
 };
 
 class sg_group;
 
-class sg_group: public transformable_node
+class LT_API sg_group: public transformable_node
 {
 friend class sg_probe;
 public:
@@ -46,8 +49,7 @@ public:
     );
 
     uvec3 get_resolution() const;
-    size_t get_lobe_count() const;
-    sg_lobe get_lobe(size_t lobe) const;
+    const std::vector<sg_lobe>& get_lobes() const;
 
     texture& get_amplitudes(size_t lobe);
     const texture& get_amplitudes(size_t lobe) const;
@@ -59,6 +61,11 @@ private:
 };
 
 } // namespace lt
+
+namespace boost
+{
+    size_t hash_value(const lt::sg_lobe& l);
+}
 
 #endif
 

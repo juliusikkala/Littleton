@@ -142,15 +142,19 @@ void render_pass(
 
     // Generate cubemap face-layer view-projection matrices
     const std::vector<camera*> cameras = scene->get_cameras();
+    std::vector<glm::vec3> camera_pos(layers);
     std::vector<glm::mat4> face_layer_vps;
     if(cubemap_target)
     {
         face_layer_vps.reserve(layers*6);
         for(unsigned layer = 0; layer < layers; ++layer)
+        {
+            camera_pos[layer] = cameras[layer]->get_global_position();
             for(unsigned face = 0; face < 6; ++face)
                 face_layer_vps.push_back(
                     cameras[layer]->get_view_projection(face)
                 );
+        }
     }
 
     glm::mat4 inv_view = cam->get_global_transform();
@@ -203,7 +207,7 @@ void render_pass(
             s->set("m", world_space ? m : mv);
             s->set("n_m", n_m);
             s->set("inv_view", inv_view);
-            s->set("camera_pos", cam->get_position());
+            s->set("camera_pos", camera_pos.size(), camera_pos.data());
 
             group.mesh->draw();
         }

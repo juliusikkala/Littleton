@@ -39,16 +39,6 @@ camera* camera_scene::get_camera() const
     return cameras.size() ? cameras[0] : nullptr;
 }
 
-void camera_scene::add_camera(camera* cam)
-{
-    sorted_insert(cameras, cam);
-}
-
-void camera_scene::remove_camera(camera* cam)
-{
-    sorted_erase(cameras, cam);
-}
-
 void camera_scene::clear_cameras()
 {
     cameras.clear();
@@ -340,6 +330,26 @@ void environment_scene::set_skybox(environment_map* skybox)
 environment_map* environment_scene::get_skybox() const
 {
     return skybox;
+}
+
+void environment_scene::add_sg_group(sg_group* group)
+{
+    sorted_insert(sg_groups, group);
+}
+
+void environment_scene::remove_sg_group(sg_group* group)
+{
+    sorted_erase(sg_groups, group);
+}
+
+const std::vector<sg_group*>& environment_scene::get_sg_groups() const
+{
+    return sg_groups;
+}
+
+void environment_scene::clear_sg_groups()
+{
+    sg_groups.clear();
 }
 
 render_scene::render_scene() {}

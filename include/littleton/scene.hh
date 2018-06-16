@@ -36,6 +36,7 @@ class directional_shadow_map;
 class omni_shadow_map;
 class perspective_shadow_map;
 class environment_map;
+class sg_group;
 
 namespace method { class shadow_method; }
 
@@ -53,11 +54,8 @@ public:
     camera* get_camera() const;
 
     // These are for multi-camera setups. Only useful for array render targets.
-    void add_camera(camera* cam);
-    void remove_camera(camera* cam);
     void clear_cameras();
     size_t camera_count() const;
-
     void set_cameras(const std::vector<camera*>& cameras);
     const std::vector<camera*>& get_cameras() const;
 
@@ -183,8 +181,14 @@ public:
     void set_skybox(environment_map* skybox);
     environment_map* get_skybox() const;
 
+    void add_sg_group(sg_group* group);
+    void remove_sg_group(sg_group* group);
+    const std::vector<sg_group*>& get_sg_groups() const;
+    void clear_sg_groups();
+
 private:
     environment_map* skybox;
+    std::vector<sg_group*> sg_groups;
 };
 
 class LT_API render_scene

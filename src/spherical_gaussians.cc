@@ -1,7 +1,14 @@
 #include "spherical_gaussians.hh"
+#include "../spherical_gaussians.hh"
+#include <boost/functional/hash.hpp>
 
 namespace lt
 {
+
+bool sg_lobe::operator==(const sg_lobe& other) const
+{
+    return other.axis == axis && other.sharpness == sharpness;
+}
 
 sg_group::sg_group(
     context& ctx,
@@ -58,14 +65,9 @@ uvec3 sg_group::get_resolution() const
     else return uvec3(0);
 }
 
-size_t sg_group::get_lobe_count() const
+const std::vector<sg_lobe>& sg_group::get_lobes() const
 {
-    return lobes.size();
-}
-
-sg_lobe sg_group::get_lobe(size_t lobe) const
-{
-    return lobes[lobe];
+    return lobes;
 }
 
 texture& sg_group::get_amplitudes(size_t lobe)
@@ -78,4 +80,15 @@ const texture& sg_group::get_amplitudes(size_t lobe) const
     return amplitudes[lobe];
 }
 
+} // namespace lt
+
+size_t boost::hash_value(const lt::sg_lobe& l)
+{
+    std::size_t seed = 0;
+    boost::hash_combine(seed, l.axis.x);
+    boost::hash_combine(seed, l.axis.y);
+    boost::hash_combine(seed, l.axis.z);
+    boost::hash_combine(seed, l.sharpness);
+    return seed;
 }
+

@@ -49,9 +49,9 @@ void backward_substitution(const T* matrix, const T* b, T* x, unsigned n)
 template<typename T>
 void transpose(const T* matrix, unsigned n)
 {
-    for(int i = 0; i < n; ++i)
+    for(unsigned i = 0; i < n; ++i)
     {
-        for(int j = 0; j < n; ++j)
+        for(unsigned j = 0; j < n; ++j)
         {
             T& a = matrix[i*n + j];
             T& b = matrix[j*n + i];
@@ -69,12 +69,12 @@ void matrix_transpose_product(
     unsigned m,
     T* product
 ){
-    for(int i = 0; i < m; ++i)
+    for(unsigned i = 0; i < m; ++i)
     {
-        for(int j = 0; j <= i; ++j)
+        for(unsigned j = 0; j <= i; ++j)
         {
-            float& sum = product[i*m + j] = T(0);
-            for(int k = 0; k < n; ++k)
+            T& sum = product[i*m + j] = T(0);
+            for(unsigned k = 0; k < n; ++k)
                 sum += matrix[k*m + i] * matrix[k*m + j];
             product[j*m + i] = sum;
         }
@@ -89,10 +89,10 @@ void matrix_transpose_vector_product(
     const T* vector,
     T* product
 ){
-    for(int i = 0; i < m; ++i)
+    for(unsigned i = 0; i < m; ++i)
     {
         float& sum = product[i] = T(0);
-        for(int j = 0; j < n; ++j)
+        for(unsigned j = 0; j < n; ++j)
             sum += matrix[j*m + i] * vector[j];
     }
 }
