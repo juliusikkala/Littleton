@@ -40,12 +40,16 @@ public:
         path(
             const std::string& vert,
             const std::string& frag,
-            const std::string& geom = ""
+            const std::string& geom = "",
+            const std::string& comp = ""
         );
+
+        explicit path(const std::string& comp);
 
         std::string vert;
         std::string frag;
         std::string geom;
+        std::string comp;
 
         bool operator==(const path& other) const;
     };
@@ -56,16 +60,19 @@ public:
         source(
             const std::string& vert,
             const std::string& frag,
-            const std::string& geom = ""
+            const std::string& geom = "",
+            const std::string& comp = ""
         );
-        source(const path& p);
+        explicit source(const std::string& comp);
+        explicit source(const path& p);
 
         std::string vert;
         std::string frag;
         std::string geom;
+        std::string comp;
     };
 
-    shader(context& ctx);
+    explicit shader(context& ctx);
     shader(
         context& ctx,
         const source& s,

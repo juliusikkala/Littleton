@@ -229,18 +229,26 @@ bool shader::path::operator==(const path& other) const
 shader::path::path(
     const std::string& vert,
     const std::string& frag,
-    const std::string& geom
-): vert(vert), frag(frag), geom(geom) {}
+    const std::string& geom,
+    const std::string& comp
+): vert(vert), frag(frag), geom(geom), comp(comp) {}
+
+shader::path::path(const std::string& comp): comp(comp) {}
 
 shader::source::source(
     const std::string& vert,
     const std::string& frag,
-    const std::string& geom
-): vert(vert), frag(frag), geom(geom) {}
+    const std::string& geom,
+    const std::string& comp
+): vert(vert), frag(frag), geom(geom), comp(comp) {}
+
+shader::source::source(const std::string& comp): comp(comp) {}
 
 shader::source::source(const path& p)
-: vert(read_text_file(p.vert)), frag(read_text_file(p.frag)),
-  geom(p.geom.empty() ? "" : read_text_file(p.geom))
+:  vert(p.vert.empty() ? "" : read_text_file(p.vert)),
+   frag(p.frag.empty() ? "" : read_text_file(p.frag)),
+   geom(p.geom.empty() ? "" : read_text_file(p.geom)),
+   comp(p.comp.empty() ? "" : read_text_file(p.comp))
 {
 }
 
@@ -260,7 +268,8 @@ shader::shader(
     basic_load({
         process_source(s.vert, definitions, include_path),
         process_source(s.frag, definitions, include_path),
-        process_source(s.geom, definitions, include_path)
+        process_source(s.geom, definitions, include_path),
+        process_source(s.comp, definitions, include_path)
     }, binary_path);
 }
 
@@ -344,7 +353,8 @@ public:
        src(
            process_source(s.vert, definitions, include_path),
            process_source(s.frag, definitions, include_path),
-           process_source(s.geom, definitions, include_path)
+           process_source(s.geom, definitions, include_path),
+           process_source(s.comp, definitions, include_path)
        ),
        binary_path(binary_path)
     { }
@@ -385,7 +395,8 @@ shader* shader::create(
     std::vector<std::string> extended_include_path = {
         boost::filesystem::path(p.vert).parent_path().string(),
         boost::filesystem::path(p.frag).parent_path().string(),
-        boost::filesystem::path(p.geom).parent_path().string()
+        boost::filesystem::path(p.geom).parent_path().string(),
+        boost::filesystem::path(p.comp).parent_path().string()
     };
     extended_include_path.insert(
         extended_include_path.end(),
@@ -491,21 +502,27 @@ void shader::basic_load(
 
     if(load_from_source)
     {
-        const char* vsrc = src.vert.c_str();
-        GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vshader, 1, &vsrc, NULL);
-        glCompileShader(vshader);
-        throw_shader_error(vshader, "Vertex shader", src.vert);
-        glAttachShader(program, vshader);
-        glDeleteShader(vshader);
+        if(!src.vert.empty())
+        {
+            const char* vsrc = src.vert.c_str();
+            GLuint vshader = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vshader, 1, &vsrc, NULL);
+            glCompileShader(vshader);
+            throw_shader_error(vshader, "Vertex shader", src.vert);
+            glAttachShader(program, vshader);
+            glDeleteShader(vshader);
+        }
 
-        const char* fsrc = src.frag.c_str();
-        GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fshader, 1, &fsrc, NULL);
-        glCompileShader(fshader);
-        throw_shader_error(fshader, "Fragment shader", src.frag);
-        glAttachShader(program, fshader);
-        glDeleteShader(fshader);
+        if(!src.frag.empty())
+        {
+            const char* fsrc = src.frag.c_str();
+            GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fshader, 1, &fsrc, NULL);
+            glCompileShader(fshader);
+            throw_shader_error(fshader, "Fragment shader", src.frag);
+            glAttachShader(program, fshader);
+            glDeleteShader(fshader);
+        }
         
         if(!src.geom.empty())
         {
@@ -516,6 +533,17 @@ void shader::basic_load(
             throw_shader_error(gshader, "Geometry shader", src.geom);
             glAttachShader(program, gshader);
             glDeleteShader(gshader);
+        }
+
+        if(!src.comp.empty())
+        {
+            const char* csrc = src.comp.c_str();
+            GLuint cshader = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(cshader, 1, &csrc, NULL);
+            glCompileShader(cshader);
+            throw_shader_error(cshader, "Compute shader", src.comp);
+            glAttachShader(program, cshader);
+            glDeleteShader(cshader);
         }
 
         glLinkProgram(program);
@@ -676,6 +704,7 @@ size_t boost::hash_value(const lt::shader::path& p)
     boost::hash_combine(seed, p.vert);
     boost::hash_combine(seed, p.frag);
     boost::hash_combine(seed, p.geom);
+    boost::hash_combine(seed, p.comp);
     return seed;
 }
 

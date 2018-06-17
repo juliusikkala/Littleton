@@ -44,10 +44,7 @@ public:
         resource_pool& pool,
         render_scene* scene,
         size_t resolution=16,
-        // Batches can't be very large, because even high-end GPUs at the time
-        // of writing (1080 ti) are hitting geometry shader vertex limits at
-        // batch_size == 3 :/
-        size_t batch_size=2
+        size_t batch_size=32
     );
 
     void set_scene(render_scene* scene);

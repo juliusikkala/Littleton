@@ -195,11 +195,6 @@ void render_pass(
 
             if(cubemap_target)
             {
-                s->set(
-                    "face_vps",
-                    face_layer_vps.size(),
-                    face_layer_vps.data()
-                );
                 s->set("mvp", m);
             }
             else s->set("mvp", mvp);
@@ -209,7 +204,12 @@ void render_pass(
             s->set("inv_view", inv_view);
             s->set("camera_pos", camera_pos.size(), camera_pos.data());
 
-            group.mesh->draw();
+            for(unsigned i = 0; i < layers; ++i)
+            {
+                s->set("face_vps", 6, face_layer_vps.data() + i*6);
+                s->set("begin_layer_face", (int)i*6);
+                group.mesh->draw();
+            }
         }
     }
 }
@@ -625,7 +625,6 @@ void render_forward_pass(
         (unsigned)scene->camera_count(), target.get_dimensions().z
     );
     common_def["LAYERS"] = std::to_string(layers);
-    common_def["CUBEMAP_MAX_VERTICES"] = std::to_string(3*6*layers);
 
     shader::definition_map depth_def(common_def);
 

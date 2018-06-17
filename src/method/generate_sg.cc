@@ -120,8 +120,16 @@ void generate_sg::execute()
         uvec3 res = sg->get_resolution();
         size_t probes = res.x*res.y*res.z;
         size_t i = 0;
+
+        // Go through the probes in batches
         while(i < probes)
         {
+            // Clear framebuffer
+            cubemap_probes.bind();
+            glClear(
+                GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT
+            );
+            
             size_t batch_probes = min(probes-i, batch_size);
 
             std::vector<camera*> c;
