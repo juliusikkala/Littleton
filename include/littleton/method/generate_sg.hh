@@ -20,11 +20,13 @@
 #define LT_METHOD_GENERATE_SG_HH
 #include "../api.hh"
 #include "../pipeline.hh"
-#include "../primitive.hh"
+#include "../gpu_buffer.hh"
 #include "../framebuffer.hh"
 #include "../scene.hh"
 #include "../spherical_gaussians.hh"
+#include "../resource.hh"
 #include "forward_pass.hh"
+#include <unordered_map>
 #include <boost/functional/hash.hpp>
 
 namespace lt
@@ -37,7 +39,7 @@ class resource_pool;
 namespace lt::method
 {
 
-class LT_API generate_sg: public pipeline_method
+class LT_API generate_sg: public pipeline_method, public glresource
 {
 public:
     generate_sg(
@@ -56,8 +58,13 @@ public:
 private:
     struct least_squares_matrices
     {
-        std::vector<float> x; // Design matrix
-        std::vector<float> r; // Cholesky decomposition of X^T*X
+        least_squares_matrices(
+            context& ctx,
+            const std::vector<float>& x,
+            const std::vector<float>& r
+        );
+        gpu_buffer x; // Design matrix
+        gpu_buffer r; // Cholesky decomposition of X^T*X
     };
 
     least_squares_matrices& get_matrices(

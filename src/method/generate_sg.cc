@@ -68,7 +68,8 @@ generate_sg::generate_sg(
     render_scene* scene,
     size_t resolution,
     size_t batch_size
-):  scene(scene),
+):  glresource(pool.get_context()),
+    scene(scene),
     resolution(resolution),
     batch_size(batch_size),
     cubemap_probes(
@@ -165,9 +166,8 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
     // resolution and number of lobes.
     size_t face_pixels = resolution*resolution;
     size_t total_pixels = face_pixels*6;
-    least_squares_matrices& m = matrix_cache[lobes];
-    m.x.resize(total_pixels*lobes.size());
-    m.r.resize(lobes.size()*lobes.size());
+    std::vector<float> x(total_pixels*lobes.size());
+    std::vector<float> r(lobes.size()*lobes.size());
 
     // Generate design matrix
     for(size_t p = 0; p < total_pixels; ++p)
@@ -188,19 +188,29 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
             float value = exp(
                 lobes[l].sharpness * (dot(lobes[l].axis, dir) - 1.0f)
             );
-            m.x[p * lobes.size() + l] = value;
+            x[p * lobes.size() + l] = value;
         }
     }
 
     // Cholesky decomposition of X^T*X
     matrix_transpose_product(
-        m.x.data(),
+        x.data(),
         total_pixels,
         lobes.size(),
-        m.r.data()
+        r.data()
     );
-    cholesky_decomposition(m.r.data(), lobes.size());
-    return m;
+    cholesky_decomposition(r.data(), lobes.size());
+    auto p = matrix_cache.try_emplace(lobes, get_context(), x, r);
+    return p.first->second;
+}
+
+generate_sg::least_squares_matrices::least_squares_matrices(
+    context& ctx,
+    const std::vector<float>& x,
+    const std::vector<float>& r
+):  x(ctx, GL_SHADER_STORAGE_BUFFER, x.size()*sizeof(float), x.data()),
+    r(ctx, GL_SHADER_STORAGE_BUFFER, r.size()*sizeof(float), r.data())
+{
 }
 
 }

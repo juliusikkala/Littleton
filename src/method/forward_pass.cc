@@ -561,7 +561,7 @@ void render_unshadowed_lights(
                 );
                 light_block->bind(0);
             }
-            if(light_block) s->set_block("Lights", 0);
+            if(light_block) s->set_uniform_block("Lights", 0);
             s->set("ambient", scene->get_ambient());
         }
     );

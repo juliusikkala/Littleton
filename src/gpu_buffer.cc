@@ -29,10 +29,14 @@ gpu_buffer::gpu_buffer(context& ctx)
 }
 
 gpu_buffer::gpu_buffer(
-    context& ctx, GLenum target, size_t size, const void* data
+    context& ctx,
+    GLenum target,
+    size_t size,
+    const void* data,
+    GLenum usage
 ): glresource(ctx), buf(0), size(size)
 {
-    basic_load(target, size, data);
+    basic_load(target, size, data, usage);
 }
 
 gpu_buffer::gpu_buffer(gpu_buffer&& other)
@@ -40,6 +44,8 @@ gpu_buffer::gpu_buffer(gpu_buffer&& other)
 {
     other.load();
     buf = other.buf;
+    target = other.target;
+    size = other.size;
     other.buf = 0;
 }
 
@@ -72,6 +78,23 @@ void gpu_buffer::bind() const
     glBindBuffer(target, buf);
 }
 
+void gpu_buffer::bind(unsigned index) const
+{
+    load();
+    if(
+        target != GL_ATOMIC_COUNTER_BUFFER &&
+        target != GL_TRANSFORM_FEEDBACK_BUFFER &&
+        target != GL_UNIFORM_BUFFER &&
+        target != GL_SHADER_STORAGE_BUFFER
+    ) throw std::runtime_error(
+        "Only atomic counter buffers, transform feedback buffers, uniform "
+        "buffers and shader storage buffers can be bound with an index. Target "
+        "type " + std::to_string(target) + " is not one of these."
+    );
+
+    glBindBufferBase(target, index, buf);
+}
+
 class data_gpu_buffer: public gpu_buffer
 {
 public:
@@ -79,13 +102,15 @@ public:
         context& ctx,
         GLenum target,
         size_t size,
-        const void* data
+        const void* data,
+        GLenum usage
     ):  gpu_buffer(ctx)
     {
         this->target = target;
         this->size = size;
         this->data = new uint8_t[size];
         memcpy(this->data, data, size);
+        this->usage = usage;
     }
 
     ~data_gpu_buffer()
@@ -96,7 +121,7 @@ public:
 protected:
     void load_impl() const override
     {
-        basic_load(target, size, data);
+        basic_load(target, size, data, usage);
     }
 
     void unload_impl() const override
@@ -106,21 +131,24 @@ protected:
 
 private:
     void* data;
+    GLenum usage;
 };
 
 gpu_buffer* gpu_buffer::create(
     context& ctx,
     GLenum target,
     size_t size,
-    const void* data
+    const void* data,
+    GLenum usage
 ){
-    return new data_gpu_buffer(ctx, target, size, data);
+    return new data_gpu_buffer(ctx, target, size, data, usage);
 }
 
 void gpu_buffer::basic_load(
     GLenum target,
     size_t size,
-    const void* data
+    const void* data,
+    GLenum usage
 ) const
 {
     if(buf) return;
@@ -130,7 +158,7 @@ void gpu_buffer::basic_load(
 
     glGenBuffers(1, &buf);
     glBindBuffer(target, buf);
-    glBufferData(target, size, data, GL_STATIC_DRAW);
+    glBufferData(target, size, data, usage);
 
     if(glGetError() != GL_NO_ERROR)
         throw std::runtime_error("Failed to create a gpu buffer");

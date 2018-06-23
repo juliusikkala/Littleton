@@ -18,6 +18,7 @@
 */
 #include "shader.hh"
 #include "helpers.hh"
+#include "gpu_buffer.hh"
 #include <stdexcept>
 #include <sstream>
 #include <set>
@@ -287,7 +288,8 @@ shader::shader(shader&& other)
     other.load();
     program = other.program;
     uniforms = std::move(other.uniforms);
-    blocks = std::move(other.blocks);
+    uniform_blocks = std::move(other.uniform_blocks);
+    storage_blocks = std::move(other.storage_blocks);
     other.program = 0;
 }
 
@@ -415,43 +417,65 @@ shader* shader::create(
 bool shader::block_exists(const std::string& name) const
 {
     load();
-    return blocks.find(name) != blocks.end();
+    return uniform_blocks.find(name) != uniform_blocks.end();
 }
 
 uniform_block_type shader::get_block_type(const std::string& name) const
 {
     load();
-    auto it = blocks.find(name);
-    if(it == blocks.end())
+    auto it = uniform_blocks.find(name);
+    if(it == uniform_blocks.end())
         throw std::runtime_error("No such block type \"" + name +"\"");
 
     return it->second.type;
 }
 
-void shader::set_block(const std::string& name, unsigned bind_point)
+void shader::set_uniform_block(const std::string& name, unsigned bind_point)
 {
     load();
-    auto it = blocks.find(name);
-    if(it == blocks.end()) return;
+    auto it = uniform_blocks.find(name);
+    if(it == uniform_blocks.end()) return;
 
     bind();
     glUniformBlockBinding(program, it->second.index, bind_point);
 }
 
-void shader::set_block(
+void shader::set_uniform_block(
     const std::string& name,
     const uniform_block& block,
     unsigned bind_point
 ){
     load();
-    auto it = blocks.find(name);
-    if(it == blocks.end()) return;
+    auto it = uniform_blocks.find(name);
+    if(it == uniform_blocks.end()) return;
     if(it->second.type == block.get_type())
         throw std::runtime_error("Incorrect block type for " + name);
 
     bind();
     block.bind(bind_point);
     glUniformBlockBinding(program, it->second.index, bind_point);
+}
+
+void shader::set_storage_block(const std::string& name, unsigned bind_point)
+{
+    load();
+    GLuint b = get_storage_block(name);
+
+    bind();
+    glShaderStorageBlockBinding(program, b, bind_point);
+}
+
+void shader::set_storage_block(
+    const std::string& name,
+    const gpu_buffer& block,
+    unsigned bind_point
+){
+    load();
+    GLuint b = get_storage_block(name);
+
+    bind();
+    block.bind(bind_point);
+    glShaderStorageBlockBinding(program, b, bind_point);
 }
 
 void shader::basic_load(
@@ -671,13 +695,23 @@ void shader::populate_uniforms() const
             info[shortened_name] = data;
         }
 
-        blocks.emplace(
+        uniform_blocks.emplace(
             name,
-            block_data{i, uniform_block_type(std::move(info), size)}
+            uniform_block_data{i, uniform_block_type(std::move(info), size)}
         );
 
         delete [] name;
     }
+}
+
+GLuint shader::get_storage_block(const std::string& name) const
+{
+    auto it = storage_blocks.find(name);
+    if(it != storage_blocks.end()) return it->second;
+
+    GLuint index = glGetProgramResourceIndex(program, GL_SHADER_STORAGE_BLOCK, name.c_str());
+    storage_blocks[name] = index;
+    return index;
 }
 
 void shader::basic_unload() const
@@ -690,7 +724,8 @@ void shader::basic_unload() const
         }
 
         uniforms.clear();
-        blocks.clear();
+        uniform_blocks.clear();
+        storage_blocks.clear();
         glDeleteProgram(program);
         program = 0;
     }

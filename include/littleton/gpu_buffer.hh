@@ -29,7 +29,13 @@ class LT_API gpu_buffer: public resource, public glresource
 {
 public:
     explicit gpu_buffer(context& ctx);
-    gpu_buffer(context& ctx, GLenum target, size_t size, const void* data);
+    gpu_buffer(
+        context& ctx,
+        GLenum target,
+        size_t size,
+        const void* data,
+        GLenum usage = GL_STATIC_DRAW
+    );
     gpu_buffer(gpu_buffer&& other);
     ~gpu_buffer();
 
@@ -38,20 +44,24 @@ public:
     size_t get_size() const;
 
     void bind() const;
+    // Only useful if you need to bind several at once for some reason
+    void bind(unsigned index) const;
 
     // Creates a lazily loaded buffer. Takes ownership of the pointers.
     static gpu_buffer* create(
         context& ctx,
         GLenum target,
         size_t size,
-        const void* data
+        const void* data,
+        GLenum usage = GL_STATIC_DRAW
     );
 
 protected:
     void basic_load(
         GLenum target,
         size_t size,
-        const void* data
+        const void* data,
+        GLenum usage
     ) const;
 
     void basic_unload() const;

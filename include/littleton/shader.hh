@@ -28,6 +28,7 @@
 
 namespace lt
 {
+class gpu_buffer;
 
 class LT_API shader: public resource, public glresource
 {
@@ -130,12 +131,22 @@ public:
     uniform_block_type get_block_type(const std::string& name) const;
 
     // Performs no safety checks! You must manually bind the block!
-    void set_block(const std::string& name, unsigned bind_point);
+    void set_uniform_block(const std::string& name, unsigned bind_point);
 
     // Checks that the type is compatible and binds the block.
-    void set_block(
+    void set_uniform_block(
         const std::string& name,
         const uniform_block& block,
+        unsigned bind_point
+    );
+
+    // Performs no safety checks! You must manually bind the block!
+    void set_storage_block(const std::string& name, unsigned bind_point);
+
+    // Binds the block at the same time. Performs no type checking.
+    void set_storage_block(
+        const std::string& name,
+        const gpu_buffer& block,
         unsigned bind_point
     );
 
@@ -148,6 +159,7 @@ protected:
     ) const;
 
     void populate_uniforms() const;
+    GLuint get_storage_block(const std::string& name) const;
 
     void basic_unload() const;
 
@@ -158,7 +170,7 @@ protected:
         GLenum type;
     };
 
-    struct block_data
+    struct uniform_block_data
     {
         GLuint index;
         uniform_block_type type;
@@ -167,7 +179,8 @@ protected:
     static GLuint current_program;
     mutable GLuint program;
     mutable std::unordered_map<std::string, uniform_data> uniforms;
-    mutable std::unordered_map<std::string, block_data> blocks;
+    mutable std::unordered_map<std::string, uniform_block_data> uniform_blocks;
+    mutable std::unordered_map<std::string, GLuint /*index*/> storage_blocks;
 };
 
 } // namespace lt
