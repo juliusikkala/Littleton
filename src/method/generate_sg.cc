@@ -19,6 +19,7 @@
 #include "generate_sg.hh"
 #include "resource_pool.hh"
 #include "camera.hh"
+#include "multishader.hh"
 
 namespace 
 {
@@ -70,6 +71,9 @@ generate_sg::generate_sg(
     size_t batch_size
 ):  glresource(pool.get_context()),
     scene(scene),
+    matrix_vector_product(pool.get_shader(
+        shader::path{"sg/matrix_vector.comp"}
+    )),
     resolution(resolution),
     batch_size(batch_size),
     cubemap_probes(
@@ -113,12 +117,23 @@ void generate_sg::execute()
     std::vector<camera> batch_cameras(batch_size);
     for(camera& c: batch_cameras) c.cube_perspective(near, far);
 
+    size_t total_pixels = resolution*resolution*6;
+
     for(const sg_group* sg: scene->get_sg_groups())
     {
         generate_sg::least_squares_matrices& m = get_matrices(*sg);
         mat4 transform = sg->get_global_transform();
 
         uvec3 res = sg->get_resolution();
+
+        size_t lobe_count = sg->get_lobes().size();
+        shader::definition_map definitions({
+            {"MATRIX_HEIGHT", std::to_string(lobe_count)},
+            {"MATRIX_WIDTH", std::to_string(total_pixels)},
+            {"MATRIX_TYPE", "vec3"}
+        });
+        shader* p = matrix_vector_product->get(definitions);
+
         size_t probes = res.x*res.y*res.z;
         size_t i = 0;
 
@@ -140,6 +155,8 @@ void generate_sg::execute()
                 batch_cameras[j].set_position(cam_pos);
                 c.push_back(&batch_cameras[j]);
             }
+
+            p->compute_dispatch(uvec3(batch_probes,1,1));
 
             probe_scene.set_cameras(c);
             fp.execute();

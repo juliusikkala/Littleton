@@ -150,6 +150,9 @@ public:
         unsigned bind_point
     );
 
+    // Executes the compute shader
+    void compute_dispatch(uvec3 work_group_size);
+
 protected:
     // Attempts to load the binary, but if that fails, falls back to the
     // source.

@@ -23,6 +23,7 @@
 #include "../gpu_buffer.hh"
 #include "../framebuffer.hh"
 #include "../scene.hh"
+#include "../shader.hh"
 #include "../spherical_gaussians.hh"
 #include "../resource.hh"
 #include "forward_pass.hh"
@@ -72,6 +73,7 @@ private:
     );
 
     render_scene* scene;
+    multishader* matrix_vector_product;
     size_t resolution;
     size_t batch_size;
     render_scene probe_scene;

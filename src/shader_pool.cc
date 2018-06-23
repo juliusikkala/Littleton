@@ -61,14 +61,15 @@ multishader* shader_pool::add(const shader::path& path)
     auto it = shaders.find(path);
     if(it != shaders.end())
         throw std::runtime_error(
-            "Shader with source files [" + path.vert + ", " + path.frag +
-            "] already exists!"
+            "Shader with source files [" + path.vert + ", " + path.frag + ", " +
+            path.geom + ", " + path.comp + "] already exists!"
         );
 
     shader::path full_path{
-        find_file(shader_path, path.vert),
-        find_file(shader_path, path.frag),
-        path.geom.empty() ? "" : find_file(shader_path, path.geom)
+        path.vert.empty() ? "" : find_file(shader_path, path.vert),
+        path.frag.empty() ? "" : find_file(shader_path, path.frag),
+        path.geom.empty() ? "" : find_file(shader_path, path.geom),
+        path.comp.empty() ? "" : find_file(shader_path, path.comp)
     };
 
     multishader* s;

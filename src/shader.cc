@@ -478,6 +478,17 @@ void shader::set_storage_block(
     glShaderStorageBlockBinding(program, b, bind_point);
 }
 
+void shader::compute_dispatch(uvec3 work_group_size)
+{
+    load();
+    bind();
+    glDispatchCompute(
+        work_group_size.x,
+        work_group_size.y,
+        work_group_size.z
+    );
+}
+
 void shader::basic_load(
     const source& src,
     const std::string& binary_path

@@ -50,6 +50,9 @@ multishader::multishader(
     this->include_path.push_back(
         boost::filesystem::path(path.geom).parent_path().string()
     );
+    this->include_path.push_back(
+        boost::filesystem::path(path.comp).parent_path().string()
+    );
 }
 
 multishader::multishader(multishader&& other)
