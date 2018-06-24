@@ -29,6 +29,7 @@
 namespace lt
 {
 class gpu_buffer;
+class texture;
 
 class LT_API shader: public resource, public glresource
 {
@@ -148,6 +149,16 @@ public:
         const std::string& name,
         const gpu_buffer& block,
         unsigned bind_point
+    );
+
+    // Don't use this for normal textures! This isn't related to the sampler*
+    // uniforms at all! It's meant for the image* types, mostly found in compute
+    // shaders.
+    void set_image_texture(
+        const std::string& name,
+        const texture& tex,
+        unsigned bind_point,
+        GLenum access = GL_READ_ONLY
     );
 
     // Executes the compute shader

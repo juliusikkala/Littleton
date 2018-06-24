@@ -61,10 +61,14 @@ private:
     {
         least_squares_matrices(
             context& ctx,
+            size_t batch_size,
+            size_t lobe_count,
+            size_t resolution,
             const std::vector<float>& x,
             const std::vector<float>& r
         );
-        gpu_buffer x; // Design matrix
+        texture x; // Design matrix (cube map array)
+        gpu_buffer xy; // Result of XTy for the whole batch
         gpu_buffer r; // Cholesky decomposition of X^T*X
     };
 
@@ -73,7 +77,7 @@ private:
     );
 
     render_scene* scene;
-    multishader* matrix_vector_product;
+    multishader* lobe_product;
     size_t resolution;
     size_t batch_size;
     render_scene probe_scene;

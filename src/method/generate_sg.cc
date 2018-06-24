@@ -71,8 +71,8 @@ generate_sg::generate_sg(
     size_t batch_size
 ):  glresource(pool.get_context()),
     scene(scene),
-    matrix_vector_product(pool.get_shader(
-        shader::path{"sg/matrix_vector.comp"}
+    lobe_product(pool.get_shader(
+        shader::path{"sg/lobe.comp"}
     )),
     resolution(resolution),
     batch_size(batch_size),
@@ -80,7 +80,7 @@ generate_sg::generate_sg(
         pool.get_context(),
         glm::uvec3(resolution, resolution, batch_size),
         {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
-         {GL_COLOR_ATTACHMENT0, {GL_RGB16F, true}}},
+         {GL_COLOR_ATTACHMENT0, {GL_RGBA16F, true}}},
         0,
         GL_TEXTURE_CUBE_MAP_ARRAY
     ),
@@ -117,8 +117,6 @@ void generate_sg::execute()
     std::vector<camera> batch_cameras(batch_size);
     for(camera& c: batch_cameras) c.cube_perspective(near, far);
 
-    size_t total_pixels = resolution*resolution*6;
-
     for(const sg_group* sg: scene->get_sg_groups())
     {
         generate_sg::least_squares_matrices& m = get_matrices(*sg);
@@ -128,11 +126,18 @@ void generate_sg::execute()
 
         size_t lobe_count = sg->get_lobes().size();
         shader::definition_map definitions({
-            {"MATRIX_HEIGHT", std::to_string(lobe_count)},
-            {"MATRIX_WIDTH", std::to_string(total_pixels)},
-            {"MATRIX_TYPE", "vec3"}
+            {"LOBE_COUNT", std::to_string(lobe_count)},
+            {"IMAGE_RESOLUTION", std::to_string(resolution)},
+            {"MAX_BATCH_SIZE", std::to_string(batch_size)}
         });
-        shader* p = matrix_vector_product->get(definitions);
+        shader* p = lobe_product->get(definitions);
+        p->bind();
+        p->set_image_texture("input_weights", m.x, 0);
+        p->set_image_texture(
+            "input_maps",
+            *cubemap_probes.get_texture_target(GL_COLOR_ATTACHMENT0), 1
+        );
+        p->set_storage_block("output_lobes", m.xy, 2);
 
         size_t probes = res.x*res.y*res.z;
         size_t i = 0;
@@ -186,46 +191,71 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
     std::vector<float> x(total_pixels*lobes.size());
     std::vector<float> r(lobes.size()*lobes.size());
 
+
     // Generate design matrix
-    for(size_t p = 0; p < total_pixels; ++p)
+    for(size_t l = 0; l < lobes.size(); ++l)
     {
-        size_t face_p = p % face_pixels;
-        size_t face_index = p / face_pixels;
-        size_t face_x = face_p % resolution;
-        size_t face_y = face_p / resolution;
-
-        // dir is the direction of the vector for this sample
-        vec3 dir = vec3(face_x, face_y, 0);
-        dir = (dir - (resolution - 1) * 0.5f)/(float)resolution;
-        dir = orientate_vector(normalize(vec3(dir.x, -dir.y, 1)), face_index);
-
-        for(size_t l = 0; l < lobes.size(); ++l)
+        for(size_t p = 0; p < total_pixels; ++p)
         {
+            size_t face_p = p % face_pixels;
+            size_t face_index = p / face_pixels;
+            size_t face_x = face_p % resolution;
+            size_t face_y = face_p / resolution;
+
+            // dir is the direction of the vector for this sample
+            vec3 dir = vec3(face_x, face_y, 0);
+            dir = (dir - (resolution - 1) * 0.5f)/(float)resolution;
+            dir = orientate_vector(normalize(vec3(dir.x, -dir.y, 1)), face_index);
             // Apply the function (spherical gaussian) to the direction
             float value = exp(
                 lobes[l].sharpness * (dot(lobes[l].axis, dir) - 1.0f)
             );
-            x[p * lobes.size() + l] = value;
+            x[l * total_pixels + p] = value;
         }
     }
 
-    // Cholesky decomposition of X^T*X
-    matrix_transpose_product(
-        x.data(),
-        total_pixels,
-        lobes.size(),
-        r.data()
-    );
+    // Compute X*X^T
+    for(unsigned i = 0; i < lobes.size(); ++i)
+    {
+        for(unsigned j = 0; j <= i; ++j)
+        {
+            float& sum = r[i*lobes.size() + j] = 0;
+            for(unsigned k = 0; k < total_pixels; ++k)
+                sum += x[i*total_pixels + k] * x[j*total_pixels + k];
+            r[j*lobes.size() + i] = sum;
+        }
+    }
+
+    // Cholesky decomposition of X*X^T
     cholesky_decomposition(r.data(), lobes.size());
-    auto p = matrix_cache.try_emplace(lobes, get_context(), x, r);
+    auto p = matrix_cache.try_emplace(
+        lobes,
+        get_context(),
+        batch_size,
+        lobes.size(),
+        resolution,
+        x, r
+    );
     return p.first->second;
 }
 
 generate_sg::least_squares_matrices::least_squares_matrices(
     context& ctx,
+    size_t batch_size,
+    size_t lobe_count,
+    size_t resolution,
     const std::vector<float>& x,
     const std::vector<float>& r
-):  x(ctx, GL_SHADER_STORAGE_BUFFER, x.size()*sizeof(float), x.data()),
+):  x(
+        ctx,
+        uvec3(resolution, resolution, lobe_count),
+        GL_R16F,
+        GL_FLOAT,
+        0,
+        GL_TEXTURE_CUBE_MAP_ARRAY,
+        x.data()
+    ),
+    xy(ctx, GL_SHADER_STORAGE_BUFFER, batch_size*lobe_count*sizeof(vec3)),
     r(ctx, GL_SHADER_STORAGE_BUFFER, r.size()*sizeof(float), r.data())
 {
 }

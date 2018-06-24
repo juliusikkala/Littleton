@@ -155,9 +155,8 @@ GLuint create_texture_from_data(
             {
                 for(unsigned i = 0; i < 6; ++i)
                 {
-                    GLenum face = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
                     glTexSubImage3D(
-                        face, 0, 0, 0, layer*6 + i, dims.x, dims.y, 1,
+                        target, 0, 0, 0, layer*6+i, dims.x, dims.y, 1,
                         external_format, type,
                         ((uint8_t*)data) + face_layer_bytes * (layer * 6 + i)
                     );

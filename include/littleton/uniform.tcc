@@ -40,6 +40,17 @@ bool uniform_is_compatible(GLenum type, GLint size, size_t count)
         case GL_SAMPLER_BUFFER:
         case GL_SAMPLER_2D_RECT:
         case GL_SAMPLER_2D_RECT_SHADOW:
+        case GL_IMAGE_1D:
+        case GL_IMAGE_2D:
+        case GL_IMAGE_3D:
+        case GL_IMAGE_2D_RECT:
+        case GL_IMAGE_CUBE:
+        case GL_IMAGE_BUFFER:
+        case GL_IMAGE_1D_ARRAY:
+        case GL_IMAGE_2D_ARRAY:
+        case GL_IMAGE_CUBE_MAP_ARRAY:
+        case GL_IMAGE_2D_MULTISAMPLE:
+        case GL_IMAGE_2D_MULTISAMPLE_ARRAY:
         case GL_INT_SAMPLER_1D:
         case GL_INT_SAMPLER_2D:
         case GL_INT_SAMPLER_3D:

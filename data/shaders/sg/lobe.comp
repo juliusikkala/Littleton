@@ -1,0 +1,29 @@
+#version 430
+
+layout(local_size_x=LOBE_COUNT) in;
+
+layout (binding = 0, r16f) readonly uniform imageCubeArray input_weights;
+layout (binding = 1, rgba16f) readonly uniform imageCubeArray input_maps;
+layout (std430, binding = 2) buffer output_lobes
+{
+    writeonly vec3 data[MAX_BATCH_SIZE][LOBE_COUNT];
+} lobes;
+
+void main()
+{
+    vec3 c = vec3(0);
+    int map_layer = int(gl_WorkGroupID.x) * 6;
+    int weight_layer = int(gl_LocalInvocationID.x) * 6;
+    for(int face = 0; face < 6; ++face)
+    {
+        for(int y = 0; y < IMAGE_RESOLUTION; ++y)
+        {
+            for(int x = 0; x < IMAGE_RESOLUTION; ++x)
+            {
+                c += vec3(imageLoad(input_maps, ivec3(x, y, face + map_layer))) *
+                    float(imageLoad(input_weights, ivec3(x, y, face + weight_layer)));
+            }
+        }
+    }
+    lobes.data[gl_WorkGroupID.x][gl_LocalInvocationID.x] = c;
+}

@@ -19,6 +19,7 @@
 #include "shader.hh"
 #include "helpers.hh"
 #include "gpu_buffer.hh"
+#include "texture.hh"
 #include <stdexcept>
 #include <sstream>
 #include <set>
@@ -476,6 +477,26 @@ void shader::set_storage_block(
     bind();
     block.bind(bind_point);
     glShaderStorageBlockBinding(program, b, bind_point);
+}
+
+void shader::set_image_texture(
+    const std::string& name,
+    const texture& tex,
+    unsigned bind_point,
+    GLenum access
+){
+    load();
+    bind();
+    glBindImageTexture(
+        bind_point,
+        tex.get_texture(),
+        0,
+        true,
+        0,
+        access,
+        tex.get_internal_format()
+    );
+    set<int>(name, bind_point);
 }
 
 void shader::compute_dispatch(uvec3 work_group_size)

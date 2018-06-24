@@ -33,7 +33,7 @@ public:
         context& ctx,
         GLenum target,
         size_t size,
-        const void* data,
+        const void* data = nullptr,
         GLenum usage = GL_STATIC_DRAW
     );
     gpu_buffer(gpu_buffer&& other);
@@ -52,7 +52,7 @@ public:
         context& ctx,
         GLenum target,
         size_t size,
-        const void* data,
+        const void* data = nullptr,
         GLenum usage = GL_STATIC_DRAW
     );
 

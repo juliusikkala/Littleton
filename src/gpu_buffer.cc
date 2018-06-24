@@ -108,8 +108,15 @@ public:
     {
         this->target = target;
         this->size = size;
-        this->data = new uint8_t[size];
-        memcpy(this->data, data, size);
+        if(data)
+        {
+            this->data = new uint8_t[size];
+            memcpy(this->data, data, size);
+        }
+        else
+        {
+            this->data = nullptr;
+        }
         this->usage = usage;
     }
 
