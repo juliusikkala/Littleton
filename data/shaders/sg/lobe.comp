@@ -20,8 +20,8 @@ void main()
         {
             for(int x = 0; x < IMAGE_RESOLUTION; ++x)
             {
-                c += vec3(imageLoad(input_maps, ivec3(x, y, face + map_layer))) *
-                    float(imageLoad(input_weights, ivec3(x, y, face + weight_layer)));
+                c += imageLoad(input_maps, ivec3(x, y, face + map_layer)).rgb *
+                    imageLoad(input_weights, ivec3(x, y, face + weight_layer)).x;
             }
         }
     }

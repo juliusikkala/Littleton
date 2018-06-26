@@ -21,6 +21,7 @@
 #include "api.hh"
 #include "glheaders.hh"
 #include "resource.hh"
+#include <vector>
 
 namespace lt
 {
@@ -56,6 +57,9 @@ public:
         GLenum usage = GL_STATIC_DRAW
     );
 
+    template<typename T>
+    std::vector<T> read() const;
+
 protected:
     void basic_load(
         GLenum target,
@@ -72,6 +76,8 @@ protected:
 };
 
 } // namespace lt
+
+#include "gpu_buffer.tcc"
 
 #endif
 

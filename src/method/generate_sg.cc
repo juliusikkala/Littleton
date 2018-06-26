@@ -161,10 +161,22 @@ void generate_sg::execute()
                 c.push_back(&batch_cameras[j]);
             }
 
-            p->compute_dispatch(uvec3(batch_probes,1,1));
-
             probe_scene.set_cameras(c);
             fp.execute();
+            p->compute_dispatch(uvec3(batch_probes,1,1));
+
+            std::vector<vec4> data = m.xy.read<vec4>();
+
+            for(unsigned j = 0; j < batch_probes; ++j)
+            {
+                printf("Probe %u\n", i-batch_probes+j);
+                for(unsigned k = 0; k < lobe_count; ++k)
+                {
+                    printf("\tLobe %u: ", k);
+                    vec4 value = data[j*lobe_count+k];
+                    printf("rgb(%f, %f, %f)\n", value.x, value.y, value.z);
+                }
+            }
 
             // TODO: compute spherical gaussians from cubemap probes
         }
@@ -255,7 +267,7 @@ generate_sg::least_squares_matrices::least_squares_matrices(
         GL_TEXTURE_CUBE_MAP_ARRAY,
         x.data()
     ),
-    xy(ctx, GL_SHADER_STORAGE_BUFFER, batch_size*lobe_count*sizeof(vec3)),
+    xy(ctx, GL_SHADER_STORAGE_BUFFER, batch_size*lobe_count*sizeof(vec4)),
     r(ctx, GL_SHADER_STORAGE_BUFFER, r.size()*sizeof(float), r.data())
 {
 }
