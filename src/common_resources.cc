@@ -20,6 +20,7 @@
 #include "texture.hh"
 #include "glheaders.hh"
 #include "math.hh"
+#include <algorithm>
 
 namespace
 {
@@ -120,10 +121,109 @@ const GLfloat quad_vertices[] = {
 
 const GLuint quad_indices[] = {0,2,1,1,2,3};
 
+primitive* create_primitive(
+    gpu_buffer_pool& buf_pool,
+    const std::string& name,
+    const GLfloat* vertices,
+    size_t vertices_count,
+    bool has_normals,
+    const GLuint* indices,
+    size_t indices_size
+){
+    std::string indices_name = name + "_index_buf";
+    std::string vertices_name = name + "_vertex_buf";
+
+    size_t vertex_size = sizeof(GLfloat) * (has_normals ? 8 : 5);
+
+    const gpu_buffer* indices_buf= nullptr;
+    const gpu_buffer* vertices_buf = nullptr;
+    if(buf_pool.contains(indices_name)) indices_buf = buf_pool.get(indices_name);
+    else
+    {
+        indices_buf = buf_pool.add(
+            indices_name,
+            new gpu_buffer(
+                buf_pool.get_context(),
+                GL_ELEMENT_ARRAY_BUFFER,
+                sizeof(GLuint) * indices_size,
+                indices
+            )
+        );
+    }
+
+    if(buf_pool.contains(vertices_name)) vertices_buf = buf_pool.get(vertices_name);
+    else
+    {
+        vertices_buf = buf_pool.add(
+            vertices_name,
+            new gpu_buffer(
+                buf_pool.get_context(),
+                GL_ARRAY_BUFFER,
+                vertices_count * vertex_size,
+                vertices
+            )
+        );
+    }
+
+    gpu_buffer_accessor index_accessor(
+        *indices_buf, 1, GL_UNSIGNED_INT, false, 0, 0
+    );
+    gpu_buffer_accessor position_accessor(
+        *vertices_buf, 3, GL_FLOAT, false, vertex_size, 0
+    );
+    if(has_normals)
+    {
+        gpu_buffer_accessor normal_accessor(
+            *vertices_buf, 3, GL_FLOAT, true, vertex_size, 3*sizeof(GLfloat)
+        );
+        gpu_buffer_accessor texture_accessor(
+            *vertices_buf, 2, GL_FLOAT, false, vertex_size, 6*sizeof(GLfloat)
+        );
+
+        return new primitive(
+            buf_pool.get_context(),
+            indices_size,
+            GL_TRIANGLES,
+            index_accessor,
+            {{primitive::POSITION, position_accessor},
+             {primitive::NORMAL, normal_accessor},
+             {primitive::UV0, texture_accessor}}
+        );
+    }
+    else
+    {
+        gpu_buffer_accessor texture_accessor(
+            *vertices_buf, 2, GL_FLOAT, false, vertex_size, 3*sizeof(GLfloat)
+        );
+
+        return new primitive(
+            buf_pool.get_context(),
+            indices_size,
+            GL_TRIANGLES,
+            index_accessor,
+            {{primitive::POSITION, position_accessor},
+             {primitive::UV0, texture_accessor}}
+        );
+    }
+}
+
 }
 
 namespace lt::common
 {
+
+const sampler& ensure_linear_sampler(sampler_pool& pool)
+{
+    std::string name = "common_linear";
+    if(pool.contains(name)) return *pool.get(name);
+    return *pool.add(name,
+        new sampler(pool.get_context(),
+            GL_LINEAR, GL_LINEAR,
+            GL_CLAMP_TO_EDGE
+        )
+    );
+}
+
 const sampler& ensure_framebuffer_sampler(sampler_pool& pool)
 {
     std::string name = "common_framebuffer";
@@ -156,57 +256,16 @@ const primitive& ensure_quad_primitive(
     std::string name = "common_quad";
     if(prim_pool.contains(name)) return *prim_pool.get(name);
 
-    std::string indices_name = "common_quad_index_buf";
-    std::string vertices_name = "common_quad_vertex_buf";
-
-    const gpu_buffer* indices = nullptr;
-    const gpu_buffer* vertices = nullptr;
-    if(buf_pool.contains(indices_name)) indices = buf_pool.get(indices_name);
-    else
-    {
-        indices = buf_pool.add(
-            indices_name,
-            new gpu_buffer(
-                buf_pool.get_context(),
-                GL_ELEMENT_ARRAY_BUFFER,
-                sizeof(quad_indices),
-                quad_indices
-            )
-        );
-    }
-    if(buf_pool.contains(vertices_name)) vertices = buf_pool.get(vertices_name);
-    else
-    {
-        vertices = buf_pool.add(
-            vertices_name,
-            new gpu_buffer(
-                buf_pool.get_context(),
-                GL_ARRAY_BUFFER,
-                sizeof(quad_vertices),
-                quad_vertices
-            )
-        );
-    }
-
-    gpu_buffer_accessor index_accessor(
-        *indices, 1, GL_UNSIGNED_INT, false, 0, 0
-    );
-    gpu_buffer_accessor position_accessor(
-        *vertices, 3, GL_FLOAT, false, 5*sizeof(float), 0
-    );
-    gpu_buffer_accessor texture_accessor(
-        *vertices, 2, GL_FLOAT, false, 5*sizeof(float), 3*sizeof(float)
-    );
-
     return *prim_pool.add(
         name,
-        new primitive(
-            prim_pool.get_context(),
-            sizeof(quad_indices)/sizeof(GLuint),
-            GL_TRIANGLES,
-            index_accessor,
-            {{primitive::POSITION, position_accessor},
-             {primitive::UV0, texture_accessor}}
+        create_primitive(
+            buf_pool,
+            name,
+            quad_vertices,
+            sizeof(quad_vertices)/(sizeof(quad_vertices[0])*5),
+            false,
+            quad_indices,
+            sizeof(quad_indices)/sizeof(quad_indices[0])
         )
     );
 }
@@ -214,6 +273,103 @@ const primitive& ensure_quad_primitive(
 const primitive& ensure_quad_primitive(resource_pool& pool)
 {
     return ensure_quad_primitive(pool, pool);
+}
+
+const primitive& ensure_patched_sphere_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool,
+    unsigned subdivisions
+){
+    std::string name = "common_patched_sphere_" + std::to_string(subdivisions);
+    if(prim_pool.contains(name)) return *prim_pool.get(name);
+
+    struct vertex
+    {
+        vec3 pos;
+        vec3 normal;
+        vec2 uv;
+    };
+    std::vector<vertex> vertices;
+    std::vector<GLuint> indices;
+
+    float start = -1.0f;
+    float step = 2.0f / subdivisions;
+
+    for(unsigned face = 0; face < 6; ++face)
+    {
+        // Iterate subdivided faces
+        for(unsigned j = 0; j < subdivisions; ++j)
+        {
+            for(unsigned i = 0; i < subdivisions; ++i)
+            {
+                float s1 = start + step * j;
+                float t1 = start + step * i;
+                float s2 = s1 + step;
+                float t2 = t1 + step;
+
+                vec3 face_vertices[] = {
+                    vec3(s1,t1,1.0f),
+                    vec3(s1,t2,1.0f),
+                    vec3(s2,t1,1.0f),
+                    vec3(s2,t2,1.0f)
+                };
+
+                vec2 face_uvs[] = {
+                    vec2(s1,t1),
+                    vec2(s1,t2),
+                    vec2(s2,t1),
+                    vec2(s2,t2)
+                };
+
+                GLuint face_indices[] = {
+                    2, 1, 0, 3, 1, 2
+                };
+
+                for(unsigned k = 0; k < 4; ++k)
+                {
+                    vec3& v = face_vertices[k];
+                    v = swizzle_for_cube_face(normalize(v), face);
+                }
+
+                for(GLuint index: face_indices)
+                {
+                    vec3 p = face_vertices[index];
+                    auto it = std::find_if(
+                        vertices.begin(),
+                        vertices.end(),
+                        [p](vertex& v){ return dot(v.pos, p) >= 0.9999f; }
+                    );
+                    indices.push_back(std::distance(vertices.begin(), it));
+                    if(it == vertices.end())
+                    {
+                        vertices.push_back({
+                            p, p, face_uvs[index]
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return *prim_pool.add(
+        name,
+        create_primitive(
+            buf_pool,
+            name,
+            (GLfloat*)vertices.data(),
+            vertices.size(),
+            true,
+            indices.data(),
+            indices.size()
+        )
+    );
+}
+
+const primitive& ensure_patched_sphere_primitive(
+    resource_pool& pool,
+    unsigned subdivisions
+){
+    return ensure_patched_sphere_primitive(pool, pool, subdivisions);
 }
 
 const texture& ensure_circular_random_texture(

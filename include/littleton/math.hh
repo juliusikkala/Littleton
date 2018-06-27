@@ -190,6 +190,11 @@ std::vector<T> fit_linear_least_squares(
 
 std::vector<vec3> packed_sphere_points(size_t count);
 
+vec3 swizzle_for_cube_face(
+    vec3 p,//assuming z-positive
+    int face
+);
+
 } // namespace lt
 
 #include "math.tcc"

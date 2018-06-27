@@ -23,28 +23,6 @@
 
 namespace 
 {
-    lt::vec3 orientate_vector(
-        lt::vec3 dir,//assuming z-positive
-        int cubemap_face
-    ){
-        switch(cubemap_face)
-        {
-        case 0:
-            return lt::vec3(dir.z, dir.y, -dir.x);
-        case 1:
-            return lt::vec3(-dir.z, dir.y, dir.x);
-        case 2:
-            return lt::vec3(dir.x, dir.z, -dir.y);
-        case 3:
-            return lt::vec3(dir.x, -dir.z, dir.y);
-        default:
-        case 4:
-            return dir;
-        case 5:
-            return lt::vec3(-dir.x, dir.y, -dir.z);
-        }
-    }
-
     lt::vec3 index_position(unsigned index, lt::uvec3 space)
     {
         unsigned layer = space.x * space.y;
@@ -217,7 +195,10 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
             // dir is the direction of the vector for this sample
             vec3 dir = vec3(face_x, face_y, 0);
             dir = (dir - (resolution - 1) * 0.5f)/(float)resolution;
-            dir = orientate_vector(normalize(vec3(dir.x, -dir.y, 1)), face_index);
+            dir = swizzle_for_cube_face(
+                normalize(vec3(dir.x, -dir.y, 1)),
+                face_index
+            );
             // Apply the function (spherical gaussian) to the direction
             float value = exp(
                 lobes[l].sharpness * (dot(lobes[l].axis, dir) - 1.0f)

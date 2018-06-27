@@ -60,6 +60,7 @@ src = [
   'src/method/ssao.cc',
   'src/method/ssrt.cc',
   'src/method/tonemap.cc',
+  'src/method/visualize_cubemap.cc',
   'src/method/visualize_gbuffer.cc',
   'src/model.cc',
   'src/multishader.cc',

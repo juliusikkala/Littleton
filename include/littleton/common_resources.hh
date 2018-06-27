@@ -26,13 +26,16 @@
 // as many kinds of lookup textures, vertex buffers and samplers.
 namespace lt::common
 {
-// Adds samplers "common_framebuffer"
+// Adds sampler "common_linear"
+LT_API const sampler& ensure_linear_sampler(sampler_pool& pool);
+
+// Adds sampler "common_framebuffer"
 LT_API const sampler& ensure_framebuffer_sampler(sampler_pool& pool);
 
 // Adds sampler "common_depth"
 LT_API const sampler& ensure_depth_sampler(sampler_pool& pool);
 
-// Adds vertex buffer "common_quad", a square buffer with coordinates at
+// Adds primitive "common_quad", a square buffer with coordinates at
 // (1,1), (1,-1), (-1,1) and (-1,-1).
 LT_API const primitive& ensure_quad_primitive(
     primitive_pool& prim_pool,
@@ -40,6 +43,19 @@ LT_API const primitive& ensure_quad_primitive(
 );
 
 LT_API const primitive& ensure_quad_primitive(resource_pool& pool);
+
+// Adds primitive "common_patched_sphere_<subdivisions>", a unit-sized patched
+// sphere (http://www.iquilezles.org/www/articles/patchedsphere/patchedsphere.htm)
+LT_API const primitive& ensure_patched_sphere_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool,
+    unsigned subdivisions
+);
+
+LT_API const primitive& ensure_patched_sphere_primitive(
+    resource_pool& pool,
+    unsigned subdivisions
+);
 
 // Adds texture "circular_random_<size.x>x<size.y>", a texture with
 // random 2d unit vectors.

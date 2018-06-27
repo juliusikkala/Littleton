@@ -395,4 +395,26 @@ std::vector<vec3> packed_sphere_points(size_t count)
     return points;
 }
 
+vec3 swizzle_for_cube_face(
+    vec3 p,
+    int face
+){
+    switch(face)
+    {
+    case 0:
+        return lt::vec3(p.z, p.y, -p.x);
+    case 1:
+        return lt::vec3(-p.z, p.y, p.x);
+    case 2:
+        return lt::vec3(p.x, p.z, -p.y);
+    case 3:
+        return lt::vec3(p.x, -p.z, p.y);
+    default:
+    case 4:
+        return p;
+    case 5:
+        return lt::vec3(-p.x, p.y, -p.z);
+    }
+}
+
 } // namespace lt
