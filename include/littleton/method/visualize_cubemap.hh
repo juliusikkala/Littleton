@@ -40,20 +40,20 @@ namespace lt::method
 class LT_API visualize_cubemap: public target_method
 {
 public:
-    class node
+    struct node
     {
-    friend class visualize_cubemap;
-    public:
         node(texture* cubemap, vec3 pos, float radius = 1.0f);
         node(
             texture* cubemap_array,
             const std::vector<vec3>& pos,
-            float radius = 1.0f
+            float radius = 1.0f,
+            unsigned first_index = 0
         );
-    private:
+
         texture* cubemap;
         std::vector<vec3> pos;
         float radius;
+        unsigned first_index;
     };
 
     visualize_cubemap(
@@ -67,6 +67,8 @@ public:
     render_scene* get_scene() const;
 
     void set_cubemaps(const std::vector<node>& cubemaps);
+    std::vector<node>& get_cubemaps();
+    const std::vector<node>& get_cubemaps() const;
 
     void execute() override;
 

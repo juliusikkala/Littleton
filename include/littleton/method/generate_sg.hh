@@ -56,6 +56,8 @@ public:
 
     std::string get_name() const override;
 
+    texture* get_design_matrix(const sg_group& group);
+
 private:
     struct least_squares_matrices
     {

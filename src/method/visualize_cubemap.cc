@@ -29,7 +29,7 @@ namespace lt::method
 {
 
 visualize_cubemap::node::node(texture* cubemap, vec3 pos, float radius)
-: cubemap(cubemap), pos({pos}), radius(radius)
+: cubemap(cubemap), pos({pos}), radius(radius), first_index(0)
 {
     if(!cubemap || cubemap->get_target() != GL_TEXTURE_CUBE_MAP)
         throw std::runtime_error(
@@ -40,8 +40,9 @@ visualize_cubemap::node::node(texture* cubemap, vec3 pos, float radius)
 visualize_cubemap::node::node(
     texture* cubemap_array,
     const std::vector<vec3>& pos,
-    float radius
-): cubemap(cubemap_array), pos(pos), radius(radius)
+    float radius,
+    unsigned first_index
+): cubemap(cubemap_array), pos(pos), radius(radius), first_index(first_index)
 {
     if(!cubemap || cubemap->get_target() != GL_TEXTURE_CUBE_MAP_ARRAY)
         throw std::runtime_error(
@@ -80,6 +81,17 @@ void visualize_cubemap::set_cubemaps(const std::vector<node>& cubemaps)
     this->cubemaps = cubemaps;
 }
 
+std::vector<visualize_cubemap::node>& visualize_cubemap::get_cubemaps()
+{
+    return cubemaps;
+}
+
+const std::vector<visualize_cubemap::node>&
+visualize_cubemap::get_cubemaps() const
+{
+    return cubemaps;
+}
+
 void visualize_cubemap::execute()
 {
     target_method::execute();
@@ -87,12 +99,13 @@ void visualize_cubemap::execute()
     if(!visualize_shader || cubemaps.size() == 0 || !scene) return;
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
     camera* cam = scene->get_camera();
     if(!cam) return;
+
+    glFrontFace(GL_CW);
 
     glm::mat4 vp =
         cam->get_projection() * glm::inverse(cam->get_global_transform());
@@ -108,20 +121,22 @@ void visualize_cubemap::execute()
         s->set("cubemap", linear_sampler.bind(*n.cubemap, 0));
         s->set("m", mat4(1.0f));
 
-        unsigned max_index = min(
-            (unsigned)n.pos.size(),
-            max(n.cubemap->get_dimensions().z, 1u)
+        int max_index = min(
+            (int)n.pos.size(),
+            max((int)n.cubemap->get_dimensions().z, 1) - (int)n.first_index
         );
 
-        for(unsigned i = 0; i < max_index; ++i)
+        for(int i = 0; i < max_index; ++i)
         {
             mat4 m = glm::translate(n.pos[i]) * glm::scale(vec3(n.radius));
             mat4 mvp = vp * m;
-            s->set<int>("array_index", i);
+            s->set<int>("array_index", i + n.first_index);
             s->set("mvp", mvp);
             sphere.draw();
         }
     }
+
+    glFrontFace(GL_CCW);
 }
 
 std::string visualize_cubemap::get_name() const

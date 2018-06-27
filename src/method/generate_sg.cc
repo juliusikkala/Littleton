@@ -166,6 +166,11 @@ std::string generate_sg::get_name() const
     return "generate_sg";
 }
 
+texture* generate_sg::get_design_matrix(const sg_group& group)
+{
+    return &get_matrices(group).x;
+}
+
 generate_sg::least_squares_matrices& generate_sg::get_matrices(
     const sg_group& group
 ){
@@ -181,7 +186,6 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
     std::vector<float> x(total_pixels*lobes.size());
     std::vector<float> r(lobes.size()*lobes.size());
 
-
     // Generate design matrix
     for(size_t l = 0; l < lobes.size(); ++l)
     {
@@ -194,7 +198,7 @@ generate_sg::least_squares_matrices& generate_sg::get_matrices(
 
             // dir is the direction of the vector for this sample
             vec3 dir = vec3(face_x, face_y, 0);
-            dir = (dir - (resolution - 1) * 0.5f)/(float)resolution;
+            dir = (dir + 0.5f) / (resolution*0.5f) - 1.0f;
             dir = swizzle_for_cube_face(
                 normalize(vec3(dir.x, -dir.y, 1)),
                 face_index

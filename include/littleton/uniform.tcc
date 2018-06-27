@@ -36,6 +36,7 @@ bool uniform_is_compatible(GLenum type, GLint size, size_t count)
         case GL_SAMPLER_2D_ARRAY_SHADOW:
         case GL_SAMPLER_2D_MULTISAMPLE:
         case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+        case GL_SAMPLER_CUBE_MAP_ARRAY:
         case GL_SAMPLER_CUBE_SHADOW:
         case GL_SAMPLER_BUFFER:
         case GL_SAMPLER_2D_RECT:
