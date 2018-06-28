@@ -57,18 +57,14 @@ generate_sg::generate_sg(
     cubemap_probes(
         pool.get_context(),
         glm::uvec3(resolution, resolution, batch_size),
-        {{GL_DEPTH_ATTACHMENT, {GL_DEPTH_COMPONENT16}},
+        {{GL_DEPTH_ATTACHMENT, {GL_DEPTH24_STENCIL8}},
          {GL_COLOR_ATTACHMENT0, {GL_RGBA16F, true}}},
         0,
         GL_TEXTURE_CUBE_MAP_ARRAY
     ),
-    fp(
-        cubemap_probes,
-        pool,
-        &probe_scene,
-        false,
-        false
-    )
+    sb(cubemap_probes, pool, &probe_scene),
+    fp(cubemap_probes, pool, &probe_scene, false, false),
+    probe_pipeline({&sb, &fp})
 {
 }
 
@@ -84,7 +80,7 @@ void generate_sg::execute()
     // Generate probe scene
     probe_scene = *scene;
     camera* view_camera = scene->get_camera();
-    float near = 0.1f;
+    float near = 0.001f;
     float far = 100.0f;
     if(view_camera)
     {
@@ -136,11 +132,12 @@ void generate_sg::execute()
             {
                 vec3 cam_pos(transform * vec4(index_position(i, res), 1));
                 batch_cameras[j].set_position(cam_pos);
+                batch_cameras[j].set_orientation(sg->get_global_orientation());
                 c.push_back(&batch_cameras[j]);
             }
 
             probe_scene.set_cameras(c);
-            fp.execute();
+            probe_pipeline.execute();
             p->compute_dispatch(uvec3(batch_probes,1,1));
 
             std::vector<vec4> data = m.xy.read<vec4>();
@@ -168,7 +165,8 @@ std::string generate_sg::get_name() const
 
 texture* generate_sg::get_design_matrix(const sg_group& group)
 {
-    return &get_matrices(group).x;
+    //return &get_matrices(group).x;
+    return cubemap_probes.get_texture_target(GL_COLOR_ATTACHMENT0);
 }
 
 generate_sg::least_squares_matrices& generate_sg::get_matrices(

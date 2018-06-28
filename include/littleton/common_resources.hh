@@ -44,6 +44,14 @@ LT_API const primitive& ensure_quad_primitive(
 
 LT_API const primitive& ensure_quad_primitive(resource_pool& pool);
 
+// Adds primitive "common_cube", a unit cube buffer.
+LT_API const primitive& ensure_cube_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool
+);
+
+LT_API const primitive& ensure_cube_primitive(resource_pool& pool);
+
 // Adds primitive "common_patched_sphere_<subdivisions>", a unit-sized patched
 // sphere (http://www.iquilezles.org/www/articles/patchedsphere/patchedsphere.htm)
 LT_API const primitive& ensure_patched_sphere_primitive(

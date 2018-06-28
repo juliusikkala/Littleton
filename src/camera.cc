@@ -19,6 +19,20 @@
 #include "camera.hh"
 #include <limits>
 
+namespace
+{
+
+const glm::mat4 face_rotations[6] = {
+    glm::lookAt(glm::vec3(0), glm::vec3(1,0,0), glm::vec3(0,-1,0)),
+    glm::lookAt(glm::vec3(0), glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
+    glm::lookAt(glm::vec3(0), glm::vec3(0,1,0), glm::vec3(0,0,1)),
+    glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,-1)),
+    glm::lookAt(glm::vec3(0), glm::vec3(0,0,1), glm::vec3(0,-1,0)),
+    glm::lookAt(glm::vec3(0), glm::vec3(0,0,-1), glm::vec3(0,-1,0))
+};
+
+}
+
 namespace lt
 {
 
@@ -79,17 +93,14 @@ glm::vec2 camera::get_projection_info() const
 
 glm::mat4 camera::get_view_projection(unsigned face) const
 {
-    static const glm::mat4 face_rotations[6] = {
-        glm::lookAt(glm::vec3(0), glm::vec3(1,0,0), glm::vec3(0,-1,0)),
-        glm::lookAt(glm::vec3(0), glm::vec3(-1,0,0), glm::vec3(0,-1,0)),
-        glm::lookAt(glm::vec3(0), glm::vec3(0,1,0), glm::vec3(0,0,1)),
-        glm::lookAt(glm::vec3(0), glm::vec3(0,-1,0), glm::vec3(0,0,-1)),
-        glm::lookAt(glm::vec3(0), glm::vec3(0,0,1), glm::vec3(0,-1,0)),
-        glm::lookAt(glm::vec3(0), glm::vec3(0,0,-1), glm::vec3(0,-1,0))
-    };
     glm::mat4 transform = glm::inverse(get_global_transform());
-
     return projection * face_rotations[face] * transform;
+}
+
+glm::mat4 camera::get_inverse_orientation_projection(unsigned face) const
+{
+    return glm::toMat4(get_global_orientation()) *
+        glm::inverse(projection * face_rotations[face]);
 }
 
 float camera::get_near() const

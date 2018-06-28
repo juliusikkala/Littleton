@@ -112,15 +112,6 @@ texture* generate_spherical_poisson(context& ctx, unsigned size)
     );
 }
 
-const GLfloat quad_vertices[] = {
-    1.0f, 1.0f, 0, 1.0f, 1.0f,
-    1.0f, -1.0f, 0, 1.0f, 0.0f,
-    -1.0f, 1.0f, 0, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0, 0.0f, 0.0f
-};
-
-const GLuint quad_indices[] = {0,2,1,1,2,3};
-
 primitive* create_primitive(
     gpu_buffer_pool& buf_pool,
     const std::string& name,
@@ -207,6 +198,49 @@ primitive* create_primitive(
     }
 }
 
+const GLfloat quad_vertices[] = {
+    1.0f, 1.0f, 0, 1.0f, 1.0f,
+    1.0f, -1.0f, 0, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0, 0.0f, 0.0f
+};
+
+const GLuint quad_indices[] = {0,2,1,1,2,3};
+
+const GLfloat cube_vertices[] = {
+     1, -1, -1,  0,  0, -1, 1, 0,
+    -1,  1, -1,  0,  0, -1, 0, 1,
+     1,  1, -1,  0,  0, -1, 0, 0,
+    -1,  1,  1,  0,  0,  1, 1, 0,
+     1, -1,  1,  0,  0,  1, 0, 1,
+     1,  1,  1,  0,  0,  1, 0, 0,
+     1,  1,  1,  1,  0,  0, 1, 0,
+     1, -1, -1,  1,  0,  0, 0, 1,
+     1,  1, -1,  1,  0,  0, 0, 0,
+     1, -1,  1,  0, -1,  0, 1, 0,
+    -1, -1, -1,  0, -1,  0, 0, 1,
+     1, -1, -1,  0, -1,  0, 0, 0,
+    -1, -1, -1, -1,  0,  0, 0, 0,
+    -1,  1,  1, -1,  0,  0, 1, 1,
+    -1,  1, -1, -1,  0,  0, 0, 1,
+     1,  1, -1,  0,  1,  0, 1, 0,
+    -1,  1,  1,  0,  1,  0, 0, 1,
+     1,  1,  1,  0,  1,  0, 0, 0,
+    -1, -1, -1,  0,  0, -1, 1, 1,
+    -1, -1,  1,  0,  0,  1, 1, 1,
+     1,  1,  1,  1,  0,  0, 1, 0,
+     1, -1,  1,  1,  0,  0, 1, 1,
+     1, -1, -1,  1,  0,  0, 0, 1,
+    -1, -1,  1,  0, -1,  0, 1, 1,
+    -1, -1,  1, -1,  0,  0, 1, 0,
+    -1,  1, -1,  0,  1,  0, 1, 1
+};
+
+const GLuint cube_indices[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 0, 18, 1,
+    3, 19, 4, 20, 21, 22, 9, 23, 10, 12, 24, 13, 15, 25, 16
+};
+
 }
 
 namespace lt::common
@@ -273,6 +307,32 @@ const primitive& ensure_quad_primitive(
 const primitive& ensure_quad_primitive(resource_pool& pool)
 {
     return ensure_quad_primitive(pool, pool);
+}
+
+const primitive& ensure_cube_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool
+){
+    std::string name = "common_cube";
+    if(prim_pool.contains(name)) return *prim_pool.get(name);
+
+    return *prim_pool.add(
+        name,
+        create_primitive(
+            buf_pool,
+            name,
+            cube_vertices,
+            sizeof(cube_vertices)/(sizeof(cube_vertices[0])*5),
+            true,
+            cube_indices,
+            sizeof(cube_indices)/sizeof(cube_indices[0])
+        )
+    );
+}
+
+const primitive& ensure_cube_primitive(resource_pool& pool)
+{
+    return ensure_cube_primitive(pool, pool);
 }
 
 const primitive& ensure_patched_sphere_primitive(

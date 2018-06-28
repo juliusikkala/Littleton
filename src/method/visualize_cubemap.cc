@@ -61,7 +61,7 @@ visualize_cubemap::visualize_cubemap(
         shader::path{"generic.vert", "visualize_cubemap.frag"}
     )),
     scene(scene),
-    sphere(common::ensure_patched_sphere_primitive(pool, 10)),
+    sphere(common::ensure_patched_sphere_primitive(pool, 20)),
     linear_sampler(common::ensure_linear_sampler(pool)),
     cubemaps(cubemaps)
 {}

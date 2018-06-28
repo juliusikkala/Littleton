@@ -36,6 +36,10 @@ skybox::skybox(
     sky_shader(pool.get_shader(
         shader::path{"skybox.vert", "skybox.frag"}, {}
     )),
+    cubemap_sky_shader(pool.get_shader(
+        shader::path{"skybox.vert", "skybox.frag", "skybox.geom"},
+        {{"CUBEMAP", ""}}
+    )),
     scene(scene),
     skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     quad(common::ensure_quad_primitive(pool))
@@ -62,22 +66,54 @@ void skybox::execute()
     camera* cam = scene->get_camera();
     if(!skybox || !cam) return;
 
-    glm::mat4 p = cam->get_projection();
-
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
 
     stencil_cull();
 
-    sky_shader->bind();
+    GLenum target = get_target().get_target();
+    bool cubemap =
+        target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_CUBE_MAP_ARRAY;
 
-    sky_shader->set("skybox", skybox_sampler.bind(*skybox));
-    sky_shader->set("exposure", skybox->get_exposure());
-    sky_shader->set("inv_view", cam->get_global_transform());
-    sky_shader->set("projection", glm::inverse(p));
+    if(cubemap)
+    {
+        cubemap_sky_shader->bind();
+        cubemap_sky_shader->set("skybox", skybox_sampler.bind(*skybox));
+        cubemap_sky_shader->set("exposure", skybox->get_exposure());
 
-    quad.draw();
+        unsigned layers = min(
+            (unsigned)scene->camera_count(), get_target().get_dimensions().z
+        );
+
+        const std::vector<camera*> cameras = scene->get_cameras();
+        std::vector<glm::mat4> face_ivps;
+        face_ivps.reserve(layers*6);
+        for(unsigned layer = 0; layer < layers; ++layer)
+            for(unsigned face = 0; face < 6; ++face)
+                face_ivps.push_back(
+                    cameras[layer]->get_inverse_orientation_projection(face)
+                );
+
+        for(unsigned i = 0; i < layers; ++i)
+        {
+            cubemap_sky_shader->set("face_ivps", 6, face_ivps.data() + i*6);
+            cubemap_sky_shader->set("begin_layer_face", (int)i*6);
+            quad.draw();
+        }
+    }
+    else
+    {
+
+        glm::mat4 p = cam->get_projection();
+        sky_shader->bind();
+
+        sky_shader->set("skybox", skybox_sampler.bind(*skybox));
+        sky_shader->set("exposure", skybox->get_exposure());
+        sky_shader->set("ivp", toMat4(cam->get_global_orientation()) * glm::inverse(p));
+
+        quad.draw();
+    }
 }
 
 std::string skybox::get_name() const

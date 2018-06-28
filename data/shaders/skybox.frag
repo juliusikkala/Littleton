@@ -1,6 +1,6 @@
-#version 400 core
+#version 410 core
 
-in vec3 view_dir;
+layout(location = 0) in vec3 view_dir;
 out vec4 color;
 
 uniform samplerCube skybox;

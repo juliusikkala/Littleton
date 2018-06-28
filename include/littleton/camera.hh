@@ -41,6 +41,9 @@ public:
     // Assumes the camera was set using cube_perspective
     glm::mat4 get_view_projection(unsigned face) const;
 
+    // Assumes the camera was set using cube_perspective
+    glm::mat4 get_inverse_orientation_projection(unsigned face) const;
+
     float get_near() const;
     float get_far() const;
     float get_aspect() const;

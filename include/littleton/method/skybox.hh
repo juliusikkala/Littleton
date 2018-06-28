@@ -54,6 +54,7 @@ public:
 
 private:
     shader* sky_shader;
+    shader* cubemap_sky_shader;
     render_scene* scene;
     sampler skybox_sampler;
 

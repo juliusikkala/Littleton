@@ -27,6 +27,7 @@
 #include "../spherical_gaussians.hh"
 #include "../resource.hh"
 #include "forward_pass.hh"
+#include "skybox.hh"
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 
@@ -84,7 +85,10 @@ private:
     size_t batch_size;
     render_scene probe_scene;
     framebuffer cubemap_probes;
+
+    skybox sb;
     forward_pass fp;
+    pipeline probe_pipeline;
 
     std::unordered_map<
         std::vector<sg_lobe>,
