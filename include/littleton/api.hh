@@ -22,8 +22,10 @@
 #if defined _WIN32 || defined __CYGWIN__
 #  ifdef LT_API_EXPORT
 #    define LT_API __declspec(dllexport)
+#    define LT_API_TEMPLATE
 #  else
 #    define LT_API __declspec(dllimport)
+#    define LT_API_TEMPLATE extern
 #  endif
 #else
 #  if __GNUC__ >= 4
@@ -31,6 +33,7 @@
 #  else
 #    define LT_API
 #  endif
+#  define LT_API_TEMPLATE
 #endif
 
 #endif

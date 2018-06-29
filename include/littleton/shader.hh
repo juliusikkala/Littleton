@@ -36,7 +36,7 @@ class LT_API shader: public resource, public glresource
 public:
     using definition_map = std::map<std::string, std::string>;
 
-    struct path
+    struct LT_API path
     {
         path() = default;
         path(
@@ -56,7 +56,7 @@ public:
         bool operator==(const path& other) const;
     };
 
-    struct source
+    struct LT_API source
     {
         source() = default;
         source(

@@ -109,7 +109,7 @@ material::sampler_tex get_material_texture_parameter(
         {
             auto it = param.json_double_value.find("scale");
             if(it != param.json_double_value.end())
-                *scale = it->second;
+                *scale = (float)it->second;
             else
                 *scale = 1.0f;
         }
@@ -131,7 +131,7 @@ glm::vec4 get_material_factor_parameter(
     if(it != values.end())
     {
         tinygltf::Parameter& param = it->second;
-        if(param.has_number_value) return glm::vec4(param.number_value);
+        if(param.has_number_value) return glm::vec4((float)param.number_value);
         else
         {
             return glm::vec4(

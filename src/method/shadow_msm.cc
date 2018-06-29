@@ -287,7 +287,7 @@ void shadow_msm::execute()
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
-    glClearColor(0, 0.63, 0, 0.63);
+    glClearColor(0.0f, 0.63f, 0.0f, 0.63f);
 
     if(directional_shadow_maps)
     {

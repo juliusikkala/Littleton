@@ -26,7 +26,7 @@
 namespace lt
 {
 
-struct sg_lobe
+struct LT_API sg_lobe
 {
     vec3 axis;
     float sharpness;
@@ -47,6 +47,9 @@ public:
         size_t lobe_count=12,
         float epsilon = 0.5f
     );
+
+    sg_group(const sg_group& other) = delete;
+    sg_group& operator=(const sg_group& other) = delete;
 
     uvec3 get_resolution() const;
     const std::vector<sg_lobe>& get_lobes() const;

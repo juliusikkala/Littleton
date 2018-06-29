@@ -79,6 +79,7 @@
       <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4251;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -97,6 +98,7 @@
       <AdditionalIncludeDirectories>.\extern;.\include\littleton\method;.\include\littleton;C:\SDL2-2.0.8\include;C:\glm-0.9.9-a2;C:\glew-2.1.0\include;C:\boost_1_67_0;.\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4251;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -114,6 +116,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>LT_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4251;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -126,6 +129,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>LT_API_EXPORT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4251;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\boost_1_67_0\stage\VS2017\x64\lib;C:\SDL2-2.0.8\lib\x64;C:\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -158,6 +162,7 @@
     <ClCompile Include="src\method\forward_pass.cc" />
     <ClCompile Include="src\method\fullscreen_effect.cc" />
     <ClCompile Include="src\method\gamma.cc" />
+    <ClCompile Include="src\method\generate_sg.cc" />
     <ClCompile Include="src\method\geometry_pass.cc" />
     <ClCompile Include="src\method\kernel.cc" />
     <ClCompile Include="src\method\lighting_pass.cc" />
@@ -170,6 +175,7 @@
     <ClCompile Include="src\method\ssao.cc" />
     <ClCompile Include="src\method\ssrt.cc" />
     <ClCompile Include="src\method\tonemap.cc" />
+    <ClCompile Include="src\method\visualize_cubemap.cc" />
     <ClCompile Include="src\method\visualize_gbuffer.cc" />
     <ClCompile Include="src\model.cc" />
     <ClCompile Include="src\multishader.cc" />
@@ -185,6 +191,7 @@
     <ClCompile Include="src\shader.cc" />
     <ClCompile Include="src\shader_pool.cc" />
     <ClCompile Include="src\shadow_map.cc" />
+    <ClCompile Include="src\spherical_gaussians.cc" />
     <ClCompile Include="src\stencil_handler.cc" />
     <ClCompile Include="src\texture.cc" />
     <ClCompile Include="src\transformable.cc" />
@@ -217,6 +224,7 @@
     <ClInclude Include="include\littleton\method\forward_pass.hh" />
     <ClInclude Include="include\littleton\method\fullscreen_effect.hh" />
     <ClInclude Include="include\littleton\method\gamma.hh" />
+    <ClInclude Include="include\littleton\method\generate_sg.hh" />
     <ClInclude Include="include\littleton\method\geometry_pass.hh" />
     <ClInclude Include="include\littleton\method\kernel.hh" />
     <ClInclude Include="include\littleton\method\lighting_pass.hh" />
@@ -229,6 +237,7 @@
     <ClInclude Include="include\littleton\method\ssao.hh" />
     <ClInclude Include="include\littleton\method\ssrt.hh" />
     <ClInclude Include="include\littleton\method\tonemap.hh" />
+    <ClInclude Include="include\littleton\method\visualize_cubemap.hh" />
     <ClInclude Include="include\littleton\method\visualize_gbuffer.hh" />
     <ClInclude Include="include\littleton\model.hh" />
     <ClInclude Include="include\littleton\multishader.hh" />
@@ -244,6 +253,7 @@
     <ClInclude Include="include\littleton\shader.hh" />
     <ClInclude Include="include\littleton\shader_pool.hh" />
     <ClInclude Include="include\littleton\shadow_map.hh" />
+    <ClInclude Include="include\littleton\spherical_gaussians.hh" />
     <ClInclude Include="include\littleton\stencil_handler.hh" />
     <ClInclude Include="include\littleton\texture.hh" />
     <ClInclude Include="include\littleton\transformable.hh" />

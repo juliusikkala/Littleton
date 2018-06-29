@@ -96,7 +96,7 @@ std::string add_line_numbers(const std::string& src)
     std::stringstream in(src);
     std::stringstream out;
     size_t line_count = count_lines(src);
-    size_t number_width = 1 + floor(log10(line_count));
+    size_t number_width = 1 + (size_t)floor(log10(line_count));
     std::string line;
 
     unsigned line_number = 1;

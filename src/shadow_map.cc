@@ -177,7 +177,7 @@ perspective_shadow_map::perspective_shadow_map(
     point_light* light
 ): method(method), l(light)
 {
-    set_fov(fov);
+    set_fov((float)fov);
     set_range(depth_range);
 }
 

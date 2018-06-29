@@ -94,12 +94,12 @@ void sampler::set_anisotropy(unsigned anisotropy)
     if(GLEW_EXT_texture_filter_anisotropic)
     {
         unsigned max_anisotropy =
-            get_context()[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
+            (unsigned)get_context()[GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT];
 
         glSamplerParameterf(
             sampler_object,
             GL_TEXTURE_MAX_ANISOTROPY_EXT,
-            std::clamp(anisotropy, 1u, max_anisotropy)
+            (float)std::clamp(anisotropy, 1u, max_anisotropy)
         );
     }
 }

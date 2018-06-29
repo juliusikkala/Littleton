@@ -211,7 +211,7 @@ unsigned factorize(unsigned n)
     // Divisible by two
     if((n&1)==0) return 2;
 
-    unsigned last = floor(sqrt(n));
+    unsigned last = (unsigned)floor(sqrt(n));
     for(unsigned i = 3; i <= last; ++i)
         if((n % i) == 0) return i;
 
@@ -362,7 +362,7 @@ std::vector<float> generate_gaussian_kernel(
     for(int i = -radius; i <= radius; ++i)
     {
         float f = i/sigma;
-        float weight = exp(-f*f/2.0f)/(sigma * sqrt(2*M_PI));
+        float weight = expf(-f*f/2.0f)/(sigma * sqrtf(2.0f*(float)M_PI));
         result.push_back(weight);
     }
     return result;
@@ -370,7 +370,7 @@ std::vector<float> generate_gaussian_kernel(
 
 unsigned calculate_mipmap_count(uvec2 size)
 {
-    return std::floor(std::log2(std::max(size.x, size.y)))+1;
+    return (unsigned)std::floor(std::log2(std::max(size.x, size.y)))+1u;
 }
 
 
@@ -378,7 +378,7 @@ std::vector<vec3> packed_sphere_points(size_t count)
 {
     std::vector<vec3> points(count);
     // Using Vogel's method
-    float golden_angle = 2.39996322972865332;
+    float golden_angle = 2.39996322972865332f;
     float z = 1.0f - 1.0f/count;
     float z_step = 2.0f*z/(count - 1);
 
