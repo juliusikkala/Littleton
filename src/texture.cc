@@ -210,7 +210,7 @@ GLuint load_texture(
     {
         throw std::runtime_error("Unable to read " + path);
     }
-    int max_size = ctx[GL_MAX_TEXTURE_SIZE];
+    int max_size = (int)ctx[GL_MAX_TEXTURE_SIZE];
     if(w > max_size || h > max_size)
         throw std::runtime_error(
             "Texture is too large, maximum is "

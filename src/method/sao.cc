@@ -92,7 +92,7 @@ void sao::set_samples(unsigned samples)
     {
         if(!factorize(i))
         {
-            spiral_turns = i;
+            spiral_turns = (float)i;
             break;
         }
     }

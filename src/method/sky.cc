@@ -121,7 +121,7 @@ glm::vec3 sky::get_attenuated_sun_color(glm::vec3 pos)
         pos,
         dir,
         origin,
-        scale*(ground_radius + atmosphere_height),
+        (float)(scale*(ground_radius + atmosphere_height)),
         t0,
         t1
     )) return glm::vec3(0);
@@ -136,9 +136,9 @@ glm::vec3 sky::get_attenuated_sun_color(glm::vec3 pos)
 
     for(unsigned i = 0; i < view_samples; ++i)
     {
-        float h = glm::distance(x, origin) - ground_radius*scale;
-        float r_h = exp(-h / (rayleigh_scale_height*scale)) * segment_length;
-        float m_h = exp(-h / (mie_scale_height*scale)) * segment_length;
+        float h = (float)(glm::distance(x, origin) - ground_radius*scale);
+        float r_h = (float)exp(-h / (rayleigh_scale_height*scale)) * segment_length;
+        float m_h = (float)exp(-h / (mie_scale_height*scale)) * segment_length;
         r_optical_depth += r_h;
         m_optical_depth += m_h;
 
@@ -146,7 +146,7 @@ glm::vec3 sky::get_attenuated_sun_color(glm::vec3 pos)
     }
 
     glm::vec3 T = rayleigh_coef * r_optical_depth / scale +
-             glm::vec3(mie_coef * 1.1f * m_optical_depth / scale);
+             glm::vec3((float)(mie_coef * 1.1 * m_optical_depth / scale));
     glm::vec3 attenuation = glm::exp(-T);
 
     return attenuation * sun->get_color();
@@ -232,15 +232,15 @@ void sky::execute()
     sky_shader->set("rayleigh_coef", rayleigh_coef/scale);
     sky_shader->set<float>(
         "inv_rayleigh_scale_height",
-        1/(rayleigh_scale_height*scale)
+        1.0f/(float)(rayleigh_scale_height*scale)
     );
-    sky_shader->set<float>("inv_mie_scale_height", 1/(mie_scale_height*scale));
-    sky_shader->set<float>("mie_coef", mie_coef/scale);
-    sky_shader->set<float>("mie_anisotropy", mie_anisotropy);
-    sky_shader->set<float>("ground_radius", scale * ground_radius);
+    sky_shader->set<float>("inv_mie_scale_height", 1.0f/(float)(mie_scale_height*scale));
+    sky_shader->set<float>("mie_coef", (float)(mie_coef/scale));
+    sky_shader->set<float>("mie_anisotropy", (float)mie_anisotropy);
+    sky_shader->set<float>("ground_radius", (float)(scale * ground_radius));
     sky_shader->set<float>(
         "atmosphere_radius2",
-        pow(scale*(ground_radius + atmosphere_height), 2)
+        powf((float)(scale*(ground_radius + atmosphere_height)), 2.0f)
     );
     sky_shader->set("in_depth", depth_sampler.bind(*depth_buffer));
     sky_shader->set("sun_direction", -sun_direction);

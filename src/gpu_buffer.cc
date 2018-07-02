@@ -19,6 +19,7 @@
 #include "gpu_buffer.hh"
 #include <cstring>
 #include <stdexcept>
+#include <string>
 
 namespace lt
 {
