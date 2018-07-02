@@ -81,6 +81,9 @@ private:
 
     render_scene* scene;
     multishader* lobe_product;
+    multishader* solve;
+    multishader* copy;
+
     size_t resolution;
     size_t batch_size;
     render_scene probe_scene;

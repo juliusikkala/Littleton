@@ -19,6 +19,12 @@ sg_group::sg_group(
 ){
     set_scaling(size);
 
+    // Generate amplitude textures
+    for(unsigned i = 0; i < lobe_count; ++i)
+        amplitudes.emplace_back(
+            ctx, resolution, GL_RGBA16F, GL_FLOAT, 0, GL_TEXTURE_3D
+        );
+
     // Always add DC entry (if we have any lobes at all)
     if(lobe_count > 0)
     {
@@ -34,7 +40,7 @@ sg_group::sg_group(
     
     // Because there are only 2 or 1 lobes, align them in the y-axis
     // (typically the sky and ground are important contributors to radiance)
-    if(lobe_count <= 2)
+    if(lobe_count > 0 && lobe_count <= 2)
     {
         if(lobe_count == 2) axes.push_back(vec3(0, -1, 0));
         axes.push_back(vec3(0, 1, 0));
@@ -46,14 +52,8 @@ sg_group::sg_group(
     // assigned sector.
     float sharpness = log(epsilon) * lobe_count * -0.5f;
 
-    // Add lobes and generate amplitude textures
-    for(vec3 axis: axes)
-    {
-        lobes.push_back({axis, sharpness});
-        amplitudes.emplace_back(
-            ctx, resolution, GL_RGB16F, GL_FLOAT, 0, GL_TEXTURE_3D
-        );
-    }
+    // Add lobes
+    for(vec3 axis: axes) lobes.push_back({axis, sharpness});
 }
 
 uvec3 sg_group::get_resolution() const

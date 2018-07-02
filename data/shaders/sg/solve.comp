@@ -1,0 +1,38 @@
+#version 430
+
+layout(local_size_x=1) in;
+
+layout (std430, binding = 0) buffer inout_lobes
+{
+    vec3 data[MAX_BATCH_SIZE][LOBE_COUNT];
+} lobes;
+
+layout (std430, binding = 1) buffer r_matrix
+{
+    readonly float data[LOBE_COUNT][LOBE_COUNT];
+} r;
+
+void main()
+{
+    vec3 z[LOBE_COUNT];
+
+    // Forward substitution step
+    for(int i = 0; i < LOBE_COUNT; ++i)
+    {
+        vec3 sum = vec3(0);
+        for(int j = 0; j < i; ++j)
+            sum += r.data[i][j] * z[j];
+
+        z[i] = (lobes.data[gl_WorkGroupID.x][i] - sum)/r.data[i][i];
+    }
+
+    // Backward substitution step
+    for(int i = LOBE_COUNT-1; i >= 0; --i)
+    {
+        vec3 sum = vec3(0);
+        for(int j = LOBE_COUNT-1; j > i; --j)
+            sum += r.data[i][j] * lobes.data[gl_WorkGroupID.x][j];
+        lobes.data[gl_WorkGroupID.x][i] = (z[i] - sum)/r.data[i][i];
+    }
+}
+

@@ -49,9 +49,9 @@ generate_sg::generate_sg(
     size_t batch_size
 ):  glresource(pool.get_context()),
     scene(scene),
-    lobe_product(pool.get_shader(
-        shader::path{"sg/lobe.comp"}
-    )),
+    lobe_product(pool.get_shader(shader::path{"sg/lobe.comp"})),
+    solve(pool.get_shader(shader::path{"sg/solve.comp"})),
+    copy(pool.get_shader(shader::path{"sg/copy.comp"})),
     resolution(resolution),
     batch_size(batch_size),
     cubemap_probes(
@@ -105,7 +105,9 @@ void generate_sg::execute()
             {"MAX_BATCH_SIZE", std::to_string(batch_size)}
         });
         shader* p = lobe_product->get(definitions);
-        p->bind();
+        shader* s = solve->get(definitions);
+        shader* c = copy->get(definitions);
+
         p->set_image_texture("input_weights", m.x, 0);
         p->set_image_texture(
             "input_maps",
@@ -113,49 +115,70 @@ void generate_sg::execute()
         );
         p->set_storage_block("output_lobes", m.xy, 2);
 
+        s->set_storage_block("inout_lobes", m.xy , 0);
+        s->set_storage_block("r_matrix", m.r , 1);
+
+        c->set_storage_block("input_lobes", m.xy , 0);
+
         size_t probes = res.x*res.y*res.z;
         size_t i = 0;
 
         // Go through the probes in batches
+        cubemap_probes.bind();
         while(i < probes)
         {
             // Clear framebuffer
-            cubemap_probes.bind();
             glClear(
                 GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT
             );
             
             size_t batch_probes = min(probes-i, batch_size);
 
-            std::vector<camera*> c;
+            std::vector<camera*> cameras;
             for(unsigned j = 0; j < batch_probes; ++j, ++i)
             {
                 vec3 cam_pos(transform * vec4(index_position(i, res), 1));
                 batch_cameras[j].set_position(cam_pos);
                 batch_cameras[j].set_orientation(sg->get_global_orientation());
-                c.push_back(&batch_cameras[j]);
+                cameras.push_back(&batch_cameras[j]);
             }
 
-            probe_scene.set_cameras(c);
+            probe_scene.set_cameras(cameras);
             probe_pipeline.execute();
             p->compute_dispatch(uvec3(batch_probes,1,1));
 
-            std::vector<vec4> data = m.xy.read<vec4>();
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+            s->compute_dispatch(uvec3(batch_probes,1,1));
+
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+            /*std::vector<vec4> sg_probes = m.xy.read<vec4>();
             for(unsigned j = 0; j < batch_probes; ++j)
             {
                 printf("Probe %u\n", i-batch_probes+j);
                 for(unsigned k = 0; k < lobe_count; ++k)
                 {
                     printf("\tLobe %u: ", k);
-                    vec4 value = data[j*lobe_count+k];
+                    vec4 value = sg_probes[j*lobe_count+k];
                     printf("rgb(%f, %f, %f)\n", value.x, value.y, value.z);
                 }
-            }
+            }*/
 
-            // TODO: compute spherical gaussians from cubemap probes
+            c->set<int>("start_index", i);
+            for(unsigned j = 0; j < lobe_count; ++j)
+            {
+                c->set<int>("lobe_index", j);
+                c->set_image_texture("lobe_output", sg->get_amplitudes(j), 3);
+                c->compute_dispatch(uvec3(batch_probes,1,1));
+            }
         }
     }
+
+    glMemoryBarrier(
+        GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT |
+        GL_TEXTURE_UPDATE_BARRIER_BIT
+    );
 }
 
 std::string generate_sg::get_name() const
