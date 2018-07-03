@@ -39,6 +39,7 @@ src = [
   'src/loaders.cc',
   'src/material.cc',
   'src/math.cc',
+  'src/method/apply_sg.cc',
   'src/method/blit_framebuffer.cc',
   'src/method/bloom.cc',
   'src/method/clear.cc',
