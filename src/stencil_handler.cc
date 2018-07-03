@@ -22,14 +22,23 @@
 namespace lt
 {
 
-stencil_handler::stencil_handler(): value(1), ref(1) {}
+stencil_handler::stencil_handler(
+    GLenum func,
+    unsigned ref,
+    unsigned mask
+): func(func), ref(ref), mask(mask) {}
 
-void stencil_handler::set_stencil_draw(unsigned value)
-{
-    this->value = value;
+void stencil_handler::set_stencil(
+    GLenum func,
+    unsigned ref,
+    unsigned mask
+){
+    this->func = func;
+    this->ref = ref;
+    this->mask = mask;
 }
 
-void stencil_handler::set_stencil_cull(unsigned ref)
+void stencil_handler::set_stencil_ref(unsigned ref)
 {
     this->ref = ref;
 }
@@ -42,16 +51,24 @@ void stencil_handler::stencil_disable()
 void stencil_handler::stencil_draw()
 {
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, value, 0xFF);
+    glStencilFunc(GL_ALWAYS, ref, mask);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glStencilMask(0xFF);
+    glStencilMask(mask);
 }
 
 void stencil_handler::stencil_cull()
 {
     glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, ref, 0xFF);
+    glStencilFunc(func, ref, mask);
     glStencilMask(0x00);
+}
+
+void stencil_handler::stencil_draw_cull()
+{
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(func, ref, mask);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilMask(mask);
 }
 
 } // namespace lt

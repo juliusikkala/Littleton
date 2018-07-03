@@ -15,8 +15,11 @@ sg_group::sg_group(
     uvec3 resolution,
     vec3 size,
     size_t lobe_count,
-    float epsilon
-){
+    float epsilon,
+    float near,
+    float far
+): near(near), far(far)
+{
     set_scaling(size);
 
     // Generate amplitude textures
@@ -78,6 +81,20 @@ texture& sg_group::get_amplitudes(size_t lobe)
 const texture& sg_group::get_amplitudes(size_t lobe) const
 {
     return amplitudes[lobe];
+}
+
+float sg_group::get_near() const { return near; }
+void sg_group::set_near(float near) { this->near = near; }
+
+float sg_group::get_far() const { return far; }
+void sg_group::set_far(float far) { this->far = far; }
+
+float sg_group::get_density() const
+{
+    // Number of points in 1x1x1 space.
+    vec3 size = get_scaling();
+    vec3 res = get_resolution();
+    return (res.x*res.y*res.z)/(size.x*size.y*size.z);
 }
 
 } // namespace lt

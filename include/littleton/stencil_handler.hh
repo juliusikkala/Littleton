@@ -19,6 +19,7 @@
 #ifndef LT_STENCIL_HANDLER_HH
 #define LT_STENCIL_HANDLER_HH
 #include "api.hh"
+#include "glheaders.hh"
 
 namespace lt
 {
@@ -28,20 +29,30 @@ namespace lt
 class LT_API stencil_handler
 {
 public:
-    stencil_handler();
+    stencil_handler(
+        GLenum func = GL_EQUAL,
+        unsigned ref = 1,
+        unsigned mask = 0xFF
+    );
 
-    void set_stencil_draw(unsigned value = 1);
-    void set_stencil_cull(unsigned ref = 1);
+    void set_stencil(
+        GLenum func = GL_EQUAL,
+        unsigned ref = 1,
+        unsigned mask = 0xFF
+    );
+    void set_stencil_ref(unsigned ref);
 
     // These should only be used by the owner of the handler, such as a method
     // deriving from it or one that holds it.
     void stencil_disable();
     void stencil_draw();
     void stencil_cull();
+    void stencil_draw_cull();
 
 private:
-    unsigned value;
+    GLenum func;
     unsigned ref;
+    unsigned mask;
 };
 
 } // namespace lt

@@ -45,7 +45,9 @@ public:
         uvec3 resolution,
         vec3 size,
         size_t lobe_count=12,
-        float epsilon = 0.5f
+        float epsilon = 0.5f,
+        float near = 0.001f,
+        float far = 100.0f
     );
 
     sg_group(const sg_group& other) = delete;
@@ -57,10 +59,19 @@ public:
     texture& get_amplitudes(size_t lobe);
     const texture& get_amplitudes(size_t lobe) const;
 
+    float get_near() const;
+    void set_near(float near);
+
+    float get_far() const;
+    void set_far(float far);
+
+    float get_density() const;
+
 private:
     std::vector<sg_lobe> lobes;
 
     std::vector<texture> amplitudes;
+    float near, far;
 };
 
 } // namespace lt

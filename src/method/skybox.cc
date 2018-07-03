@@ -33,6 +33,7 @@ skybox::skybox(
     resource_pool& pool,
     render_scene* scene
 ):  target_method(target),
+    stencil_handler(GL_NOTEQUAL, 1, 1),
     sky_shader(pool.get_shader(
         shader::path{"skybox.vert", "skybox.frag"}, {}
     )),
@@ -44,7 +45,6 @@ skybox::skybox(
     skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     quad(common::ensure_quad_primitive(pool))
 {
-    set_stencil_cull(0);
 }
 
 void skybox::set_scene(render_scene* s)

@@ -79,20 +79,13 @@ void generate_sg::execute()
 
     // Generate probe scene
     probe_scene = *scene;
-    camera* view_camera = scene->get_camera();
-    float near = 0.001f;
-    float far = 100.0f;
-    if(view_camera)
-    {
-        near = view_camera->get_near();
-        far = view_camera->get_far();
-    }
-
-    std::vector<camera> batch_cameras(batch_size);
-    for(camera& c: batch_cameras) c.cube_perspective(near, far);
 
     for(const sg_group* sg: scene->get_sg_groups())
     {
+        std::vector<camera> batch_cameras(batch_size);
+        for(camera& c: batch_cameras)
+            c.cube_perspective(sg->get_near(), sg->get_far());
+
         generate_sg::least_squares_matrices& m = get_matrices(*sg);
         mat4 transform = sg->get_global_transform();
 
