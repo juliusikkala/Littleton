@@ -1,4 +1,5 @@
 uniform sampler2D in_depth;
+uniform sampler2D in_linear_depth;
 uniform vec3 clip_info;
 
 float get_depth(vec2 uv)

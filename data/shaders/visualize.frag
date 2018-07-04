@@ -33,6 +33,10 @@ void main(void)
     float roughness, metallic, f0;
     decode_material(uv, roughness, metallic, f0);
     out_color = vec4(roughness, metallic, f0 * 2.0f, 1.0f);
+#elif defined(SHOW_LIGHTING)
+    out_color = vec4(decode_lighting(uv), 1.0f);
+#elif defined(SHOW_INDIRECT_LIGHTING)
+    out_color = vec4(decode_indirect_lighting(uv), 1.0f);
 #else
     out_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 #endif

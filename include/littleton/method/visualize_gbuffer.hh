@@ -59,7 +59,9 @@ public:
         ROUGHNESS,
         METALLIC,
         IOR,
-        MATERIAL
+        MATERIAL,
+        LIGHTING,
+        INDIRECT_LIGHTING,
     };
 
     void show(visualizer full);

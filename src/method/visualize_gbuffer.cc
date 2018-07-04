@@ -64,6 +64,12 @@ void render_visualizer(
     case visualize_gbuffer::MATERIAL:
         s = ms->get({{"SHOW_MATERIAL", ""}});
         break;
+    case visualize_gbuffer::LIGHTING:
+        s = ms->get({{"SHOW_LIGHTING", ""}});
+        break;
+    case visualize_gbuffer::INDIRECT_LIGHTING:
+        s = ms->get({{"SHOW_INDIRECT_LIGHTING", ""}});
+        break;
     default:
         throw std::runtime_error("Unknown visualizer type");
     }
@@ -136,6 +142,7 @@ void visualize_gbuffer::execute()
 
     unsigned texture_index = 0;
     buf->bind_textures(fb_sampler, texture_index);
+    buf->set_draw(gbuffer::DRAW_LIGHTING);
 
     if(visualizers.size() == 1)
     {

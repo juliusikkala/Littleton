@@ -76,13 +76,14 @@ public:
 
     enum draw_mode
     {
-        DRAW_ALL = 0,
-        DRAW_GEOMETRY = 1,
+        DRAW_NONE = 0,
+        DRAW_ALL,
+        DRAW_GEOMETRY,
         // Default, since it works for almost everything that isn't written to
         // use a g-buffer.
-        DRAW_LIGHTING = 2,
-        DRAW_INDIRECT_LIGHTING = 3,
-        DRAW_ALL_LIGHTING = 4
+        DRAW_LIGHTING,
+        DRAW_INDIRECT_LIGHTING,
+        DRAW_ALL_LIGHTING
     };
 
     void set_draw(draw_mode mode);

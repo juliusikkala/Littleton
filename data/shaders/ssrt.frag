@@ -4,9 +4,6 @@ in vec2 uv;
 #include "cast_ray.glsl"
 #include "deferred_input.glsl"
 #include "brdf.glsl"
-
-uniform sampler2D in_linear_depth;
-uniform sampler2D in_lighting;
 uniform mat4 proj;
 uniform float thickness;
 uniform float near;

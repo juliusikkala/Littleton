@@ -101,6 +101,7 @@ void visualize_cubemap::execute()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
+    glEnable(GL_CULL_FACE);
 
     camera* cam = scene->get_camera();
     if(!cam) return;
@@ -118,6 +119,7 @@ void visualize_cubemap::execute()
         if(is_array) def["CUBEMAP_ARRAY"];
 
         shader* s = visualize_shader->get(def);
+        s->bind();
         s->set("cubemap", linear_sampler.bind(*n.cubemap, 0));
         s->set("m", mat4(1.0f));
 

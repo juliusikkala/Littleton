@@ -325,6 +325,14 @@ void gbuffer::set_draw(draw_mode mode)
 
     switch(mode)
     {
+    case DRAW_NONE:
+        color_index = -1;
+        normal_index = -1;
+        material_index = -1;
+        linear_depth_index = -1;
+        lighting_index = -1;
+        indirect_lighting_index = -1;
+        break;
     case DRAW_ALL:
         if(color)
         {
@@ -432,9 +440,6 @@ void gbuffer::set_draw(draw_mode mode)
         }
         break;
     }
-
-    if(index == 0)
-        throw std::runtime_error("G-Buffer doesn't have requested buffers!");
 
     glDrawBuffers(attachments.size(), attachments.data());
 

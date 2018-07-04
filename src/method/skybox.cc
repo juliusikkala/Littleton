@@ -104,7 +104,6 @@ void skybox::execute()
     }
     else
     {
-
         glm::mat4 p = cam->get_projection();
         sky_shader->bind();
 
