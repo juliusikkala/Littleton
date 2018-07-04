@@ -86,8 +86,10 @@ void apply_sg::execute()
         }
     );
 
-    buf->bind_textures(fb_sampler);
-    buf->set_uniforms(sg_shader);
+    unsigned bind_index = 0;
+    buf->bind_textures(fb_sampler, bind_index);
+    bind_index = 0;
+    buf->set_uniforms(sg_shader, bind_index);
     sg_shader->set("projection_info", cam->get_projection_info());
     sg_shader->set("clip_info", cam->get_clip_info());
 

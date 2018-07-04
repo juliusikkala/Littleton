@@ -34,11 +34,13 @@ gbuffer::gbuffer(
     texture* material,
     texture* lighting,
     texture* linear_depth,
-    texture* depth_stencil
+    texture* depth_stencil,
+    texture* indirect_lighting
 ):  render_target(ctx, GL_TEXTURE_2D, glm::uvec3(size, 1)),
     normal(normal), color(color), material(material),
     linear_depth(linear_depth), lighting(lighting),
-    depth_stencil(depth_stencil), depth_stencil_rbo(0)
+    depth_stencil(depth_stencil), depth_stencil_rbo(0),
+    indirect_lighting(indirect_lighting)
 {
     // Validate textures first
     if(
@@ -78,6 +80,11 @@ gbuffer::gbuffer(
         depth_stencil->get_internal_format() != GL_DEPTH24_STENCIL8 ||
         depth_stencil->get_target() != GL_TEXTURE_2D)
     ) throw std::runtime_error("Incompatible depth_stencil");
+
+    if(indirect_lighting != nullptr && (
+        indirect_lighting->get_size() != size ||
+        indirect_lighting->get_target() != GL_TEXTURE_2D)
+    ) throw std::runtime_error("Incompatible indirect_lighting");
 
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -168,6 +175,17 @@ gbuffer::gbuffer(
         glReadBuffer(GL_COLOR_ATTACHMENT4);
     }
 
+    if(indirect_lighting)
+    {
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER,
+            GL_COLOR_ATTACHMENT5,
+            indirect_lighting->get_target(),
+            indirect_lighting->get_texture(),
+            0
+        );
+    }
+
     set_draw(DRAW_LIGHTING);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -182,10 +200,12 @@ gbuffer::gbuffer(gbuffer&& other)
     linear_depth(other.linear_depth), lighting(other.lighting),
     depth_stencil(other.depth_stencil),
     depth_stencil_rbo(other.depth_stencil_rbo),
+    indirect_lighting(other.indirect_lighting),
     normal_index(other.normal_index), color_index(other.color_index),
     material_index(other.material_index),
     linear_depth_index(other.linear_depth_index),
-    lighting_index(other.lighting_index)
+    lighting_index(other.lighting_index),
+    indirect_lighting_index(other.indirect_lighting_index)
 {
     other.fbo = 0;
     other.depth_stencil_rbo = 0;
@@ -203,31 +223,37 @@ texture* gbuffer::get_material() const { return material; }
 texture* gbuffer::get_linear_depth() const { return linear_depth; }
 texture* gbuffer::get_lighting() const { return lighting; }
 texture* gbuffer::get_depth_stencil() const { return depth_stencil; }
+texture* gbuffer::get_indirect_lighting() const { return indirect_lighting; }
 
 int gbuffer::get_normal_index() const { return normal_index; }
 int gbuffer::get_color_index() const { return color_index; }
 int gbuffer::get_material_index() const { return material_index; }
 int gbuffer::get_linear_depth_index() const { return linear_depth_index; }
 int gbuffer::get_lighting_index() const { return lighting_index; }
-
-void gbuffer::bind_textures(const sampler& fb_sampler) const
-{
-    if(depth_stencil) fb_sampler.bind(*depth_stencil, 0);
-    if(color) fb_sampler.bind(*color, 1);
-    if(normal) fb_sampler.bind(*normal, 2);
-    if(material) fb_sampler.bind(*material, 3);
-    if(linear_depth) fb_sampler.bind(*linear_depth, 4);
-    if(lighting) fb_sampler.bind(*lighting, 5);
+int gbuffer::get_indirect_lighting_index() const {
+    return indirect_lighting_index;
 }
 
-void gbuffer::set_uniforms(shader* s) const
+void gbuffer::bind_textures(const sampler& fb_sampler, unsigned& index) const
 {
-    if(depth_stencil) s->set("in_depth", 0);
-    if(color) s->set("in_color", 1);
-    if(normal) s->set("in_normal", 2);
-    if(material) s->set("in_material", 3);
-    if(linear_depth) s->set("in_linear_depth", 4);
-    if(lighting) s->set("in_lighting", 5);
+    if(depth_stencil) fb_sampler.bind(*depth_stencil, index++);
+    if(color) fb_sampler.bind(*color, index++);
+    if(normal) fb_sampler.bind(*normal, index++);
+    if(material) fb_sampler.bind(*material, index++);
+    if(linear_depth) fb_sampler.bind(*linear_depth, index++);
+    if(lighting) fb_sampler.bind(*lighting, index++);
+    if(indirect_lighting) fb_sampler.bind(*indirect_lighting, index++);
+}
+
+void gbuffer::set_uniforms(shader* s, unsigned& index) const
+{
+    if(depth_stencil) s->set<int>("in_depth", index++);
+    if(color) s->set<int>("in_color", index++);
+    if(normal) s->set<int>("in_normal", index++);
+    if(material) s->set<int>("in_material", index++);
+    if(linear_depth) s->set<int>("in_linear_depth", index++);
+    if(lighting) s->set<int>("in_lighting", index++);
+    if(indirect_lighting) s->set<int>("in_indirect_lighting", index++);
 }
 
 void gbuffer::update_definitions(shader::definition_map& def) const
@@ -254,6 +280,11 @@ void gbuffer::update_definitions(shader::definition_map& def) const
     if(lighting_index >= 0)
         def["LIGHTING_INDEX"] = std::to_string(lighting_index);
     else def.erase("LIGHTING_INDEX");
+
+    if(indirect_lighting_index >= 0)
+        def["INDIRECT_LIGHTING_INDEX"] =
+            std::to_string(indirect_lighting_index);
+    else def.erase("INDIRECT_LIGHTING_INDEX");
 }
 
 void gbuffer::clear()
@@ -275,6 +306,8 @@ void gbuffer::clear()
         glClearBufferfv(GL_COLOR, linear_depth_index, neg_infinite);
     if(lighting_index >= 0)
         glClearBufferfv(GL_COLOR, lighting_index, zero);
+    if(indirect_lighting_index >= 0)
+        glClearBufferfv(GL_COLOR, indirect_lighting_index, zero);
 
     glClearDepth(1);
     glClearStencil(0);
@@ -323,6 +356,12 @@ void gbuffer::set_draw(draw_mode mode)
             attachments.push_back(GL_COLOR_ATTACHMENT4);
         }
 
+        if(indirect_lighting)
+        {
+            indirect_lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT5);
+        }
+
         break;
     case DRAW_GEOMETRY:
         if(color)
@@ -349,6 +388,7 @@ void gbuffer::set_draw(draw_mode mode)
             attachments.push_back(GL_COLOR_ATTACHMENT3);
         }
         lighting_index = -1;
+        indirect_lighting_index = -1;
         break;
     case DRAW_LIGHTING:
         color_index = -1;
@@ -359,6 +399,36 @@ void gbuffer::set_draw(draw_mode mode)
         {
             lighting_index = index++;
             attachments.push_back(GL_COLOR_ATTACHMENT4);
+        }
+        indirect_lighting_index = -1;
+        break;
+    case DRAW_INDIRECT_LIGHTING:
+        color_index = -1;
+        normal_index = -1;
+        material_index = -1;
+        linear_depth_index = -1;
+        lighting_index = -1;
+        if(indirect_lighting)
+        {
+            indirect_lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT5);
+        }
+        break;
+    case DRAW_ALL_LIGHTING:
+        color_index = -1;
+        normal_index = -1;
+        material_index = -1;
+        linear_depth_index = -1;
+        if(lighting)
+        {
+            lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT4);
+        }
+
+        if(indirect_lighting)
+        {
+            indirect_lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT5);
         }
         break;
     }

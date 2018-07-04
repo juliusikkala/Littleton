@@ -68,7 +68,8 @@ void render_visualizer(
         throw std::runtime_error("Unknown visualizer type");
     }
     s->bind();
-    buf->set_uniforms(s);
+    unsigned texture_index = 0;
+    buf->set_uniforms(s, texture_index);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
     quad.draw();
@@ -133,7 +134,8 @@ void visualize_gbuffer::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    buf->bind_textures(fb_sampler);
+    unsigned texture_index = 0;
+    buf->bind_textures(fb_sampler, texture_index);
 
     if(visualizers.size() == 1)
     {

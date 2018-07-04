@@ -43,7 +43,8 @@ public:
         texture* material = nullptr,
         texture* lighting = nullptr,
         texture* linear_depth = nullptr,
-        texture* depth_stencil = nullptr
+        texture* depth_stencil = nullptr,
+        texture* indirect_lighting = nullptr
     );
     gbuffer(gbuffer&& other);
     ~gbuffer();
@@ -54,6 +55,7 @@ public:
     texture* get_linear_depth() const;
     texture* get_lighting() const;
     texture* get_depth_stencil() const;
+    texture* get_indirect_lighting() const;
 
     // -1 if not bound on drawBuffers
     int get_normal_index() const;
@@ -61,10 +63,12 @@ public:
     int get_material_index() const;
     int get_linear_depth_index() const;
     int get_lighting_index() const;
+    int get_indirect_lighting_index() const;
 
-    void bind_textures(const sampler& fb_sampler) const;
+    void bind_textures(const sampler& fb_sampler, unsigned& index) const;
+
     // Call bind_textures at least once before this!
-    void set_uniforms(shader* s) const;
+    void set_uniforms(shader* s, unsigned& index) const;
     void update_definitions(shader::definition_map& def) const;
 
     // Assumes either draw_all or draw_geometry is in effect
@@ -74,7 +78,11 @@ public:
     {
         DRAW_ALL = 0,
         DRAW_GEOMETRY = 1,
-        DRAW_LIGHTING = 2
+        // Default, since it works for almost everything that isn't written to
+        // use a g-buffer.
+        DRAW_LIGHTING = 2,
+        DRAW_INDIRECT_LIGHTING = 3,
+        DRAW_ALL_LIGHTING = 4
     };
 
     void set_draw(draw_mode mode);
@@ -98,12 +106,14 @@ private:
     texture* lighting;
     texture* depth_stencil;
     GLuint depth_stencil_rbo;
+    texture* indirect_lighting;
 
     int normal_index;
     int color_index;
     int material_index;
     int linear_depth_index;
     int lighting_index;
+    int indirect_lighting_index;
 };
 
 } // namespace lt

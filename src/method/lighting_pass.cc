@@ -34,7 +34,8 @@ using namespace lt::method;
 
 void set_gbuf(shader* s, gbuffer* buf, const camera* cam)
 {
-    buf->set_uniforms(s);
+    unsigned start_index = 0;
+    buf->set_uniforms(s, start_index);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
 }
@@ -159,7 +160,8 @@ void render_shadowed(
     const camera* cam,
     float cutoff,
     lighting_pass::depth_test light_test,
-    const primitive& quad
+    const primitive& quad,
+    unsigned start_index
 ){
     for(const auto& pair: shadows)
     {
@@ -171,7 +173,7 @@ void render_shadowed(
         shader* s = lighting_shader->get(def);
         s->bind();
 
-        unsigned texture_index = 4;
+        unsigned texture_index = start_index;
         m->set_omni_uniforms(s, texture_index);
 
         for(omni_shadow_map* sm: pair.second)
@@ -209,7 +211,8 @@ void render_shadowed(
     const camera* cam,
     float cutoff,
     lighting_pass::depth_test light_test,
-    const primitive& quad
+    const primitive& quad,
+    unsigned start_index
 ){
     for(const auto& pair: shadows)
     {
@@ -221,7 +224,7 @@ void render_shadowed(
         shader* s = lighting_shader->get(def);
         s->bind();
 
-        unsigned texture_index = 4;
+        unsigned texture_index = start_index;
         m->set_omni_uniforms(s, texture_index);
 
         for(perspective_shadow_map* sm: pair.second)
@@ -255,7 +258,8 @@ void render_point_lights(
     float cutoff,
     lighting_pass::depth_test light_test,
     const primitive& quad,
-    bool visualize_light_volumes
+    bool visualize_light_volumes,
+    unsigned start_index
 ){
     const std::vector<point_light*>& lights = 
         scene->get_point_lights();
@@ -276,7 +280,8 @@ void render_point_lights(
         scene->get_camera(),
         cutoff,
         light_test,
-        quad
+        quad,
+        start_index
     );
 
     render_shadowed(
@@ -289,7 +294,8 @@ void render_point_lights(
         scene->get_camera(),
         cutoff,
         light_test,
-        quad
+        quad,
+        start_index
     );
 
     // Render unshadowed lights
@@ -313,7 +319,8 @@ void render_spotlights(
     float cutoff,
     lighting_pass::depth_test light_test,
     const primitive& quad,
-    bool visualize_light_volumes
+    bool visualize_light_volumes,
+    unsigned start_index
 ){
     const std::vector<spotlight*>& lights = scene->get_spotlights();
     std::vector<bool> handled_lights(lights.size(), false);
@@ -333,7 +340,8 @@ void render_spotlights(
         scene->get_camera(),
         cutoff,
         light_test,
-        quad
+        quad,
+        start_index
     );
 
     render_shadowed(
@@ -346,7 +354,8 @@ void render_spotlights(
         scene->get_camera(),
         cutoff,
         light_test,
-        quad
+        quad,
+        start_index
     );
 
     // Render unshadowed lights
@@ -367,7 +376,8 @@ void render_directional_lights(
     gbuffer* buf,
     multishader* lighting_shader,
     render_scene* scene,
-    const primitive& quad
+    const primitive& quad,
+    unsigned start_index
 ){
     const std::vector<directional_light*>& lights = 
         scene->get_directional_lights();
@@ -389,7 +399,7 @@ void render_directional_lights(
         shader* s = lighting_shader->get(def);
         s->bind();
 
-        unsigned texture_index = 4;
+        unsigned texture_index = start_index;
         m->set_directional_uniforms(s, texture_index);
 
         for(directional_shadow_map* sm: pair.second)
@@ -513,17 +523,20 @@ void lighting_pass::execute()
     camera* cam = scene->get_camera();
     if(!cam) return;
 
-    buf->bind_textures(fb_sampler);
+    unsigned texture_index = 0;
+    buf->bind_textures(fb_sampler, texture_index);
 
     render_point_lights(
         buf, lighting_shader, scene,
         cutoff, light_test,
-        quad, visualize_light_volumes
+        quad, visualize_light_volumes,
+        texture_index
     );
     render_spotlights(
         buf, lighting_shader, scene,
         cutoff, light_test,
-        quad, visualize_light_volumes
+        quad, visualize_light_volumes,
+        texture_index
     );
 
     if(cutoff > 0 && light_test != TEST_NONE)
@@ -533,7 +546,13 @@ void lighting_pass::execute()
         glDepthMask(GL_TRUE);
     }
 
-    render_directional_lights(buf, lighting_shader, scene, quad);
+    render_directional_lights(
+        buf,
+        lighting_shader,
+        scene,
+        quad,
+        texture_index
+    );
 }
 
 std::string lighting_pass::get_name() const
