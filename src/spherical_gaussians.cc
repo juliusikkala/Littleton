@@ -20,7 +20,7 @@ sg_group::sg_group(
     float far
 ): near(near), far(far)
 {
-    set_scaling(size);
+    set_scaling(size*0.5f);
 
     // Generate amplitude textures
     for(unsigned i = 0; i < lobe_count; ++i)

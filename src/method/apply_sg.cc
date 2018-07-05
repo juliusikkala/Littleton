@@ -39,7 +39,7 @@ apply_sg::apply_sg(
     stencil_handler(GL_NOTEQUAL, 1<<7, 1<<7),
     buf(&buf),
     sg_shader(pool.get_shader(
-        shader::path{"generic.vert", "sao/apply_sg.frag"}, {}
+        shader::path{"generic.vert", "apply_sg.frag"}, {}
     )),
     scene(scene),
     cube(common::ensure_cube_primitive(pool)),
@@ -73,6 +73,12 @@ void apply_sg::execute()
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
 
+    // Draw back faces only of the bounding cube
+    glFrontFace(GL_CW);
+
+    if(&get_target() == buf && buf->get_indirect_lighting() != nullptr)
+        buf->set_draw(gbuffer::DRAW_INDIRECT_LIGHTING);
+
     glm::mat4 p = cam->get_projection();
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 vp = p * v;
@@ -101,7 +107,7 @@ void apply_sg::execute()
         glm::mat4 mv = v * m;
 
         sg_shader->set("m", glm::mat4(1.0));
-        sg_shader->set("inv_m", glm::inverseTranspose(mv));
+        sg_shader->set("inv_mv", glm::inverse(mv));
         sg_shader->set("mvp", vp * m);
 
         stencil_cull();
@@ -116,6 +122,10 @@ void apply_sg::execute()
             cube.draw();
         }
     }
+
+    if(&get_target() == buf) buf->set_draw(gbuffer::DRAW_LIGHTING);
+
+    glFrontFace(GL_CCW);
 }
 
 std::string apply_sg::get_name() const 

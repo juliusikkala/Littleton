@@ -36,7 +36,8 @@ ssrt::ssrt(
     gbuffer& buf,
     resource_pool& pool,
     render_scene* scene
-):  target_method(target), buf(&buf), pool(pool),
+):  target_method(target), stencil_handler(GL_EQUAL, 1, 1),
+    buf(&buf), pool(pool),
     ssrt_shaders(pool.get_shader(shader::path{"fullscreen.vert", "ssrt.frag"})),
     blit_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blit_texture.frag"}, {}
