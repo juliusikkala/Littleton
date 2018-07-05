@@ -236,7 +236,11 @@ void main(void)
 
 #ifdef OUTPUT_LIGHTING
 #ifdef APPLY_AMBIENT
+#ifdef INDIRECT_LIGHTING_INDEX
+    out_indirect_lighting = vec4(surface_color.rgb * ambient, surface_color.a);
+#else
     color.rgb += surface_color.rgb * ambient;
+#endif
 #endif
 #ifdef APPLY_EMISSION
     color.rgb += emission;

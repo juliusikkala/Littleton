@@ -34,6 +34,7 @@ namespace lt
 class gbuffer;
 class resource_pool;
 class shader;
+class multishader;
 
 }
 
@@ -79,7 +80,7 @@ private:
 
     shader* ao_sample_pass_shader;
     shader* blur_shader;
-    shader* ambient_shader;
+    multishader* ambient_shader;
     render_scene* scene;
 
     float radius;

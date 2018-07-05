@@ -626,20 +626,19 @@ void render_forward_pass(
     );
     common_def["LAYERS"] = std::to_string(layers);
 
-    shader::definition_map depth_def(common_def);
-
-    if(gbuf)
-    {
-        depth_def["OUTPUT_GEOMETRY"];
-        gbuf->set_draw(gbuffer::DRAW_ALL);
-        gbuf->update_definitions(depth_def);
-    }
-
     glDisable(GL_BLEND);
     glDepthFunc(GL_LEQUAL);
 
     if(gbuf)
     {
+        shader::definition_map geometry_def(common_def);
+        geometry_def["OUTPUT_GEOMETRY"];
+        geometry_def["APPLY_EMISSION"];
+        if(apply_ambient) geometry_def["APPLY_AMBIENT"];
+
+        gbuf->set_draw(gbuffer::DRAW_ALL);
+        gbuf->update_definitions(geometry_def);
+
         if(!opaque)
         {
             glColorMaski(
@@ -649,12 +648,13 @@ void render_forward_pass(
         }
 
         stencil.stencil_draw();
+        // Geometry pass
         depth_pass(
             target,
             forward_shader,
             world_space,
             scene,
-            depth_def,
+            geometry_def,
             !opaque
         );
         stencil.stencil_disable();
@@ -676,19 +676,23 @@ void render_forward_pass(
                 GL_ZERO,
                 GL_ONE_MINUS_SRC_ALPHA
             );
-            depth_def.erase("OUTPUT_GEOMETRY");
+            geometry_def.erase("OUTPUT_GEOMETRY");
+            geometry_def.erase("APPLY_EMISSION");
+            geometry_def.erase("APPLY_AMBIENT");
             depth_pass(
                 target,
                 forward_shader,
                 world_space,
                 scene,
-                depth_def,
+                geometry_def,
                 !opaque
             );
         }
     }
     else
     {
+        shader::definition_map depth_def(common_def);
+
         if(!opaque) glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         stencil.stencil_draw();
@@ -733,9 +737,6 @@ void render_forward_pass(
         common_def,
         !opaque
     );
-
-    if(apply_ambient) common_def["APPLY_AMBIENT"];
-    common_def["APPLY_EMISSION"];
 
     render_unshadowed_lights(
         target,

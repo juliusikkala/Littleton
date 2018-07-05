@@ -17,6 +17,7 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ssao.hh"
+#include "multishader.hh"
 #include "shader.hh"
 #include "helpers.hh"
 #include "gbuffer.hh"
@@ -81,7 +82,7 @@ ssao::ssao(
         shader::path{"fullscreen.vert", "blur.frag"}, {{"HORIZONTAL", ""}}
     )),
     ambient_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "ambient.frag"}, {}
+        shader::path{"fullscreen.vert", "ambient.frag"}
     )),
     scene(scene),
     ssao_buffer(get_context(), target.get_size(), GL_R8),
@@ -195,11 +196,18 @@ void ssao::execute()
     ssao_buffer.swap();
     get_target().bind();
 
-    ambient_shader->bind();
-    ambient_shader->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
+    texture* indirect = buf->get_indirect_lighting();
+    shader::definition_map ambient_definitions;
+    if(indirect) ambient_definitions["USE_INDIRECT_LIGHTING"];
+    shader* a = ambient_shader->get(ambient_definitions);
 
-    ambient_shader->set("ambient", scene->get_ambient());
-    ambient_shader->set("occlusion", fb_sampler.bind(ssao_buffer.output(), 2));
+    a->bind();
+
+    if(indirect) a->set("in_indirect_lighting", fb_sampler.bind(*indirect, 0));
+    else a->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
+
+    a->set("ambient", scene->get_ambient());
+    a->set("occlusion", fb_sampler.bind(ssao_buffer.output(), 1));
 
     quad.draw();
 }

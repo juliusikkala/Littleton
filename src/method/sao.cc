@@ -17,6 +17,7 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "sao.hh"
+#include "multishader.hh"
 #include "shader.hh"
 #include "math.hh"
 #include "gbuffer.hh"
@@ -46,7 +47,7 @@ sao::sao(
         shader::path{"fullscreen.vert", "sao/blur.frag"}, {}
     )),
     ambient_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "ambient.frag"}, {}
+        shader::path{"fullscreen.vert", "ambient.frag"}
     )),
     scene(scene),
     radius(radius), samples(samples), bias(bias), intensity(intensity),
@@ -185,11 +186,18 @@ void sao::execute()
     ao.swap();
     get_target().bind();
 
-    ambient_shader->bind();
-    ambient_shader->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
+    texture* indirect = buf->get_indirect_lighting();
+    shader::definition_map ambient_definitions;
+    if(indirect) ambient_definitions["USE_INDIRECT_LIGHTING"];
+    shader* a = ambient_shader->get(ambient_definitions);
 
-    ambient_shader->set("ambient", scene->get_ambient());
-    ambient_shader->set("occlusion", fb_sampler.bind(ao.output(), 1));
+    a->bind();
+
+    if(indirect) a->set("in_indirect_lighting", fb_sampler.bind(*indirect, 0));
+    else a->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
+
+    a->set("ambient", scene->get_ambient());
+    a->set("occlusion", fb_sampler.bind(ao.output(), 1));
 
     quad.draw();
 }

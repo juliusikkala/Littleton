@@ -33,6 +33,7 @@ class gbuffer;
 class resource_pool;
 class shader;
 class render_scene;
+class multishader;
 
 }
 
@@ -75,7 +76,7 @@ private:
     shader* ssao_shader;
     shader* vertical_blur_shader;
     shader* horizontal_blur_shader;
-    shader* ambient_shader;
+    multishader* ambient_shader;
 
     render_scene* scene;
 

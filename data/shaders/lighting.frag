@@ -16,10 +16,6 @@ uniform directional_light light;
 
 out vec4 out_color;
 
-#ifdef AMBIENT
-uniform vec3 ambient;
-#endif
-
 #ifdef SHADOW_MAPPING
 uniform shadow_map shadow;
 #endif
@@ -113,10 +109,6 @@ void main(void)
         dot(normal, -light.direction)
     );
 #endif
-#endif
-
-#ifdef AMBIENT
-    vec3 lighting = surface_color * ambient;
 #endif
 
 #ifdef VISUALIZE

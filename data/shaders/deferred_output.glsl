@@ -25,6 +25,10 @@ layout(location=LIGHTING_INDEX) out vec4 out_lighting;
 #undef OUTPUT_LIGHTING
 #endif
 
+#ifdef INDIRECT_LIGHTING_INDEX
+layout(location=INDIRECT_LIGHTING_INDEX) out vec4 out_indirect_lighting;
+#endif
+
 vec2 encode_normal(vec3 normal)
 {
     return project_lambert_azimuthal_equal_area(normal);
