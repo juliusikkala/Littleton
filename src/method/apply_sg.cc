@@ -17,6 +17,8 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "apply_sg.hh"
+#include "context.hh"
+#include "multishader.hh"
 #include "shader.hh"
 #include "math.hh"
 #include "gbuffer.hh"
@@ -36,11 +38,10 @@ apply_sg::apply_sg(
     resource_pool& pool,
     render_scene* scene
 ):  target_method(target),
+    glresource(target.get_context()),
     stencil_handler(GL_NOTEQUAL, 1<<7, 1<<7),
     buf(&buf),
-    sg_shader(pool.get_shader(
-        shader::path{"generic.vert", "apply_sg.frag"}, {}
-    )),
+    sg_shader(pool.get_shader(shader::path{"generic.vert", "sg/apply.frag"})),
     scene(scene),
     cube(common::ensure_cube_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
@@ -94,10 +95,21 @@ void apply_sg::execute()
 
     unsigned bind_index = 0;
     buf->bind_textures(fb_sampler, bind_index);
+    unsigned available_texture_slots =
+        get_context()[GL_MAX_TEXTURE_IMAGE_UNITS] - bind_index;
+
+    shader* s = sg_shader->get({
+        {"MAX_LOBE_COUNT", std::to_string(available_texture_slots)}
+    });
+    s->set("projection_info", cam->get_projection_info());
+    s->set("clip_info", cam->get_clip_info());
+
     bind_index = 0;
-    buf->set_uniforms(sg_shader, bind_index);
-    sg_shader->set("projection_info", cam->get_projection_info());
-    sg_shader->set("clip_info", cam->get_clip_info());
+    buf->set_uniforms(s, bind_index);
+
+    std::vector<vec3> axis_buffer(available_texture_slots);
+    std::vector<float> sharpness_buffer(available_texture_slots);
+    std::vector<int> amplitude_buffer(available_texture_slots);
 
     for(sg_group* group: groups_by_density)
     {
@@ -106,19 +118,51 @@ void apply_sg::execute()
         glm::mat4 m = group->get_global_transform();
         glm::mat4 mv = v * m;
 
-        sg_shader->set("m", glm::mat4(1.0));
-        sg_shader->set("inv_mv", glm::inverse(mv));
-        sg_shader->set("mvp", vp * m);
+        s->set("m", glm::mat4(1.0));
+        s->set("inv_mv", glm::inverse(mv));
+        s->set("mvp", vp * m);
 
         stencil_cull();
-        for(unsigned i = 0; i < lobes.size(); ++i)
+        unsigned i = 0;
+        while(i < lobes.size())
         {
-            if(i == lobes.size()-1)
-                stencil_draw_cull();
-            sg_shader->set(
-                "sg_lobe",
-                linear_sampler.bind(group->get_amplitudes(i), 6)
+            unsigned batch_size = min(
+                (unsigned)lobes.size() - i,
+                available_texture_slots
             );
+            s->set<int>("sg_lobe_count", batch_size);
+
+            unsigned j = 0;
+            for(j = 0; j < batch_size; ++j)
+            {
+                std::string str_index = std::to_string(j);
+                amplitude_buffer[j] = linear_sampler.bind(
+                    group->get_amplitudes(i+j),
+                    bind_index + j
+                );
+                axis_buffer[j] = lobes[i + j].axis;
+                sharpness_buffer[j] = lobes[i + j].sharpness;
+            }
+
+            for(unsigned k = j; k < available_texture_slots; ++k)
+                amplitude_buffer[k] = amplitude_buffer[j - 1];
+
+            s->set(
+                "sg_amplitude",
+                amplitude_buffer.size(),
+                amplitude_buffer.data()
+            );
+            s->set("sg_axis", axis_buffer.size(), axis_buffer.data());
+            s->set("sg_sharpness",
+                sharpness_buffer.size(),
+                sharpness_buffer.data()
+            );
+
+            i += available_texture_slots;
+            // If last iteration, draw to stencil
+            if(i >= lobes.size())
+                stencil_draw_cull();
+
             cube.draw();
         }
     }

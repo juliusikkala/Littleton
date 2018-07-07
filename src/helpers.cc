@@ -419,4 +419,17 @@ GLenum get_binding_name(GLenum target)
     }
 }
 
+bool gl_target_is_array(GLenum target)
+{
+    switch(target)
+    {
+    case GL_TEXTURE_1D_ARRAY:
+    case GL_TEXTURE_2D_ARRAY:
+    case GL_TEXTURE_CUBE_MAP_ARRAY:
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace lt

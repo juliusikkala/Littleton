@@ -68,6 +68,7 @@ public:
     GLenum get_type() const;
     glm::uvec2 get_size() const;
     glm::uvec3 get_dimensions() const;
+    size_t get_texel_size() const;
 
     void generate_mipmaps();
 
@@ -100,6 +101,9 @@ public:
         const void* data = nullptr
     );
 
+    template<typename T>
+    std::vector<T> read() const;
+
 protected:
     explicit texture(context& ctx);
 
@@ -128,5 +132,7 @@ protected:
 };
 
 } // namespace lt
+
+#include "texture.tcc"
 
 #endif

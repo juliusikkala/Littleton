@@ -491,7 +491,7 @@ void shader::set_image_texture(
         bind_point,
         tex.get_texture(),
         0,
-        true,
+        true,//gl_target_is_array(tex.get_target()),
         0,
         access,
         tex.get_internal_format()

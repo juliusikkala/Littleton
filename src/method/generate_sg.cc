@@ -27,7 +27,7 @@ namespace
     {
         unsigned layer = space.x * space.y;
 
-        unsigned z = index / (layer);
+        unsigned z = index / layer;
         unsigned layer_index = index % layer;
         unsigned y = layer_index / space.x;
         unsigned x = layer_index % space.x;
@@ -146,7 +146,10 @@ void generate_sg::execute()
 
             s->compute_dispatch(uvec3(batch_probes,1,1));
 
-            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            glMemoryBarrier(
+                GL_SHADER_STORAGE_BARRIER_BIT |
+                GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+            );
 
             /*std::vector<vec4> sg_probes = m.xy.read<vec4>();
             for(unsigned j = 0; j < batch_probes; ++j)
@@ -160,14 +163,21 @@ void generate_sg::execute()
                 }
             }*/
 
-            c->set<int>("start_index", i);
+            c->set<int>("start_index", i - batch_probes);
             for(unsigned j = 0; j < lobe_count; ++j)
             {
                 c->set<int>("lobe_index", j);
-                c->set_image_texture("lobe_output", sg->get_amplitudes(j), 3);
+                c->set_image_texture(
+                    "lobe_output", sg->get_amplitudes(j), 3, GL_WRITE_ONLY
+                );
                 c->compute_dispatch(uvec3(batch_probes,1,1));
             }
         }
+
+        glMemoryBarrier(
+            GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT |
+            GL_TEXTURE_UPDATE_BARRIER_BIT
+        );
     }
 
     glMemoryBarrier(

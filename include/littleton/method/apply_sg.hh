@@ -34,14 +34,14 @@ namespace lt
 
 class gbuffer;
 class resource_pool;
-class shader;
+class multishader;
 
 }
 
 namespace lt::method
 {
 
-class LT_API apply_sg: public target_method, public stencil_handler
+class LT_API apply_sg: public target_method, public glresource, public stencil_handler
 {
 public:
     apply_sg(
@@ -61,7 +61,7 @@ public:
 private:
     gbuffer* buf;
 
-    shader* sg_shader;
+    multishader* sg_shader;
     render_scene* scene;
 
     const primitive& cube;

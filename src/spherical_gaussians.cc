@@ -28,7 +28,7 @@ sg_group::sg_group(
             ctx, resolution, GL_RGBA16F, GL_FLOAT, 0, GL_TEXTURE_3D
         );
 
-    // Always add DC entry (if we have any lobes at all)
+    /*// Always add DC entry (if we have any lobes at all)
     if(lobe_count > 0)
     {
         // The direction here doesn't matter, since sharpness == 0
@@ -37,7 +37,7 @@ sg_group::sg_group(
         // zero-length vector somewhere.
         lobes.push_back({vec3(1,0,0), 0.0f});
         lobe_count--;
-    }
+    }*/
 
     std::vector<vec3> axes;
     

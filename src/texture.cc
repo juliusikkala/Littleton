@@ -371,6 +371,13 @@ glm::uvec3 texture::get_dimensions() const
     return dimensions;
 }
 
+size_t texture::get_texel_size() const
+{
+    load();
+    return gl_type_sizeof(type) *
+        internal_format_channel_count(internal_format);
+}
+
 void texture::generate_mipmaps()
 {
     load();

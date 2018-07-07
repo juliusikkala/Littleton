@@ -47,6 +47,7 @@ GLint internal_format_compatible_type(GLint internal_format);
 unsigned internal_format_channel_count(GLint internal_format);
 unsigned gl_type_sizeof(GLenum type);
 GLenum get_binding_name(GLenum target);
+bool gl_target_is_array(GLenum target);
 
 template<typename T>
 void sorted_insert(
