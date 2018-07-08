@@ -16,9 +16,10 @@ sg_group::sg_group(
     vec3 size,
     size_t lobe_count,
     float epsilon,
+    float max_brightness,
     float near,
     float far
-): near(near), far(far)
+): near(near), far(far), max_brightness(max_brightness)
 {
     set_scaling(size*0.5f);
 
@@ -27,17 +28,6 @@ sg_group::sg_group(
         amplitudes.emplace_back(
             ctx, resolution, GL_RGBA16F, GL_FLOAT, 0, GL_TEXTURE_3D
         );
-
-    /*// Always add DC entry (if we have any lobes at all)
-    if(lobe_count > 0)
-    {
-        // The direction here doesn't matter, since sharpness == 0
-        // => the gaussian is constant, equal to its amplitude. Just set the
-        // direction to something other than zero to avoid dividing by a
-        // zero-length vector somewhere.
-        lobes.push_back({vec3(1,0,0), 0.0f});
-        lobe_count--;
-    }*/
 
     std::vector<vec3> axes;
     
@@ -88,6 +78,13 @@ void sg_group::set_near(float near) { this->near = near; }
 
 float sg_group::get_far() const { return far; }
 void sg_group::set_far(float far) { this->far = far; }
+
+float sg_group::get_max_brightness() const { return max_brightness; }
+
+void sg_group::set_max_brightness(float max_brightness)
+{
+    this->max_brightness = max_brightness;
+}
 
 float sg_group::get_density() const
 {

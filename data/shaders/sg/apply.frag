@@ -24,7 +24,7 @@ void main(void)
     for(int i = 0; i < sg_lobe_count; ++i)
     {
         sg_lobe lobe;
-        lobe.amplitude = texture(sg_amplitude[i], cube_coord).rgb;
+        lobe.amplitude = texture(sg_amplitude[i], cube_coord*0.5f+0.5f).rgb;
         lobe.axis = sg_axis[i];
         lobe.sharpness = sg_sharpness[i];
 

@@ -692,6 +692,7 @@ void render_forward_pass(
     else
     {
         shader::definition_map depth_def(common_def);
+        depth_def["APPLY_EMISSION"];
 
         if(!opaque) glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 

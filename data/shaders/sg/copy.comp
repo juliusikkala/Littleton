@@ -26,7 +26,8 @@ ivec3 index_position(int i)
 
 void main()
 {
-    ivec3 pos = index_position(start_index + int(gl_WorkGroupID.x));
+    int i = start_index + int(gl_WorkGroupID.x);
+    ivec3 pos = index_position(i);
     imageStore(
         lobe_output,
         pos,

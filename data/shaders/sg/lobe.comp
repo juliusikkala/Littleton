@@ -9,6 +9,8 @@ layout (std430, binding = 2) buffer output_lobes
     writeonly vec3 data[MAX_BATCH_SIZE][LOBE_COUNT];
 } lobes;
 
+uniform float max_brightness;
+
 void main()
 {
     vec3 c = vec3(0);
@@ -20,7 +22,11 @@ void main()
         {
             for(int x = 0; x < IMAGE_RESOLUTION; ++x)
             {
-                c += imageLoad(input_maps, ivec3(x, y, face + map_layer)).rgb *
+                vec3 env = imageLoad(
+                    input_maps,
+                    ivec3(x, y, face + map_layer)
+                ).rgb;
+                c += min(env, vec3(max_brightness)) *
                     imageLoad(input_weights, ivec3(x, y, face + weight_layer)).x;
             }
         }

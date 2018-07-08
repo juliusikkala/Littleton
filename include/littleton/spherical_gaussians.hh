@@ -46,6 +46,7 @@ public:
         vec3 size,
         size_t lobe_count=12,
         float epsilon = 0.5f,
+        float max_brightness = 2.0f,
         float near = 0.001f,
         float far = 100.0f
     );
@@ -65,13 +66,18 @@ public:
     float get_far() const;
     void set_far(float far);
 
+    // Clamps brightness to this range (makes smoother probes at the expense of
+    // realism)
+    float get_max_brightness() const;
+    void set_max_brightness(float max_brightness);
+
     float get_density() const;
 
 private:
     std::vector<sg_lobe> lobes;
 
     std::vector<texture> amplitudes;
-    float near, far;
+    float near, far, max_brightness;
 };
 
 } // namespace lt

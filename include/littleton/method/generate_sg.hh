@@ -47,8 +47,9 @@ public:
     generate_sg(
         resource_pool& pool,
         render_scene* scene,
-        size_t resolution=16,
-        size_t batch_size=32
+        unsigned resolution = 16,
+        unsigned samples = 8,
+        unsigned batch_size = 32
     );
 
     void set_scene(render_scene* scene);
@@ -64,9 +65,9 @@ private:
     {
         least_squares_matrices(
             context& ctx,
-            size_t batch_size,
-            size_t lobe_count,
-            size_t resolution,
+            unsigned batch_size,
+            unsigned lobe_count,
+            unsigned resolution,
             const std::vector<float>& x,
             const std::vector<float>& r
         );
@@ -84,8 +85,8 @@ private:
     multishader* solve;
     multishader* copy;
 
-    size_t resolution;
-    size_t batch_size;
+    unsigned resolution;
+    unsigned batch_size;
     render_scene probe_scene;
     framebuffer cubemap_probes;
 
