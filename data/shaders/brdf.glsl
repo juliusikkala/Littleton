@@ -42,7 +42,7 @@ vec3 brdf(
     vec3 f0_m = mix(vec3(f0), surface_color, metallic);
 
     float k = roughness + 1.0f;
-    k = k * k / 8.0f;
+    k = k * k * 0.125f;
 
     vec3 fresnel = fresnel_schlick(cos_d, f0_m);
     float geometry = geometry_smith(cos_l, cos_v, k);
@@ -58,7 +58,7 @@ vec3 brdf(
 
 // TODO: Fix this, it's probably incorrect. Using distribution breaks
 // everything, and since normally distribution_ggx premultiplies by pi, do
-// that manually. Also, this must be multiplied by the specular color manually.
+// that manually. Also, this must be multiplied by the reflected color manually.
 vec3 brdf_reflection(
     vec3 light_dir,
     vec3 surface_color,
@@ -74,7 +74,7 @@ vec3 brdf_reflection(
     vec3 f0_m = mix(vec3(f0), surface_color, metallic);
 
     float k = roughness + 1.0f;
-    k = k * k / 8.0f;
+    k = k * k * 0.125f;
 
     vec3 fresnel = fresnel_schlick(cos_v, f0_m);
     float geometry = geometry_smith(cos_l, cos_v, k);

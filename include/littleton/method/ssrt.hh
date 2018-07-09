@@ -48,7 +48,8 @@ public:
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene
+        render_scene* scene,
+        float roughness_cutoff = 0.2f
     );
 
     void set_scene(render_scene* scene);

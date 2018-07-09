@@ -35,7 +35,8 @@ ssrt::ssrt(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene
+    render_scene* scene,
+    float roughness_cutoff
 ):  target_method(target), stencil_handler(GL_EQUAL, 1, 1),
     buf(&buf), pool(pool),
     ssrt_shaders(pool.get_shader(shader::path{"fullscreen.vert", "ssrt.frag"})),
@@ -54,7 +55,7 @@ ssrt::ssrt(
     cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     max_steps(500),
     thickness(-1.0f),
-    roughness_cutoff(0.5f),
+    roughness_cutoff(roughness_cutoff),
     brdf_cutoff(0.0f),
     ray_offset(0.01f),
     fallback_cubemap(false)

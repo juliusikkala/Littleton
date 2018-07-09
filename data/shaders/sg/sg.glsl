@@ -1,4 +1,5 @@
 #include "constants.glsl"
+#include "brdf.glsl"
 
 struct sg_lobe
 {
@@ -78,3 +79,107 @@ vec3 sg_approx_irradiance(sg_lobe s, vec3 normal)
     return result * sg_approx_integral(s);
 }
 
+sg_lobe sg_distribution(vec3 dir, float a2)
+{
+    sg_lobe distribution;
+    distribution.axis = dir;
+    distribution.sharpness = 2.0f / a2;
+    distribution.amplitude = vec3(1.0f / (PI * a2));
+    return distribution;
+}
+
+sg_lobe sg_warp_distribution(sg_lobe ndf, vec3 view)
+{
+    sg_lobe warp;
+    warp.axis = reflect(-view, ndf.axis);
+    warp.amplitude = ndf.amplitude;
+    warp.sharpness = ndf.sharpness / (4.0f * max(dot(ndf.axis, view), 0.0001f));
+    return warp;
+}
+
+struct asg_lobe
+{
+    vec3 amplitude;
+    mat3 basis;
+    vec2 sharpness;
+};
+
+vec3 asg_value(asg_lobe s, vec3 d)
+{
+    float st = clamp(dot(s.basis[2], d), 0.0f, 1.0f);
+    vec2 db = vec2(dot(d, s.basis[0]), dot(d, s.basis[1]));
+    return s.amplitude * st * exp(-dot(s.sharpness, db * db));
+}
+
+vec3 asg_sg_convolution(asg_lobe a, sg_lobe s) {
+    float nu = s.sharpness * 0.5f;
+
+    asg_lobe convolve;
+    convolve.basis = a.basis;
+    convolve.sharpness = nu * a.sharpness / (vec2(nu) + a.sharpness);
+
+    convolve.amplitude = vec3(PI * inversesqrt(
+        (nu + a.sharpness.x) * (nu + a.sharpness.y)
+    ));
+
+    vec3 res = asg_value(convolve, s.axis);
+    return res * s.amplitude * a.amplitude;
+}
+
+asg_lobe asg_warp_distribution(sg_lobe ndf, vec3 view)
+{
+    asg_lobe warp;
+
+    warp.basis[2] = reflect(-view, ndf.axis);
+    warp.basis[0] = normalize(cross(ndf.axis, warp.basis[2]));
+    warp.basis[1] = normalize(cross(warp.basis[2], warp.basis[0]));
+
+    float o = max(dot(view, ndf.axis), 0.0001f);
+
+    warp.sharpness.y = ndf.sharpness * 0.125f;
+    warp.sharpness.x = warp.sharpness.y / (o * o);
+
+    warp.amplitude = ndf.amplitude;
+
+    return warp;
+}
+
+float inv_ggx_v1(float cos_h, float a2)
+{
+    return cos_h + sqrt(a2 + (1 - a2) * cos_h * cos_h);
+}
+
+vec3 asg_approx_specular(
+    sg_lobe light,
+    vec3 surface_color,
+    vec3 view_dir,
+    vec3 normal,
+    float roughness,
+    float f0,
+    float metallic
+){
+    float a2 = roughness * roughness;
+    a2 *= a2;
+    sg_lobe ndf = sg_distribution(normal, a2);
+    asg_lobe warped_ndf = asg_warp_distribution(ndf, view_dir);
+
+    vec3 res = asg_sg_convolution(warped_ndf, light);
+
+    vec3 warp_dir = warped_ndf.basis[2];
+    float ndotl = clamp(dot(normal, warp_dir), 0.0f, 1.0f);
+    float ndotv = clamp(dot(normal, view_dir), 0.0f, 1.0f);
+    vec3 h = normalize(warp_dir + view_dir);
+
+    res /= inv_ggx_v1(a2, ndotl) * inv_ggx_v1(a2, ndotv);
+
+    vec3 f0_m = mix(vec3(f0), surface_color, metallic);
+
+    // Fresnel
+    float cos_d = clamp(dot(warp_dir, h), 0.0f, 1.0f);
+    res *= fresnel_schlick(cos_d, f0_m);
+
+    // Cosine term
+    res *= ndotl;
+
+    return max(res, 0.0f);
+}

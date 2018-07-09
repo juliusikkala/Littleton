@@ -36,13 +36,15 @@ apply_sg::apply_sg(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene
+    render_scene* scene,
+    float min_specular_roughness
 ):  target_method(target),
     glresource(target.get_context()),
     stencil_handler(GL_NOTEQUAL, 1<<7, 1<<7),
     buf(&buf),
     sg_shader(pool.get_shader(shader::path{"generic.vert", "sg/apply.frag"})),
     scene(scene),
+    min_specular_roughness(min_specular_roughness),
     cube(common::ensure_cube_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     linear_sampler(common::ensure_linear_sampler(pool))
@@ -103,6 +105,7 @@ void apply_sg::execute()
     });
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
+    s->set("min_specular_roughness", min_specular_roughness);
 
     bind_index = 0;
     buf->set_uniforms(s, bind_index);

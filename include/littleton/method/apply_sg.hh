@@ -48,7 +48,8 @@ public:
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene
+        render_scene* scene,
+        float min_specular_roughness = 0.2f
     );
 
     void set_scene(render_scene* scene);
@@ -64,6 +65,7 @@ private:
     multishader* sg_shader;
     render_scene* scene;
 
+    float min_specular_roughness;
     const primitive& cube;
     const sampler& fb_sampler;
     const sampler& linear_sampler;
