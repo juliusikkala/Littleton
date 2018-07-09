@@ -39,7 +39,7 @@ void main(void)
         lobe.axis = sg_axis[i];
         lobe.sharpness = sg_sharpness[i];
 
-        irradiance += sg_approx_irradiance(lobe, cube_normal);
+        irradiance += sg_approx_irradiance(lobe, cube_normal) * (1.0f - metallic);
 
         if(roughness > min_specular_roughness)
         {
