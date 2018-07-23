@@ -92,6 +92,7 @@ documentation. If you still want to try it out, here's what you need to do:
   Atmospheric Scattering", 1993)
 - Skyboxes
 - Shader binaries
+- Spherical gaussians
 
 ## Wishlist
 
@@ -110,7 +111,6 @@ documentation. If you still want to try it out, here's what you need to do:
 - Bent normals
 - Post-processing AA
 - Bokeh DOF
-- Spherical harmonics
 - Parallax cube mapping
 - Pre-convoluted cube maps
     - Specular

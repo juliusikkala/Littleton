@@ -35,10 +35,10 @@ skybox::skybox(
 ):  target_method(target),
     stencil_handler(GL_NOTEQUAL, 1, 1),
     sky_shader(pool.get_shader(
-        shader::path{"skybox.vert", "skybox.frag"}, {}
+        shader::path{"cast_ray.vert", "skybox.frag"}, {}
     )),
     cubemap_sky_shader(pool.get_shader(
-        shader::path{"skybox.vert", "skybox.frag", "skybox.geom"},
+        shader::path{"cast_ray.vert", "skybox.frag", "cast_ray.geom"},
         {{"CUBEMAP", ""}}
     )),
     scene(scene),
