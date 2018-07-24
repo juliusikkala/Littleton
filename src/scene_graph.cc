@@ -73,7 +73,7 @@ void scene_graph::remove_object(const std::string& name)
     objects.erase(name);
 }
 
-void scene_graph::add_to_scene(render_scene* scene)
+void scene_graph::add_to_scene(object_scene* scene)
 {
     for(auto& pair: objects)
     {

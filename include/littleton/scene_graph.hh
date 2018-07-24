@@ -20,13 +20,15 @@
 #define LT_SCENE_GRAPH_HH
 #include "api.hh"
 #include "object.hh"
+#include "scene.hh"
 #include <unordered_map>
 #include <string>
 
 namespace lt
 {
 
-class render_scene;
+class object_scene;
+
 // The naming might be a bit off, this scene_graph simply acts as a container
 // for nodes that can be referenced from a scene.
 // TODO: Add more node types besides object
@@ -47,7 +49,7 @@ public:
     const object* get_object(const std::string& name) const;
     void remove_object(const std::string& name);
 
-    void add_to_scene(render_scene* scene);
+    void add_to_scene(object_scene* o);
 
     void merge(const scene_graph& other);
 

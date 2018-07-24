@@ -36,14 +36,14 @@ apply_sg::apply_sg(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     float min_specular_roughness
 ):  target_method(target),
+    scene_method(scene),
     glresource(target.get_context()),
     stencil_handler(GL_NOTEQUAL, 1<<7, 1<<7),
     buf(&buf),
     sg_shader(pool.get_shader(shader::path{"generic.vert", "sg/apply.frag"})),
-    scene(scene),
     min_specular_roughness(min_specular_roughness),
     cube(common::ensure_cube_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
@@ -51,24 +51,14 @@ apply_sg::apply_sg(
 {
 }
 
-void apply_sg::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* apply_sg::get_scene() const
-{
-    return scene;
-}
-
 void apply_sg::execute()
 {
     target_method::execute();
 
-    if(!sg_shader || !scene)
+    if(!sg_shader || !has_all_scenes())
         return;
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     glDisable(GL_DEPTH_TEST);
@@ -86,7 +76,9 @@ void apply_sg::execute()
     glm::mat4 v = glm::inverse(cam->get_global_transform());
     glm::mat4 vp = p * v;
 
-    std::vector<sg_group*> groups_by_density(scene->get_sg_groups());
+    std::vector<sg_group*> groups_by_density(
+        get_scene<environment_scene>()->get_sg_groups()
+    );
     std::sort(
         groups_by_density.begin(),
         groups_by_density.end(),

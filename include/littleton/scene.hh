@@ -191,12 +191,91 @@ private:
     std::vector<sg_group*> sg_groups;
 };
 
+// TODO: Rename to game_scene
 class LT_API render_scene
 : public camera_scene, public object_scene, public light_scene,
   public shadow_scene, public environment_scene
 {
 public:
     render_scene();
+};
+
+template<typename Scene>
+class single_scene_holder
+{
+public:
+    single_scene_holder(Scene* scene): scene(scene) {}
+
+    void set(Scene* scene) { this->scene = scene; }
+    Scene* get() const { return scene; }
+private:
+    Scene* scene;
+};
+
+// This class is designed to be used as follows:
+// void myfunc(const scene_acceptor<a_scene, b_scene>& scene)
+// {
+//     a_scene* a = scene;
+//     b_scene* b = scene;
+// }
+//
+// ab_scene* ab;
+// myfunc(ab);
+//
+// a_scene* a;
+// b_scene* b;
+// myfunc({ a, b });
+//
+// This allows the class to only depend on the needed scenes, but still take
+// a single, composite scene as argument if available.
+template<typename... Scenes>
+struct scene_acceptor: public single_scene_holder<Scenes>...
+{
+    template<typename Scene>
+    scene_acceptor(Scene* scene = nullptr)
+    : single_scene_holder<Scenes>(scene)... {}
+    scene_acceptor(Scenes*... scenes)
+    : single_scene_holder<Scenes>(scenes)... {}
+
+    template<typename Scene>
+    operator Scene*() const { return single_scene_holder<Scene>::get(); }
+};
+
+// If your method needs multiple scenes, use this to reduce boilerplate.
+template<typename... Scenes>
+struct scene_method: public single_scene_holder<Scenes>...
+{
+public:
+    using Scene = const scene_acceptor<Scenes...>&;
+
+    template<typename S>
+    S* get_scene() const { return single_scene_holder<S>::get(); }
+
+    void set_scene(Scene acceptor) { set_scenes<Scenes...>(acceptor); }
+
+    template<typename S>
+    void set_single_scene(S* scene) { single_scene_holder<S>::set(scene); }
+    bool has_all_scenes() const { return has_scenes<Scenes...>(); }
+
+protected:
+    scene_method(Scene acceptor)
+    : single_scene_holder<Scenes>(acceptor)... {}
+
+private:
+    template<typename S, typename... Ss>
+    void set_scenes(Scene acceptor)
+    {
+        set_single_scene<S>(acceptor);
+        if constexpr(sizeof...(Ss) != 0) set_scenes<Ss...>(acceptor);
+    }
+
+    template<typename S, typename... Ss>
+    bool has_scenes() const
+    {
+        if(!single_scene_holder<S>::get()) return false;
+        if constexpr(sizeof...(Ss) != 0) return has_scenes<Ss...>();
+        return true;
+    }
 };
 
 } // namespace lt

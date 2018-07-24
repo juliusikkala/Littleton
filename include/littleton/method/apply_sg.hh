@@ -26,6 +26,7 @@
 #include "../doublebuffer.hh"
 #include "../resource.hh"
 #include "../stencil_handler.hh"
+#include "../scene.hh"
 #include "shadow_method.hh"
 #include <memory>
 
@@ -41,19 +42,18 @@ class multishader;
 namespace lt::method
 {
 
-class LT_API apply_sg: public target_method, public glresource, public stencil_handler
+class LT_API apply_sg
+: public target_method, public scene_method<camera_scene, environment_scene>,
+  public glresource, public stencil_handler
 {
 public:
     apply_sg(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         float min_specular_roughness = 0.2f
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     void execute() override;
 
@@ -63,7 +63,6 @@ private:
     gbuffer* buf;
 
     multishader* sg_shader;
-    render_scene* scene;
 
     float min_specular_roughness;
     const primitive& cube;
