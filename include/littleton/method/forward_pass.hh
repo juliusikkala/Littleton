@@ -21,11 +21,11 @@
 #include "../api.hh"
 #include "../pipeline.hh"
 #include "../stencil_handler.hh"
+#include "../scene.hh"
 
 namespace lt
 {
 
-class render_scene;
 class resource_pool;
 class multishader;
 class shader;
@@ -39,13 +39,16 @@ namespace lt::method
 {
 
 class shadow_method;
-class LT_API forward_pass: public target_method, public stencil_handler
+class LT_API forward_pass:
+    public target_method,
+    public scene_method<camera_scene, object_scene, light_scene, shadow_scene>,
+    public stencil_handler
 {
 public:
     forward_pass(
         render_target& target,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         bool apply_ambient = true,
         bool apply_transmittance = true
     );
@@ -53,15 +56,12 @@ public:
     forward_pass(
         gbuffer& target,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         bool apply_ambient = true,
         bool apply_transmittance = true
     );
 
     ~forward_pass();
-
-    void set_scene(render_scene* s);
-    render_scene* get_scene() const;
 
     // Whether to apply ambient lighting or not. Disable if you are using
     // SSAO or other methods which add the ambient term on their own.
@@ -85,7 +85,6 @@ private:
     multishader* cubemap_forward_shader;
     shader* min_max_shader;
 
-    render_scene* scene; 
     gbuffer* gbuf;
 
     bool opaque;

@@ -24,7 +24,6 @@
 #include "gbuffer.hh"
 #include "resource_pool.hh"
 #include "camera.hh"
-#include "scene.hh"
 #include "common_resources.hh"
 #include "spherical_gaussians.hh"
 #include <algorithm>

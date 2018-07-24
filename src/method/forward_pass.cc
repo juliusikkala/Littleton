@@ -25,7 +25,6 @@
 #include "math.hh"
 #include "multishader.hh"
 #include "resource_pool.hh"
-#include "scene.hh"
 #include "primitive.hh"
 #include "shadow_map.hh"
 #include "gbuffer.hh"
@@ -125,7 +124,8 @@ void render_pass(
     render_target& target,
     multishader* forward_shader,
     bool world_space,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
     const shader::definition_map& common,
     bool potentially_transparent_only,
     F&& vertex_group_callback
@@ -135,13 +135,13 @@ void render_pass(
         target.get_target() == GL_TEXTURE_CUBE_MAP_ARRAY;
 
     unsigned layers = min(
-        (unsigned)scene->camera_count(), target.get_dimensions().z
+        (unsigned)cameras->camera_count(), target.get_dimensions().z
     );
 
-    camera* cam = scene->get_camera();
+    camera* cam = cameras->get_camera();
 
     // Generate cubemap face-layer view-projection matrices
-    const std::vector<camera*> cameras = scene->get_cameras();
+    const std::vector<camera*>& all_cameras = cameras->get_cameras();
     std::vector<glm::vec3> camera_pos(layers);
     std::vector<glm::mat4> face_layer_vps;
     if(cubemap_target)
@@ -149,10 +149,10 @@ void render_pass(
         face_layer_vps.reserve(layers*6);
         for(unsigned layer = 0; layer < layers; ++layer)
         {
-            camera_pos[layer] = cameras[layer]->get_global_position();
+            camera_pos[layer] = all_cameras[layer]->get_global_position();
             for(unsigned face = 0; face < 6; ++face)
                 face_layer_vps.push_back(
-                    cameras[layer]->get_view_projection(face)
+                    all_cameras[layer]->get_view_projection(face)
                 );
         }
     }
@@ -162,7 +162,7 @@ void render_pass(
     glm::mat4 p = cam->get_projection();
 
     // Loop objects in scene
-    for(object* obj: scene->get_objects())
+    for(object* obj: objects->get_objects())
     {
         const model* mod = obj->get_model();
         if(!mod) continue;
@@ -219,7 +219,8 @@ void render_shadowed_light(
     render_target& target,
     shadow_method* met,
     const shader::definition_map& scene_definitions,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
     multishader* forward_shader,
     bool world_space,
     L* light,
@@ -227,8 +228,8 @@ void render_shadowed_light(
     bool potentially_transparent_only
 ){
     render_pass(
-        target, forward_shader, world_space, scene, scene_definitions,
-        potentially_transparent_only,
+        target, forward_shader, world_space, cameras, objects,
+        scene_definitions, potentially_transparent_only,
         [&](
             shader* s,
             unsigned& texture_index,
@@ -248,7 +249,10 @@ void render_shadowed_lights(
     std::vector<bool>& handled_point_lights,
     std::vector<bool>& handled_spotlights,
     std::vector<bool>& handled_directional_lights,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
+    light_scene* lights,
+    shadow_scene* shadows,
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
@@ -260,9 +264,9 @@ void render_shadowed_lights(
     directional_def["OUTPUT_LIGHTING"];
 
     const std::vector<directional_light*>& directional_lights =
-        scene->get_directional_lights();
+        lights->get_directional_lights();
 
-    for(const auto& pair: scene->get_directional_shadows())
+    for(const auto& pair: shadows->get_directional_shadows())
     {
         shadow_method* met = pair.first;
 
@@ -288,8 +292,9 @@ void render_shadowed_lights(
             handled_directional_lights[it - directional_lights.begin()] = true;
 
             render_shadowed_light(
-                target, met, scene_definitions, scene, forward_shader,
-                world_space, light, sm, potentially_transparent_only
+                target, met, scene_definitions, cameras, objects,
+                forward_shader, world_space, light, sm,
+                potentially_transparent_only
             );
         }
     }
@@ -304,10 +309,10 @@ void render_shadowed_lights(
     spot_def["SINGLE_LIGHT"];
     spot_def["OUTPUT_LIGHTING"];
 
-    const std::vector<point_light*>& point_lights = scene->get_point_lights();
-    const std::vector<spotlight*>& spotlights = scene->get_spotlights();
+    const std::vector<point_light*>& point_lights = lights->get_point_lights();
+    const std::vector<spotlight*>& spotlights = lights->get_spotlights();
 
-    for(const auto& pair: scene->get_omni_shadows())
+    for(const auto& pair: shadows->get_omni_shadows())
     {
         shadow_method* met = pair.first;
 
@@ -339,8 +344,9 @@ void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_shadowed_light(
-                    target, met, point_definitions, scene, forward_shader,
-                    world_space, point, sm, potentially_transparent_only
+                    target, met, point_definitions, cameras, objects,
+                    forward_shader, world_space, point, sm,
+                    potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -348,14 +354,15 @@ void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_shadowed_light(
-                    target, met, spot_definitions, scene, forward_shader,
-                    world_space, spot, sm, potentially_transparent_only
+                    target, met, spot_definitions, cameras, objects,
+                    forward_shader, world_space, spot, sm,
+                    potentially_transparent_only
                 );
             }
         }
     }
 
-    for(const auto& pair: scene->get_perspective_shadows())
+    for(const auto& pair: shadows->get_perspective_shadows())
     {
         shadow_method* met = pair.first;
 
@@ -389,8 +396,9 @@ void render_shadowed_lights(
                 handled_point_lights[point_it - point_lights.begin()] = true;
 
                 render_shadowed_light(
-                    target, met, point_definitions, scene, forward_shader,
-                    world_space, point, sm, potentially_transparent_only
+                    target, met, point_definitions, cameras, objects,
+                    forward_shader, world_space, point, sm,
+                    potentially_transparent_only
                 );
             }
             else if(spot_it != spotlights.end() && *spot_it == spot)
@@ -398,8 +406,9 @@ void render_shadowed_lights(
                 handled_spotlights[spot_it - spotlights.begin()] = true;
 
                 render_shadowed_light(
-                    target, met, spot_definitions, scene, forward_shader,
-                    world_space, spot, sm, potentially_transparent_only
+                    target, met, spot_definitions, cameras, objects,
+                    forward_shader, world_space, spot, sm,
+                    potentially_transparent_only
                 );
             }
         }
@@ -408,7 +417,7 @@ void render_shadowed_lights(
 
 std::unique_ptr<uniform_block> create_light_block(
     const std::string& block_name,
-    render_scene* scene,
+    light_scene* lights,
     shader* compatible_shader,
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
@@ -423,7 +432,7 @@ std::unique_ptr<uniform_block> create_light_block(
         new uniform_block(compatible_shader->get_block_type(block_name))
     );
 
-    const std::vector<point_light*>& point_lights = scene->get_point_lights();
+    const std::vector<point_light*>& point_lights = lights->get_point_lights();
     for(unsigned i = 0; i < point_lights.size(); ++i)
     {
         if(handled_point_lights[i]) continue;
@@ -439,7 +448,7 @@ std::unique_ptr<uniform_block> create_light_block(
         );
     }
 
-    const std::vector<spotlight*>& spotlights = scene->get_spotlights();
+    const std::vector<spotlight*>& spotlights = lights->get_spotlights();
     for(unsigned i = 0; i < spotlights.size(); ++i)
     {
         if(handled_spotlights[i]) continue;
@@ -470,7 +479,7 @@ std::unique_ptr<uniform_block> create_light_block(
     }
 
     const std::vector<directional_light*>& directional_lights =
-        scene->get_directional_lights();
+        lights->get_directional_lights();
 
     for(unsigned i = 0; i < directional_lights.size(); ++i)
     {
@@ -505,15 +514,15 @@ std::unique_ptr<uniform_block> create_light_block(
 
 void update_scene_definitions(
     shader::definition_map& def,
-    render_scene* scene
+    light_scene* lights
 ){
     def["MULTIPLE_LIGHTS"];
     def["MAX_POINT_LIGHT_COUNT"] = std::to_string(
-        next_power_of_two(scene->point_light_count()));
+        next_power_of_two(lights->point_light_count()));
     def["MAX_DIRECTIONAL_LIGHT_COUNT"] = std::to_string(
-        next_power_of_two(scene->directional_light_count()));
+        next_power_of_two(lights->directional_light_count()));
     def["MAX_SPOTLIGHT_COUNT"] = std::to_string(
-        next_power_of_two(scene->spotlight_count()));
+        next_power_of_two(lights->spotlight_count()));
 }
 
 void render_unshadowed_lights(
@@ -523,12 +532,14 @@ void render_unshadowed_lights(
     const std::vector<bool>& handled_point_lights,
     const std::vector<bool>& handled_spotlights,
     const std::vector<bool>& handled_directional_lights,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
+    light_scene* lights,
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
     shader::definition_map scene_definitions(common);
-    update_scene_definitions(scene_definitions, scene);
+    update_scene_definitions(scene_definitions, lights);
 
     std::unique_ptr<uniform_block> light_block;
 
@@ -536,7 +547,8 @@ void render_unshadowed_lights(
         target,
         forward_shader,
         world_space,
-        scene,
+        cameras,
+        objects,
         scene_definitions,
         potentially_transparent_only,
         [&](
@@ -552,7 +564,7 @@ void render_unshadowed_lights(
             {
                 light_block = create_light_block(
                     "Lights",
-                    scene,
+                    lights,
                     s,
                     handled_point_lights,
                     handled_spotlights,
@@ -562,7 +574,7 @@ void render_unshadowed_lights(
                 light_block->bind(0);
             }
             if(light_block) s->set_uniform_block("Lights", 0);
-            s->set("ambient", scene->get_ambient());
+            s->set("ambient", lights->get_ambient());
         }
     );
 }
@@ -571,12 +583,14 @@ void depth_pass(
     render_target& target,
     multishader* depth_shader,
     bool world_space,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
+    light_scene* lights,
     const shader::definition_map& common,
     bool potentially_transparent_only
 ){
     render_pass(
-        target, depth_shader, world_space, scene, common,
+        target, depth_shader, world_space, cameras, objects, common,
         potentially_transparent_only,
         [&](
             shader* s,
@@ -584,14 +598,17 @@ void depth_pass(
             const glm::mat4& m,
             const glm::mat4& v
         ){
-            s->set("ambient", scene->get_ambient());
+            s->set("ambient", lights->get_ambient());
         }
     );
 }
 
 void render_forward_pass(
     render_target& target,
-    render_scene* scene,
+    camera_scene* cameras,
+    object_scene* objects,
+    light_scene* lights,
+    shadow_scene* shadows,
     bool world_space,
     bool opaque,
     bool apply_ambient,
@@ -600,16 +617,16 @@ void render_forward_pass(
     gbuffer* gbuf,
     multishader* forward_shader
 ){
-    camera* cam = scene->get_camera();
+    camera* cam = cameras->get_camera();
     if(!cam) return;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    std::vector<bool> handled_point_lights(scene->point_light_count(), false);
-    std::vector<bool> handled_spotlights(scene->spotlight_count(), false);
+    std::vector<bool> handled_point_lights(lights->point_light_count(), false);
+    std::vector<bool> handled_spotlights(lights->spotlight_count(), false);
     std::vector<bool> handled_directional_lights(
-        scene->directional_light_count(), false
+        lights->directional_light_count(), false
     );
 
     shader::definition_map common_def({{"OUTPUT_LIGHTING", ""}});
@@ -622,7 +639,7 @@ void render_forward_pass(
     }
 
     unsigned layers = min(
-        (unsigned)scene->camera_count(), target.get_dimensions().z
+        (unsigned)cameras->camera_count(), target.get_dimensions().z
     );
     common_def["LAYERS"] = std::to_string(layers);
 
@@ -653,7 +670,9 @@ void render_forward_pass(
             target,
             forward_shader,
             world_space,
-            scene,
+            cameras,
+            objects,
+            lights,
             geometry_def,
             !opaque
         );
@@ -683,7 +702,9 @@ void render_forward_pass(
                 target,
                 forward_shader,
                 world_space,
-                scene,
+                cameras,
+                objects,
+                lights,
                 geometry_def,
                 !opaque
             );
@@ -701,7 +722,9 @@ void render_forward_pass(
             target,
             forward_shader,
             world_space,
-            scene,
+            cameras,
+            objects,
+            lights,
             depth_def,
             !opaque
         );
@@ -717,7 +740,9 @@ void render_forward_pass(
                 target,
                 forward_shader, 
                 world_space,
-                scene,
+                cameras,
+                objects,
+                lights,
                 depth_def,
                 !opaque
             );
@@ -734,7 +759,10 @@ void render_forward_pass(
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene,
+        cameras,
+        objects,
+        lights,
+        shadows,
         common_def,
         !opaque
     );
@@ -746,7 +774,9 @@ void render_forward_pass(
         handled_point_lights,
         handled_spotlights,
         handled_directional_lights,
-        scene,
+        cameras,
+        objects,
+        lights,
         common_def,
         !opaque
     );
@@ -759,10 +789,11 @@ namespace lt::method
 forward_pass::forward_pass(
     render_target& target,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     bool apply_ambient,
     bool apply_transmittance
 ):  target_method(target),
+    scene_method(scene),
     forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
@@ -770,7 +801,7 @@ forward_pass::forward_pass(
         shader::path{"generic.vert", "forward.frag", "cubemap.geom"})
     ),
     min_max_shader(nullptr),
-    scene(scene), gbuf(nullptr),
+    gbuf(nullptr),
     opaque(true), transparent(true), apply_ambient(apply_ambient),
     apply_transmittance(apply_transmittance),
     quad(common::ensure_quad_primitive(pool)),
@@ -780,7 +811,7 @@ forward_pass::forward_pass(
 forward_pass::forward_pass(
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     bool apply_ambient,
     bool apply_transmittance
 ):  forward_pass(
@@ -796,7 +827,7 @@ forward_pass::~forward_pass() {}
 void forward_pass::execute()
 {
     target_method::execute();
-    if(!forward_shader || !scene)
+    if(!forward_shader || !has_all_scenes())
         return;
 
     bool cubemap =
@@ -807,7 +838,10 @@ void forward_pass::execute()
     {
         render_forward_pass(
             get_target(),
-            scene,
+            get_scene<camera_scene>(),
+            get_scene<object_scene>(),
+            get_scene<light_scene>(),
+            get_scene<shadow_scene>(),
             cubemap,
             true,
             apply_ambient,
@@ -822,7 +856,10 @@ void forward_pass::execute()
     {
         render_forward_pass(
             get_target(),
-            scene,
+            get_scene<camera_scene>(),
+            get_scene<object_scene>(),
+            get_scene<light_scene>(),
+            get_scene<shadow_scene>(),
             cubemap,
             false,
             apply_ambient,
@@ -837,10 +874,6 @@ void forward_pass::execute()
     // unnecessarily in hybrid pipelines.
     if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }
-
-void forward_pass::set_scene(render_scene* s) { scene = s; }
-
-render_scene* forward_pass::get_scene() const { return scene; }
 
 void forward_pass::set_apply_ambient(bool apply_ambient)
 {

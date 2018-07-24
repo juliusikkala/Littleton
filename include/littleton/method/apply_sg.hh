@@ -42,9 +42,9 @@ class multishader;
 namespace lt::method
 {
 
-class LT_API apply_sg
-: public target_method, public scene_method<camera_scene, environment_scene>,
-  public glresource, public stencil_handler
+class LT_API apply_sg:
+    public target_method, public scene_method<camera_scene, environment_scene>,
+    public glresource, public stencil_handler
 {
 public:
     apply_sg(
