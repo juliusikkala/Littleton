@@ -22,6 +22,7 @@
 #include "../pipeline.hh"
 #include "../sampler.hh"
 #include "../stencil_handler.hh"
+#include "../scene.hh"
 
 namespace lt
 {
@@ -36,17 +37,17 @@ class primitive;
 namespace lt::method
 {
 
-class LT_API skybox: public target_method, public stencil_handler
+class LT_API skybox:
+    public target_method,
+    public scene_method<camera_scene, environment_scene>,
+    public stencil_handler
 {
 public:
     skybox(
         render_target& target,
         resource_pool& pool,
-        render_scene* scene = nullptr
+        Scene scene
     );
-
-    void set_scene(render_scene* s);
-    render_scene* get_scene() const;
 
     void execute() override;
 
@@ -55,7 +56,6 @@ public:
 private:
     shader* sky_shader;
     shader* cubemap_sky_shader;
-    render_scene* scene;
     sampler skybox_sampler;
 
     const primitive& quad;

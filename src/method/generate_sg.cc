@@ -44,12 +44,12 @@ namespace lt::method
 
 generate_sg::generate_sg(
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     unsigned resolution,
     unsigned samples,
     unsigned batch_size
-):  glresource(pool.get_context()),
-    scene(scene),
+):  scene_method(scene),
+    glresource(pool.get_context()),
     lobe_product(pool.get_shader(shader::path{"sg/lobe.comp"})),
     solve(pool.get_shader(shader::path{"sg/solve.comp"})),
     copy(pool.get_shader(shader::path{"sg/copy.comp"})),
@@ -62,25 +62,22 @@ generate_sg::generate_sg(
          {GL_COLOR_ATTACHMENT0, {GL_RGBA16F, true}}},
         samples, GL_TEXTURE_CUBE_MAP_ARRAY
     ),
-    sb(cubemap_probes, pool, &probe_scene),
-    fp(cubemap_probes, pool, &probe_scene, false, false),
+    sb(cubemap_probes, pool, { &probe_cameras, scene }),
+    fp(cubemap_probes, pool, { &probe_cameras, scene, scene, scene }, false, false),
     probe_pipeline({&sb, &fp})
 {
 }
 
-void generate_sg::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
 void generate_sg::execute()
 {
-    if(!scene) return;
+    if(!has_all_scenes()) return;
 
-    // Generate probe scene
-    probe_scene = *scene;
+    sb.set_scenes(get_acceptor());
+    sb.set_scene(&probe_cameras);
+    fp.set_scenes(get_acceptor());
+    fp.set_scene(&probe_cameras);
 
-    for(const sg_group* sg: scene->get_sg_groups())
+    for(const sg_group* sg: get_scene<environment_scene>()->get_sg_groups())
     {
         std::vector<camera> batch_cameras(batch_size);
         for(camera& c: batch_cameras)
@@ -139,7 +136,7 @@ void generate_sg::execute()
                 cameras.push_back(&batch_cameras[j]);
             }
 
-            probe_scene.set_cameras(cameras);
+            probe_cameras.set_cameras(cameras);
             probe_pipeline.execute();
             p->compute_dispatch(uvec3(batch_probes,1,1));
 

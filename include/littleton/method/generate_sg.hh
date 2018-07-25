@@ -41,18 +41,25 @@ class resource_pool;
 namespace lt::method
 {
 
-class LT_API generate_sg: public pipeline_method, public glresource
+class LT_API generate_sg:
+    public pipeline_method,
+    public scene_method<
+        camera_scene,
+        object_scene,
+        light_scene,
+        shadow_scene,
+        environment_scene
+    >,
+    public glresource
 {
 public:
     generate_sg(
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         unsigned resolution = 16,
         unsigned samples = 8,
         unsigned batch_size = 32
     );
-
-    void set_scene(render_scene* scene);
 
     void execute() override;
 
@@ -80,14 +87,13 @@ private:
         const sg_group& group
     );
 
-    render_scene* scene;
     multishader* lobe_product;
     multishader* solve;
     multishader* copy;
 
     unsigned resolution;
     unsigned batch_size;
-    render_scene probe_scene;
+    camera_scene probe_cameras;
     framebuffer cubemap_probes;
 
     skybox sb;

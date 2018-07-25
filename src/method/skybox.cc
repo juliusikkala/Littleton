@@ -31,8 +31,9 @@ namespace lt::method
 skybox::skybox(
     render_target& target,
     resource_pool& pool,
-    render_scene* scene
+    Scene scene
 ):  target_method(target),
+    scene_method(scene),
     stencil_handler(GL_NOTEQUAL, 1, 1),
     sky_shader(pool.get_shader(
         shader::path{"cast_ray.vert", "skybox.frag"}, {}
@@ -41,29 +42,20 @@ skybox::skybox(
         shader::path{"cast_ray.vert", "skybox.frag", "cast_ray.geom"},
         {{"CUBEMAP", ""}}
     )),
-    scene(scene),
     skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     quad(common::ensure_quad_primitive(pool))
 {
-}
-
-void skybox::set_scene(render_scene* s)
-{
-    this->scene = s;
-}
-
-render_scene* skybox::get_scene() const
-{
-    return scene;
 }
 
 void skybox::execute()
 {
     target_method::execute();
 
-    if(!scene) return;
-    environment_map* skybox = scene->get_skybox();
-    camera* cam = scene->get_camera();
+    if(!has_all_scenes()) return;
+
+    camera_scene* cs = get_scene<camera_scene>();
+    environment_map* skybox = get_scene<environment_scene>()->get_skybox();
+    camera* cam = cs->get_camera();
     if(!skybox || !cam) return;
 
     glDisable(GL_CULL_FACE);
@@ -83,10 +75,10 @@ void skybox::execute()
         cubemap_sky_shader->set("exposure", skybox->get_exposure());
 
         unsigned layers = min(
-            (unsigned)scene->camera_count(), get_target().get_dimensions().z
+            (unsigned)cs->camera_count(), get_target().get_dimensions().z
         );
 
-        const std::vector<camera*> cameras = scene->get_cameras();
+        const std::vector<camera*> cameras = cs->get_cameras();
         std::vector<glm::mat4> face_ivps;
         face_ivps.reserve(layers*6);
         for(unsigned layer = 0; layer < layers; ++layer)

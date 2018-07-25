@@ -204,7 +204,7 @@ template<typename Scene>
 class single_scene_holder
 {
 public:
-    single_scene_holder(Scene* scene): scene(scene) {}
+    single_scene_holder(Scene* scene = nullptr): scene(scene) {}
 
     void set(Scene* scene) { this->scene = scene; }
     Scene* get() const { return scene; }
@@ -231,11 +231,18 @@ private:
 template<typename... Scenes>
 struct scene_acceptor: public single_scene_holder<Scenes>...
 {
+    scene_acceptor() {}
+
     template<typename Scene>
-    scene_acceptor(Scene* scene = nullptr)
+    scene_acceptor(Scene* scene)
     : single_scene_holder<Scenes>(scene)... {}
+
     scene_acceptor(Scenes*... scenes)
     : single_scene_holder<Scenes>(scenes)... {}
+
+    template<typename... OtherScenes>
+    scene_acceptor(const scene_acceptor<OtherScenes...>& s)
+    : single_scene_holder<Scenes>(s)... {}
 
     template<typename Scene>
     operator Scene*() const { return single_scene_holder<Scene>::get(); }
@@ -243,7 +250,7 @@ struct scene_acceptor: public single_scene_holder<Scenes>...
 
 // If your method needs multiple scenes, use this to reduce boilerplate.
 template<typename... Scenes>
-struct scene_method: public single_scene_holder<Scenes>...
+struct scene_method: private single_scene_holder<Scenes>...
 {
 public:
     using Scene = const scene_acceptor<Scenes...>&;
@@ -251,11 +258,18 @@ public:
     template<typename S>
     S* get_scene() const { return single_scene_holder<S>::get(); }
 
-    void set_scene(Scene acceptor) { set_scenes<Scenes...>(acceptor); }
+    void set_scenes(Scene acceptor) { set_scenes<Scenes...>(acceptor); }
 
     template<typename S>
-    void set_single_scene(S* scene) { single_scene_holder<S>::set(scene); }
+    void set_scene(S* scene) { single_scene_holder<S>::set(scene); }
     bool has_all_scenes() const { return has_scenes<Scenes...>(); }
+
+    scene_acceptor<Scenes...> get_acceptor() const
+    {
+        scene_acceptor<Scenes...> acceptor;
+        get_scenes<Scenes...>(acceptor);
+        return acceptor;
+    }
 
 protected:
     scene_method(Scene acceptor)
@@ -265,8 +279,15 @@ private:
     template<typename S, typename... Ss>
     void set_scenes(Scene acceptor)
     {
-        set_single_scene<S>(acceptor);
+        set_scene<S>(acceptor);
         if constexpr(sizeof...(Ss) != 0) set_scenes<Ss...>(acceptor);
+    }
+
+    template<typename S, typename... Ss>
+    void get_scenes(scene_acceptor<Scenes...>& acceptor) const
+    {
+        acceptor.single_scene_holder<S>::set(single_scene_holder<S>::get());
+        if constexpr(sizeof...(Ss) != 0) get_scenes<Ss...>(acceptor);
     }
 
     template<typename S, typename... Ss>
