@@ -29,7 +29,6 @@ namespace lt
 
 class shader;
 class resource_pool;
-class render_scene;
 class primitive;
 
 }

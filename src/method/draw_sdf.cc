@@ -16,7 +16,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "sdf.hh"
+#include "draw_sdf.hh"
 #include "multishader.hh"
 #include "camera.hh"
 #include "helpers.hh"
@@ -26,62 +26,20 @@
 #include "scene.hh"
 #include <stdexcept>
 
-namespace lt
-{
-
-sdf_object::sdf_object(
-    const material* mat,
-    const std::string& distance,
-    const std::string& texture_mapping
-): mat(mat), distance(distance), texture_mapping(texture_mapping) {}
-
-void sdf_object::set_material(const material* mat)
-{
-    this->mat = mat;
-}
-
-const material* sdf_object::get_material() const
-{
-    return mat;
-}
-
-void sdf_object::set_distance(const std::string& distance)
-{
-    this->distance = distance;
-}
-
-const std::string& sdf_object::get_distance() const
-{
-    return distance;
-}
-
-void sdf_object::set_texture_mapping(const std::string& texture_mapping)
-{
-    this->texture_mapping = texture_mapping;
-}
-
-const std::string& sdf_object::get_texture_mapping() const
-{
-    return texture_mapping;
-}
-
-}
-
 namespace lt::method
 {
 
-sdf::sdf(
+draw_sdf::draw_sdf(
     gbuffer& target,
     resource_pool& pool,
-    render_scene* scene,
-    const std::vector<sdf_object>& sdfs,
+    Scene scene,
     bool apply_ambient,
     const std::string& insert
 ):  target_method(target),
+    scene_method(scene),
     pool(pool),
     sdf_shaders(pool.get_shader(shader::path{"cast_ray.vert", "sdf.frag"})),
     sdf_shader(nullptr),
-    scene(scene),
     apply_ambient(apply_ambient),
     quad(common::ensure_quad_primitive(pool)),
     linear_sampler(common::ensure_linear_sampler(pool)),
@@ -92,54 +50,33 @@ sdf::sdf(
         GL_NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
     ),
-    insert(insert), sdfs(sdfs)
+    insert(insert)
 {
     update_sdf_shader();
 }
 
-void sdf::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* sdf::get_scene() const
-{
-    return scene;
-}
-
-void sdf::set_sdfs(const std::vector<sdf_object>& sdfs)
-{
-    this->sdfs = sdfs;
-    update_sdf_shader();
-}
-
-const std::vector<sdf_object>& sdf::get_sdfs() const
-{
-    return sdfs;
-}
-
-void sdf::set_apply_ambient(bool apply_ambient)
+void draw_sdf::set_apply_ambient(bool apply_ambient)
 {
     this->apply_ambient = apply_ambient;
 }
 
-bool sdf::get_apply_ambient() const
+bool draw_sdf::get_apply_ambient() const
 {
     return apply_ambient;
 }
 
-shader* sdf::get_shader()
+shader* draw_sdf::get_shader()
 {
     return sdf_shader;
 }
 
-void sdf::execute()
+void draw_sdf::execute()
 {
     target_method::execute();
     
-    if(!sdf_shader || !scene) return;
+    if(!sdf_shader || !has_all_scenes()) return;
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     texture* linear_depth = gbuf->get_linear_depth();
@@ -199,12 +136,12 @@ void sdf::execute()
     quad.draw();
 }
 
-std::string sdf::get_name() const
+std::string draw_sdf::get_name() const
 {
-    return "sdf";
+    return "draw_sdf";
 }
 
-void sdf::update_sdf_shader()
+void draw_sdf::update_sdf_shader()
 {
     shader::definition_map def(
         {{"INSERT", insert}}

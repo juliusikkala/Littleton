@@ -35,15 +35,14 @@ ssrt::ssrt(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     float roughness_cutoff
-):  target_method(target), stencil_handler(GL_EQUAL, 1, 1),
-    buf(&buf), pool(pool),
+):  target_method(target), scene_method(scene),
+    stencil_handler(GL_EQUAL, 1, 1), buf(&buf), pool(pool),
     ssrt_shaders(pool.get_shader(shader::path{"fullscreen.vert", "ssrt.frag"})),
     blit_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blit_texture.frag"}, {}
     )),
-    scene(scene),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     mipmap_sampler(
@@ -61,16 +60,6 @@ ssrt::ssrt(
     fallback_cubemap(false)
 {
     set_thickness();
-}
-
-void ssrt::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* ssrt::get_scene() const
-{
-    return scene;
 }
 
 void ssrt::set_max_steps(unsigned max_steps)
@@ -118,9 +107,9 @@ void ssrt::use_fallback_cubemap(bool use)
 
 void ssrt::execute()
 {
-    if(!ssrt_shader || !scene || !buf) return;
+    if(!ssrt_shader || !has_all_scenes() || !buf) return;
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     texture* linear_depth = buf->get_linear_depth();
@@ -148,7 +137,7 @@ void ssrt::execute()
     glClearColor(0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    environment_map* skybox = scene->get_skybox();
+    environment_map* skybox = get_scene<environment_scene>()->get_skybox();
     shader* s = fallback_cubemap && skybox ? ssrt_shader_env : ssrt_shader;
 
     s->bind();

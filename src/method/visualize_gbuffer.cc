@@ -90,26 +90,15 @@ visualize_gbuffer::visualize_gbuffer(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene
-):  target_method(target), buf(&buf),
+    Scene scene
+):  target_method(target), scene_method(scene), buf(&buf),
     visualize_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "visualize.frag"}
     )),
-    scene(scene),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     visualizers({POSITION, NORMAL, COLOR, MATERIAL})
 {
-}
-
-void visualize_gbuffer::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* visualize_gbuffer::get_scene() const
-{
-    return scene;
 }
 
 void visualize_gbuffer::show(visualizer full)
@@ -130,14 +119,14 @@ void visualize_gbuffer::execute()
 {
     target_method::execute();
 
-    if(!visualize_shader || visualizers.size() == 0 || !scene) return;
+    if(!visualize_shader || visualizers.size() == 0 || !has_all_scenes()) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     unsigned texture_index = 0;

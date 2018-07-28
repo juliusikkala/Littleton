@@ -186,15 +186,6 @@ private:
     environment_map* skybox;
 };
 
-// TODO: Rename to game_scene
-class LT_API render_scene
-: public camera_scene, public object_scene, public light_scene,
-  public shadow_scene, public environment_scene, public sg_scene
-{
-public:
-    render_scene();
-};
-
 template<typename Scene>
 class single_scene_holder
 {
@@ -293,6 +284,18 @@ private:
         return true;
     }
 };
+
+template<typename... Scenes>
+class composite_scene: public Scenes... {};
+
+using render_scene = composite_scene<
+    camera_scene,
+    object_scene,
+    light_scene,
+    shadow_scene,
+    environment_scene,
+    sg_scene
+>;
 
 } // namespace lt
 

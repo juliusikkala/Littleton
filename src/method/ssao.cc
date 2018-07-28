@@ -66,12 +66,15 @@ ssao::ssao(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     float radius, 
     unsigned samples,
     unsigned blur_radius,
     float bias
-):  target_method(target), glresource(pool.get_context()), buf(&buf),
+):  target_method(target),
+    scene_method(scene),
+    glresource(pool.get_context()),
+    buf(&buf),
     ssao_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ssao.frag"}, {}
     )),
@@ -84,7 +87,6 @@ ssao::ssao(
     ambient_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ambient.frag"}
     )),
-    scene(scene),
     ssao_buffer(get_context(), target.get_size(), GL_R8),
     radius(radius), samples(samples), blur_radius(blur_radius), bias(bias),
     random_rotation(
@@ -140,10 +142,15 @@ float ssao::get_bias() const
 
 void ssao::execute()
 {
-    if(!ssao_shader || radius <= 0.0f || !scene ||
-        scene->get_ambient() == glm::vec3(0))
+    if(!has_all_scenes() || radius <= 0.0f)
         return;
-    camera* cam = scene->get_camera();
+
+    glm::vec3 ambient = get_scene<light_scene>()->get_ambient();
+
+    if(ambient == glm::vec3(0))
+        return;
+
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     glDisable(GL_DEPTH_TEST);
@@ -206,7 +213,7 @@ void ssao::execute()
     if(indirect) a->set("in_indirect_lighting", fb_sampler.bind(*indirect, 0));
     else a->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
 
-    a->set("ambient", scene->get_ambient());
+    a->set("ambient", ambient);
     a->set("occlusion", fb_sampler.bind(ssao_buffer.output(), 1));
 
     quad.draw();

@@ -33,7 +33,7 @@ template<typename L>
 void render_single(
     L* msm,
     resource_pool& pool,
-    render_scene* scene,
+    object_scene* objects,
     const primitive& quad,
     shader* depth_shader,
     shader* horizontal_blur_shader,
@@ -76,7 +76,7 @@ void render_single(
 
     glm::mat4 vp = msm->get_projection() * msm->get_view();
 
-    for(object* obj: scene->get_objects())
+    for(object* obj: objects->get_objects())
     {
         const model* mod = obj->get_model();
         if(!mod) continue;
@@ -137,7 +137,7 @@ void render_single(
 namespace lt::method
 {
 
-shadow_msm::shadow_msm(resource_pool& pool, render_scene* scene)
+shadow_msm::shadow_msm(resource_pool& pool, Scene scene)
 :   glresource(pool.get_context()),
     shadow_method(scene),
     pool(pool),
@@ -258,20 +258,22 @@ void shadow_msm::set_shadow_map_uniforms(
 
 void shadow_msm::execute()
 {
-    if(!scene) return;
+    if(!has_all_scenes()) return;
 
+    shadow_scene* shadows = get_scene<shadow_scene>();
+    object_scene* objects = get_scene<object_scene>();
 
     const std::vector<directional_shadow_map*>* directional_shadow_maps = NULL;
     {
         const shadow_scene::directional_map& directional =
-            scene->get_directional_shadows();
+            shadows->get_directional_shadows();
         auto it = directional.find(this);
         if(it != directional.end()) directional_shadow_maps = &it->second;
     }
 
     const std::vector<omni_shadow_map*>* omni_shadow_maps = NULL;
     {
-        const shadow_scene::omni_map& omni = scene->get_omni_shadows();
+        const shadow_scene::omni_map& omni = shadows->get_omni_shadows();
         auto it = omni.find(this);
         if(it != omni.end()) omni_shadow_maps = &it->second;
     }
@@ -279,7 +281,7 @@ void shadow_msm::execute()
     const std::vector<perspective_shadow_map*>* perspective_shadow_maps = NULL;
     {
         const shadow_scene::perspective_map& perspective =
-            scene->get_perspective_shadows();
+            shadows->get_perspective_shadows();
         auto it = perspective.find(this);
         if(it != perspective.end()) perspective_shadow_maps = &it->second;
     }
@@ -301,7 +303,7 @@ void shadow_msm::execute()
             render_single(
                 msm,
                 pool,
-                scene,
+                objects,
                 quad,
                 depth_shader,
                 horizontal_blur_shader,
@@ -327,7 +329,7 @@ void shadow_msm::execute()
             render_single(
                 msm,
                 pool,
-                scene,
+                objects,
                 quad,
                 perspective_depth_shader,
                 horizontal_blur_shader,
@@ -367,7 +369,7 @@ void shadow_msm::execute()
             );
             cubemap_depth_shader->set("far_plane", msm->get_range().y);
 
-            for(object* obj: scene->get_objects())
+            for(object* obj: objects->get_objects())
             {
                 const model* mod = obj->get_model();
                 if(!mod) continue;

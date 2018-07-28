@@ -332,6 +332,4 @@ environment_map* environment_scene::get_skybox() const
     return skybox;
 }
 
-render_scene::render_scene() {}
-
 } // namespace lt

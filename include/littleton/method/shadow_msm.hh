@@ -149,7 +149,10 @@ namespace lt::method
 class LT_API shadow_msm: public glresource, public shadow_method
 {
 public:
-    shadow_msm(resource_pool& pool, render_scene* scene);
+    shadow_msm(
+        resource_pool& pool,
+        Scene scene
+    );
 
     shader::definition_map get_directional_definitions() const override;
     shader::definition_map get_omni_definitions() const override;

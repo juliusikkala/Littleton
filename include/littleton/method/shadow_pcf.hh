@@ -156,7 +156,7 @@ namespace lt::method
 class LT_API shadow_pcf: public shadow_method
 {
 public:
-    shadow_pcf(resource_pool& pool, render_scene* scene);
+    shadow_pcf(resource_pool& pool, Scene scene);
 
     void set_directional_uniforms(
         shader* s,

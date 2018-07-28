@@ -23,52 +23,78 @@
 #include "../primitive.hh"
 #include "../shader.hh"
 #include "../sampler.hh"
+#include "../scene.hh"
 
 namespace lt
 {
 
 class texture;
 class resource_pool;
-class render_scene;
 class multishader;
+
+class LT_API cubemap_visualizer_node
+{
+public:
+    cubemap_visualizer_node(
+        texture* cubemap = nullptr,
+        vec3 pos = vec3(0),
+        float radius = 1.0f
+    );
+
+    cubemap_visualizer_node(
+        texture* cubemap_array,
+        const std::vector<vec3>& pos,
+        float radius = 1.0f,
+        unsigned first_index = 0
+    );
+
+    void set_cubemap(texture* cubemap, vec3 pos);
+    void set_cubemap(texture* cubemap, const std::vector<vec3>& pos);
+
+    texture* get_cubemap() const;
+    const std::vector<vec3>& get_pos() const;
+
+    void set_radius(float radius);
+    float get_radius() const;
+
+    void set_first_index(unsigned first_index);
+    unsigned get_first_index() const;
+
+private:
+    texture* cubemap;
+    std::vector<vec3> pos;
+    float radius;
+    unsigned first_index;
+};
+
+class LT_API cubemap_visualizer_scene
+{
+public:
+    cubemap_visualizer_scene();
+
+    void add_cubemap_visualizer(cubemap_visualizer_node* visualizer);
+    void remove_cubemap_visualizer(cubemap_visualizer_node* visualizer);
+
+    const std::vector<cubemap_visualizer_node*>&
+    get_cubemap_visualizers() const;
+
+    void clear_cubemap_visualizers();
+
+private:
+    std::vector<cubemap_visualizer_node*> cubemap_visualizers;
+};
 
 }
 
 namespace lt::method
 {
 
-class LT_API visualize_cubemap: public target_method
+class LT_API visualize_cubemap:
+    public target_method,
+    public scene_method<camera_scene, cubemap_visualizer_scene>
 {
 public:
-    struct node
-    {
-        node(texture* cubemap, vec3 pos, float radius = 1.0f);
-        node(
-            texture* cubemap_array,
-            const std::vector<vec3>& pos,
-            float radius = 1.0f,
-            unsigned first_index = 0
-        );
-
-        texture* cubemap;
-        std::vector<vec3> pos;
-        float radius;
-        unsigned first_index;
-    };
-
-    visualize_cubemap(
-        render_target& target,
-        resource_pool& pool,
-        render_scene* scene,
-        const std::vector<node>& cubemaps = {}
-    );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
-
-    void set_cubemaps(const std::vector<node>& cubemaps);
-    std::vector<node>& get_cubemaps();
-    const std::vector<node>& get_cubemaps() const;
+    visualize_cubemap(render_target& target, resource_pool& pool, Scene scene);
 
     void execute() override;
 
@@ -76,11 +102,8 @@ public:
 
 private:
     multishader* visualize_shader;
-    render_scene* scene;
     const primitive& sphere;
     const sampler& linear_sampler;        
-
-    std::vector<node> cubemaps;
 };
 
 } // namespace lt::method

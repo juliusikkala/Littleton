@@ -21,19 +21,9 @@
 namespace lt::method
 {
 
-shadow_method::shadow_method(render_scene* scene)
-: scene(scene)
+shadow_method::shadow_method(Scene scene)
+: scene_method(scene)
 {
-}
-
-void shadow_method::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* shadow_method::get_scene() const
-{
-    return scene;
 }
 
 void shadow_method::set_directional_uniforms(shader*, unsigned&) {}

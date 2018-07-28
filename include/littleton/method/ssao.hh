@@ -24,6 +24,7 @@
 #include "../sampler.hh"
 #include "../doublebuffer.hh"
 #include "../resource.hh"
+#include "../scene.hh"
 #include <memory>
 
 namespace lt
@@ -32,7 +33,6 @@ namespace lt
 class gbuffer;
 class resource_pool;
 class shader;
-class render_scene;
 class multishader;
 
 }
@@ -40,14 +40,17 @@ class multishader;
 namespace lt::method
 {
 
-class LT_API ssao: public target_method, public glresource
+class LT_API ssao:
+    public target_method,
+    public scene_method<camera_scene, light_scene>,
+    public glresource
 {
 public:
     ssao(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         float radius = 0.2f,
         unsigned samples = 16,
         unsigned blur_radius = 1,
@@ -77,8 +80,6 @@ private:
     shader* vertical_blur_shader;
     shader* horizontal_blur_shader;
     multishader* ambient_shader;
-
-    render_scene* scene;
 
     doublebuffer ssao_buffer;
 

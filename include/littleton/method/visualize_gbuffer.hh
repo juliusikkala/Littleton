@@ -22,6 +22,7 @@
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../shader.hh"
+#include "../scene.hh"
 #include "../sampler.hh"
 
 namespace lt
@@ -29,7 +30,6 @@ namespace lt
 
 class gbuffer;
 class resource_pool;
-class render_scene;
 class multishader;
 
 }
@@ -37,18 +37,17 @@ class multishader;
 namespace lt::method
 {
 
-class LT_API visualize_gbuffer: public target_method
+class LT_API visualize_gbuffer:
+    public target_method,
+    public scene_method<camera_scene>
 {
 public:
     visualize_gbuffer(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene
+        Scene scene
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     enum visualizer
     {
@@ -80,7 +79,6 @@ private:
     gbuffer* buf;
 
     multishader* visualize_shader;
-    render_scene* scene;
     const primitive& quad;
     const sampler& fb_sampler;        
 

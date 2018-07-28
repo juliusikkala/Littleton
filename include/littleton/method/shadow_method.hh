@@ -21,26 +21,25 @@
 #include "../api.hh"
 #include "../pipeline.hh"
 #include "../render_target.hh"
+#include "../scene.hh"
 #include "../shadow_map.hh"
 
 namespace lt
 {
 
 class directional_light;
-class render_scene;
 
 }
 
 namespace lt::method
 {
 
-class LT_API shadow_method: public pipeline_method
+class LT_API shadow_method:
+    public pipeline_method,
+    public scene_method<object_scene, shadow_scene>
 {
 public:
-    shadow_method(render_scene* scene = nullptr);
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
+    shadow_method(Scene scene);
 
     // Sets the uniforms needed when using directional shadow maps with
     // this method.
@@ -90,9 +89,6 @@ public:
         const std::string& prefix,
         const glm::mat4& pos_to_world
     );
-
-protected:
-    render_scene* scene;
 };
 
 } // namespace lt::method

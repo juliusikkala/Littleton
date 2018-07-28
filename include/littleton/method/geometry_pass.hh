@@ -28,7 +28,6 @@ namespace lt
 
 class gbuffer;
 class sampler;
-class render_scene;
 class multishader;
 class shader;
 class primitive;

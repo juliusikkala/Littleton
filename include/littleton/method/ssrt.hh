@@ -24,6 +24,7 @@
 #include "../sampler.hh"
 #include "../doublebuffer.hh"
 #include "../resource.hh"
+#include "../scene.hh"
 #include "../stencil_handler.hh"
 #include <memory>
 
@@ -34,26 +35,25 @@ class gbuffer;
 class resource_pool;
 class multishader;
 class shader;
-class render_scene;
 
 }
 
 namespace lt::method
 {
 
-class LT_API ssrt: public target_method, public stencil_handler
+class LT_API ssrt:
+    public target_method,
+    public scene_method<camera_scene, environment_scene>,
+    public stencil_handler
 {
 public:
     ssrt(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         float roughness_cutoff = 0.2f
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     // Limiting max steps improves worst-case performance, but limits
     // reflected range near geometry boundaries. When thickness is finite,
@@ -82,8 +82,6 @@ private:
     shader* ssrt_shader;
     shader* ssrt_shader_env;
     shader* blit_shader;
-
-    render_scene* scene;
 
     const primitive& quad;
     const sampler& fb_sampler;

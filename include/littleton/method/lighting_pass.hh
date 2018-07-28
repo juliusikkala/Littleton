@@ -31,7 +31,6 @@ namespace lt
 
 class gbuffer;
 class resource_pool;
-class render_scene;
 class multishader;
 
 }

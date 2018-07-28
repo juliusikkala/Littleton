@@ -22,6 +22,7 @@
 #include "../pipeline.hh"
 #include "../transformable.hh"
 #include "../primitive.hh"
+#include "../scene.hh"
 #include "../sampler.hh"
 
 namespace lt
@@ -29,7 +30,6 @@ namespace lt
 
 class texture;
 class resource_pool;
-class render_scene;
 class directional_light;
 
 }
@@ -37,19 +37,18 @@ class directional_light;
 namespace lt::method
 {
 
-class LT_API sky: public target_method
+class LT_API sky:
+    public target_method,
+    public scene_method<camera_scene>
 {
 public:
     sky(
         render_target& target,
         resource_pool& pool,
-        render_scene* scene = nullptr,
+        Scene scene,
         texture* depth_buffer = nullptr,
         directional_light* sun = nullptr
     );
-
-    void set_scene(render_scene* s);
-    render_scene* get_scene() const;
 
     void set_parent(transformable_node* parent = nullptr);
     void set_origin(glm::vec3 origin = glm::vec3(0));
@@ -94,7 +93,6 @@ public:
 
 private:
     shader* sky_shader;
-    render_scene* scene;
     texture* depth_buffer;
     const sampler& depth_sampler;
     const primitive& quad;

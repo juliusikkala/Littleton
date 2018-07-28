@@ -22,9 +22,9 @@ project(
 )
 
 src = [
+  'extern/mikktspace.c',
   'extern/stb_image.c',
   'extern/tiny_gltf.cc',
-  'extern/mikktspace.c',
   'src/camera.cc',
   'src/common_resources.cc',
   'src/context.cc',
@@ -44,6 +44,7 @@ src = [
   'src/method/bloom.cc',
   'src/method/clear.cc',
   'src/method/clear_gbuffer.cc',
+  'src/method/draw_sdf.cc',
   'src/method/draw_texture.cc',
   'src/method/forward_pass.cc',
   'src/method/fullscreen_effect.cc',
@@ -53,7 +54,6 @@ src = [
   'src/method/kernel.cc',
   'src/method/lighting_pass.cc',
   'src/method/sao.cc',
-  'src/method/sdf.cc',
   'src/method/shadow_method.cc',
   'src/method/shadow_msm.cc',
   'src/method/shadow_pcf.cc',
@@ -75,6 +75,7 @@ src = [
   'src/sampler.cc',
   'src/scene.cc',
   'src/scene_graph.cc',
+  'src/sdf.cc',
   'src/shader.cc',
   'src/shader_pool.cc',
   'src/shadow_map.cc',

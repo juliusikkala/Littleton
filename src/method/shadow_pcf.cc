@@ -27,7 +27,7 @@
 namespace lt::method
 {
 
-shadow_pcf::shadow_pcf(resource_pool& pool, render_scene* scene)
+shadow_pcf::shadow_pcf(resource_pool& pool, Scene scene)
 :   shadow_method(scene),
     depth_shader(pool.get_shader(
         shader::path{"generic.vert", "empty.frag"},
@@ -203,20 +203,22 @@ void shadow_pcf::set_shadow_map_uniforms(
 
 void shadow_pcf::execute()
 {
-    if(!scene) return;
+    if(!has_all_scenes()) return;
 
+    shadow_scene* shadows = get_scene<shadow_scene>();
+    object_scene* objects = get_scene<object_scene>();
 
     const std::vector<directional_shadow_map*>* directional_shadow_maps = NULL;
     {
         const shadow_scene::directional_map& directional =
-            scene->get_directional_shadows();
+            shadows->get_directional_shadows();
         auto it = directional.find(this);
         if(it != directional.end()) directional_shadow_maps = &it->second;
     }
 
     const std::vector<omni_shadow_map*>* omni_shadow_maps = NULL;
     {
-        const shadow_scene::omni_map& omni = scene->get_omni_shadows();
+        const shadow_scene::omni_map& omni = shadows->get_omni_shadows();
         auto it = omni.find(this);
         if(it != omni.end()) omni_shadow_maps = &it->second;
     }
@@ -224,7 +226,7 @@ void shadow_pcf::execute()
     const std::vector<perspective_shadow_map*>* perspective_shadow_maps = NULL;
     {
         const shadow_scene::perspective_map& perspective =
-            scene->get_perspective_shadows();
+            shadows->get_perspective_shadows();
         auto it = perspective.find(this);
         if(it != perspective.end()) perspective_shadow_maps = &it->second;
     }
@@ -249,7 +251,7 @@ void shadow_pcf::execute()
 
             glm::mat4 vp = pcf->get_projection() * pcf->get_view();
 
-            for(object* obj: scene->get_objects())
+            for(object* obj: objects->get_objects())
             {
                 const model* mod = obj->get_model();
                 if(!mod) continue;
@@ -291,7 +293,7 @@ void shadow_pcf::execute()
             );
             cubemap_depth_shader->set("far_plane", pcf->get_range().y);
 
-            for(object* obj: scene->get_objects())
+            for(object* obj: objects->get_objects())
             {
                 const model* mod = obj->get_model();
                 if(!mod) continue;
@@ -329,7 +331,7 @@ void shadow_pcf::execute()
             );
             perspective_depth_shader->set("far_plane", pcf->get_range().y);
 
-            for(object* obj: scene->get_objects())
+            for(object* obj: objects->get_objects())
             {
                 const model* mod = obj->get_model();
                 if(!mod) continue;

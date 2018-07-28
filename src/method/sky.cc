@@ -49,12 +49,12 @@ namespace lt::method
 sky::sky(
     render_target& target,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     texture* depth_buffer,
     directional_light* sun
 ):  target_method(target),
+    scene_method(scene),
     sky_shader(pool.get_shader(shader::path{"sky.vert", "sky.frag"}, {})),
-    scene(scene),
     depth_buffer(depth_buffer),
     depth_sampler(common::ensure_depth_sampler(pool)),
     quad(common::ensure_quad_primitive(pool)),
@@ -66,16 +66,6 @@ sky::sky(
     set_radius();
     set_conditions();
     set_scale_height();
-}
-
-void sky::set_scene(render_scene* s)
-{
-    scene = s;
-}
-
-render_scene* sky::get_scene() const
-{
-    return scene;
 }
 
 void sky::set_parent(transformable_node* parent)
@@ -200,7 +190,7 @@ void sky::execute()
 {
     target_method::execute();
 
-    if(!sky_shader || !depth_buffer || !scene || !sun) return;
+    if(!sky_shader || !depth_buffer || !has_all_scenes() || !sun) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -208,7 +198,7 @@ void sky::execute()
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_STENCIL_TEST);
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
