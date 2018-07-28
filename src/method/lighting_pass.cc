@@ -254,30 +254,33 @@ void render_shadowed(
 void render_point_lights(
     gbuffer* buf,
     multishader* lighting_shader,
-    render_scene* scene,
+    camera_scene* cameras,
+    light_scene* lights,
+    shadow_scene* shadows,
     float cutoff,
     lighting_pass::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes,
     unsigned start_index
 ){
-    const std::vector<point_light*>& lights = 
-        scene->get_point_lights();
-    std::vector<bool> handled_lights(lights.size(), false);
+    const std::vector<point_light*>& l = lights->get_point_lights();
+    std::vector<bool> handled_lights(l.size(), false);
 
     shader::definition_map definitions({{"POINT_LIGHT", ""}});
     if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
+    camera* cam = cameras->get_camera();
+
     // Render shadowed lights
     render_shadowed(
         buf,
         lighting_shader,
-        scene->get_omni_shadows(),
+        shadows->get_omni_shadows(),
         definitions,
-        lights,
+        l,
         handled_lights,
-        scene->get_camera(),
+        cam,
         cutoff,
         light_test,
         quad,
@@ -287,11 +290,11 @@ void render_point_lights(
     render_shadowed(
         buf,
         lighting_shader,
-        scene->get_perspective_shadows(),
+        shadows->get_perspective_shadows(),
         definitions,
-        lights,
+        l,
         handled_lights,
-        scene->get_camera(),
+        cam,
         cutoff,
         light_test,
         quad,
@@ -301,12 +304,12 @@ void render_point_lights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
-    set_gbuf(s, buf, scene->get_camera());
+    set_gbuf(s, buf, cam);
 
-    for(unsigned i = 0; i < lights.size(); ++i)
+    for(unsigned i = 0; i < l.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], scene->get_camera(), cutoff, light_test))
+        if(!set_light(s, l[i], cam, cutoff, light_test))
             continue;
         quad.draw();
     }
@@ -315,29 +318,33 @@ void render_point_lights(
 void render_spotlights(
     gbuffer* buf,
     multishader* lighting_shader,
-    render_scene* scene,
+    camera_scene* cameras,
+    light_scene* lights,
+    shadow_scene* shadows,
     float cutoff,
     lighting_pass::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes,
     unsigned start_index
 ){
-    const std::vector<spotlight*>& lights = scene->get_spotlights();
-    std::vector<bool> handled_lights(lights.size(), false);
+    const std::vector<spotlight*>& l = lights->get_spotlights();
+    std::vector<bool> handled_lights(l.size(), false);
 
     shader::definition_map definitions({{"SPOTLIGHT", ""}});
     if(visualize_light_volumes) definitions["VISUALIZE"];
     quad.update_definitions(definitions);
 
+    camera* cam = cameras->get_camera();
+
     // Render shadowed lights
     render_shadowed(
         buf,
         lighting_shader,
-        scene->get_omni_shadows(),
+        shadows->get_omni_shadows(),
         definitions,
-        lights,
+        l,
         handled_lights,
-        scene->get_camera(),
+        cam,
         cutoff,
         light_test,
         quad,
@@ -347,11 +354,11 @@ void render_spotlights(
     render_shadowed(
         buf,
         lighting_shader,
-        scene->get_perspective_shadows(),
+        shadows->get_perspective_shadows(),
         definitions,
-        lights,
+        l,
         handled_lights,
-        scene->get_camera(),
+        cam,
         cutoff,
         light_test,
         quad,
@@ -361,12 +368,12 @@ void render_spotlights(
     // Render unshadowed lights
     shader* s = lighting_shader->get(definitions);
     s->bind();
-    set_gbuf(s, buf, scene->get_camera());
+    set_gbuf(s, buf, cam);
 
-    for(unsigned i = 0; i < lights.size(); ++i)
+    for(unsigned i = 0; i < l.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], scene->get_camera(), cutoff, light_test))
+        if(!set_light(s, l[i], cam, cutoff, light_test))
             continue;
         quad.draw();
     }
@@ -375,21 +382,21 @@ void render_spotlights(
 void render_directional_lights(
     gbuffer* buf,
     multishader* lighting_shader,
-    render_scene* scene,
+    camera_scene* cameras,
+    light_scene* lights,
+    shadow_scene* shadows,
     const primitive& quad,
     unsigned start_index
 ){
-    const std::vector<directional_light*>& lights = 
-        scene->get_directional_lights();
-    std::vector<bool> handled_lights(lights.size(), false);
-
+    const std::vector<directional_light*>& l = lights->get_directional_lights();
+    std::vector<bool> handled_lights(l.size(), false); 
     shader::definition_map definitions({{"DIRECTIONAL_LIGHT", ""}});
     quad.update_definitions(definitions);
 
-    camera* cam = scene->get_camera();
+    camera* cam = cameras->get_camera();
 
     // Render shadowed lights
-    for(const auto& pair: scene->get_directional_shadows())
+    for(const auto& pair: shadows->get_directional_shadows())
     {
         shadow_method* m = pair.first;
         shader::definition_map def(m->get_directional_definitions());
@@ -408,9 +415,9 @@ void render_directional_lights(
             directional_light* light = sm->get_light();
 
             // Check if the light is in the scene and mark it as handled
-            auto it = std::lower_bound(lights.begin(), lights.end(), light);
-            if(it == lights.end() || *it != light) continue;
-            handled_lights[it - lights.begin()] = true;
+            auto it = std::lower_bound(l.begin(), l.end(), light);
+            if(it == l.end() || *it != light) continue;
+            handled_lights[it - l.begin()] = true;
 
             if(!set_light(s, light, cam)) continue;
 
@@ -430,10 +437,10 @@ void render_directional_lights(
     s->bind();
     set_gbuf(s, buf, cam);
 
-    for(unsigned i = 0; i < lights.size(); ++i)
+    for(unsigned i = 0; i < l.size(); ++i)
     {
         if(handled_lights[i]) continue;
-        if(!set_light(s, lights[i], cam)) continue;
+        if(!set_light(s, l[i], cam)) continue;
         quad.draw();
     }
 }
@@ -447,26 +454,16 @@ lighting_pass::lighting_pass(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     float cutoff
-):  target_method(target), buf(&buf),
+):  target_method(target), scene_method(scene), buf(&buf),
     lighting_shader(pool.get_shader(
         shader::path{"generic.vert", "lighting.frag"}
     )),
-    scene(scene), cutoff(cutoff), light_test(TEST_NEAR),
-    visualize_light_volumes(false), quad(common::ensure_quad_primitive(pool)),
+    cutoff(cutoff), light_test(TEST_NEAR), visualize_light_volumes(false),
+    quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
-}
-
-void lighting_pass::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* lighting_pass::get_scene() const
-{
-    return scene;
 }
 
 void lighting_pass::set_cutoff(float cutoff)
@@ -484,8 +481,7 @@ void lighting_pass::set_light_depth_test(depth_test test)
     this->light_test = test;
 }
 
-lighting_pass::depth_test
-lighting_pass::get_light_depth_test() const
+lighting_pass::depth_test lighting_pass::get_light_depth_test() const
 {
     return light_test;
 }
@@ -499,7 +495,7 @@ void lighting_pass::execute()
 {
     target_method::execute();
 
-    if(!lighting_shader || !scene)
+    if(!lighting_shader || !has_all_scenes())
         return;
 
     glEnable(GL_CULL_FACE);
@@ -520,20 +516,27 @@ void lighting_pass::execute()
         glDisable(GL_DEPTH_TEST);
     }
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     unsigned texture_index = 0;
     buf->bind_textures(fb_sampler, texture_index);
 
     render_point_lights(
-        buf, lighting_shader, scene,
+        buf, lighting_shader,
+        get_scene<camera_scene>(),
+        get_scene<light_scene>(),
+        get_scene<shadow_scene>(),
         cutoff, light_test,
         quad, visualize_light_volumes,
         texture_index
     );
+
     render_spotlights(
-        buf, lighting_shader, scene,
+        buf, lighting_shader,
+        get_scene<camera_scene>(),
+        get_scene<light_scene>(),
+        get_scene<shadow_scene>(),
         cutoff, light_test,
         quad, visualize_light_volumes,
         texture_index
@@ -549,7 +552,9 @@ void lighting_pass::execute()
     render_directional_lights(
         buf,
         lighting_shader,
-        scene,
+        get_scene<camera_scene>(),
+        get_scene<light_scene>(),
+        get_scene<shadow_scene>(),
         quad,
         texture_index
     );

@@ -1,5 +1,5 @@
 #include "spherical_gaussians.hh"
-#include "../spherical_gaussians.hh"
+#include "helpers.hh"
 #include <boost/functional/hash.hpp>
 
 namespace lt
@@ -92,6 +92,28 @@ float sg_group::get_density() const
     vec3 size = get_scaling();
     vec3 res = get_resolution();
     return (res.x*res.y*res.z)/(size.x*size.y*size.z);
+}
+
+sg_scene::sg_scene() {}
+
+void sg_scene::add_sg_group(sg_group* group)
+{
+    sorted_insert(sg_groups, group);
+}
+
+void sg_scene::remove_sg_group(sg_group* group)
+{
+    sorted_erase(sg_groups, group);
+}
+
+const std::vector<sg_group*>& sg_scene::get_sg_groups() const
+{
+    return sg_groups;
+}
+
+void sg_scene::clear_sg_groups()
+{
+    sg_groups.clear();
 }
 
 } // namespace lt

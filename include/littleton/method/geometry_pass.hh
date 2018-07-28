@@ -20,6 +20,7 @@
 #define LT_METHOD_GEOMETRY_PASS_HH
 #include "../api.hh"
 #include "../pipeline.hh"
+#include "../scene.hh"
 #include "../stencil_handler.hh"
 
 namespace lt
@@ -38,18 +39,18 @@ class resource_pool;
 namespace lt::method
 {
 
-class LT_API geometry_pass: public target_method, public stencil_handler
+class LT_API geometry_pass:
+    public target_method,
+    public scene_method<camera_scene, object_scene, light_scene>,
+    public stencil_handler
 {
 public:
     geometry_pass(
         gbuffer& buf,
         resource_pool& store,
-        render_scene* scene,
+        Scene scene,
         bool apply_ambient = true
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     void set_apply_ambient(bool apply_ambient);
     bool get_apply_ambient() const;
@@ -61,7 +62,6 @@ public:
 private:
     multishader* geometry_shader;
     shader* min_max_shader;
-    render_scene* scene;
     const primitive& quad;
     const sampler& fb_sampler;
 

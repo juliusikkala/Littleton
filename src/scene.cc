@@ -332,26 +332,6 @@ environment_map* environment_scene::get_skybox() const
     return skybox;
 }
 
-void environment_scene::add_sg_group(sg_group* group)
-{
-    sorted_insert(sg_groups, group);
-}
-
-void environment_scene::remove_sg_group(sg_group* group)
-{
-    sorted_erase(sg_groups, group);
-}
-
-const std::vector<sg_group*>& environment_scene::get_sg_groups() const
-{
-    return sg_groups;
-}
-
-void environment_scene::clear_sg_groups()
-{
-    sg_groups.clear();
-}
-
 render_scene::render_scene() {}
 
 } // namespace lt

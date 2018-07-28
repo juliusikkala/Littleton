@@ -25,6 +25,7 @@
 #include "../framebuffer.hh"
 #include "../doublebuffer.hh"
 #include "../resource.hh"
+#include "../scene.hh"
 #include "shadow_method.hh"
 #include <memory>
 
@@ -42,22 +43,22 @@ namespace lt::method
 {
 
 // Scalable ambient obsurance (McGuire, HPG 2012)
-class LT_API sao: public target_method, public glresource
+class LT_API sao:
+    public target_method,
+    public scene_method<camera_scene, light_scene>,
+    public glresource
 {
 public:
     sao(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene,
+        Scene scene,
         float radius = 0.5f,
         unsigned samples = 8,
         float bias = 0.01f,
         float intensity = 1.0f
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     void set_radius(float radius);
     float get_radius() const;
@@ -81,7 +82,6 @@ private:
     shader* ao_sample_pass_shader;
     shader* blur_shader;
     multishader* ambient_shader;
-    render_scene* scene;
 
     float radius;
     unsigned samples;

@@ -33,12 +33,13 @@ sao::sao(
     render_target& target,
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     float radius,
     unsigned samples,
     float bias,
     float intensity
-):  target_method(target), glresource(pool.get_context()), buf(&buf),
+):  target_method(target), scene_method(scene),
+    glresource(pool.get_context()), buf(&buf),
     ao_sample_pass_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "sao/ao_sample_pass.frag"},
         {{"USE_NORMAL_TEXTURE", ""}}
@@ -49,7 +50,6 @@ sao::sao(
     ambient_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ambient.frag"}
     )),
-    scene(scene),
     radius(radius), samples(samples), bias(bias), intensity(intensity),
     ao(get_context(), target.get_size(), GL_R8),
     quad(common::ensure_quad_primitive(pool)),
@@ -62,16 +62,6 @@ sao::sao(
     )
 {
     set_samples(samples);
-}
-
-void sao::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* sao::get_scene() const
-{
-    return scene;
 }
 
 void sao::set_radius(float radius)
@@ -126,10 +116,15 @@ float sao::get_intensity() const
 
 void sao::execute()
 {
-    if(!scene || scene->get_ambient() == glm::vec3(0))
+    if(!has_all_scenes())
         return;
 
-    camera* cam = scene->get_camera();
+    glm::vec3 ambient = get_scene<light_scene>()->get_ambient();
+
+    if(ambient == glm::vec3(0))
+        return;
+
+    camera* cam = get_scene<camera_scene>()->get_camera();
     texture* depth_tex = buf->get_linear_depth();
     if(!cam || !depth_tex) return;
 
@@ -196,7 +191,7 @@ void sao::execute()
     if(indirect) a->set("in_indirect_lighting", fb_sampler.bind(*indirect, 0));
     else a->set("in_color", fb_sampler.bind(*buf->get_color(), 0));
 
-    a->set("ambient", scene->get_ambient());
+    a->set("ambient", ambient);
     a->set("occlusion", fb_sampler.bind(ao.output(), 1));
 
     quad.draw();

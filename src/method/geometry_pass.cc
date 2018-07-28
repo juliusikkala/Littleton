@@ -37,28 +37,18 @@ namespace lt::method
 geometry_pass::geometry_pass(
     gbuffer& buf,
     resource_pool& pool,
-    render_scene* scene,
+    Scene scene,
     bool apply_ambient
 ):  target_method(buf),
+    scene_method(scene),
     geometry_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
     min_max_shader(buf.get_min_max_shader(pool)),
-    scene(scene),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     apply_ambient(apply_ambient)
 {}
-
-void geometry_pass::set_scene(render_scene* scene)
-{
-    this->scene = scene;
-}
-
-render_scene* geometry_pass::get_scene() const
-{
-    return scene;
-}
 
 void geometry_pass::set_apply_ambient(bool apply_ambient)
 {
@@ -73,7 +63,7 @@ bool geometry_pass::get_apply_ambient() const
 void geometry_pass::execute()
 {
     target_method::execute();
-    if(!geometry_shader || !scene)
+    if(!geometry_shader || !has_all_scenes())
         return;
 
     glEnable(GL_DEPTH_TEST);
@@ -82,7 +72,7 @@ void geometry_pass::execute()
 
     stencil_draw();
 
-    camera* cam = scene->get_camera();
+    camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     glm::mat4 v = glm::inverse(cam->get_global_transform());
@@ -104,7 +94,7 @@ void geometry_pass::execute()
     gbuf->set_draw(gbuffer::DRAW_ALL);
     gbuf->update_definitions(common);
 
-    for(object* obj: scene->get_objects())
+    for(object* obj: get_scene<object_scene>()->get_objects())
     {
         const model* mod = obj->get_model();
         if(!mod) continue;
@@ -127,7 +117,7 @@ void geometry_pass::execute()
             s->set("mvp", mvp);
             s->set("m", mv);
             s->set("n_m", n_m);
-            s->set("ambient", scene->get_ambient());
+            s->set("ambient", get_scene<light_scene>()->get_ambient());
 
             unsigned texture_index = 0;
             group.mat->apply(s, texture_index);

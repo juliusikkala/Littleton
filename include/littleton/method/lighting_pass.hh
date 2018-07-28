@@ -22,6 +22,7 @@
 #include "../pipeline.hh"
 #include "../primitive.hh"
 #include "../sampler.hh"
+#include "../scene.hh"
 #include "../stencil_handler.hh"
 #include "shadow_method.hh"
 
@@ -39,19 +40,19 @@ namespace lt::method
 {
 
 class shadow_method;
-class LT_API lighting_pass: public target_method, public stencil_handler
+class LT_API lighting_pass:
+    public target_method,
+    public scene_method<camera_scene, light_scene, shadow_scene>,
+    public stencil_handler
 {
 public:
     lighting_pass(
         render_target& target,
         gbuffer& buf,
         resource_pool& pool,
-        render_scene* scene,
-        float cutoff = 5/256.0f // Set to negative to not use light volumes
+        Scene scene,
+        float cutoff = 5/256.0f// Set to negative to not use light volumes
     );
-
-    void set_scene(render_scene* scene);
-    render_scene* get_scene() const;
 
     void set_cutoff(float cutoff);
     float get_cutoff() const;
@@ -75,8 +76,8 @@ public:
 private:
     gbuffer* buf;
 
+    multishader* ambient_shader;
     multishader* lighting_shader;
-    render_scene* scene;
 
     float cutoff;
     depth_test light_test;

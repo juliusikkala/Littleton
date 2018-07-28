@@ -20,6 +20,7 @@
 #define LT_SCENE_HH
 #include "api.hh"
 #include "math.hh"
+#include "spherical_gaussians.hh"
 #include <vector>
 #include <map>
 
@@ -181,20 +182,14 @@ public:
     void set_skybox(environment_map* skybox);
     environment_map* get_skybox() const;
 
-    void add_sg_group(sg_group* group);
-    void remove_sg_group(sg_group* group);
-    const std::vector<sg_group*>& get_sg_groups() const;
-    void clear_sg_groups();
-
 private:
     environment_map* skybox;
-    std::vector<sg_group*> sg_groups;
 };
 
 // TODO: Rename to game_scene
 class LT_API render_scene
 : public camera_scene, public object_scene, public light_scene,
-  public shadow_scene, public environment_scene
+  public shadow_scene, public environment_scene, public sg_scene
 {
 public:
     render_scene();

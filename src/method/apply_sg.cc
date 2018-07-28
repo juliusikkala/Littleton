@@ -76,7 +76,7 @@ void apply_sg::execute()
     glm::mat4 vp = p * v;
 
     std::vector<sg_group*> groups_by_density(
-        get_scene<environment_scene>()->get_sg_groups()
+        get_scene<sg_scene>()->get_sg_groups()
     );
     std::sort(
         groups_by_density.begin(),

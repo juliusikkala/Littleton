@@ -80,6 +80,20 @@ private:
     float near, far, max_brightness;
 };
 
+class LT_API sg_scene
+{
+public:
+    sg_scene();
+
+    void add_sg_group(sg_group* group);
+    void remove_sg_group(sg_group* group);
+    const std::vector<sg_group*>& get_sg_groups() const;
+    void clear_sg_groups();
+
+private:
+    std::vector<sg_group*> sg_groups;
+};
+
 } // namespace lt
 
 namespace boost

@@ -72,12 +72,15 @@ void generate_sg::execute()
 {
     if(!has_all_scenes()) return;
 
-    sb.set_scenes(get_acceptor());
-    sb.set_scene(&probe_cameras);
-    fp.set_scenes(get_acceptor());
-    fp.set_scene(&probe_cameras);
+    sb.set_scenes({&probe_cameras, get_scene<environment_scene>()});
+    fp.set_scenes({
+        &probe_cameras,
+        get_scene<object_scene>(),
+        get_scene<light_scene>(),
+        get_scene<shadow_scene>()
+    });
 
-    for(const sg_group* sg: get_scene<environment_scene>()->get_sg_groups())
+    for(const sg_group* sg: get_scene<sg_scene>()->get_sg_groups())
     {
         std::vector<camera> batch_cameras(batch_size);
         for(camera& c: batch_cameras)

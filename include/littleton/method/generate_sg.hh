@@ -44,11 +44,11 @@ namespace lt::method
 class LT_API generate_sg:
     public pipeline_method,
     public scene_method<
-        camera_scene,
         object_scene,
         light_scene,
         shadow_scene,
-        environment_scene
+        environment_scene,
+        sg_scene
     >,
     public glresource
 {
