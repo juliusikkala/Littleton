@@ -166,16 +166,16 @@ vec3 asg_approx_specular(
     vec3 res = asg_sg_convolution(warped_ndf, light);
 
     vec3 warp_dir = warped_ndf.basis[2];
-    float ndotl = clamp(dot(normal, warp_dir), 0.0f, 1.0f);
-    float ndotv = clamp(dot(normal, view_dir), 0.0f, 1.0f);
+    float ndotl = max(dot(normal, warp_dir), 0.0f);
+    float ndotv = max(dot(normal, view_dir), 0.0f);
     vec3 h = normalize(warp_dir + view_dir);
 
-    res /= inv_ggx_v1(a2, ndotl) * inv_ggx_v1(a2, ndotv);
+    res /= inv_ggx_v1(ndotl, a2) * inv_ggx_v1(ndotv, a2);
 
     vec3 f0_m = mix(vec3(f0), surface_color, metallic);
 
     // Fresnel
-    float cos_d = clamp(dot(warp_dir, h), 0.0f, 1.0f);
+    float cos_d = max(dot(warp_dir, h), 0.0f);
     res *= fresnel_schlick(cos_d, f0_m);
 
     // Cosine term
