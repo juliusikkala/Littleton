@@ -50,6 +50,60 @@ private:
     render_target* target;
 };
 
+namespace method
+{
+template<typename For>
+struct method_options;
+}
+
+#define LT_OPTIONS(For) template<> struct LT_API method_options<class For>
+
+template<typename Derived>
+class LT_API options_method
+{
+public:
+    using options = method::method_options<Derived>;
+
+private:
+    struct member_detector_general {};
+    struct member_detector_special: member_detector_general {};
+    template<typename> struct member_detector { typedef int type; };
+
+    struct accessor: Derived
+    {
+        template<
+            typename Self,
+            typename member_detector<
+                decltype(&Self::options_will_update)
+            >::type = 0
+        > static void will_update(
+            Derived& method,
+            const options& opt,
+            member_detector_special
+        );
+
+        template<typename Self>
+        static void will_update(
+            Derived&,
+            const options&,
+            member_detector_general
+        );
+    };
+
+public:
+    options_method(const options& opt);
+
+    void set_options(const options& opt);
+    const options& get_options() const;
+
+protected:
+    // If you get a compiler warning here about an incomplete type, you've
+    // probably derived from options_method without creating an LT_OPTIONS for
+    // your method. Also, make sure LT_OPTIONS is created _before_ your method
+    // class.
+    options opt;
+};
+
 class LT_API pipeline: public pipeline_method
 {
 public:
@@ -68,5 +122,7 @@ private:
 };
 
 } // namespace lt
+
+#include "pipeline.tcc"
 
 #endif

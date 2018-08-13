@@ -34,34 +34,31 @@ class multishader;
 
 namespace lt::method
 {
-class LT_API bloom: public target_method
+
+LT_OPTIONS(bloom)
+{
+    float threshold = 2.0f;
+    unsigned radius = 5;
+    float strength = 1.0f;
+    unsigned level = 2;
+};
+
+class LT_API bloom: public target_method, public options_method<bloom>
 {
 public:
     bloom(
         render_target& target,
         resource_pool& pool,
         texture* src,
-        float threshold = 2.0f,
-        unsigned radius = 5,
-        float strength = 1.0f,
-        unsigned level = 2
+        const options& opt = {}
     );
-
-    void set_threshold(float threshold);
-    float get_threshold() const;
-
-    void set_radius(unsigned radius);
-    unsigned get_radius() const;
-
-    void set_strength(float strength);
-    float get_strength() const;
-
-    void set_level(unsigned level);
-    unsigned get_level() const;
 
     void execute() override;
 
     std::string get_name() const override;
+
+protected:
+    void options_will_update(const options& next);
 
 private:
     resource_pool& pool;
@@ -72,10 +69,6 @@ private:
     multishader* convolution_shader;
     shader* apply_shader;
 
-    float threshold;
-    unsigned radius;
-    float strength;
-    unsigned level;
     std::vector<float> gaussian_kernel;
 
     const primitive& quad;

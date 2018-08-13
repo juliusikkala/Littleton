@@ -30,11 +30,8 @@ bloom::bloom(
     render_target& target,
     resource_pool& pool,
     texture* src,
-    float threshold,
-    unsigned radius,
-    float strength,
-    unsigned level
-):  target_method(target), pool(pool), src(src),
+    const options& opt
+):  target_method(target), options_method(opt), pool(pool), src(src),
     threshold_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "threshold.frag"}, {}
     )),
@@ -44,63 +41,15 @@ bloom::bloom(
     apply_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "blend_texture.frag"}, {}
     )),
-    threshold(threshold), radius(radius), strength(strength), level(level),
     quad(common::ensure_quad_primitive(pool)),
     smooth_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE)
 {
-    set_radius(radius);
-}
-
-void bloom::set_threshold(float threshold)
-{
-    this->threshold = threshold;
-}
-
-float bloom::get_threshold() const
-{
-    return threshold;
-}
-
-void bloom::set_radius(unsigned radius)
-{
-    this->radius = radius;
-
-    gaussian_kernel = generate_gaussian_kernel(
-        (radius >> level), 0.4f * (radius >> level)
-    );
-}
-
-unsigned bloom::get_radius() const
-{
-    return radius;
-}
-
-void bloom::set_strength(float strength)
-{
-    this->strength = strength;
-}
-
-float bloom::get_strength() const
-{
-    return strength;
-}
-
-void bloom::set_level(unsigned level)
-{
-    this->level = level;
-
-    gaussian_kernel = generate_gaussian_kernel(
-        (radius >> level), 0.4f * (radius >> level)
-    );
-}
-
-unsigned bloom::get_level() const
-{
-    return level;
+    options_will_update(opt);
 }
 
 void bloom::execute()
 {
+    const auto [threshold, radius, strength, level] = opt;
     if(radius <= 0.0f || strength <= 0.0f || !src)
         return;
 
@@ -174,6 +123,13 @@ void bloom::execute()
 std::string bloom::get_name() const
 {
     return "bloom";
+}
+
+void bloom::options_will_update(const options& next)
+{
+    gaussian_kernel = generate_gaussian_kernel(
+        (next.radius >> next.level), 0.4f * (next.radius >> next.level)
+    );
 }
 
 } // namespace lt::method
