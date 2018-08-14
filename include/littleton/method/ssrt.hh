@@ -41,9 +41,25 @@ class shader;
 namespace lt::method
 {
 
+LT_OPTIONS(ssrt)
+{
+    float roughness_cutoff = 0.2f;
+    float brdf_cutoff = 0.0f;
+    // Limiting max steps improves worst-case performance, but limits
+    // reflected range near geometry boundaries. When thickness is finite,
+    // this should be larger. 
+    unsigned max_steps = 500;
+    // Set to negative for infinite depth (faster)
+    float thickness = -1.0f;
+    // Distance of the first sample from the point where the ray starts
+    float ray_offset = 0.01f;
+    bool use_fallback_cubemap = true;
+};
+
 class LT_API ssrt:
     public target_method,
     public scene_method<camera_scene, environment_scene>,
+    public options_method<ssrt>,
     public stencil_handler
 {
 public:
@@ -52,25 +68,15 @@ public:
         gbuffer& buf,
         resource_pool& pool,
         Scene scene,
-        float roughness_cutoff = 0.2f
+        const options& opt = {}
     );
-
-    // Limiting max steps improves worst-case performance, but limits
-    // reflected range near geometry boundaries. When thickness is finite,
-    // this should be larger. 
-    void set_max_steps(unsigned max_steps = 500);
-    void set_roughness_cutoff(float cutoff = 0.5f);
-    void set_brdf_cutoff(float cutoff = 0.0f);
-    // Set to negative for infinite depth (faster)
-    void set_thickness(float thickness = -1.0f);
-    // Distance of the first sample from the point where the ray starts
-    void set_ray_offset(float offset = 0.01f);
-
-    void use_fallback_cubemap(bool use = true);
 
     void execute() override;
 
     std::string get_name() const override;
+
+protected:
+    void options_will_update(const options& next, bool initial = false);
 
 private:
     void refresh_shader();
@@ -87,13 +93,6 @@ private:
     const sampler& fb_sampler;
     sampler mipmap_sampler;
     sampler cubemap_sampler;
-
-    unsigned max_steps;
-    float thickness;
-    float roughness_cutoff;
-    float brdf_cutoff;
-    float ray_offset;
-    bool fallback_cubemap;
 };
 
 } // namespace lt::method

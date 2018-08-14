@@ -36,8 +36,8 @@ ssrt::ssrt(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    float roughness_cutoff
-):  target_method(target), scene_method(scene),
+    const options& opt
+):  target_method(target), scene_method(scene), options_method(opt),
     stencil_handler(GL_EQUAL, 1, 1), buf(&buf), pool(pool),
     ssrt_shaders(pool.get_shader(shader::path{"fullscreen.vert", "ssrt.frag"})),
     blit_shader(pool.get_shader(
@@ -51,62 +51,21 @@ ssrt::ssrt(
         GL_NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
     ),
-    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
-    max_steps(500),
-    thickness(-1.0f),
-    roughness_cutoff(roughness_cutoff),
-    brdf_cutoff(0.0f),
-    ray_offset(0.01f),
-    fallback_cubemap(false)
+    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE)
 {
-    set_thickness();
-}
-
-void ssrt::set_max_steps(unsigned max_steps)
-{
-    this->max_steps = max_steps;
-}
-
-void ssrt::set_roughness_cutoff(float cutoff)
-{
-    roughness_cutoff = cutoff;
-}
-
-void ssrt::set_brdf_cutoff(float cutoff)
-{
-    brdf_cutoff = cutoff;
-}
-
-void ssrt::set_thickness(float thickness)
-{
-    this->thickness = thickness;
-    texture* linear_depth = buf->get_linear_depth();
-
-    // Thickness requires min-max depth buffer
-    if(thickness > 0.0f && linear_depth &&
-       linear_depth->get_external_format() != GL_RG) 
-    {
-        throw std::runtime_error(
-            "Min-max (two channel) linear depth buffer required for SSRT with "
-            "finite thickness"
-        );
-    }
-
-    refresh_shader();
-}
-
-void ssrt::set_ray_offset(float offset)
-{
-    ray_offset = offset;
-}
-
-void ssrt::use_fallback_cubemap(bool use)
-{
-    this->fallback_cubemap = use;
+    options_will_update(opt, true);
 }
 
 void ssrt::execute()
 {
+    const auto [
+        roughness_cutoff,
+        brdf_cutoff,
+        max_steps,
+        thickness,
+        ray_offset,
+        use_fallback_cubemap
+    ] = opt;
     if(!ssrt_shader || !has_all_scenes() || !buf) return;
 
     camera* cam = get_scene<camera_scene>()->get_camera();
@@ -138,7 +97,7 @@ void ssrt::execute()
     glClear(GL_COLOR_BUFFER_BIT);
 
     environment_map* skybox = get_scene<environment_scene>()->get_skybox();
-    shader* s = fallback_cubemap && skybox ? ssrt_shader_env : ssrt_shader;
+    shader* s = use_fallback_cubemap && skybox ? ssrt_shader_env : ssrt_shader;
 
     s->bind();
     s->set("in_linear_depth", mipmap_sampler.bind(*linear_depth, 0));
@@ -158,7 +117,7 @@ void ssrt::execute()
     s->set("brdf_cutoff", brdf_cutoff);
     s->set("ray_offset", ray_offset);
 
-    if(fallback_cubemap && skybox)
+    if(use_fallback_cubemap && skybox)
     {
         s->set("fallback_cubemap", true);
         s->set("inv_view", cam->get_global_transform());
@@ -189,6 +148,28 @@ std::string ssrt::get_name() const
     return "ssrt";
 }
 
+void ssrt::options_will_update(const options& next, bool initial)
+{
+    if(opt.thickness != next.thickness || initial)
+    {
+        texture* linear_depth = buf->get_linear_depth();
+
+        // Thickness requires min-max depth buffer
+        if(next.thickness > 0.0f && linear_depth &&
+           linear_depth->get_external_format() != GL_RG) 
+        {
+            throw std::runtime_error(
+                "Min-max (two channel) linear depth buffer required for SSRT with "
+                "finite thickness"
+            );
+        }
+
+        opt = next;
+
+        refresh_shader();
+    }
+}
+
 void ssrt::refresh_shader()
 {
     shader::definition_map def = {
@@ -197,7 +178,7 @@ void ssrt::refresh_shader()
             std::to_string(calculate_mipmap_count(get_target().get_size())-1)
         }
     };
-    if(thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
+    if(opt.thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
 
     ssrt_shader = ssrt_shaders->get(def);
     def["FALLBACK_CUBEMAP"];

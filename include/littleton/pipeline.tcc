@@ -41,7 +41,7 @@ void options_method<Derived>::accessor::will_update(
 ){
     // HACK! Takes the function pointer to the member function from
     // the parent class and calls it on the argument object.
-    void (Derived::*fn)(const options& opt) = &accessor::options_will_update;
+    auto fn = &accessor::options_will_update;
     (method.*fn)(opt);
 }
 
