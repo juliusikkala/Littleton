@@ -42,10 +42,19 @@ class multishader;
 namespace lt::method
 {
 
+LT_OPTIONS(sao)
+{
+    float radius = 0.5f;
+    unsigned samples = 8;
+    float bias = 0.01f;
+    float intensity = 1.0f;
+};
+
 // Scalable ambient obsurance (McGuire, HPG 2012)
 class LT_API sao:
     public target_method,
     public scene_method<camera_scene, light_scene>,
+    public options_method<sao>,
     public glresource
 {
 public:
@@ -54,27 +63,15 @@ public:
         gbuffer& buf,
         resource_pool& pool,
         Scene scene,
-        float radius = 0.5f,
-        unsigned samples = 8,
-        float bias = 0.01f,
-        float intensity = 1.0f
+        const options& opt = {}
     );
-
-    void set_radius(float radius);
-    float get_radius() const;
-
-    void set_samples(unsigned samples);
-    unsigned get_samples() const;
-
-    void set_bias(float bias);
-    float get_bias() const;
-
-    void set_intensity(float intensity);
-    float get_intensity() const;
 
     void execute() override;
 
     std::string get_name() const override;
+
+protected:
+    void options_will_update(const options& next, bool initial = false);
 
 private:
     gbuffer* buf;
@@ -83,10 +80,6 @@ private:
     shader* blur_shader;
     multishader* ambient_shader;
 
-    float radius;
-    unsigned samples;
-    float bias;
-    float intensity;
     float spiral_turns;
 
     doublebuffer ao;

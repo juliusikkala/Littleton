@@ -34,11 +34,8 @@ sao::sao(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    float radius,
-    unsigned samples,
-    float bias,
-    float intensity
-):  target_method(target), scene_method(scene),
+    const options& opt
+):  target_method(target), scene_method(scene), options_method(opt),
     glresource(pool.get_context()), buf(&buf),
     ao_sample_pass_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "sao/ao_sample_pass.frag"},
@@ -50,7 +47,6 @@ sao::sao(
     ambient_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "ambient.frag"}
     )),
-    radius(radius), samples(samples), bias(bias), intensity(intensity),
     ao(get_context(), target.get_size(), GL_R8),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
@@ -61,61 +57,12 @@ sao::sao(
         GL_CLAMP_TO_EDGE
     )
 {
-    set_samples(samples);
-}
-
-void sao::set_radius(float radius)
-{
-    this->radius = radius;
-}
-
-float sao::get_radius() const
-{
-    return radius;
-}
-
-void sao::set_samples(unsigned samples)
-{
-    this->samples = samples;
-
-    spiral_turns = 17;
-    for(unsigned i = samples + 1; i < 2048; ++i)
-    {
-        if(!factorize(i))
-        {
-            spiral_turns = (float)i;
-            break;
-        }
-    }
-}
-
-unsigned sao::get_samples() const
-{
-    return samples;
-}
-
-void sao::set_bias(float bias)
-{
-    this->bias = bias;
-}
-
-float sao::get_bias() const
-{
-    return bias;
-}
-
-void sao::set_intensity(float intensity)
-{
-    this->intensity = intensity;
-}
-
-float sao::get_intensity() const
-{
-    return intensity;
+    options_will_update(opt, true);
 }
 
 void sao::execute()
 {
+    const auto [radius, samples, bias, intensity] = opt;
     if(!has_all_scenes())
         return;
 
@@ -200,6 +147,22 @@ void sao::execute()
 std::string sao::get_name() const
 {
     return "sao";
+}
+
+void sao::options_will_update(const options& next, bool initial)
+{
+    if(opt.samples != next.samples || initial)
+    {
+        spiral_turns = 17;
+        for(unsigned i = next.samples + 1; i < 2048; ++i)
+        {
+            if(!factorize(i))
+            {
+                spiral_turns = (float)i;
+                break;
+            }
+        }
+    }
 }
 
 } // namespace lt::method
