@@ -40,9 +40,18 @@ class multishader;
 namespace lt::method
 {
 
+LT_OPTIONS(ssao)
+{
+    float radius = 0.2f;
+    unsigned samples = 16;
+    unsigned blur_radius = 1;
+    float bias = 0.01f;
+};
+
 class LT_API ssao:
     public target_method,
     public scene_method<camera_scene, light_scene>,
+    public options_method<ssao>,
     public glresource
 {
 public:
@@ -51,27 +60,15 @@ public:
         gbuffer& buf,
         resource_pool& pool,
         Scene scene,
-        float radius = 0.2f,
-        unsigned samples = 16,
-        unsigned blur_radius = 1,
-        float bias = 0.01f
+        const options& opt = {}
     );
-
-    void set_radius(float radius);
-    float get_radius() const;
-
-    void set_samples(unsigned samples);
-    unsigned get_samples() const;
-
-    void set_blur(unsigned blur_radius);
-    unsigned get_blur() const;
-
-    void set_bias(float bias);
-    float get_bias() const;
 
     void execute() override;
 
     std::string get_name() const override;
+
+protected:
+    void options_will_update(const options& next, bool initial = false);
 
 private:
     gbuffer* buf;
@@ -82,11 +79,6 @@ private:
     multishader* ambient_shader;
 
     doublebuffer ssao_buffer;
-
-    float radius;
-    unsigned samples;
-    unsigned blur_radius;
-    float bias;
 
     const texture& random_rotation;
     std::unique_ptr<texture> kernel;

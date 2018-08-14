@@ -67,12 +67,10 @@ ssao::ssao(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    float radius, 
-    unsigned samples,
-    unsigned blur_radius,
-    float bias
+    const options& opt
 ):  target_method(target),
     scene_method(scene),
+    options_method(opt),
     glresource(pool.get_context()),
     buf(&buf),
     ssao_shader(pool.get_shader(
@@ -88,60 +86,20 @@ ssao::ssao(
         shader::path{"fullscreen.vert", "ambient.frag"}
     )),
     ssao_buffer(get_context(), target.get_size(), GL_R8),
-    radius(radius), samples(samples), blur_radius(blur_radius), bias(bias),
     random_rotation(
         common::ensure_spherical_random_texture(pool, glm::uvec2(4))
     ),
-    kernel(generate_ssao_kernel(get_context(), samples)),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     noise_sampler(get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
 {
-}
-
-void ssao::set_radius(float radius)
-{
-    this->radius = radius;
-}
-
-float ssao::get_radius() const
-{
-    return radius;
-}
-
-void ssao::set_samples(unsigned samples)
-{
-    kernel.reset(generate_ssao_kernel(get_context(), samples)),
-    this->samples = samples;
-}
-
-unsigned ssao::get_samples() const
-{
-    return samples;
-}
-
-void ssao::set_blur(unsigned blur_radius)
-{
-    this->blur_radius = blur_radius;
-}
-
-unsigned ssao::get_blur() const
-{
-    return blur_radius;
-}
-
-void ssao::set_bias(float bias)
-{
-    this->bias = bias;
-}
-
-float ssao::get_bias() const
-{
-    return bias;
+    options_will_update(opt, true);
 }
 
 void ssao::execute()
 {
+    const auto [radius, samples, blur_radius, bias] = opt;
+
     if(!has_all_scenes() || radius <= 0.0f)
         return;
 
@@ -222,6 +180,12 @@ void ssao::execute()
 std::string ssao::get_name() const
 {
     return "ssao";
+}
+
+void ssao::options_will_update(const options& next, bool initial)
+{
+    if(opt.samples != next.samples || initial)
+        kernel.reset(generate_ssao_kernel(get_context(), next.samples));
 }
 
 } // namespace lt::method
