@@ -31,26 +31,29 @@ class sampler;
 
 }
 
+
 namespace lt::method
 {
 
-class LT_API kernel: public target_method
+LT_OPTIONS(kernel)
 {
-public:
     static const glm::mat3 SHARPEN;
     static const glm::mat3 EDGE_DETECT;
     static const glm::mat3 GAUSSIAN_BLUR;
     static const glm::mat3 BOX_BLUR;
 
+    glm::mat3 kernel = SHARPEN;
+};
+
+class LT_API kernel: public target_method, public options_method<kernel>
+{
+public:
     kernel(
         render_target& target,
         texture& src,
         resource_pool& store,
-        const glm::mat3& k = SHARPEN
+        const options& opt = {}
     );
-
-    void set_kernel(const glm::mat3& kernel);
-    glm::mat3 get_kernel() const;
 
     void execute() override;
 
@@ -61,7 +64,6 @@ private:
     shader* kernel_shader;
     const primitive& quad;
     const sampler& fb_sampler;
-    glm::mat3 k;
 };
 
 } // namespace lt::method

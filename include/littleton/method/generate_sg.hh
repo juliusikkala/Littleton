@@ -53,6 +53,8 @@ class LT_API generate_sg:
     public glresource
 {
 public:
+    // Due to the nature of the method, the parameters 'resolution', 'samples'
+    // and 'batch_size' don't use LT_OPTIONS. Consider them as immutable.
     generate_sg(
         resource_pool& pool,
         Scene scene,
