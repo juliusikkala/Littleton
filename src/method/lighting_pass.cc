@@ -50,7 +50,7 @@ float compute_cutoff_radius(light* light, float cutoff)
 bool set_bounding_rect(
     shader* s, point_light* light, glm::vec3 light_pos,
     const camera* cam, float cutoff,
-    lighting_pass::depth_test light_test
+    lighting_pass::options::depth_test light_test
 ){
     glm::mat4 m = glm::mat4(1.0f);
 
@@ -66,7 +66,7 @@ bool set_bounding_rect(
             r,
             cam->get_near(),
             cam->get_far(),
-            light_test == lighting_pass::TEST_NEAR
+            light_test == lighting_pass::options::TEST_NEAR
         );
     }
 
@@ -80,7 +80,7 @@ bool set_light(
     point_light* light,
     const camera* cam,
     float cutoff,
-    lighting_pass::depth_test light_test
+    lighting_pass::options::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::vec3 pos = glm::vec3(
@@ -97,7 +97,7 @@ bool set_light(
     spotlight* light,
     const camera* cam,
     float cutoff,
-    lighting_pass::depth_test light_test
+    lighting_pass::options::depth_test light_test
 ){
     glm::mat4 inv_view = cam->get_global_transform();
     glm::mat4 view = glm::inverse(inv_view);
@@ -159,7 +159,7 @@ void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
-    lighting_pass::depth_test light_test,
+    lighting_pass::options::depth_test light_test,
     const primitive& quad,
     unsigned start_index
 ){
@@ -210,7 +210,7 @@ void render_shadowed(
     std::vector<bool>& handled_lights,
     const camera* cam,
     float cutoff,
-    lighting_pass::depth_test light_test,
+    lighting_pass::options::depth_test light_test,
     const primitive& quad,
     unsigned start_index
 ){
@@ -258,7 +258,7 @@ void render_point_lights(
     light_scene* lights,
     shadow_scene* shadows,
     float cutoff,
-    lighting_pass::depth_test light_test,
+    lighting_pass::options::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes,
     unsigned start_index
@@ -322,7 +322,7 @@ void render_spotlights(
     light_scene* lights,
     shadow_scene* shadows,
     float cutoff,
-    lighting_pass::depth_test light_test,
+    lighting_pass::options::depth_test light_test,
     const primitive& quad,
     bool visualize_light_volumes,
     unsigned start_index
@@ -455,45 +455,26 @@ lighting_pass::lighting_pass(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    float cutoff
-):  target_method(target), scene_method(scene), buf(&buf),
+    const options& opt
+):  target_method(target), scene_method(scene), options_method(opt),
+    buf(&buf),
     lighting_shader(pool.get_shader(
         shader::path{"generic.vert", "lighting.frag"}
     )),
-    cutoff(cutoff), light_test(TEST_NEAR), visualize_light_volumes(false),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
 }
 
-void lighting_pass::set_cutoff(float cutoff)
-{
-    this->cutoff = cutoff;
-}
-
-float lighting_pass::get_cutoff() const
-{
-    return cutoff;
-}
-
-void lighting_pass::set_light_depth_test(depth_test test)
-{
-    this->light_test = test;
-}
-
-lighting_pass::depth_test lighting_pass::get_light_depth_test() const
-{
-    return light_test;
-}
-
-void lighting_pass::set_visualize_light_volumes(bool visualize)
-{
-    visualize_light_volumes = visualize;
-}
-
 void lighting_pass::execute()
 {
     target_method::execute();
+
+    const auto [
+        cutoff,
+        light_test,
+        visualize_light_volumes
+    ] = opt;
 
     if(!lighting_shader || !has_all_scenes())
         return;
@@ -504,11 +485,11 @@ void lighting_pass::execute()
 
     stencil_cull();
 
-    if(cutoff > 0 && light_test != TEST_NONE)
+    if(cutoff > 0 && light_test != options::TEST_NONE)
     {
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
-        if(light_test == TEST_FAR) glDepthFunc(GL_GEQUAL);
+        if(light_test == options::TEST_FAR) glDepthFunc(GL_GEQUAL);
         else glDepthFunc(GL_LEQUAL);
     }
     else
@@ -542,7 +523,7 @@ void lighting_pass::execute()
         texture_index
     );
 
-    if(cutoff > 0 && light_test != TEST_NONE)
+    if(cutoff > 0 && light_test != options::TEST_NONE)
     {
         glDisable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);

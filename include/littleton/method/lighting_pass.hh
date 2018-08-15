@@ -38,23 +38,11 @@ class multishader;
 namespace lt::method
 {
 
-class shadow_method;
-class LT_API lighting_pass:
-    public target_method,
-    public scene_method<camera_scene, light_scene, shadow_scene>,
-    public stencil_handler
-{
-public:
-    lighting_pass(
-        render_target& target,
-        gbuffer& buf,
-        resource_pool& pool,
-        Scene scene,
-        float cutoff = 5/256.0f// Set to negative to not use light volumes
-    );
 
-    void set_cutoff(float cutoff);
-    float get_cutoff() const;
+LT_OPTIONS(lighting_pass)
+{
+    // Set to negative to not use light volumes
+    float cutoff = 5/256.0f;
 
     enum depth_test
     {
@@ -63,10 +51,27 @@ public:
         TEST_FAR
     };
 
-    void set_light_depth_test(depth_test test);
-    depth_test get_light_depth_test() const;
+    // Type of depth culling for the light volumes
+    depth_test test = TEST_NEAR;
 
-    void set_visualize_light_volumes(bool visualize);
+    bool visualize_light_volumes = false;
+};
+
+class shadow_method;
+class LT_API lighting_pass:
+    public target_method,
+    public scene_method<camera_scene, light_scene, shadow_scene>,
+    public options_method<lighting_pass>,
+    public stencil_handler
+{
+public:
+    lighting_pass(
+        render_target& target,
+        gbuffer& buf,
+        resource_pool& pool,
+        Scene scene,
+        const options& opt = {}
+    );
 
     void execute() override;
 
@@ -77,10 +82,6 @@ private:
 
     multishader* ambient_shader;
     multishader* lighting_shader;
-
-    float cutoff;
-    depth_test light_test;
-    bool visualize_light_volumes;
 
     const primitive& quad;
     const sampler& fb_sampler;
