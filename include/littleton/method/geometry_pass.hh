@@ -38,9 +38,15 @@ class resource_pool;
 namespace lt::method
 {
 
+LT_OPTIONS(geometry_pass)
+{
+    bool apply_ambient = true;
+};
+
 class LT_API geometry_pass:
     public target_method,
     public scene_method<camera_scene, object_scene, light_scene>,
+    public options_method<geometry_pass>,
     public stencil_handler
 {
 public:
@@ -48,11 +54,8 @@ public:
         gbuffer& buf,
         resource_pool& store,
         Scene scene,
-        bool apply_ambient = true
+        const options& opt = {}
     );
-
-    void set_apply_ambient(bool apply_ambient);
-    bool get_apply_ambient() const;
 
     void execute() override;
 
@@ -63,8 +66,6 @@ private:
     shader* min_max_shader;
     const primitive& quad;
     const sampler& fb_sampler;
-
-    bool apply_ambient;
 };
 
 } // namespace lt::method

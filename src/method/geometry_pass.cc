@@ -38,27 +38,17 @@ geometry_pass::geometry_pass(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    bool apply_ambient
+    const options& opt
 ):  target_method(buf),
     scene_method(scene),
+    options_method(opt),
     geometry_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
     min_max_shader(buf.get_min_max_shader(pool)),
     quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    apply_ambient(apply_ambient)
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
-
-void geometry_pass::set_apply_ambient(bool apply_ambient)
-{
-    this->apply_ambient = apply_ambient;
-}
-
-bool geometry_pass::get_apply_ambient() const
-{
-    return apply_ambient;
-}
 
 void geometry_pass::execute()
 {
@@ -85,7 +75,7 @@ void geometry_pass::execute()
         {"MIN_ALPHA", "1.0f"}
     });
 
-    if(apply_ambient) common["APPLY_AMBIENT"];
+    if(opt.apply_ambient) common["APPLY_AMBIENT"];
 
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
 
