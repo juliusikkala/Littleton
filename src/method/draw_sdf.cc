@@ -33,14 +33,11 @@ draw_sdf::draw_sdf(
     gbuffer& target,
     resource_pool& pool,
     Scene scene,
-    bool apply_ambient,
-    const std::string& insert
-):  target_method(target),
-    scene_method(scene),
+    const options& opt
+):  target_method(target), scene_method(scene), options_method(opt),
     pool(pool),
     sdf_shaders(pool.get_shader(shader::path{"cast_ray.vert", "sdf.frag"})),
     sdf_shader(nullptr),
-    apply_ambient(apply_ambient),
     quad(common::ensure_quad_primitive(pool)),
     linear_sampler(common::ensure_linear_sampler(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
@@ -49,30 +46,15 @@ draw_sdf::draw_sdf(
         GL_NEAREST,
         GL_NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
-    ),
-    insert(insert)
+    )
 {
     update_sdf_shader();
-}
-
-void draw_sdf::set_apply_ambient(bool apply_ambient)
-{
-    this->apply_ambient = apply_ambient;
-}
-
-bool draw_sdf::get_apply_ambient() const
-{
-    return apply_ambient;
-}
-
-shader* draw_sdf::get_shader()
-{
-    return sdf_shader;
 }
 
 void draw_sdf::execute()
 {
     target_method::execute();
+    const auto [apply_ambient, insert] = opt;
     
     if(!sdf_shader || !has_all_scenes()) return;
 
@@ -141,10 +123,19 @@ std::string draw_sdf::get_name() const
     return "draw_sdf";
 }
 
+void draw_sdf::options_will_update(const options& next)
+{
+    if(next.insert != opt.insert)
+    {
+        opt.insert = next.insert;
+        update_sdf_shader();
+    }
+}
+
 void draw_sdf::update_sdf_shader()
 {
     shader::definition_map def(
-        {{"INSERT", insert}}
+        {{"INSERT", opt.insert}}
     );
     sdf_shader = sdf_shaders->get(def);
 }

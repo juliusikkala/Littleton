@@ -42,6 +42,16 @@ class gbuffer;
 namespace lt::method
 {
 
+LT_OPTIONS(draw_sdf)
+{
+    // Whether to apply ambient lighting or not. Disable if you are using
+    // SSAO or other methods which add the ambient term on their own.
+    bool apply_ambient = true;
+
+    // 'insert' is inserted before any of the sdf_object functions
+    std::string insert = "";
+};
+
 // Currently, this only works with a deferred pipeline. Sorry about that.
 // (shadow maps man, they're not fun)
 class LT_API draw_sdf:
@@ -50,35 +60,23 @@ class LT_API draw_sdf:
         camera_scene,
         sdf_scene
     >,
+    public options_method<draw_sdf>,
     public stencil_handler
 {
 public:
-    // 'insert' is inserted before any of the sdf_object functions
     draw_sdf(
         gbuffer& target,
         resource_pool& pool,
         Scene scene,
-        bool apply_ambient = true,
-        const std::string& insert = ""
+        const options& opt = {}
     );
-
-    // Note that calling this functions resets the sdf_shader and is quite slow.
-    // If you need to mutate your SDFs, please use get_shader() and set some
-    // uniforms there. You can declare additional uniforms with the 'insert'
-    // parameter of the constructor.
-    void set_sdfs(const std::vector<sdf_object>& sdfs);
-    const std::vector<sdf_object>& get_sdfs() const;
-
-    // Whether to apply ambient lighting or not. Disable if you are using
-    // SSAO or other methods which add the ambient term on their own.
-    void set_apply_ambient(bool apply_ambient);
-    bool get_apply_ambient() const;
-
-    shader* get_shader();
 
     void execute() override;
 
     std::string get_name() const override;
+
+protected:
+    void options_will_update(const options& next);
 
 private:
     void update_sdf_shader();
@@ -89,13 +87,10 @@ private:
     multishader* sdf_shaders;
     shader* sdf_shader;
 
-    bool apply_ambient;
     const primitive& quad;
     const sampler& linear_sampler;        
     const sampler& fb_sampler;
     sampler mipmap_sampler;
-
-    std::string insert;
 };
 
 } // namespace lt::method
