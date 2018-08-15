@@ -35,18 +35,20 @@ class sampler;
 namespace lt::method
 {
 
-class LT_API gamma: public target_method
+LT_OPTIONS(gamma)
+{
+    float gamma = 2.2f;
+};
+
+class LT_API gamma: public target_method, public options_method<gamma>
 {
 public:
     gamma(
         render_target& target,
         texture& src,
         resource_pool& pool,
-        float gamma = 2.2
+        const options& opt = {}
     );
-
-    void set_gamma(float gamma);
-    float get_gamma() const;
 
     void execute() override;
 
@@ -55,7 +57,6 @@ public:
 private:
     texture* src;
 
-    float g;
     shader* gamma_shader;
 
     const primitive& quad;

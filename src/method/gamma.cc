@@ -30,24 +30,14 @@ gamma::gamma(
     render_target& target,
     texture& src,
     resource_pool& pool,
-    float g
-):  target_method(target), src(&src), g(g),
+    const options& opt
+):  target_method(target), options_method(opt), src(&src),
     gamma_shader(pool.get_shader(
         shader::path{"fullscreen.vert", "gamma.frag"}, {})
     ),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
-}
-
-void gamma::set_gamma(float g)
-{
-    this->g = g;
-}
-
-float gamma::get_gamma() const
-{
-    return g;
 }
 
 void gamma::execute()
@@ -62,7 +52,7 @@ void gamma::execute()
     glDisable(GL_STENCIL_TEST);
 
     gamma_shader->bind();
-    gamma_shader->set("gamma", 1.0f/g);
+    gamma_shader->set("gamma", 1.0f/opt.gamma);
     gamma_shader->set("in_color", fb_sampler.bind(*src));
 
     quad.draw();

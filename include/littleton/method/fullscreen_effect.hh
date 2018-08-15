@@ -37,6 +37,7 @@ namespace lt::method
 {
 
 // Assumes the vertex shader is data/shaders/fullscreen.vert
+// DEPRECATED. TODO: Remove when 2D rendering features are in place.
 class LT_API fullscreen_effect: public target_method
 {
 public:
