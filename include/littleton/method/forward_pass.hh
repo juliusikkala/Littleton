@@ -38,10 +38,25 @@ class primitive;
 namespace lt::method
 {
 
+LT_OPTIONS(forward_pass)
+{
+    // Whether to apply ambient lighting or not. Disable if you are using
+    // SSAO or other methods which add the ambient term on their own.
+    bool apply_ambient = true;
+    // Whether to apply object transmittance or not. Disable if you are
+    // using SSRT or similar methods for refractions.
+    bool apply_transmittance = true;
+    // Whether to render opaque objects.
+    bool render_opaque = true;
+    // Whether to render transparent objects.
+    bool render_transparent = true;
+};
+
 class shadow_method;
 class LT_API forward_pass:
     public target_method,
     public scene_method<camera_scene, object_scene, light_scene, shadow_scene>,
+    public options_method<forward_pass>,
     public stencil_handler
 {
 public:
@@ -49,32 +64,17 @@ public:
         render_target& target,
         resource_pool& pool,
         Scene scene,
-        bool apply_ambient = true,
-        bool apply_transmittance = true
+        const options& opt = {}
     );
 
     forward_pass(
         gbuffer& target,
         resource_pool& pool,
         Scene scene,
-        bool apply_ambient = true,
-        bool apply_transmittance = true
+        const options& opt = {}
     );
 
     ~forward_pass();
-
-    // Whether to apply ambient lighting or not. Disable if you are using
-    // SSAO or other methods which add the ambient term on their own.
-    void set_apply_ambient(bool apply_ambient);
-    bool get_apply_ambient() const;
-
-    // Whether to apply object transmittance or not. Disable if you are
-    // using SSRT or similar methods for refractions.
-    void set_apply_transmittance(bool apply_transmittance);
-    bool get_apply_transmittance() const;
-
-    void render_opaque(bool opaque);
-    void render_transparent(bool transparent);
 
     void execute() override;
 
@@ -87,11 +87,6 @@ private:
 
     gbuffer* gbuf;
 
-    bool opaque;
-    bool transparent;
-
-    bool apply_ambient;
-    bool apply_transmittance;
     const primitive& quad;
     const sampler& fb_sampler;
 };

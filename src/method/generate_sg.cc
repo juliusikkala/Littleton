@@ -63,7 +63,12 @@ generate_sg::generate_sg(
         samples, GL_TEXTURE_CUBE_MAP_ARRAY
     ),
     sb(cubemap_probes, pool, { &probe_cameras, scene }),
-    fp(cubemap_probes, pool, { &probe_cameras, scene, scene, scene }, false, false),
+    fp(
+        cubemap_probes,
+        pool,
+        { &probe_cameras, scene, scene, scene },
+        {false, false}
+    ),
     probe_pipeline({&sb, &fp})
 {
 }

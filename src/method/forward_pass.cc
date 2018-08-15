@@ -790,10 +790,10 @@ forward_pass::forward_pass(
     render_target& target,
     resource_pool& pool,
     Scene scene,
-    bool apply_ambient,
-    bool apply_transmittance
+    const options& opt
 ):  target_method(target),
     scene_method(scene),
+    options_method(opt),
     forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
     ),
@@ -802,8 +802,6 @@ forward_pass::forward_pass(
     ),
     min_max_shader(nullptr),
     gbuf(nullptr),
-    opaque(true), transparent(true), apply_ambient(apply_ambient),
-    apply_transmittance(apply_transmittance),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool))
 {}
@@ -812,11 +810,8 @@ forward_pass::forward_pass(
     gbuffer& buf,
     resource_pool& pool,
     Scene scene,
-    bool apply_ambient,
-    bool apply_transmittance
-):  forward_pass(
-        (render_target&)buf, pool, scene, apply_ambient, apply_transmittance
-    )
+    const options& opt
+): forward_pass((render_target&)buf, pool, scene, opt)
 {
     min_max_shader = buf.get_min_max_shader(pool);
     gbuf = &buf;
@@ -827,6 +822,8 @@ forward_pass::~forward_pass() {}
 void forward_pass::execute()
 {
     target_method::execute();
+    const auto [apply_ambient, apply_transmittance, opaque, transparent] = opt;
+
     if(!forward_shader || !has_all_scenes())
         return;
 
@@ -873,26 +870,6 @@ void forward_pass::execute()
     // TODO: Separate method for gbuffer mipmap rendering, this one might render
     // unnecessarily in hybrid pipelines.
     if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
-}
-
-void forward_pass::set_apply_ambient(bool apply_ambient)
-{
-    this->apply_ambient = apply_ambient;
-}
-
-bool forward_pass::get_apply_ambient() const
-{
-    return apply_ambient;
-}
-
-void forward_pass::render_opaque(bool opaque)
-{
-    this->opaque = opaque;
-}
-
-void forward_pass::render_transparent(bool transparent)
-{
-    this->transparent = transparent;
 }
 
 std::string forward_pass::get_name() const

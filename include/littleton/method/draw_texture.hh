@@ -34,6 +34,7 @@ class resource_pool;
 namespace lt::method
 {
 
+// DEPRECATED. TODO: Remove when 2D rendering features are in place.
 class LT_API draw_texture: public target_method
 {
 public:
