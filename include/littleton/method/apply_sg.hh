@@ -42,8 +42,18 @@ class multishader;
 namespace lt::method
 {
 
+LT_OPTIONS(apply_sg)
+{
+    // If the roughness of the surface is less than this, the specular part
+    // won't be applied to it (this is useful if you mix different reflection
+    // methods such as cubemaps and SSRT)
+    float min_specular_roughness = 0.2f;
+};
+
 class LT_API apply_sg:
-    public target_method, public scene_method<camera_scene, sg_scene>,
+    public target_method,
+    public scene_method<camera_scene, sg_scene>,
+    public options_method<apply_sg>,
     public glresource, public stencil_handler
 {
 public:
@@ -52,7 +62,7 @@ public:
         gbuffer& buf,
         resource_pool& pool,
         Scene scene,
-        float min_specular_roughness = 0.2f
+        const options& opt = {}
     );
 
     void execute() override;
@@ -64,7 +74,6 @@ private:
 
     multishader* sg_shader;
 
-    float min_specular_roughness;
     const primitive& cube;
     const sampler& fb_sampler;
     const sampler& linear_sampler;

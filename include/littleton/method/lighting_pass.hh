@@ -54,6 +54,7 @@ LT_OPTIONS(lighting_pass)
     // Type of depth culling for the light volumes
     depth_test test = TEST_NEAR;
 
+    // If true, highlights the light volumes by drawing them slightly brighter
     bool visualize_light_volumes = false;
 };
 
