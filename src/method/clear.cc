@@ -24,16 +24,15 @@ namespace lt::method
 
 clear::clear(
     render_target& target,
-    glm::vec4 color,
-    double depth,
-    int stencil
-): target_method(target), color(color), depth(depth), stencil(stencil) {}
+    const options& opt
+): target_method(target), options_method(opt) {}
 
 clear::~clear(){}
 
 void clear::execute()
 {
     target_method::execute();
+    const auto [color, depth, stencil] = opt;
 
     glStencilMask(0xFF);
     glClearColor(color.r, color.g, color.b, color.a);
