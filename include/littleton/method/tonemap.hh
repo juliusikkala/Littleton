@@ -34,18 +34,20 @@ class resource_pool;
 namespace lt::method
 {
 
-class LT_API tonemap: public target_method
+LT_OPTIONS(tonemap)
+{
+    float exposure = 1.0f;
+};
+
+class LT_API tonemap: public target_method, public options_method<tonemap>
 {
 public:
     tonemap(
         render_target& target,
         resource_pool& pool,
         texture* src,
-        float exposure = 1.0f
+        const options& opt = {}
     );
-
-    void set_exposure(float exposure);
-    float get_exposure() const;
 
     void execute() override;
 
@@ -56,8 +58,6 @@ private:
     shader* tonemap_shader;
     const primitive& quad;
     const sampler& fb_sampler;
-
-    float exposure;
 };
 
 } // namespace lt::method

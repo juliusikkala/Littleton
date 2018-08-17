@@ -29,25 +29,14 @@ tonemap::tonemap(
     render_target& target,
     resource_pool& pool,
     texture* src,
-    float exposure
-):  target_method(target), src(src),
+    const options& opt
+):  target_method(target), options_method(opt), src(src),
     tonemap_shader(
         pool.get_shader(shader::path{"fullscreen.vert", "tonemap.frag"}, {})
     ),
     quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    exposure(exposure)
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
 {
-}
-
-void tonemap::set_exposure(float exposure)
-{
-    this->exposure = exposure;
-}
-
-float tonemap::get_exposure() const
-{
-    return exposure;
 }
 
 void tonemap::execute()
@@ -62,7 +51,7 @@ void tonemap::execute()
     glDisable(GL_STENCIL_TEST);
 
     tonemap_shader->bind();
-    tonemap_shader->set<float>("exposure", exposure);
+    tonemap_shader->set<float>("exposure", opt.exposure);
     tonemap_shader->set("in_color", fb_sampler.bind(*src));
 
     quad.draw();
