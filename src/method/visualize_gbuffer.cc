@@ -32,7 +32,7 @@ using namespace lt::method;
 
 void render_visualizer(
     const gbuffer* buf,
-    visualize_gbuffer::visualizer v,
+    visualize_gbuffer::options::visualizer v,
     multishader* ms,
     const primitive& quad,
     camera* cam
@@ -40,34 +40,34 @@ void render_visualizer(
     shader* s;
     switch(v)
     {
-    case visualize_gbuffer::DEPTH:
+    case visualize_gbuffer::options::DEPTH:
         s = ms->get({{"SHOW_DEPTH", ""}});
         break;
-    case visualize_gbuffer::POSITION:
+    case visualize_gbuffer::options::POSITION:
         s = ms->get({{"SHOW_POSITION", ""}});
         break;
-    case visualize_gbuffer::NORMAL:
+    case visualize_gbuffer::options::NORMAL:
         s = ms->get({{"SHOW_NORMAL", ""}});
         break;
-    case visualize_gbuffer::COLOR:
+    case visualize_gbuffer::options::COLOR:
         s = ms->get({{"SHOW_COLOR", ""}});
         break;
-    case visualize_gbuffer::ROUGHNESS:
+    case visualize_gbuffer::options::ROUGHNESS:
         s = ms->get({{"SHOW_ROUGHNESS", ""}});
         break;
-    case visualize_gbuffer::METALLIC:
+    case visualize_gbuffer::options::METALLIC:
         s = ms->get({{"SHOW_METALLIC", ""}});
         break;
-    case visualize_gbuffer::IOR:
+    case visualize_gbuffer::options::IOR:
         s = ms->get({{"SHOW_IOR", ""}});
         break;
-    case visualize_gbuffer::MATERIAL:
+    case visualize_gbuffer::options::MATERIAL:
         s = ms->get({{"SHOW_MATERIAL", ""}});
         break;
-    case visualize_gbuffer::LIGHTING:
+    case visualize_gbuffer::options::LIGHTING:
         s = ms->get({{"SHOW_LIGHTING", ""}});
         break;
-    case visualize_gbuffer::INDIRECT_LIGHTING:
+    case visualize_gbuffer::options::INDIRECT_LIGHTING:
         s = ms->get({{"SHOW_INDIRECT_LIGHTING", ""}});
         break;
     default:
@@ -86,38 +86,42 @@ void render_visualizer(
 namespace lt::method
 {
 
-visualize_gbuffer::visualize_gbuffer(
-    render_target& target,
-    gbuffer& buf,
-    resource_pool& pool,
-    Scene scene
-):  target_method(target), scene_method(scene), buf(&buf),
-    visualize_shader(pool.get_shader(
-        shader::path{"fullscreen.vert", "visualize.frag"}
-    )),
-    quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    visualizers({POSITION, NORMAL, COLOR, MATERIAL})
-{
-}
+method_options<visualize_gbuffer>::method_options()
+: visualizers({POSITION, NORMAL, COLOR, MATERIAL})
+{}
 
-void visualize_gbuffer::show(visualizer full)
-{
-    visualizers = {full};
-}
+method_options<visualize_gbuffer>::method_options(visualizer full)
+: visualizers({full})
+{}
 
-void visualize_gbuffer::show(
+method_options<visualize_gbuffer>::method_options(
     visualizer topleft,
     visualizer topright,
     visualizer bottomleft,
     visualizer bottomright
-){
-    visualizers = {topleft, topright, bottomleft, bottomright};
+): visualizers({topleft, topright, bottomleft, bottomright})
+{}
+
+visualize_gbuffer::visualize_gbuffer(
+    render_target& target,
+    gbuffer& buf,
+    resource_pool& pool,
+    Scene scene,
+    const options& opt
+):  target_method(target), scene_method(scene), options_method(opt), buf(&buf),
+    visualize_shader(pool.get_shader(
+        shader::path{"fullscreen.vert", "visualize.frag"}
+    )),
+    quad(common::ensure_quad_primitive(pool)),
+    fb_sampler(common::ensure_framebuffer_sampler(pool))
+{
 }
 
 void visualize_gbuffer::execute()
 {
     target_method::execute();
+
+    const auto [visualizers] = opt;
 
     if(!visualize_shader || visualizers.size() == 0 || !has_all_scenes()) return;
 

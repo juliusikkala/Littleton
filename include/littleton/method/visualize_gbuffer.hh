@@ -37,18 +37,8 @@ class multishader;
 namespace lt::method
 {
 
-class LT_API visualize_gbuffer:
-    public target_method,
-    public scene_method<camera_scene>
+LT_OPTIONS(visualize_gbuffer)
 {
-public:
-    visualize_gbuffer(
-        render_target& target,
-        gbuffer& buf,
-        resource_pool& pool,
-        Scene scene
-    );
-
     enum visualizer
     {
         DEPTH,
@@ -63,12 +53,30 @@ public:
         INDIRECT_LIGHTING,
     };
 
-    void show(visualizer full);
-    void show(
+    method_options();
+    method_options(visualizer full);
+    method_options(
         visualizer topleft,
         visualizer topright,
         visualizer bottomleft,
         visualizer bottomright
+    );
+
+    std::vector<visualizer> visualizers;
+};
+
+class LT_API visualize_gbuffer:
+    public target_method,
+    public scene_method<camera_scene>,
+    public options_method<visualize_gbuffer>
+{
+public:
+    visualize_gbuffer(
+        render_target& target,
+        gbuffer& buf,
+        resource_pool& pool,
+        Scene scene,
+        const options& opt
     );
 
     void execute() override;
@@ -81,8 +89,6 @@ private:
     multishader* visualize_shader;
     const primitive& quad;
     const sampler& fb_sampler;        
-
-    std::vector<visualizer> visualizers;
 };
 
 } // namespace lt::method
