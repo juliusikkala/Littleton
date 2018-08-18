@@ -50,6 +50,7 @@ src = [
   'src/method/forward_pass.cc',
   'src/method/fullscreen_effect.cc',
   'src/method/gamma.cc',
+  'src/method/generate_depth_mipmap.cc',
   'src/method/generate_sg.cc',
   'src/method/geometry_pass.cc',
   'src/method/kernel.cc',

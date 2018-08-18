@@ -40,7 +40,6 @@ class LT_API target_method: public pipeline_method
 public:
     explicit target_method(render_target& target);
 
-    void set_target(render_target& target);
     render_target& get_target();
 
     // Call this from the deriving method with target_method::execute().

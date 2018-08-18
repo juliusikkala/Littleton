@@ -800,10 +800,7 @@ forward_pass::forward_pass(
     cubemap_forward_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag", "cubemap.geom"})
     ),
-    min_max_shader(nullptr),
-    gbuf(nullptr),
-    quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
+    gbuf(nullptr)
 {}
 
 forward_pass::forward_pass(
@@ -813,7 +810,6 @@ forward_pass::forward_pass(
     const options& opt
 ): forward_pass((render_target&)buf, pool, scene, opt)
 {
-    min_max_shader = buf.get_min_max_shader(pool);
     gbuf = &buf;
 }
 
@@ -866,10 +862,6 @@ void forward_pass::execute()
             cubemap ? cubemap_forward_shader : forward_shader
         );
     }
-
-    // TODO: Separate method for gbuffer mipmap rendering, this one might render
-    // unnecessarily in hybrid pipelines.
-    if(gbuf) gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
 }
 
 std::string forward_pass::get_name() const

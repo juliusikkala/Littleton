@@ -89,14 +89,6 @@ public:
     void set_draw(draw_mode mode);
     draw_mode get_draw() const;
 
-    shader* get_min_max_shader(shader_pool& pool) const;
-    // Warning: modifies OpenGL state variables
-    void render_depth_mipmaps(
-        shader* min_max,
-        const primitive& quad,
-        const sampler& fb_sampler
-    );
-
 private:
     draw_mode mode;
 

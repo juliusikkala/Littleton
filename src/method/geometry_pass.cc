@@ -44,10 +44,7 @@ geometry_pass::geometry_pass(
     options_method(opt),
     geometry_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"})
-    ),
-    min_max_shader(buf.get_min_max_shader(pool)),
-    quad(common::ensure_quad_primitive(pool)),
-    fb_sampler(common::ensure_framebuffer_sampler(pool))
+    )
 {}
 
 void geometry_pass::execute()
@@ -115,7 +112,6 @@ void geometry_pass::execute()
         }
     }
 
-    gbuf->render_depth_mipmaps(min_max_shader, quad, fb_sampler);
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 

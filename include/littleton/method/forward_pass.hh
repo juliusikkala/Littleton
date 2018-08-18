@@ -28,10 +28,7 @@ namespace lt
 
 class resource_pool;
 class multishader;
-class shader;
 class gbuffer;
-class sampler;
-class primitive;
 
 }
 
@@ -83,12 +80,8 @@ public:
 private:
     multishader* forward_shader;
     multishader* cubemap_forward_shader;
-    shader* min_max_shader;
 
     gbuffer* gbuf;
-
-    const primitive& quad;
-    const sampler& fb_sampler;
 };
 
 } // namespace lt::method

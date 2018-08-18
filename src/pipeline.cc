@@ -34,11 +34,6 @@ std::string pipeline_method::get_name() const
 
 target_method::target_method(render_target& target): target(&target) {}
 
-void target_method::set_target(render_target& target)
-{
-    this->target = &target;
-}
-
 render_target& target_method::get_target()
 {
     return *target;
