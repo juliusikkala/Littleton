@@ -47,6 +47,8 @@ private:
         std::unique_ptr<T>
     >;
 
+    static const std::string type_string;
+
 public:
     using iterator = typename map_type::iterator;
     using const_iterator = typename map_type::const_iterator;

@@ -1,8 +1,14 @@
 #include <algorithm>
 #include "resource_pool.hh"
+#include <boost/core/demangle.hpp>
 
 namespace lt
 {
+
+template<typename T>
+const std::string generic_resource_pool<T>::type_string = boost::core::demangle(
+    typeid(T).name()
+);
 
 template<typename T>
 generic_resource_pool<T>::generic_resource_pool(context& ctx)
@@ -17,6 +23,14 @@ T* generic_resource_pool<T>::add(
     T* tex,
     bool ignore_duplicate
 ){
+    if(!tex)
+    {
+        throw std::runtime_error(
+            "Attempted to add a null pointer as a " + type_string +
+            " with name " + name
+        );
+    }
+
     auto it = resources.find(name);
     if(it != resources.end())
     {
@@ -25,8 +39,11 @@ T* generic_resource_pool<T>::add(
             delete tex;
             return it->second.get();
         }
-        else throw std::runtime_error("Resource " + name + " already exists!");
+        else throw std::runtime_error(
+            type_string + " " + name + " already exists!"
+        );
     }
+
     resources.emplace(name, tex);
     return tex;
 }
@@ -41,7 +58,9 @@ T* generic_resource_pool<T>::add(
     if(it != resources.end())
     {
         if(ignore_duplicate) return it->second.get();
-        else throw std::runtime_error("Resource " + name + " already exists!");
+        else throw std::runtime_error(
+            type_string + " " + name + " already exists!"
+        );
     }
 
     T* new_tex = new T(std::move(tex));
@@ -60,7 +79,7 @@ const T* generic_resource_pool<T>::get(const std::string& name) const
 {
     auto it = resources.find(name);
     if(it == resources.end())
-        throw std::runtime_error("Unable to get generic_resource " + name);
+        throw std::runtime_error("Unable to get " + type_string + " " + name);
     return it->second.get();
 }
 
@@ -69,7 +88,7 @@ T* generic_resource_pool<T>::get_mutable(const std::string& name)
 {
     auto it = resources.find(name);
     if(it == resources.end())
-        throw std::runtime_error("Unable to get generic_resource " + name);
+        throw std::runtime_error("Unable to get " + type_string + " " + name);
     return it->second.get();
 }
 
