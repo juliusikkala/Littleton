@@ -120,11 +120,6 @@ void bloom::execute()
     quad.draw();
 }
 
-std::string bloom::get_name() const
-{
-    return "bloom";
-}
-
 void bloom::options_will_update(const options& next)
 {
     gaussian_kernel = generate_gaussian_kernel(

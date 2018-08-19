@@ -58,9 +58,4 @@ void gamma::execute()
     quad.draw();
 }
 
-std::string gamma::get_name() const
-{
-    return "gamma";
-}
-
 } // namespace lt::method

@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include <typeinfo>
 #include <string>
+#include <boost/core/demangle.hpp>
 
 namespace lt
 {
@@ -29,7 +30,7 @@ namespace lt
 pipeline_method::~pipeline_method() {}
 std::string pipeline_method::get_name() const
 {
-    return std::string(typeid(this).name());
+    return boost::core::demangle(typeid(*this).name());
 }
 
 target_method::target_method(render_target& target): target(&target) {}

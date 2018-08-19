@@ -118,11 +118,6 @@ void draw_sdf::execute()
     quad.draw();
 }
 
-std::string draw_sdf::get_name() const
-{
-    return "draw_sdf";
-}
-
 void draw_sdf::options_will_update(const options& next)
 {
     if(next.insert != opt.insert)

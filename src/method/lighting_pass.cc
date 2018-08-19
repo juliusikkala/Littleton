@@ -541,9 +541,4 @@ void lighting_pass::execute()
     );
 }
 
-std::string lighting_pass::get_name() const
-{
-    return "lighting_pass";
-}
-
 } // namespace lt::method

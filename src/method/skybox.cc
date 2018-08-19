@@ -107,9 +107,4 @@ void skybox::execute()
     }
 }
 
-std::string skybox::get_name() const
-{
-    return "skybox";
-}
-
 } // namespace lt::method

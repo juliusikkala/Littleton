@@ -65,8 +65,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
     texture* get_design_matrix(const sg_group& group);
 
 private:

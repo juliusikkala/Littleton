@@ -115,7 +115,7 @@ public:
     void execute(std::vector<double>& timing);
 
     std::string get_name(size_t i) const;
-    virtual std::string get_name() const;
+    std::string get_name() const override;
 private:
     std::vector<pipeline_method*> methods;
 };

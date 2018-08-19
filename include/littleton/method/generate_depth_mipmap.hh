@@ -42,8 +42,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     gbuffer* buf;
     shader* min_max_shader;

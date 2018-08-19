@@ -75,8 +75,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     multishader* forward_shader;
     multishader* cubemap_forward_shader;

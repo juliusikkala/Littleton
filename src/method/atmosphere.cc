@@ -338,9 +338,4 @@ void render_atmosphere::execute()
     }
 }
 
-std::string render_atmosphere::get_name() const
-{
-    return "render_atmosphere";
-}
-
 } // namespace lt::method

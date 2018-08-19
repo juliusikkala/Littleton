@@ -41,9 +41,4 @@ void clear::execute()
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 }
 
-std::string clear::get_name() const
-{
-    return "clear";
-}
-
 } // namespace lt::method

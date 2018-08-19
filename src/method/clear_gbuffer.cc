@@ -32,9 +32,4 @@ void clear_gbuffer::execute()
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
-std::string clear_gbuffer::get_name() const
-{
-    return "clear_gbuffer";
-}
-
 } // namespace lt::method

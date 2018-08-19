@@ -57,9 +57,4 @@ void tonemap::execute()
     quad.draw();
 }
 
-std::string tonemap::get_name() const
-{
-    return "tonemap";
-}
-
 } // namespace lt::method

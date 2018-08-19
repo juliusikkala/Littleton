@@ -167,9 +167,4 @@ void apply_sg::execute()
     glFrontFace(GL_CCW);
 }
 
-std::string apply_sg::get_name() const 
-{
-    return "apply_sg";
-}
-
 } // namespace lt::method

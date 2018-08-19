@@ -57,9 +57,4 @@ void blit_framebuffer::execute()
     );
 }
 
-std::string blit_framebuffer::get_name() const
-{
-    return "blit_framebuffer";
-}
-
 } // namespace lt::method

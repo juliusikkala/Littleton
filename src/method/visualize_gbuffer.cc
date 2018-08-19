@@ -162,9 +162,4 @@ void visualize_gbuffer::execute()
     }
 }
 
-std::string visualize_gbuffer::get_name() const
-{
-    return "visualize_gbuffer";
-}
-
 } // namespace lt::method

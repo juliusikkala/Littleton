@@ -53,8 +53,6 @@ public:
     void set_shader(shader* effect);
     shader* get_shader() const;
 
-    std::string get_name() const override;
-
 private:
     shader* effect;
     const primitive& quad;

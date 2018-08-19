@@ -203,8 +203,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     shader* depth_shader;
     shader* cubemap_depth_shader;

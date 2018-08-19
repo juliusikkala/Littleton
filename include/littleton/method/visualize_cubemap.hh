@@ -98,8 +98,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     multishader* visualize_shader;
     const primitive& sphere;

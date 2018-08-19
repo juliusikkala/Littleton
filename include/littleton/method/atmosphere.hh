@@ -136,8 +136,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     shader* atmosphere_shader;
     texture* depth_buffer;

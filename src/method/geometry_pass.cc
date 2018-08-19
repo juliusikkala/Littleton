@@ -115,9 +115,4 @@ void geometry_pass::execute()
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
-std::string geometry_pass::get_name() const
-{
-    return "geometry_pass";
-}
-
 } // namespace lt::method

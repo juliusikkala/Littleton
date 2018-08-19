@@ -50,8 +50,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     shader* sky_shader;
     shader* cubemap_sky_shader;

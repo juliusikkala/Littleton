@@ -143,11 +143,6 @@ void ssrt::execute()
     quad.draw();
 }
 
-std::string ssrt::get_name() const
-{
-    return "ssrt";
-}
-
 void ssrt::options_will_update(const options& next, bool initial)
 {
     if(opt.thickness != next.thickness || initial)

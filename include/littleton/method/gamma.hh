@@ -52,8 +52,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 private:
     texture* src;
 

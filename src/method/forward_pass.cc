@@ -864,9 +864,4 @@ void forward_pass::execute()
     }
 }
 
-std::string forward_pass::get_name() const
-{
-    return "forward_pass";
-}
-
 } // namespace lt::method

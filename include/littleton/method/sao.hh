@@ -68,8 +68,6 @@ public:
 
     void execute() override;
 
-    std::string get_name() const override;
-
 protected:
     void options_will_update(const options& next, bool initial = false);
 

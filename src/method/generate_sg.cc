@@ -180,11 +180,6 @@ void generate_sg::execute()
     );
 }
 
-std::string generate_sg::get_name() const
-{
-    return "generate_sg";
-}
-
 texture* generate_sg::get_design_matrix(const sg_group& group)
 {
     //return &get_matrices(group).x;

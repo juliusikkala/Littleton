@@ -352,11 +352,6 @@ void shadow_pcf::execute()
     }
 }
 
-std::string shadow_pcf::get_name() const
-{
-    return "shadow_pcf";
-}
-
 } // namespace lt::method
 
 namespace lt

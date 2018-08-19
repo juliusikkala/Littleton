@@ -144,11 +144,6 @@ void sao::execute()
     quad.draw();
 }
 
-std::string sao::get_name() const
-{
-    return "sao";
-}
-
 void sao::options_will_update(const options& next, bool initial)
 {
     if(opt.samples != next.samples || initial)

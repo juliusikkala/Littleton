@@ -110,10 +110,5 @@ void generate_depth_mipmap::execute()
     buf->set_draw(buf->get_draw());
 }
 
-std::string generate_depth_mipmap::get_name() const
-{
-    return "generate_depth_mipmap";
-}
-
 } // namespace lt::method
 

@@ -60,9 +60,4 @@ shader* fullscreen_effect::get_shader() const
     return effect;
 }
 
-std::string fullscreen_effect::get_name() const
-{
-    return "fullscreen_effect";
-}
-
 } // namespace lt::method

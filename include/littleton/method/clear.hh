@@ -42,8 +42,6 @@ public:
     ~clear();
 
     void execute() override;
-
-    std::string get_name() const override;
 };
 
 } // namespace lt::method

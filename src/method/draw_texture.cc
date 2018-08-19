@@ -80,9 +80,4 @@ void draw_texture::execute()
     quad.draw();
 }
 
-std::string draw_texture::get_name() const
-{
-    return "draw_texture";
-}
-
 } // namespace lt::method

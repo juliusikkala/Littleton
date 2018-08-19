@@ -200,9 +200,4 @@ void visualize_cubemap::execute()
     glFrontFace(GL_CCW);
 }
 
-std::string visualize_cubemap::get_name() const
-{
-    return "visualize_cubemap";
-}
-
 } // namespace lt::method

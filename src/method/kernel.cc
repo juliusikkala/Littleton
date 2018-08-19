@@ -82,9 +82,4 @@ void kernel::execute()
     quad.draw();
 }
 
-std::string kernel::get_name() const
-{
-    return "kernel";
-}
-
 } // namespace lt::method

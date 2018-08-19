@@ -389,11 +389,6 @@ void shadow_msm::execute()
     }
 }
 
-std::string shadow_msm::get_name() const
-{
-    return "shadow_msm";
-}
-
 } // namespace lt::method
 
 namespace lt
