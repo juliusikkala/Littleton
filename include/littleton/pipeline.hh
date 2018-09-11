@@ -110,7 +110,6 @@ public:
     pipeline(pipeline&& other);
     ~pipeline();
 
-
     void execute();
     void execute(std::vector<double>& timing);
 

@@ -239,6 +239,7 @@ template<typename... Scenes>
 struct scene_method: private single_scene_holder<Scenes>...
 {
 public:
+    using SceneAcceptor = scene_acceptor<Scenes...>;
     using Scene = const scene_acceptor<Scenes...>&;
 
     template<typename S>
