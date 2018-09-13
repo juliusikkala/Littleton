@@ -22,6 +22,7 @@
 #include "pipeline.hh"
 #include "scene.hh"
 #include "gbuffer.hh"
+#include "doublebuffer.hh"
 #include "method/apply_sg.hh"
 #include "method/blit_framebuffer.hh"
 #include "method/bloom.hh"
@@ -67,6 +68,7 @@ protected:
         render_target& target,
         gbuffer* buf1,
         gbuffer* buf2,
+        doublebuffer* dbuf,
         std::vector<pipeline_method*>&& dynamic_stages,
         std::vector<pipeline_method*>&& static_stages,
         stage_ptrs&& all_stages
@@ -75,6 +77,7 @@ protected:
     // Double G-Buffering! The second buffer might not be in use, depends on
     // pipeline stages. Check whether it's nullptr to make sure.
     gbuffer* buf[2];
+    doublebuffer* dbuf;
     std::tuple<std::unique_ptr<Stages>...> all_stages;
     std::vector<pipeline_method*> dynamic_stages;
     std::vector<pipeline_method*> static_stages;
@@ -125,6 +128,7 @@ using simple_pipeline_base = basic_simple_pipeline<
     method::sao,
     method::ssao,
     method::apply_sg,
+    method::apply_sg,
     method::ssrt,
     method::blit_framebuffer,
     method::generate_sg
@@ -154,6 +158,7 @@ public:
         SAO,
         SSAO,
         APPLY_SG,
+        APPLY_SG_TRANSPARENT,
         SSRT,
         BLIT_FRAMEBUFFER,
         GENERATE_SG
@@ -171,6 +176,12 @@ public:
         resource_pool& pool
     );
 
+    simple_pipeline_builder(
+        render_target& target,
+        resource_pool& pool,
+        uvec2 resolution
+    );
+
     enum algorithm
     {
         DEFERRED = 0,
@@ -180,6 +191,9 @@ public:
     };
 
     void set_algorithm(algorithm a);
+
+    void set_resolution(uvec2 res);
+    uvec2 get_resolution() const;
 
     template<typename Method>
     void add(typename Method::options& opt);
@@ -199,6 +213,7 @@ public:
 private:
     render_target& target;
     resource_pool& pool;
+    uvec2 resolution;
 
     struct method_status
     {

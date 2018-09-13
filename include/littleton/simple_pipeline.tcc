@@ -9,10 +9,12 @@ basic_simple_pipeline<Stages...>::basic_simple_pipeline(
     render_target& target,
     gbuffer* buf1,
     gbuffer* buf2,
+    doublebuffer* dbuf,
     std::vector<pipeline_method*>&& dynamic_stages,
     std::vector<pipeline_method*>&& static_stages,
     stage_ptrs&& all_stages
-):  target_method(target), buf{buf1, buf2}, all_stages(std::move(all_stages)),
+):  target_method(target), buf{buf1, buf2}, dbuf(dbuf),
+    all_stages(std::move(all_stages)),
     dynamic_stages(std::move(dynamic_stages)),
     static_stages(std::move(static_stages))
 {
@@ -29,13 +31,14 @@ basic_simple_pipeline<Stages...>::~basic_simple_pipeline()
             b->get_color(),
             b->get_material(),
             b->get_linear_depth(),
-            b->get_lighting(),
+            dbuf ? nullptr : b->get_lighting(),
             b->get_depth_stencil(),
             b->get_indirect_lighting()
         };
         for(texture* t: textures) if(t) delete t;
         delete b;
     }
+    delete dbuf;
 }
 
 template<typename... Stages>

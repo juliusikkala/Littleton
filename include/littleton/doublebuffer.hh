@@ -56,6 +56,8 @@ public:
     void set_depth_stencil(texture* depth_stencil);
     void set_depth_stencil(unsigned index, texture* depth_stencil);
 
+    texture& get_texture(unsigned actual_index = 0);
+
     void swap();
 
 private:

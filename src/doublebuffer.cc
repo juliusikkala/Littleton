@@ -135,6 +135,11 @@ void doublebuffer::set_depth_stencil(unsigned index, texture* depth_stencil)
     return targets[index^cur_index].set_depth_stencil(depth_stencil);
 }
 
+texture& doublebuffer::get_texture(unsigned actual_index)
+{
+    return buffers[actual_index];
+}
+
 void doublebuffer::swap()
 {
     cur_index = 1-cur_index;
