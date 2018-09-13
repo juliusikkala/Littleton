@@ -59,19 +59,22 @@ template<typename... Stages>
 class basic_simple_pipeline: public target_method
 {
 friend class simple_pipeline_builder;
+public:
+    using stage_ptrs = std::tuple<std::unique_ptr<Stages>...>;
+
 protected:
     basic_simple_pipeline(
         render_target& target,
-        gbuffer&& buf1,
-        gbuffer&& buf2,
+        gbuffer* buf1,
+        gbuffer* buf2,
         std::vector<pipeline_method*>&& dynamic_stages,
         std::vector<pipeline_method*>&& static_stages,
-        Stages*... all_stages
+        stage_ptrs&& all_stages
     );
 
     // Double G-Buffering! The second buffer might not be in use, depends on
-    // pipeline stages. Check whether its lighting buffer is null to be sure.
-    gbuffer buf[2];
+    // pipeline stages. Check whether it's nullptr to make sure.
+    gbuffer* buf[2];
     std::tuple<std::unique_ptr<Stages>...> all_stages;
     std::vector<pipeline_method*> dynamic_stages;
     std::vector<pipeline_method*> static_stages;

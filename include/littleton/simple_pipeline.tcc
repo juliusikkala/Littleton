@@ -7,12 +7,12 @@ namespace lt
 template<typename... Stages>
 basic_simple_pipeline<Stages...>::basic_simple_pipeline(
     render_target& target,
-    gbuffer&& buf1,
-    gbuffer&& buf2,
+    gbuffer* buf1,
+    gbuffer* buf2,
     std::vector<pipeline_method*>&& dynamic_stages,
     std::vector<pipeline_method*>&& static_stages,
-    Stages*... all_stages
-):  target_method(target), buf{buf1, buf2}, all_stages(all_stages...),
+    stage_ptrs&& all_stages
+):  target_method(target), buf{buf1, buf2}, all_stages(std::move(all_stages)),
     dynamic_stages(std::move(dynamic_stages)),
     static_stages(std::move(static_stages))
 {
@@ -21,18 +21,20 @@ basic_simple_pipeline<Stages...>::basic_simple_pipeline(
 template<typename... Stages>
 basic_simple_pipeline<Stages...>::~basic_simple_pipeline()
 {
-    for(gbuffer& b: buf)
+    for(gbuffer* b: buf)
     {
+        if(!b) continue;
         texture* textures[] = {
-            b.get_normal(),
-            b.get_color(),
-            b.get_material(),
-            b.get_linear_depth(),
-            b.get_lighting(),
-            b.get_depth_stencil(),
-            b.get_indirect_lighting()
+            b->get_normal(),
+            b->get_color(),
+            b->get_material(),
+            b->get_linear_depth(),
+            b->get_lighting(),
+            b->get_depth_stencil(),
+            b->get_indirect_lighting()
         };
         for(texture* t: textures) if(t) delete t;
+        delete b;
     }
 }
 
@@ -86,7 +88,7 @@ void basic_simple_pipeline<Stages...>::set_scenes(const Scene& scene)
         {
             auto func = [&](auto& stage)
             {
-                if constexpr(has_set_scenes<decltype(*stage)>::value)
+                if constexpr(has_set_scenes<decltype(*stage)>::value && stage)
                     stage->set_scenes(scene);
                 return 0;
             };
@@ -114,7 +116,7 @@ void basic_simple_pipeline<Stages...>::set_scene(S* scene)
         {
             auto func = [&](auto& stage)
             {
-                if constexpr(has_set_scene<decltype(*stage), S>::value)
+                if constexpr(has_set_scene<decltype(*stage), S>::value && stage)
                     stage->set_scene(scene);
                 return 0;
             };
@@ -137,7 +139,8 @@ template<unsigned i>
 void basic_simple_pipeline<Stages...>::set_options(
     const typename decltype(*std::get<i>(all_stages))::options& opt
 ){
-    std::get<i>(all_stages)->set_options(opt);
+    auto stage = std::get<i>(all_stages);
+    if(stage) stage->set_options(opt);
 }
 
 template<typename... Stages>
@@ -145,7 +148,9 @@ template<unsigned i>
 auto basic_simple_pipeline<Stages...>::get_options() const
 -> const typename decltype(*std::get<i>(all_stages))::options&
 {
-    return std::get<i>(all_stages)->get_options();
+    auto stage = std::get<i>(all_stages);
+    if(stage) return stage->get_options();
+    throw std::runtime_error("Stage " + std::to_string(i) + " not present in pipeline");
 }
 
 template<typename Method>
@@ -180,7 +185,9 @@ simple_pipeline* simple_pipeline_builder::build(const Scene& scene)
 {
     // TODO: Figure out which scene types the compound scene has, then enable
     // the correct methods and call build().
-    return build();
+    simple_pipeline* res = build();
+    res->set_scenes(scene);
+    return res;
 }
 
 }
