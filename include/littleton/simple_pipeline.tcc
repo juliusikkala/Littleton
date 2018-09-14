@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <utility>
+#include <type_traits>
 
 namespace lt
 {
@@ -13,9 +14,8 @@ basic_simple_pipeline<Stages...>::basic_simple_pipeline(
     std::vector<pipeline_method*>&& dynamic_stages,
     std::vector<pipeline_method*>&& static_stages,
     stage_ptrs&& all_stages
-):  target_method(target), buf{buf1, buf2}, dbuf(dbuf),
+):  pipeline(dynamic_stages), buf{buf1, buf2}, dbuf(dbuf),
     all_stages(std::move(all_stages)),
-    dynamic_stages(std::move(dynamic_stages)),
     static_stages(std::move(static_stages))
 {
 }
@@ -56,33 +56,18 @@ void basic_simple_pipeline<Stages...>::execute_static()
     }
 }
 
-template<typename... Stages>
-void basic_simple_pipeline<Stages...>::execute()
-{
-    for(unsigned i = 0; i < dynamic_stages.size(); ++i)
-    {
-        pipeline_method* method = dynamic_stages[i];
-        method->execute();
-        if(glGetError() != GL_NO_ERROR)
-            throw std::runtime_error(
-                "Error in pipeline method "
-                + method->get_name() + " index " + std::to_string(i)
-            );
-    }
-}
-
 template<typename T, typename=void>
 struct has_set_scenes: std::false_type { };
 
 template<typename T>
 struct has_set_scenes<
     T,
-    decltype((void) std::declval<T>().set_scenes(), void())
+    decltype((void) std::declval<T>().set_scenes({}), void())
 > : std::true_type { };
 
 template<typename... Stages>
 template<typename Scene>
-void basic_simple_pipeline<Stages...>::set_scenes(const Scene& scene)
+void basic_simple_pipeline<Stages...>::set_scenes(Scene& scene)
 {
     // Calls set_scenes for all methods in all_stages if it exists for the
     // method.
@@ -91,8 +76,10 @@ void basic_simple_pipeline<Stages...>::set_scenes(const Scene& scene)
         {
             auto func = [&](auto& stage)
             {
-                if constexpr(has_set_scenes<decltype(*stage)>::value && stage)
-                    stage->set_scenes(scene);
+                if constexpr(has_set_scenes<decltype(*stage)>::value)
+                {
+                    if(stage) stage->set_scenes(&scene);
+                }
                 return 0;
             };
             std::make_tuple(func(stages)...);
@@ -157,7 +144,7 @@ auto basic_simple_pipeline<Stages...>::get_options() const
 }
 
 template<typename Method>
-void simple_pipeline_builder::add(typename Method::options& opt)
+void simple_pipeline_builder::add(const typename Method::options& opt)
 {
 #define LT_HANDLE_METHOD(name, status) \
     if constexpr(std::is_same_v<Method, method:: name>) \
@@ -184,7 +171,7 @@ void simple_pipeline_builder::add()
 }
 
 template<typename Scene>
-simple_pipeline* simple_pipeline_builder::build(const Scene& scene)
+simple_pipeline* simple_pipeline_builder::build(Scene& scene)
 {
     // TODO: Figure out which scene types the compound scene has, then enable
     // the correct methods and call build().

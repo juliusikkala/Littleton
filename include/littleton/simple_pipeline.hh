@@ -57,7 +57,7 @@ class resource_pool;
 
 // Simple in usage, not in implementation :P
 template<typename... Stages>
-class basic_simple_pipeline: public target_method
+class basic_simple_pipeline: public pipeline
 {
 friend class simple_pipeline_builder;
 public:
@@ -79,7 +79,6 @@ protected:
     gbuffer* buf[2];
     doublebuffer* dbuf;
     std::tuple<std::unique_ptr<Stages>...> all_stages;
-    std::vector<pipeline_method*> dynamic_stages;
     std::vector<pipeline_method*> static_stages;
 
 public:
@@ -90,10 +89,8 @@ public:
     // new scene.
     void execute_static();
 
-    void execute() override;
-
     template<typename Scene>
-    void set_scenes(const Scene& scene);
+    void set_scenes(Scene& scene);
 
     template<typename S>
     void set_scene(S* scene);
@@ -163,6 +160,10 @@ public:
         BLIT_FRAMEBUFFER,
         GENERATE_SG
     };
+
+    method::shadow_pcf* get_pcf() {return get_stage<SHADOW_PCF>();}
+    method::shadow_msm* get_msm() {return get_stage<SHADOW_MSM>();}
+    method::generate_sg* get_sg() {return get_stage<GENERATE_SG>();}
 };
 
 // Builds a simple pipeline. If you just want to create a simple_pipeline
@@ -196,7 +197,7 @@ public:
     uvec2 get_resolution() const;
 
     template<typename Method>
-    void add(typename Method::options& opt);
+    void add(const typename Method::options& opt);
 
     template<typename Method>
     void add();
@@ -208,7 +209,7 @@ public:
     // Determines needed stages based on scene. If you don't want this, use
     // build() without arguments.
     template<typename Scene>
-    simple_pipeline* build(const Scene& scene);
+    simple_pipeline* build(Scene& scene);
 
 private:
     render_target& target;
