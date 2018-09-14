@@ -37,9 +37,9 @@ namespace lt::method
 
 LT_OPTIONS(bloom)
 {
-    float threshold = 2.0f;
-    unsigned radius = 5;
-    float strength = 1.0f;
+    float threshold = 6.0f;
+    unsigned radius = 30;
+    float strength = 0.1f;
     unsigned level = 2;
 };
 

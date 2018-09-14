@@ -175,6 +175,10 @@ simple_pipeline* simple_pipeline_builder::build(Scene& scene)
 {
     // TODO: Figure out which scene types the compound scene has, then enable
     // the correct methods and call build().
+    if(std::is_convertible_v<Scene&, environment_scene&>)
+        add<method::skybox>();
+    if(std::is_convertible_v<Scene&, atmosphere_scene&>)
+        add<method::render_atmosphere>();
     simple_pipeline* res = build();
     res->set_scenes(scene);
     return res;

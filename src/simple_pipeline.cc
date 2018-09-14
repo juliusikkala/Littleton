@@ -174,8 +174,10 @@ simple_pipeline* simple_pipeline_builder::build()
     std::unique_ptr<doublebuffer> dbuf;
 
     // Determine which buffers we need
-    if(deferred)
-    {
+    if(
+        deferred || sg_status.enabled || sao_status.enabled ||
+        ssao_status.enabled || ssrt_status.enabled
+    ){
         normal = true;
         color = true;
         material = true;
@@ -184,7 +186,10 @@ simple_pipeline* simple_pipeline_builder::build()
 
     if(sg_status.enabled)
     {
-        indirect_lighting = true;
+        // Indirect lighting buffer is only needed in conjunction with SSAO or
+        // SAO.
+        if(ssao_status.enabled || sao_status.enabled)
+            indirect_lighting = true;
         defer_ambient = true;
     }
 

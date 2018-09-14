@@ -52,7 +52,7 @@ LT_OPTIONS(ssrt)
     // Set to negative for infinite depth (faster)
     float thickness = -1.0f;
     // Distance of the first sample from the point where the ray starts
-    float ray_offset = 0.01f;
+    float ray_offset = 0.1f;
     bool use_fallback_cubemap = true;
 };
 
