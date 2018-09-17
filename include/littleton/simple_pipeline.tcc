@@ -140,11 +140,14 @@ auto basic_simple_pipeline<Stages...>::get_options() const
 {
     auto stage = std::get<i>(all_stages);
     if(stage) return stage->get_options();
-    throw std::runtime_error("Stage " + std::to_string(i) + " not present in pipeline");
+    throw std::runtime_error(
+        "Stage " + std::to_string(i) + " not present in pipeline"
+    );
 }
 
 template<typename Method>
-void simple_pipeline_builder::add(const typename Method::options& opt)
+simple_pipeline_builder&
+simple_pipeline_builder::add(const typename Method::options& opt)
 {
 #define LT_HANDLE_METHOD(name, status) \
     if constexpr(std::is_same_v<Method, method:: name>) \
@@ -159,15 +162,18 @@ void simple_pipeline_builder::add(const typename Method::options& opt)
     LT_HANDLE_METHOD(ssao, ssao_status)
     LT_HANDLE_METHOD(ssrt, ssrt_status)
     LT_HANDLE_METHOD(apply_sg, sg_status)
+    LT_HANDLE_METHOD(visualize_gbuffer, visualize_status)
 #undef LT_HANDLE_METHOD
+    return *this;
 }
 
 template<typename Method>
-void simple_pipeline_builder::add()
+simple_pipeline_builder& simple_pipeline_builder::add()
 {
     if constexpr(std::is_same_v<Method, method::skybox>)
         skybox_status.enabled = true;
-    else add<Method>({});
+    else return add<Method>({});
+    return *this;
 }
 
 template<typename Scene>

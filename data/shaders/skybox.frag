@@ -8,5 +8,5 @@ uniform float exposure;
 
 void main(void)
 {
-    color = texture(skybox, view_dir) * exposure;
+    color = clamp(texture(skybox, view_dir) * exposure, 0.0f, 1000.0f);
 }

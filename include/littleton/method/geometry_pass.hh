@@ -38,6 +38,9 @@ namespace lt::method
 LT_OPTIONS(geometry_pass)
 {
     bool apply_ambient = true;
+    // Whether to render transparent objects only, with transmittance. This is
+    // an on/off switch due to how the lighting pass is separate.
+    bool render_transparent = false;
 };
 
 class LT_API geometry_pass:

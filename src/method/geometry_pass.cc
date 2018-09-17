@@ -31,6 +31,52 @@
 #include "math.hh"
 #include <utility>
 
+namespace
+{
+    using namespace lt;
+    void depth_pass(
+        const shader::definition_map& common,
+        multishader* geometry_shader,
+        camera* cam,
+        object_scene* s,
+        vec3 ambient = vec3(0)
+    ){
+        glm::mat4 v = glm::inverse(cam->get_global_transform());
+        glm::mat4 p = cam->get_projection();
+
+        for(object* obj: s->get_objects())
+        {
+            const model* mod = obj->get_model();
+            if(!mod) continue;
+
+            glm::mat4 mv = v * obj->get_global_transform();
+            glm::mat3 n_m(glm::inverseTranspose(mv));
+            glm::mat4 mvp = p * mv;
+
+            for(const model::vertex_group& group: *mod)
+            {
+                if(!group.mat || !group.mesh) continue;
+
+                shader::definition_map definitions(common);
+                group.mat->update_definitions(definitions);
+                group.mesh->update_definitions(definitions);
+
+                shader* s = geometry_shader->get(definitions);
+                s->bind();
+
+                s->set("mvp", mvp);
+                s->set("m", mv);
+                s->set("n_m", n_m);
+                s->set("ambient", ambient);
+
+                unsigned texture_index = 0;
+                group.mat->apply(s, texture_index);
+                group.mesh->draw();
+            }
+        }
+    }
+}
+
 namespace lt::method
 {
 
@@ -54,6 +100,7 @@ void geometry_pass::execute()
         return;
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_CULL_FACE);
     glDisable(GL_BLEND);
 
@@ -62,55 +109,61 @@ void geometry_pass::execute()
     camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
-    glm::mat4 v = glm::inverse(cam->get_global_transform());
-    glm::mat4 p = cam->get_projection();
-
     shader::definition_map common({
         {"OUTPUT_GEOMETRY", ""},
         {"OUTPUT_LIGHTING", ""},
-        {"APPLY_EMISSION", ""},
-        {"MIN_ALPHA", "1.0f"}
+        {"APPLY_EMISSION", ""}
     });
+
+    if(opt.render_transparent)
+    {
+        common["MAX_ALPHA"] = "1.0f";
+        common["MIN_ALPHA"] = "0.00390625f";
+    }
+    else common["MIN_ALPHA"] = "1.0f";
 
     if(opt.apply_ambient) common["APPLY_AMBIENT"];
 
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
 
+    if(opt.render_transparent)
+    {
+        // Draw depth first to extract top layer.
+        gbuf->set_draw(gbuffer::DRAW_NONE);
+
+        shader::definition_map depth_only({
+            {"MAX_ALPHA", "1.0f"},
+            {"MIN_ALPHA", "0.00390625f"}
+        });
+
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        depth_pass(depth_only, geometry_shader, cam, get_scene<object_scene>());
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+        gbuf->set_draw(gbuffer::DRAW_ALL);
+        glEnable(GL_BLEND);
+        // Don't blend geometry data channels.
+        glBlendFunc(GL_ONE, GL_ZERO);
+
+        // Transmittance
+        glBlendFunci(
+            gbuf->get_lighting_index(),
+            GL_ZERO,
+            GL_ONE_MINUS_SRC_ALPHA
+        );
+    }
+    else gbuf->set_draw(gbuffer::DRAW_ALL);
     // Emission values are written to lighting during geometry pass, so DRAW_ALL
     // instead of DRAW_GEOMETRY.
-    gbuf->set_draw(gbuffer::DRAW_ALL);
     gbuf->update_definitions(common);
 
-    for(object* obj: get_scene<object_scene>()->get_objects())
-    {
-        const model* mod = obj->get_model();
-        if(!mod) continue;
-
-        glm::mat4 mv = v * obj->get_global_transform();
-        glm::mat3 n_m(glm::inverseTranspose(mv));
-        glm::mat4 mvp = p * mv;
-
-        for(const model::vertex_group& group: *mod)
-        {
-            if(!group.mat || !group.mesh) continue;
-
-            shader::definition_map definitions(common);
-            group.mat->update_definitions(definitions);
-            group.mesh->update_definitions(definitions);
-
-            shader* s = geometry_shader->get(definitions);
-            s->bind();
-
-            s->set("mvp", mvp);
-            s->set("m", mv);
-            s->set("n_m", n_m);
-            s->set("ambient", get_scene<light_scene>()->get_ambient());
-
-            unsigned texture_index = 0;
-            group.mat->apply(s, texture_index);
-            group.mesh->draw();
-        }
-    }
+    depth_pass(
+        common,
+        geometry_shader,
+        cam,
+        get_scene<object_scene>(),
+        get_scene<light_scene>()->get_ambient()
+    );
 
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }

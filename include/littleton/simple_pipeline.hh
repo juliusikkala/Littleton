@@ -117,7 +117,8 @@ using simple_pipeline_base = basic_simple_pipeline<
     method::generate_depth_mipmap,
     method::lighting_pass,
     method::forward_pass,
-    method::forward_pass,
+    method::geometry_pass,
+    method::lighting_pass,
     method::visualize_gbuffer,
     method::render_atmosphere,
     method::bloom,
@@ -147,7 +148,8 @@ public:
         GENERATE_DEPTH_MIPMAP,
         LIGHTING_PASS,
         FORWARD_PASS,
-        TRANSPARENCY_PASS,
+        GEOMETRY_TRANSPARENCY_PASS,
+        LIGHTING_TRANSPARENCY_PASS,
         VISUALIZE_GBUFFER,
         RENDER_ATMOSPHERE,
         BLOOM,
@@ -187,22 +189,21 @@ public:
     {
         DEFERRED = 0,
         FORWARD,
-        HYBRID,
-        VISUALIZER
+        DEFERRED_TRANSPARENT
     };
 
-    void set_algorithm(algorithm a);
+    simple_pipeline_builder& set_algorithm(algorithm a);
 
-    void set_resolution(uvec2 res);
+    simple_pipeline_builder& set_resolution(uvec2 res);
     uvec2 get_resolution() const;
 
     template<typename Method>
-    void add(const typename Method::options& opt);
+    simple_pipeline_builder& add(const typename Method::options& opt);
 
     template<typename Method>
-    void add();
+    simple_pipeline_builder& add();
 
-    void reset();
+    simple_pipeline_builder& reset();
 
     simple_pipeline* build();
 
@@ -236,6 +237,7 @@ private:
     options_method_status<method::ssao> ssao_status;
     options_method_status<method::ssrt> ssrt_status;
     options_method_status<method::apply_sg> sg_status;
+    options_method_status<method::visualize_gbuffer> visualize_status;
 };
 
 } // namespace lt

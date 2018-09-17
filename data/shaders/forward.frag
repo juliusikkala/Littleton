@@ -95,7 +95,7 @@ void main(void)
 
 #ifdef OUTPUT_GEOMETRY
     write_gbuffer(
-        pos, normal, surface_color.rgb,
+        pos, normal, surface_color.rgb * surface_color.a,
         emission, roughness, metallic, f0
     );
 #endif

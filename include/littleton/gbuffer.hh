@@ -76,6 +76,7 @@ public:
 
     enum draw_mode
     {
+        // Draws depth only
         DRAW_NONE = 0,
         DRAW_ALL,
         DRAW_GEOMETRY,

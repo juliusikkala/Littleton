@@ -127,14 +127,16 @@ simple_pipeline_builder::simple_pipeline_builder(
 {
 }
 
-void simple_pipeline_builder::set_algorithm(algorithm a)
+simple_pipeline_builder& simple_pipeline_builder::set_algorithm(algorithm a)
 {
     lighting_approach = a;
+    return *this;
 }
 
-void simple_pipeline_builder::set_resolution(uvec2 res)
+simple_pipeline_builder& simple_pipeline_builder::set_resolution(uvec2 res)
 {
     this->resolution = res;
+    return *this;
 }
 
 uvec2 simple_pipeline_builder::get_resolution() const
@@ -142,7 +144,7 @@ uvec2 simple_pipeline_builder::get_resolution() const
     return resolution;
 }
 
-void simple_pipeline_builder::reset()
+simple_pipeline_builder& simple_pipeline_builder::reset()
 {
     lighting_approach = DEFERRED;
     resolution = target.get_size();
@@ -154,6 +156,8 @@ void simple_pipeline_builder::reset()
     ssao_status.enabled = false;
     ssrt_status.enabled = false;
     sg_status.enabled = false;
+    visualize_status.enabled = false;
+    return *this;
 }
 
 simple_pipeline* simple_pipeline_builder::build()
@@ -167,7 +171,7 @@ simple_pipeline* simple_pipeline_builder::build()
     bool indirect_lighting = false;
 
     bool deferred = lighting_approach == DEFERRED ||
-       lighting_approach == HYBRID || lighting_approach == VISUALIZER;
+       lighting_approach == DEFERRED_TRANSPARENT;
     bool postprocessed = tonemap_status.enabled || bloom_status.enabled;
     bool defer_ambient = false;
 
@@ -326,11 +330,29 @@ simple_pipeline* simple_pipeline_builder::build()
         );
     }
 
-    // TODO: Transparency handling with SG:
-    // Write 1 in first geometry/forward pass to stencil (default?)
-    // First SG application (1<<7)
-    // Transparency pass (write 2)
-    // Second SG application (1)
+    if(lighting_approach == DEFERRED_TRANSPARENT)
+    {
+        method::geometry_pass::options gp_opt;
+        // SG, SSAO, SAO and SSRT are currently not supported for the
+        // transparent objects.
+        gp_opt.apply_ambient = true;
+        gp_opt.render_transparent = true;
+
+        method::geometry_pass* gp = new method::geometry_pass(
+            b.in(), pool, {}, gp_opt
+        );
+        // Identify new geometry, old geometry should still have a stencil value
+        // of 1.
+        gp->set_stencil_ref(2);
+        add_stage(GEOMETRY_TRANSPARENCY_PASS, gp, dynamic);
+
+        method::lighting_pass* lp = new method::lighting_pass(
+            b.in(), b.in(), pool, {}
+        );
+        // Render lighting pass only for the new geometry
+        lp->set_stencil(GL_EQUAL, 2);
+        add_stage(LIGHTING_TRANSPARENCY_PASS, lp, dynamic);
+    }
 
     // Start postprocessing
     b.sync_dbuf();
@@ -366,18 +388,12 @@ simple_pipeline* simple_pipeline_builder::build()
     }
 
     // Final blit
-    if(lighting_approach == VISUALIZER)
+    if(visualize_status.enabled)
     {
         add_stage(
             VISUALIZE_GBUFFER,
             new method::visualize_gbuffer(
-                target, b.in(), pool, {},
-                {
-                    method::visualize_gbuffer::options::POSITION,
-                    method::visualize_gbuffer::options::MATERIAL,
-                    method::visualize_gbuffer::options::LIGHTING,
-                    method::visualize_gbuffer::options::INDIRECT_LIGHTING
-                }
+                target, b.in(), pool, {}, visualize_status.opt
             ),
             dynamic
         );
