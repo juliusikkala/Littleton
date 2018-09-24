@@ -152,6 +152,7 @@ simple_pipeline_builder& simple_pipeline_builder::reset()
     atmosphere_status.enabled = false;
     bloom_status.enabled = false;
     tonemap_status.enabled = false;
+    sdf_status.enabled = false;
     sao_status.enabled = false;
     ssao_status.enabled = false;
     ssrt_status.enabled = false;
@@ -245,6 +246,19 @@ simple_pipeline* simple_pipeline_builder::build()
             new method::geometry_pass(b.in(), pool, {}, gp_opt),
             dynamic
         );
+
+        if(sdf_status.enabled)
+        {
+            sdf_status.opt.apply_lighting = false;
+            sdf_status.opt.render_transparent = false;
+            sdf_status.opt.write_depth = true;
+            sdf_status.opt.apply_ambient = !defer_ambient;
+            add_stage(
+                RENDER_SDF,
+                new method::render_sdf(b.in(), pool, {}, sdf_status.opt),
+                dynamic
+            );
+        }
     }
 
     if(skybox_status.enabled)
@@ -267,6 +281,19 @@ simple_pipeline* simple_pipeline_builder::build()
             new method::forward_pass(b.in(), pool, {}, fp_opt),
             dynamic
         );
+
+        if(sdf_status.enabled)
+        {
+            sdf_status.opt.apply_lighting = true;
+            sdf_status.opt.render_transparent = true;
+            sdf_status.opt.write_depth = true;
+            sdf_status.opt.apply_ambient = !defer_ambient;
+            add_stage(
+                RENDER_SDF,
+                new method::render_sdf(b.in(), pool, {}, sdf_status.opt),
+                dynamic
+            );
+        }
     }
 
     if(linear_depth)

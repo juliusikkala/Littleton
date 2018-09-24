@@ -158,6 +158,7 @@ simple_pipeline_builder::add(const typename Method::options& opt)
     LT_HANDLE_METHOD(render_atmosphere, atmosphere_status)
     LT_HANDLE_METHOD(bloom, bloom_status)
     LT_HANDLE_METHOD(tonemap, tonemap_status)
+    LT_HANDLE_METHOD(render_sdf, sdf_status)
     LT_HANDLE_METHOD(sao, sao_status)
     LT_HANDLE_METHOD(ssao, ssao_status)
     LT_HANDLE_METHOD(ssrt, ssrt_status)
@@ -185,6 +186,8 @@ simple_pipeline* simple_pipeline_builder::build(Scene& scene)
         add<method::skybox>();
     if(std::is_convertible_v<Scene&, atmosphere_scene&>)
         add<method::render_atmosphere>();
+    if(std::is_convertible_v<Scene&, sdf_scene&>)
+        add<method::render_sdf>();
     simple_pipeline* res = build();
     res->set_scenes(scene);
     return res;

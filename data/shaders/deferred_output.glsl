@@ -1,5 +1,6 @@
 #include "constants.glsl"
 #include "generic_fragment_input.glsl"
+#define USE_INPUT_MATERIAL
 #include "material.glsl"
 #include "projection.glsl"
 

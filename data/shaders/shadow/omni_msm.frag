@@ -4,6 +4,7 @@
 #include "constants.glsl"
 
 #ifdef DISCARD_ALPHA
+#define USE_INPUT_MATERIAL
 #include "material.glsl"
 #endif
 

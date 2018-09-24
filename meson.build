@@ -56,6 +56,7 @@ src = [
   'src/method/kernel.cc',
   'src/method/lighting_pass.cc',
   'src/method/sao.cc',
+  'src/method/sdf.cc',
   'src/method/shadow_method.cc',
   'src/method/shadow_msm.cc',
   'src/method/shadow_pcf.cc',

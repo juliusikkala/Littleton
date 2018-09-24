@@ -26,18 +26,16 @@ sdf_object::sdf_object(
     const material* mat,
     const std::string& distance_func,
     const std::string& texture_mapping_func
-):  mat(mat),
-    distance_func(distance_func), texture_mapping_func(texture_mapping_func)
-{}
-
-void sdf_object::set_material(const material* mat)
+):  mat(mat), distance_func(distance_func)
 {
-    this->mat = mat;
+    set_material(mat, texture_mapping_func);
 }
 
-const material* sdf_object::get_material() const
+sdf_object::sdf_object(
+    const std::string& distance_func,
+    const std::string& material_func
+):  mat(nullptr), distance_func(distance_func), material_func(material_func)
 {
-    return mat;
 }
 
 void sdf_object::set_distance_func(const std::string& distance_func)
@@ -50,15 +48,18 @@ const std::string& sdf_object::get_distance_func() const
     return distance_func;
 }
 
-void sdf_object::set_texture_mapping_func(
+void sdf_object::set_material(
+    const material* mat,
     const std::string& texture_mapping_func
-){
-    this->texture_mapping_func = texture_mapping_func;
+)
+{
+    this->mat = mat;
+    // TODO: Create material_func from texture_mapping_func
 }
 
-const std::string& sdf_object::get_texture_mapping_func() const
+void sdf_object::set_material(const std::string& material_func)
 {
-    return texture_mapping_func;
+    this->material_func = material_func;
 }
 
 sdf_scene::sdf_scene() {}

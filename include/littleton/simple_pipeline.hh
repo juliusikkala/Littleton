@@ -39,6 +39,7 @@
 #include "method/shadow_msm.hh"
 #include "method/shadow_pcf.hh"
 #include "method/atmosphere.hh"
+#include "method/sdf.hh"
 #include "method/skybox.hh"
 #include "method/ssao.hh"
 #include "method/ssrt.hh"
@@ -114,6 +115,7 @@ using simple_pipeline_base = basic_simple_pipeline<
     method::shadow_pcf,
     method::shadow_msm,
     method::geometry_pass,
+    method::render_sdf,
     method::generate_depth_mipmap,
     method::lighting_pass,
     method::forward_pass,
@@ -145,6 +147,7 @@ public:
         SHADOW_PCF,
         SHADOW_MSM,
         GEOMETRY_PASS,
+        RENDER_SDF,
         GENERATE_DEPTH_MIPMAP,
         LIGHTING_PASS,
         FORWARD_PASS,
@@ -233,6 +236,7 @@ private:
     options_method_status<method::render_atmosphere> atmosphere_status;
     options_method_status<method::bloom> bloom_status;
     options_method_status<method::tonemap> tonemap_status;
+    options_method_status<method::render_sdf> sdf_status;
     options_method_status<method::sao> sao_status;
     options_method_status<method::ssao> ssao_status;
     options_method_status<method::ssrt> ssrt_status;

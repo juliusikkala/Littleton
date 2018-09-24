@@ -4,6 +4,7 @@
 #version 430 core
 
 #include "generic_fragment_input.glsl"
+#define USE_INPUT_MATERIAL
 #include "material.glsl"
 #include "light_types.glsl"
 #include "shadow.glsl"
@@ -92,6 +93,7 @@ void main(void)
     float metallic = metallic_roughness.x;
     float roughness = metallic_roughness.y;
     float f0 = get_material_f0();
+    material_t m = get_input_material();
 
 #ifdef OUTPUT_GEOMETRY
     write_gbuffer(

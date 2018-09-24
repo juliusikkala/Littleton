@@ -295,7 +295,7 @@ void shadow_msm::execute()
     {
         depth_shader->bind();
         //TODO: Handle transparency correctly by setting the material.
-        depth_shader->set("material.color_factor", glm::vec4(1.0f));
+        depth_shader->set("input_material.color_factor", glm::vec4(1.0f));
         for(directional_shadow_map* sm: *directional_shadow_maps)
         {
             directional_shadow_map_msm* msm =
@@ -317,7 +317,10 @@ void shadow_msm::execute()
     {
         perspective_depth_shader->bind();
         //TODO: Handle transparency correctly by setting the material.
-        perspective_depth_shader->set("material.color_factor", glm::vec4(1.0f));
+        perspective_depth_shader->set(
+            "input_material.color_factor",
+            glm::vec4(1.0f)
+        );
         for(perspective_shadow_map* sm: *perspective_shadow_maps)
         {
             perspective_shadow_map_msm* msm =
@@ -345,7 +348,10 @@ void shadow_msm::execute()
 
         cubemap_depth_shader->bind();
         //TODO: Handle transparency correctly by setting the material.
-        cubemap_depth_shader->set("material.color_factor", glm::vec4(1.0f));
+        cubemap_depth_shader->set(
+            "input_material.color_factor",
+            glm::vec4(1.0f)
+        );
 
         for(omni_shadow_map* sm: *omni_shadow_maps)
         {

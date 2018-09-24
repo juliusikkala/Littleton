@@ -3,6 +3,7 @@
 #include "generic_fragment_input.glsl"
 
 #ifdef DISCARD_ALPHA
+#define USE_INPUT_MATERIAL
 #include "material.glsl"
 #endif
 

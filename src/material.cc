@@ -65,33 +65,33 @@ void material::update_definitions(shader::definition_map& def) const
 
 void material::apply(shader* s, unsigned& texture_index) const
 {
-    s->set("material.color_factor", color_factor);
+    s->set("input_material.color_factor", color_factor);
     if(color_texture.first) s->set(
-        "material.color",
+        "input_material.color",
         color_texture.first->bind(*color_texture.second, texture_index++)
     );
 
-    s->set("material.metallic_factor", metallic_factor);
-    s->set("material.roughness_factor", roughness_factor);
+    s->set("input_material.metallic_factor", metallic_factor);
+    s->set("input_material.roughness_factor", roughness_factor);
     if(metallic_roughness_texture.first) s->set(
-        "material.metallic_roughness",
+        "input_material.metallic_roughness",
         metallic_roughness_texture.first->bind(
             *metallic_roughness_texture.second,
             texture_index++
         )
     );
 
-    s->set("material.normal_factor", normal_factor);
+    s->set("input_material.normal_factor", normal_factor);
     if(normal_texture.first) s->set(
-        "material.normal",
+        "input_material.normal",
         normal_texture.first->bind(*normal_texture.second, texture_index++)
     );
 
-    s->set<float>("material.f0", 2 * pow((ior-1)/(ior+1), 2));
+    s->set<float>("input_material.f0", 2 * pow((ior-1)/(ior+1), 2));
 
-    s->set("material.emission_factor", emission_factor);
+    s->set("input_material.emission_factor", emission_factor);
     if(emission_texture.first) s->set(
-        "material.emission",
+        "input_material.emission",
         emission_texture.first->bind(*emission_texture.second, texture_index++)
     );
 }

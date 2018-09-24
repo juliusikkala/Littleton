@@ -190,7 +190,8 @@ template<typename Scene>
 class single_scene_holder
 {
 public:
-    single_scene_holder(Scene* scene = nullptr): scene(scene) {}
+    single_scene_holder(void* incorrect = nullptr): scene(nullptr) {}
+    single_scene_holder(Scene* scene): scene(scene) {}
 
     void set(Scene* scene) { this->scene = scene; }
     Scene* get() const { return scene; }

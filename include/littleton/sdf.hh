@@ -26,6 +26,10 @@ namespace lt
 {
 
 class material;
+namespace method
+{
+class render_sdf;
+}
 
 /* 'distance_func' must be the contents of a glsl function with the following
  * definition:
@@ -49,9 +53,19 @@ class material;
  * ) {
  *     <your code>
  * }
+ *
+ * If a material function is defined, the material of the object is computed.
+ * 'material_func' must be the contents of a glsl function with the following
+ * definition:
+ *
+ * material_t material_func(in vec3 p)
+ * {
+ *     <your code>
+ * }
  */
 class LT_API sdf_object: public transformable_node
 {
+friend class method::render_sdf;
 public:
     sdf_object(
         const material* mat,
@@ -59,19 +73,24 @@ public:
         const std::string& texture_mapping_func = ""
     );
 
-    void set_material(const material* mat);
-    const material* get_material() const;
+    sdf_object(
+        const std::string& distance_func,
+        const std::string& material_func = ""
+    );
 
     void set_distance_func(const std::string& distance_func);
     const std::string& get_distance_func() const;
 
-    void set_texture_mapping_func(const std::string& texture_mapping_func);
-    const std::string& get_texture_mapping_func() const;
+    void set_material(
+        const material* mat,
+        const std::string& texture_mapping_func = ""
+    );
+    void set_material(const std::string& material_func);
 
 private:
     const material* mat;
     std::string distance_func;
-    std::string texture_mapping_func;
+    std::string material_func;
 };
 
 class LT_API sdf_scene
