@@ -106,8 +106,10 @@ void basic_simple_pipeline<Stages...>::set_scene(S* scene)
         {
             auto func = [&](auto& stage)
             {
-                if constexpr(has_set_scene<decltype(*stage), S>::value && stage)
-                    stage->set_scene(scene);
+                if constexpr(has_set_scene<decltype(*stage), S>::value)
+                {
+                    if(stage) stage->set_scene(scene);
+                }
                 return 0;
             };
             std::make_tuple(func(stages)...);
@@ -142,6 +144,28 @@ auto basic_simple_pipeline<Stages...>::get_options() const
     if(stage) return stage->get_options();
     throw std::runtime_error(
         "Stage " + std::to_string(i) + " not present in pipeline"
+    );
+}
+
+template<typename... Stages>
+void basic_simple_pipeline<Stages...>::update(duration delta)
+{
+    std::apply(
+        [&](auto&... stages)
+        {
+            auto func = [&](auto& stage)
+            {
+                if constexpr(
+                    std::is_base_of_v<
+                        animated_method,
+                        std::decay_t<decltype(*stage)>
+                    >
+                ) if(stage) stage->update(delta);
+                return 0;
+            };
+            std::make_tuple(func(stages)...);
+        },
+        all_stages
     );
 }
 

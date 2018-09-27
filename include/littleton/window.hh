@@ -22,6 +22,7 @@
 #include "render_target.hh"
 #include "context.hh"
 #include "math.hh"
+#include "timer.hh"
 #include <SDL.h>
 
 namespace lt
@@ -54,15 +55,16 @@ public:
 
     void grab_mouse(bool enabled = true);
 
-    int get_delta_ms() const;
-    float get_delta() const;
+    double get_delta_sec() const;
+    duration get_delta() const;
 
 private:
     static bool initialized;
 
     unsigned framerate_limit;
-    int last_frame;
-    int delta;
+
+    timer frame_timer;
+    duration last_delta;
 
     SDL_Window* win;
     SDL_GLContext ctx;

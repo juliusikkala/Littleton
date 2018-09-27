@@ -89,6 +89,7 @@ class LT_API render_sdf:
     public target_method,
     public scene_method<camera_scene, sdf_scene, light_scene>,
     public options_method<render_sdf>,
+    public animated_method,
     public stencil_handler
 {
 public:

@@ -18,12 +18,13 @@ uniform float min_dist;
 uniform float max_dist;
 uniform float step_ratio;
 uniform float hit_ratio;
+uniform float time;
 
 float sphere_distance(vec3 p)
 {
     vec3 c = vec3(0.3f);
-    vec3 q = mod(p, c)-0.5*c;
-    return length(q - vec3(0.0f)) - 0.02f;
+    vec3 q = mod(p - vec3(0.0f, -2 * time, 0.0f), c)-0.5*c;
+    return length(q) - 0.005f;
 }
 
 #define OBJECTS \

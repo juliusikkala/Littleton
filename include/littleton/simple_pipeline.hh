@@ -107,6 +107,8 @@ public:
     template<unsigned i>
     auto get_options() const ->
     const typename decltype(*std::get<i>(all_stages))::options&;
+
+    void update(duration delta);
 };
 
 using simple_pipeline_base = basic_simple_pipeline<

@@ -19,6 +19,7 @@
 #include "window.hh"
 #include "glheaders.hh"
 #include <stdexcept>
+#include <thread>
 #include <SDL_opengl.h>
 
 namespace lt
@@ -28,7 +29,7 @@ bool window::initialized = false;
 
 window::window(const params& p)
 : render_target(*this, GL_TEXTURE_2D, glm::uvec3(p.size, 1)),
-  framerate_limit(p.framerate_limit), last_frame(0), delta(0)
+  framerate_limit(p.framerate_limit), last_delta(duration::zero())
 {
     if(initialized)
     {
@@ -132,18 +133,18 @@ void window::present()
 {
     SDL_GL_SwapWindow(win);
 
-    if(last_frame == 0) last_frame = SDL_GetTicks();
+    if(last_delta == duration::zero()) frame_timer.lap();
     if(framerate_limit)
     {
-        int frame_ticks = SDL_GetTicks() - last_frame;
-        int required_ticks = 1000 / framerate_limit;
-        int sleep_ticks = required_ticks - frame_ticks;
+        duration elapsed = frame_timer.elapsed();
+        duration required = std::chrono::duration_cast<duration>(
+            std::chrono::duration<double>(1.0/framerate_limit)
+        );
+        duration sleep_time = required - elapsed;
 
-        if(sleep_ticks > 0) SDL_Delay(sleep_ticks);
+        if(elapsed < required) std::this_thread::sleep_for(sleep_time);
     }
-    unsigned this_frame = SDL_GetTicks();
-    delta = this_frame - last_frame;
-    last_frame = this_frame;
+    last_delta = frame_timer.lap();
 }
 
 void window::set_framerate_limit(unsigned framerate_limit)
@@ -162,14 +163,14 @@ void window::grab_mouse(bool enabled)
     SDL_SetRelativeMouseMode((SDL_bool)enabled);
 }
 
-int window::get_delta_ms() const
+double window::get_delta_sec() const
 {
-    return delta;
+    return std::chrono::duration<double>(last_delta).count();
 }
 
-float window::get_delta() const
+duration window::get_delta() const
 {
-    return delta/1000.0f;
+    return last_delta;
 }
 
 } // namespace lt
