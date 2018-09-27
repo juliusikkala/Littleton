@@ -49,9 +49,9 @@ void render_sdf::execute()
         return;
 
     auto [
-        apply_ambient, apply_lighting, render_transparent, num_refractions,
-        num_reflections, write_depth, max_steps, min_dist, max_dist, step_ratio,
-        hit_ratio
+        apply_ambient, apply_lighting, render_transparent, write_depth,
+        num_refractions, num_reflections, max_steps, min_dist, max_dist,
+        step_ratio, hit_ratio
     ] = opt;
 
     glEnable(GL_DEPTH_TEST);
@@ -74,6 +74,9 @@ void render_sdf::execute()
         {"FUNCTIONS", ""}
     });
 
+    if(apply_ambient) def["APPLY_AMBIENT"];
+    if(!write_depth) glDepthMask(GL_FALSE);
+
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
 
     gbuf->set_draw(gbuffer::DRAW_ALL);
@@ -88,10 +91,20 @@ void render_sdf::execute()
     s->set("proj", p);
     s->set("projection_info", cam->get_projection_info());
     s->set("clip_info", cam->get_clip_info());
+    s->set("camera_pos", cam->get_global_position());
     s->set("near", -cam->get_near());
+    s->set("n_v", glm::mat3(glm::transpose(cam->get_global_transform())));
+    s->set<int>("num_refractions", num_refractions);
+    s->set<int>("num_reflections", num_reflections);
+    s->set<int>("max_steps", max_steps);
+    s->set("min_dist", min_dist);
+    s->set("max_dist", max_dist);
+    s->set("step_ratio", step_ratio);
+    s->set("hit_ratio", hit_ratio);
 
     quad.draw();
 
+    if(!write_depth) glDepthMask(GL_TRUE);
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 

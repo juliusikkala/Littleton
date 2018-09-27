@@ -65,7 +65,7 @@ LT_OPTIONS(render_sdf)
 
     // Maximum ray march steps to be taken. Higher values give better quality
     // with worse worst-case performance.
-    unsigned max_steps = 128;
+    unsigned max_steps = 64;
 
     // Minimum distance of the ray from its origin.
     float min_dist = 0.1f;
