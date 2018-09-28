@@ -87,10 +87,16 @@ public:
     );
     void set_material(const std::string& material_func);
 
+    // Used for cache invalidation
+    uint64_t get_hash() const;
+
 private:
+    void recalc_hash();
+
     const material* mat;
     std::string distance_func;
     std::string material_func;
+    uint64_t hash;
 };
 
 class LT_API sdf_scene
@@ -102,6 +108,9 @@ public:
     void remove_sdf_object(sdf_object* object);
     const std::vector<sdf_object*>& get_sdf_objects() const;
     void clear_sdf_objects();
+
+    // Used for cache invalidation
+    uint64_t get_hash() const;
 
 private:
     std::vector<sdf_object*> objects;

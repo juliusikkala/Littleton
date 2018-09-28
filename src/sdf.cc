@@ -36,11 +36,13 @@ sdf_object::sdf_object(
     const std::string& material_func
 ):  mat(nullptr), distance_func(distance_func), material_func(material_func)
 {
+    recalc_hash();
 }
 
 void sdf_object::set_distance_func(const std::string& distance_func)
 {
     this->distance_func = distance_func;
+    recalc_hash();
 }
 
 const std::string& sdf_object::get_distance_func() const
@@ -55,11 +57,26 @@ void sdf_object::set_material(
 {
     this->mat = mat;
     // TODO: Create material_func from texture_mapping_func
+    recalc_hash();
 }
 
 void sdf_object::set_material(const std::string& material_func)
 {
     this->material_func = material_func;
+    recalc_hash();
+}
+
+uint64_t sdf_object::get_hash() const
+{
+    return hash;
+}
+
+void sdf_object::recalc_hash()
+{
+    uint64_t seed = 0;
+    boost::hash_combine(seed, distance_func);
+    boost::hash_combine(seed, material_func);
+    hash = seed;
 }
 
 sdf_scene::sdf_scene() {}
@@ -82,6 +99,14 @@ const std::vector<sdf_object*>& sdf_scene::get_sdf_objects() const
 void sdf_scene::clear_sdf_objects()
 {
     objects.clear();
+}
+
+uint64_t sdf_scene::get_hash() const
+{
+    uint64_t seed = 0;
+    for(sdf_object* obj: objects)
+        boost::hash_combine(seed, obj->get_hash());
+    return seed;
 }
 
 }
