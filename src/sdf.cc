@@ -18,6 +18,8 @@
 */
 #include "sdf.hh"
 #include "helpers.hh"
+#include <boost/algorithm/string.hpp>
+#include <sstream>
 
 namespace lt
 {
@@ -99,6 +101,35 @@ const std::vector<sdf_object*>& sdf_scene::get_sdf_objects() const
 void sdf_scene::clear_sdf_objects()
 {
     objects.clear();
+}
+
+void sdf_scene::update_definitions(shader::definition_map& def)
+{
+    // Generate code here
+    std::stringstream distance_func_src;
+    std::stringstream map_src;
+
+    map_src
+        << "float map(in vec3 p) {"
+        << "float closest = INF;";
+
+    for(unsigned i = 0; i < objects.size(); ++i)
+    {
+        distance_func_src
+           << "float distance_sdf_object_" << i << "(in vec3 p) {"
+           << objects[i]->get_distance_func()
+           << "} ";
+
+        map_src
+            << "closest = min(closest, distance_sdf_object_" << i << "(p));";
+    }
+    map_src
+        << "return closest;"
+        << "}";
+
+    std::string src = distance_func_src.str() + map_src.str();
+    boost::replace_all(src, "\n", "\\\n");
+    def["SDF_INSERT_CODE"] = src;
 }
 
 uint64_t sdf_scene::get_hash() const

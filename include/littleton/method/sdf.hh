@@ -102,10 +102,16 @@ public:
 
     void execute() override;
 
+protected:
+    void options_will_update(const options& next);
+
 private:
     multishader* sdf_shader;
     const sampler& fb_sampler;
     const primitive& quad;
+
+    // Cache the shaders to avoid regenerating source code.
+    std::unordered_map<uint64_t, shader*> cached;
 };
 
 } // namespace lt::method

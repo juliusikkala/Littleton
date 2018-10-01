@@ -20,25 +20,7 @@ uniform float step_ratio;
 uniform float hit_ratio;
 uniform float time;
 
-float sphere_distance(vec3 p)
-{
-    vec3 c = vec3(0.3f);
-    vec3 q = mod(p - vec3(0.0f, -2 * time, 0.0f), c)-0.5*c;
-    return length(q) - 0.005f;
-}
-
-#define OBJECTS \
-    X(sphere)
-
-float map(in vec3 p)
-{
-    float closest = INF;
-#define X(name) \
-        closest = min(closest, name##_distance(p));
-    OBJECTS
-#undef X
-    return closest;
-}
+SDF_INSERT_CODE
 
 // World-space normal
 vec3 normal(vec3 p)

@@ -20,6 +20,7 @@
 #define LT_SDF_HH
 #include "api.hh"
 #include "transformable.hh"
+#include "shader.hh"
 #include <string>
 
 namespace lt
@@ -74,7 +75,7 @@ public:
     );
 
     sdf_object(
-        const std::string& distance_func,
+        const std::string& distance_func = "",
         const std::string& material_func = ""
     );
 
@@ -108,6 +109,7 @@ public:
     void remove_sdf_object(sdf_object* object);
     const std::vector<sdf_object*>& get_sdf_objects() const;
     void clear_sdf_objects();
+    void update_definitions(shader::definition_map& def);
 
     // Used for cache invalidation
     uint64_t get_hash() const;

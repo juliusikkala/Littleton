@@ -62,27 +62,37 @@ void render_sdf::execute()
     stencil_draw();
 
     light_scene* lights = get_scene<light_scene>();
+    sdf_scene* sdfs = get_scene<sdf_scene>();
     camera* cam = get_scene<camera_scene>()->get_camera();
     if(!cam) return;
 
     glm::mat4 p = cam->get_projection();
     glm::mat4 ip = glm::inverse(cam->get_projection());
 
-    shader::definition_map def({
-        {"LOCAL_VIEW_DIR", ""},
-        {"VERTEX_NORMAL", ""},
-        {"FUNCTIONS", ""}
-    });
-
-    if(apply_ambient) def["APPLY_AMBIENT"];
-    if(!write_depth) glDepthMask(GL_FALSE);
-
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
 
     gbuf->set_draw(gbuffer::DRAW_ALL);
-    gbuf->update_definitions(def);
 
-    shader* s = sdf_shader->get(def);
+    if(!write_depth) glDepthMask(GL_FALSE);
+
+    shader* s = NULL;
+    uint64_t hash = sdfs->get_hash();
+    auto it = cached.find(hash);
+    
+    if(it != cached.end()) s = it->second;
+    else {
+        shader::definition_map def({
+            {"LOCAL_VIEW_DIR", ""},
+            {"VERTEX_NORMAL", ""}
+        });
+        sdfs->update_definitions(def);
+
+        if(apply_ambient) def["APPLY_AMBIENT"];
+        gbuf->update_definitions(def);
+
+        s = sdf_shader->get(def);
+        cached[hash] = s;
+    }
     s->bind();
 
     s->set("ambient", lights->get_ambient());
@@ -107,6 +117,11 @@ void render_sdf::execute()
 
     if(!write_depth) glDepthMask(GL_TRUE);
     gbuf->set_draw(gbuffer::DRAW_LIGHTING);
+}
+
+void render_sdf::options_will_update(const options&)
+{
+    cached.clear();
 }
 
 }
