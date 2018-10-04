@@ -371,6 +371,39 @@ void gbuffer::set_draw(draw_mode mode)
         }
 
         break;
+    case DRAW_ALL_EXCEPT_LINEAR_DEPTH:
+        if(color)
+        {
+            color_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT0);
+        }
+
+        if(normal)
+        {
+            normal_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT1);
+        }
+
+        if(material)
+        {
+            material_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT2);
+        }
+
+        linear_depth_index = -1;
+
+        if(lighting)
+        {
+            lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT4);
+        }
+
+        if(indirect_lighting)
+        {
+            indirect_lighting_index = index++;
+            attachments.push_back(GL_COLOR_ATTACHMENT5);
+        }
+        break;
     case DRAW_GEOMETRY:
         if(color)
         {

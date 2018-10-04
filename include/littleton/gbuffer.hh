@@ -79,6 +79,7 @@ public:
         // Draws depth only
         DRAW_NONE = 0,
         DRAW_ALL,
+        DRAW_ALL_EXCEPT_LINEAR_DEPTH,
         DRAW_GEOMETRY,
         // Default, since it works for almost everything that isn't written to
         // use a g-buffer.

@@ -24,6 +24,7 @@
 #include "camera.hh"
 #include "resource_pool.hh"
 #include "common_resources.hh"
+#include "environment_map.hh"
 
 namespace lt::method
 {
@@ -36,8 +37,16 @@ render_sdf::render_sdf(
 ):  target_method(buf),
     scene_method(scene),
     options_method(opt),
+    pool(pool),
     sdf_shader(pool.get_shader(shader::path{"cast_ray.vert", "sdf.frag"})),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
+        mipmap_sampler(
+            pool.get_context(),
+            GL_NEAREST,
+            GL_NEAREST_MIPMAP_NEAREST,
+            GL_CLAMP_TO_EDGE
+    ),
+    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
     quad(common::ensure_quad_primitive(pool))
 {
 }
@@ -51,7 +60,8 @@ void render_sdf::execute()
     auto [
         apply_ambient, apply_lighting, render_transparent, write_depth,
         num_refractions, num_reflections, max_steps, min_dist, max_dist,
-        step_ratio, hit_ratio
+        step_ratio, hit_ratio, use_ssrt, ssrt_roughness_cutoff,
+        ssrt_brdf_cutoff, ssrt_max_steps, ssrt_thickness
     ] = opt;
 
     glEnable(GL_DEPTH_TEST);
@@ -70,8 +80,40 @@ void render_sdf::execute()
     glm::mat4 ip = glm::inverse(cam->get_projection());
 
     gbuffer* gbuf = static_cast<gbuffer*>(&get_target());
+    glm::uvec2 size(get_target().get_size());
 
-    gbuf->set_draw(gbuffer::DRAW_ALL);
+    texture* linear_depth = gbuf->get_linear_depth();
+    texture* lighting = gbuf->get_lighting();
+    if(!linear_depth || !lighting) return;
+
+    framebuffer_pool::loaner ssrt_buffer;
+
+    // Copy necessary buffers for SSRT
+    if(use_ssrt)
+    {
+        ssrt_buffer = pool.loan_framebuffer(
+            size, {
+                {GL_COLOR_ATTACHMENT0, {lighting->get_internal_format(), true}}
+            }
+        );
+        lighting = ssrt_buffer->get_texture_target(GL_COLOR_ATTACHMENT0);
+
+        gbuf->set_draw(gbuffer::DRAW_LIGHTING);
+
+        ssrt_buffer->bind(GL_DRAW_FRAMEBUFFER);
+        gbuf->bind(GL_READ_FRAMEBUFFER);
+        
+        /* Copy lighting */
+        glBlitFramebuffer(
+            0, 0, size.x, size.y,
+            0, 0, size.x, size.y,
+            GL_COLOR_BUFFER_BIT,
+            GL_NEAREST
+        );
+    }
+
+    gbuf->bind();
+    gbuf->set_draw(gbuffer::DRAW_ALL_EXCEPT_LINEAR_DEPTH);
 
     if(!write_depth) glDepthMask(GL_FALSE);
 
@@ -83,8 +125,19 @@ void render_sdf::execute()
     else {
         shader::definition_map def({
             {"LOCAL_VIEW_DIR", ""},
-            {"VERTEX_NORMAL", ""}
+            {"VERTEX_NORMAL", ""},
+            {"FALLBACK_CUBEMAP", ""}
         });
+
+        if(use_ssrt)
+        {
+            def["USE_SSRT"];
+            def["RAY_MAX_LEVEL"] = std::to_string(
+                calculate_mipmap_count(get_target().get_size())-1
+            );
+            if(ssrt_thickness < 0.0f) def["DEPTH_INFINITE_THICKNESS"];
+        }
+    
         sdfs->update_definitions(def);
 
         if(apply_ambient) def["APPLY_AMBIENT"];
@@ -94,6 +147,31 @@ void render_sdf::execute()
         cached[hash] = s;
     }
     s->bind();
+
+    environment_map* skybox = get_scene<environment_scene>()->get_skybox();
+
+    if(use_ssrt)
+    {
+        if(skybox)
+        {
+            s->set("fallback_cubemap", true);
+            s->set("ssrt_env_inv_view", cam->get_global_transform());
+            s->set("ssrt_env", cubemap_sampler.bind(*skybox, 5));
+            s->set("ssrt_env_exposure", skybox->get_exposure());
+        }
+        else
+        {
+            s->set("fallback_cubemap", false);
+        }
+
+        s->set("in_linear_depth", mipmap_sampler.bind(*linear_depth, 0));
+        s->set("in_lighting", fb_sampler.bind(*lighting, 1));
+        s->set<int>("ssrt_ray_max_steps", ssrt_max_steps);
+        s->set("ssrt_thickness", ssrt_thickness);
+        s->set("ssrt_roughness_cutoff", ssrt_roughness_cutoff);
+        s->set("ssrt_brdf_cutoff", ssrt_brdf_cutoff);
+        s->set("ssrt_ray_offset", 0.0f);
+    }
 
     s->set("ambient", lights->get_ambient());
     s->set("ivp", toMat4(cam->get_global_orientation()) * ip);

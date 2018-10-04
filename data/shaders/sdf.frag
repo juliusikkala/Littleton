@@ -1,6 +1,13 @@
 #version 430 core
+
+uniform mat4 proj;
+
 #include "depth.glsl"
 #include "deferred_output.glsl"
+
+#ifdef USE_SSRT
+#include "ssrt.glsl"
+#endif
 
 layout(location = 0) in vec3 view_dir;
 layout(location = 1) in vec3 local_view_dir;
@@ -63,21 +70,37 @@ void main(void)
 {
     float t;
     vec3 n;
-    vec3 c = vec3(1);
-    if(!intersect(camera_pos, normalize(view_dir), t, n, false)) discard;
+    material_t mat;
+    mat.color = vec4(1);
+    mat.metallic = 1.0f;
+    mat.roughness = 0.01f;
+    mat.f0 = 0.04f;
+    if(!intersect(camera_pos, normalize(view_dir), t, mat.normal, false))
+        discard;
 
-    vec3 p = normalize(local_view_dir) * t;
+    mat.normal = n_v * mat.normal;
+
+    vec3 v = normalize(local_view_dir);
+    vec3 p = v * t;
     gl_FragDepth = hyperbolic_depth(p.z)*0.5f+0.5f;
 
     write_gbuffer(
-        p, n_v * n, vec3(1),
-        vec3(0), 1.0f, 0.0f, 1.0f
+        p, mat.normal, mat.color.rgb,
+        vec3(0), mat.roughness, mat.metallic, mat.f0
     );
 
+    vec3 lighting = vec3(0);
+#ifdef USE_SSRT
+    lighting += ssrt_reflection(-v, mat, p);
+#endif
+
 #ifdef APPLY_AMBIENT
-    out_lighting = vec4(c * ambient, 0);
+    out_lighting = vec4(
+        lighting + (1.0f - mat.metallic) * mat.color.rgb * mat.color.a * ambient,
+        1.0f
+    );
 #else
-    out_lighting = vec4(0);
+    out_lighting = vec4(lighting, 1.0f);
 #endif
 }
 

@@ -247,7 +247,7 @@ simple_pipeline* simple_pipeline_builder::build()
             dynamic
         );
 
-        if(sdf_status.enabled)
+        if(sdf_status.enabled && !sdf_status.opt.use_ssrt)
         {
             sdf_status.opt.apply_lighting = false;
             sdf_status.opt.render_transparent = false;
@@ -379,6 +379,27 @@ simple_pipeline* simple_pipeline_builder::build()
         // Render lighting pass only for the new geometry
         lp->set_stencil(GL_EQUAL, 2);
         add_stage(LIGHTING_TRANSPARENCY_PASS, lp, dynamic);
+    }
+
+    if(sdf_status.enabled && sdf_status.opt.use_ssrt)
+    {
+        // SG, SSA and SAO are currently not supported for SSRT-enabled SDFs
+        sdf_status.opt.apply_lighting = false;
+        sdf_status.opt.render_transparent = true;
+        sdf_status.opt.write_depth = true;
+        sdf_status.opt.apply_ambient = true;
+
+        method::render_sdf* sdf = new
+            method::render_sdf(b.in(), pool, {}, sdf_status.opt);
+        sdf->set_stencil_ref(4);
+        add_stage(RENDER_SDF, sdf, dynamic);
+
+        method::lighting_pass* lp = new method::lighting_pass(
+            b.in(), b.in(), pool, {}
+        );
+        // Render lighting pass only for the new geometry
+        lp->set_stencil(GL_EQUAL, 4);
+        add_stage(LIGHTING_SDF_PASS, lp, dynamic);
     }
 
     // Start postprocessing

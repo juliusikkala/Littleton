@@ -23,6 +23,7 @@
 #include "../shader.hh"
 #include "../scene.hh"
 #include "../sdf.hh"
+#include "../sampler.hh"
 #include "../stencil_handler.hh"
 
 namespace lt
@@ -83,11 +84,23 @@ LT_OPTIONS(render_sdf)
     // the surface. Lower this value to get more accurate results with worse
     // performance.
     float hit_ratio = 0.001f;
+
+    // SSRT options, see ssrt.hh for more details
+    bool use_ssrt = true;
+    float ssrt_roughness_cutoff = 0.2f;
+    float ssrt_brdf_cutoff = 0.0f;
+    unsigned ssrt_max_steps = 500;
+    float ssrt_thickness = -1.0f;
 };
 
 class LT_API render_sdf:
     public target_method,
-    public scene_method<camera_scene, sdf_scene, light_scene>,
+    public scene_method<
+        camera_scene,
+        sdf_scene,
+        light_scene,
+        environment_scene
+    >,
     public options_method<render_sdf>,
     public animated_method,
     public stencil_handler
@@ -106,8 +119,12 @@ protected:
     void options_will_update(const options& next);
 
 private:
+    resource_pool& pool;
+
     multishader* sdf_shader;
     const sampler& fb_sampler;
+    sampler mipmap_sampler;
+    sampler cubemap_sampler;
     const primitive& quad;
 
     // Cache the shaders to avoid regenerating source code.

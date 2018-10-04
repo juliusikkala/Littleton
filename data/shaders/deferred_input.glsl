@@ -1,6 +1,7 @@
 #include "constants.glsl"
 #include "depth.glsl"
 #include "projection.glsl"
+#include "material.glsl"
 
 uniform sampler2D in_color;
 uniform sampler2D in_normal;
@@ -45,4 +46,12 @@ vec3 decode_lighting(vec2 uv)
 vec3 decode_indirect_lighting(vec2 uv)
 {
     return texture(in_indirect_lighting, uv).rgb;
+}
+
+void decode_material(vec2 uv, out material_t mat)
+{
+    mat.color = vec4(decode_color(uv), 1.0f);
+    decode_material(uv, mat.roughness, mat.metallic, mat.f0);
+    mat.normal = decode_normal(uv);
+    mat.emission = vec3(0); // This can't be reconstructed unfortunately
 }

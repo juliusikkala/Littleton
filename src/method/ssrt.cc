@@ -111,18 +111,18 @@ void ssrt::execute()
     s->set("clip_info", cam->get_clip_info());
     s->set("near", -cam->get_near());
 
-    s->set<int>("ray_max_steps", max_steps);
-    s->set("thickness", thickness);
-    s->set("roughness_cutoff", roughness_cutoff);
-    s->set("brdf_cutoff", brdf_cutoff);
-    s->set("ray_offset", ray_offset);
+    s->set<int>("ssrt_ray_max_steps", max_steps);
+    s->set("ssrt_thickness", thickness);
+    s->set("ssrt_roughness_cutoff", roughness_cutoff);
+    s->set("ssrt_brdf_cutoff", brdf_cutoff);
+    s->set("ssrt_ray_offset", ray_offset);
 
     if(use_fallback_cubemap && skybox)
     {
         s->set("fallback_cubemap", true);
-        s->set("inv_view", cam->get_global_transform());
-        s->set("env", cubemap_sampler.bind(*skybox, 5));
-        s->set("exposure", skybox->get_exposure());
+        s->set("ssrt_env_inv_view", cam->get_global_transform());
+        s->set("ssrt_env", cubemap_sampler.bind(*skybox, 5));
+        s->set("ssrt_env_exposure", skybox->get_exposure());
     }
     else
     {
