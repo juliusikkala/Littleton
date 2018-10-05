@@ -1,6 +1,7 @@
 #version 430 core
 
 uniform mat4 proj;
+uniform mat4 view;
 
 #include "depth.glsl"
 #include "deferred_output.glsl"
@@ -47,6 +48,7 @@ bool intersect(
     in vec3 v,
     out float t,
     out vec3 n,
+    float min_dist,
     bool inside
 ) {
     t = min_dist;
@@ -70,28 +72,49 @@ void main(void)
 {
     float t;
     vec3 n;
+    vec3 v = normalize(view_dir);
+    vec3 lv = normalize(local_view_dir);
     material_t mat;
-    mat.color = vec4(1);
-    mat.metallic = 1.0f;
+    mat.color = vec4(vec3(1), 0.0f);
+    mat.metallic = 0.0f;
     mat.roughness = 0.01f;
-    mat.f0 = 0.04f;
-    if(!intersect(camera_pos, normalize(view_dir), t, mat.normal, false))
+    mat.f0 = 1.3f;
+    if(!intersect(camera_pos, v, t, n, min_dist, false))
         discard;
 
-    mat.normal = n_v * mat.normal;
+    float eta = mat.f0;
+    mat.f0 = (eta-1)/(eta+1);
+    mat.f0 *= mat.f0;
+    mat.normal = n_v * n;
 
-    vec3 v = normalize(local_view_dir);
-    vec3 p = v * t;
+    vec3 p = lv * t;
     gl_FragDepth = hyperbolic_depth(p.z)*0.5f+0.5f;
 
     write_gbuffer(
-        p, mat.normal, mat.color.rgb,
+        p, mat.normal, mat.color.rgb * mat.color.a,
         vec3(0), mat.roughness, mat.metallic, mat.f0
     );
 
     vec3 lighting = vec3(0);
 #ifdef USE_SSRT
-    lighting += ssrt_reflection(-v, mat, p);
+    lighting += ssrt_reflection(-lv, mat, p);
+
+    // Refraction ray
+    if(mat.color.a < 1.0f)
+    {
+        vec3 rp = camera_pos + v * t;
+        vec3 rrv = normalize(refract(v, n, 1.0f/eta));
+        vec3 rn;
+        float rt;
+
+        intersect(rp, rrv, rt, rn, 0.1f, true);
+
+        vec3 rv = normalize((view * vec4(rrv, 0)).xyz);
+        p += rv * rt;
+
+        mat.normal = normalize(n_v * rn);
+        lighting += ssrt_refraction(rv, mat, p, eta);
+    }
 #endif
 
 #ifdef APPLY_AMBIENT

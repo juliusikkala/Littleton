@@ -182,6 +182,7 @@ void render_sdf::execute()
     s->set("camera_pos", cam->get_global_position());
     s->set("near", -cam->get_near());
     s->set("n_v", glm::mat3(glm::transpose(cam->get_global_transform())));
+    s->set("view", glm::inverse(cam->get_global_transform()));
     s->set<int>("num_refractions", num_refractions);
     s->set<int>("num_reflections", num_reflections);
     s->set<int>("max_steps", max_steps);
