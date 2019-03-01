@@ -93,7 +93,7 @@ struct has_set_scene: std::false_type { };
 
 template<typename T, typename U>
 struct has_set_scene<
-    T,
+    T, U,
     decltype((void) std::declval<T>().template set_scene<U*>(nullptr), void())
 > : std::true_type { };
 
@@ -204,8 +204,6 @@ simple_pipeline_builder& simple_pipeline_builder::add()
 template<typename Scene>
 simple_pipeline* simple_pipeline_builder::build(Scene& scene)
 {
-    // TODO: Figure out which scene types the compound scene has, then enable
-    // the correct methods and call build().
     if(std::is_convertible_v<Scene&, environment_scene&>)
         add<method::skybox>();
     if(std::is_convertible_v<Scene&, atmosphere_scene&>)
