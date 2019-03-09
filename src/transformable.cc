@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -38,6 +38,12 @@ void transformable::rotate(float angle, glm::vec3 axis, glm::vec3 local_origin)
     orientation = glm::normalize(rotation * orientation);
     position += local_origin + rotation * -local_origin;
 }
+
+void transformable::rotate(float angle, glm::vec2 local_origin)
+{
+    rotate(angle, glm::vec3(0,0,1), glm::vec3(local_origin, 0));
+}
+
 void transformable::rotate_local(
     float angle,
     glm::vec3 axis,
@@ -50,6 +56,11 @@ void transformable::rotate_local(
 void transformable::rotate(glm::quat rotation)
 {
     orientation = glm::normalize(rotation * orientation);
+}
+
+void transformable::set_orientation(float angle)
+{
+    orientation = glm::angleAxis(glm::radians(angle), glm::vec3(0,0,1));
 }
 
 void transformable::set_orientation(float angle, glm::vec3 axis)
@@ -75,14 +86,31 @@ void transformable::set_orientation(float pitch, float yaw, float roll)
 
 glm::quat transformable::get_orientation() const { return orientation; }
 
+void transformable::translate(glm::vec2 offset)
+{
+    this->position.x += offset.x;
+    this->position.y += offset.y;
+}
+
 void transformable::translate(glm::vec3 offset)
 {
     this->position += offset;
 }
 
+void transformable::translate_local(glm::vec2 offset)
+{
+    translate_local(glm::vec3(offset, 0));
+}
+
 void transformable::translate_local(glm::vec3 offset)
 {
     this->position += orientation * offset;
+}
+
+void transformable::set_position(glm::vec2 position)
+{
+    this->position.x = position.x;
+    this->position.y = position.y;
 }
 
 void transformable::set_position(glm::vec3 position)
@@ -97,9 +125,21 @@ void transformable::scale(float scale)
     this->scaling *= scale;
 }
 
+void transformable::scale(glm::vec2 scale)
+{
+    this->scaling.x *= scale.x;
+    this->scaling.y *= scale.y;
+}
+
 void transformable::scale(glm::vec3 scale)
 {
     this->scaling *= scale;
+}
+
+void transformable::set_scaling(glm::vec2 scaling)
+{
+    this->scaling.x = scaling.x;
+    this->scaling.y = scaling.y;
 }
 
 void transformable::set_scaling(glm::vec3 scaling)

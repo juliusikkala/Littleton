@@ -57,10 +57,12 @@ void load_gltf_node(
     else
     {
         if(node.translation.size())
-            obj.set_position(glm::make_vec3(node.translation.data()));
+            obj.set_position(
+                (glm::vec3)glm::make_vec3(node.translation.data())
+            );
 
         if(node.scale.size())
-            obj.set_scaling(glm::make_vec3(node.scale.data()));
+            obj.set_scaling((glm::vec3)glm::make_vec3(node.scale.data()));
 
         if(node.rotation.size())
             obj.set_orientation(glm::make_quat(node.rotation.data()));

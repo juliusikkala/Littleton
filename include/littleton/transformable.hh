@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -36,24 +36,36 @@ public:
         glm::vec3 local_origin = glm::vec3(0)
     );
 
+    void rotate(
+        float angle,
+        glm::vec2 local_origin = glm::vec2(0)
+    );
+
     void rotate_local(
         float angle,
         glm::vec3 axis,
         glm::vec3 local_origin = glm::vec3(0)
     );
+
     void rotate(glm::quat rotation);
+    void set_orientation(float angle);
     void set_orientation(float angle, glm::vec3 axis);
     void set_orientation(float pitch, float yaw, float roll = 0);
     void set_orientation(glm::quat orientation = glm::quat());
     glm::quat get_orientation() const;
 
+    void translate(glm::vec2 offset); 
     void translate(glm::vec3 offset); 
+    void translate_local(glm::vec2 offset);
     void translate_local(glm::vec3 offset);
+    void set_position(glm::vec2 position = glm::vec2(0));
     void set_position(glm::vec3 position = glm::vec3(0));
     glm::vec3 get_position() const;
 
     void scale(float scale);
+    void scale(glm::vec2 scale);
     void scale(glm::vec3 scale);
+    void set_scaling(glm::vec2 scaling);
     void set_scaling(glm::vec3 scaling = glm::vec3(1));
     glm::vec3 get_scaling() const;
 
