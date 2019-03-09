@@ -104,30 +104,6 @@ protected:
     options opt;
 };
 
-class LT_API animated_method
-{
-public:
-    animated_method();
-    virtual ~animated_method();
-
-    void set_animation_multiplier(double multiplier);
-    double get_animation_multiplier(double multiplier);
-    void update(duration delta);
-
-    duration get_time() const;
-    double get_time_sec() const;
-
-protected:
-    // Be aware that on_update may later be called in parallel; don't use OpenGL
-    // and use synchronization if the on_update of other methods may affect
-    // this method.
-    virtual void on_update(duration delta);
-
-private:
-    double multiplier;
-    duration total_time;
-};
-
 class LT_API pipeline: public pipeline_method
 {
 public:

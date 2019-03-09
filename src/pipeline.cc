@@ -45,42 +45,6 @@ void target_method::execute()
     target->bind();
 }
 
-animated_method::animated_method()
-: multiplier(1.0f), total_time(duration::zero())
-{}
-
-animated_method::~animated_method() {}
-
-void animated_method::set_animation_multiplier(double multiplier)
-{
-    this->multiplier = fabs(multiplier);
-}
-
-double animated_method::get_animation_multiplier(double multiplier)
-{
-    return multiplier;
-}
-
-void animated_method::update(duration delta)
-{
-    duration modified_delta =
-        std::chrono::duration_cast<duration>(delta * multiplier);
-    total_time += modified_delta;
-    on_update(modified_delta);
-}
-
-duration animated_method::get_time() const
-{
-    return total_time;
-}
-
-double animated_method::get_time_sec() const
-{
-    return std::chrono::duration<double>(total_time).count();
-}
-
-void animated_method::on_update(duration) {}
-
 pipeline::pipeline(const std::vector<pipeline_method*>& methods)
 : methods(methods) {}
 

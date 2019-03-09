@@ -25,6 +25,7 @@
 #include "../sdf.hh"
 #include "../sampler.hh"
 #include "../stencil_handler.hh"
+#include "../animated.hh"
 
 namespace lt
 {
@@ -102,7 +103,7 @@ class LT_API render_sdf:
         environment_scene
     >,
     public options_method<render_sdf>,
-    public animated_method,
+    public animated,
     public stencil_handler
 {
 public:

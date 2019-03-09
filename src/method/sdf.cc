@@ -190,7 +190,7 @@ void render_sdf::execute()
     s->set("max_dist", max_dist);
     s->set("step_ratio", step_ratio);
     s->set("hit_ratio", hit_ratio);
-    s->set<float>("time", get_time_sec());
+    s->set<float>("time", get_animation_time_sec());
 
     quad.draw();
 

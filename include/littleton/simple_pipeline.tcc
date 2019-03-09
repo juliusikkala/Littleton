@@ -157,10 +157,10 @@ void basic_simple_pipeline<Stages...>::update(duration delta)
             {
                 if constexpr(
                     std::is_base_of_v<
-                        animated_method,
+                        animated,
                         std::decay_t<decltype(*stage)>
                     >
-                ) if(stage) stage->update(delta);
+                ) if(stage) stage->animation_update(delta);
                 return 0;
             };
             std::make_tuple(func(stages)...);

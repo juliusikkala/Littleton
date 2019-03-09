@@ -25,6 +25,7 @@ src = [
   'extern/mikktspace.c',
   'extern/stb_image.c',
   'extern/tiny_gltf.cc',
+  'src/animated.cc',
   'src/camera.cc',
   'src/common_resources.cc',
   'src/context.cc',
