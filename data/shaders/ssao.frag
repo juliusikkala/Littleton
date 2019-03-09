@@ -10,7 +10,7 @@ uniform sampler1D kernel;
 uniform mat4 proj;
 
 in vec2 uv;
-out float output;
+out float ao;
 
 void main(void)
 {
@@ -41,5 +41,5 @@ void main(void)
         );
         occlusion += sample_depth >= offset_depth + bias ? range_check : 0.0f;
     }
-    output = 1.0f - occlusion / samples;
+    ao = 1.0f - occlusion / samples;
 }
