@@ -58,8 +58,9 @@ public:
     void translate(glm::vec3 offset); 
     void translate_local(glm::vec2 offset);
     void translate_local(glm::vec3 offset);
-    void set_position(glm::vec2 position = glm::vec2(0));
+    void set_position(glm::vec2 position);
     void set_position(glm::vec3 position = glm::vec3(0));
+    void set_depth(float depth = 0);
     glm::vec3 get_position() const;
 
     void scale(float scale);

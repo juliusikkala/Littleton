@@ -50,6 +50,11 @@ public:
         const std::vector<std::string>& shader_path = {},
         const std::optional<std::string>& shader_binary_path = {}
     );
+    shader_pool(
+        shader_pool* parent,
+        const std::vector<std::string>& shader_path = {},
+        const std::optional<std::string>& shader_binary_path = {}
+    );
     shader_pool(const shader_pool& other) = delete;
     shader_pool(shader_pool&& other) = delete;
     ~shader_pool();
@@ -66,7 +71,10 @@ public:
     // Unloads all shaders in this pool.
     void unload_all();
 
+    // Automatically adds the shader if necessary.
     multishader* get(const shader::path& path);
+    // May return nullptr if no such shader has been added.
+    multishader* try_get(const shader::path& path);
     shader* get(
         const shader::path& path,
         const shader::definition_map& definitions
@@ -79,6 +87,7 @@ public:
     const_iterator cend() const;
 
 private:
+    shader_pool* parent;
     std::vector<std::string> shader_path;
     std::optional<std::string> shader_binary_path;
     map_type shaders;

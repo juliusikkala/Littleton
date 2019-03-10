@@ -54,6 +54,8 @@ public:
     using const_iterator = typename map_type::const_iterator;
 
     explicit generic_resource_pool(context& ctx);
+    // Overlay constructor, this pool acts as a layer over the parent pool.
+    explicit generic_resource_pool(generic_resource_pool<T>* parent);
     generic_resource_pool(const generic_resource_pool& other) = delete;
     generic_resource_pool(generic_resource_pool&& other) = delete;
     ~generic_resource_pool();
@@ -77,6 +79,9 @@ public:
     const_iterator cend() const;
 
 protected:
+    // The parent only affects get() and contains(). Creating a resource in the 
+    // child pool results in that resource being found from that point on.
+    generic_resource_pool<T>* parent;
     map_type resources;
 };
 
@@ -85,6 +90,7 @@ class lazy_resource_pool: public generic_resource_pool<T>
 {
 public:
     explicit lazy_resource_pool(context& ctx);
+    explicit lazy_resource_pool(generic_resource_pool<T>* parent);
 
     // Loads all resources in this pool.
     void load_all();
@@ -118,6 +124,11 @@ class LT_API resource_pool
 public:
     resource_pool(
         context& ctx,
+        const std::vector<std::string>& shader_path = {},
+        const std::optional<std::string>& shader_binary_path = {}
+    );
+    resource_pool(
+        resource_pool* parent,
         const std::vector<std::string>& shader_path = {},
         const std::optional<std::string>& shader_binary_path = {}
     );

@@ -20,7 +20,6 @@
 
 namespace lt
 {
-
 resource_pool::resource_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
@@ -29,6 +28,18 @@ resource_pool::resource_pool(
     texture_pool(ctx), gpu_buffer_pool(ctx), primitive_pool(ctx),
     sampler_pool(ctx), material_pool(ctx), model_pool(ctx),
     framebuffer_pool(ctx)
+{
+}
+
+resource_pool::resource_pool(
+    resource_pool* parent,
+    const std::vector<std::string>& shader_path,
+    const std::optional<std::string>& shader_binary_path
+):  glresource(parent->get_context()),
+    shader_pool(parent, shader_path, shader_binary_path),
+    texture_pool(parent), gpu_buffer_pool(parent), primitive_pool(parent),
+    sampler_pool(parent), material_pool(parent), model_pool(parent),
+    framebuffer_pool(parent->get_context())
 {
 }
 

@@ -118,6 +118,11 @@ void transformable::set_position(glm::vec3 position)
     this->position = position;
 }
 
+void transformable::set_depth(float depth)
+{
+    this->position.z = depth;
+}
+
 glm::vec3 transformable::get_position() const { return position; }
 
 void transformable::scale(float scale)

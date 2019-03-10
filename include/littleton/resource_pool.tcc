@@ -12,7 +12,11 @@ const std::string generic_resource_pool<T>::type_string = boost::core::demangle(
 
 template<typename T>
 generic_resource_pool<T>::generic_resource_pool(context& ctx)
-: glresource(ctx) { }
+: glresource(ctx), parent(nullptr) { }
+
+template<typename T>
+generic_resource_pool<T>::generic_resource_pool(generic_resource_pool<T>* pool)
+: glresource(pool->get_context()), parent(pool) { }
 
 template<typename T>
 generic_resource_pool<T>::~generic_resource_pool() { }
@@ -79,7 +83,12 @@ const T* generic_resource_pool<T>::get(const std::string& name) const
 {
     auto it = resources.find(name);
     if(it == resources.end())
-        throw std::runtime_error("Unable to get " + type_string + " " + name);
+    {
+        if(parent) return parent->get(name);
+        else throw std::runtime_error(
+            "Unable to get " + type_string + " " + name
+        );
+    }
     return it->second.get();
 }
 
@@ -88,7 +97,12 @@ T* generic_resource_pool<T>::get_mutable(const std::string& name)
 {
     auto it = resources.find(name);
     if(it == resources.end())
-        throw std::runtime_error("Unable to get " + type_string + " " + name);
+    {
+        if(parent) return parent->get_mutable(name);
+        else throw std::runtime_error(
+            "Unable to get " + type_string + " " + name
+        );
+    }
     return it->second.get();
 }
 
@@ -96,7 +110,12 @@ template<typename T>
 bool generic_resource_pool<T>::contains(const std::string& name) const
 {
     auto it = resources.find(name);
-    return it != resources.end();
+    if(it == resources.end())
+    {
+        if(parent) return parent->contains(name);
+        else return false;
+    }
+    return true;
 }
 
 template<typename T>
@@ -116,6 +135,10 @@ generic_resource_pool<T>::cend() const
 template<typename T>
 lazy_resource_pool<T>::lazy_resource_pool(context& ctx)
 : glresource(ctx), generic_resource_pool<T>(ctx) {}
+
+template<typename T>
+lazy_resource_pool<T>::lazy_resource_pool(generic_resource_pool<T>* parent)
+: glresource(parent->get_context()), generic_resource_pool<T>(parent) {}
 
 template<typename T>
 void lazy_resource_pool<T>::load_all()

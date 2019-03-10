@@ -48,7 +48,15 @@ shader_pool::shader_pool(
     context& ctx,
     const std::vector<std::string>& shader_path,
     const std::optional<std::string>& shader_binary_path
-):  glresource(ctx), shader_path(shader_path),
+):  glresource(ctx), parent(nullptr), shader_path(shader_path),
+    shader_binary_path(shader_binary_path)
+{}
+
+shader_pool::shader_pool(
+    shader_pool* parent,
+    const std::vector<std::string>& shader_path,
+    const std::optional<std::string>& shader_binary_path
+):  glresource(parent->get_context()), parent(parent), shader_path(shader_path),
     shader_binary_path(shader_binary_path)
 {}
 
@@ -111,9 +119,19 @@ void shader_pool::unload_all()
 
 multishader* shader_pool::get(const shader::path& path)
 {
+    multishader* ms = try_get(path);
+    if(ms) return ms;
+    return add(path);
+}
+
+multishader* shader_pool::try_get(const shader::path& path)
+{
     auto it = shaders.find(path);
     if(it == shaders.end())
-        return add(path);
+    {
+        if(parent) return parent->try_get(path);
+        return nullptr;
+    }
     return it->second.get();
 }
 
