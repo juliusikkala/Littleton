@@ -83,6 +83,7 @@ src = [
   'src/shadow_map.cc',
   'src/simple_pipeline.cc',
   'src/spherical_gaussians.cc',
+  'src/sprite.cc',
   'src/stencil_handler.cc',
   'src/texture.cc',
   'src/timer.cc',

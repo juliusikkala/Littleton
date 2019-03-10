@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -92,6 +92,41 @@ void object_scene::set_objects(const std::vector<object*>& objects)
 const std::vector<object*>& object_scene::get_objects() const
 {
     return objects;
+}
+
+sprite_scene::sprite_scene(std::vector<sprite*>&& sprites)
+: sprites(std::move(sprites)) {}
+
+sprite_scene::~sprite_scene() {}
+
+void sprite_scene::add_sprite(sprite* spr)
+{
+    sorted_insert(sprites, spr);
+}
+
+void sprite_scene::remove_sprite(sprite* spr)
+{
+    sorted_erase(sprites, spr);
+}
+
+void sprite_scene::clear_sprites()
+{
+    sprites.clear();
+}
+
+size_t sprite_scene::sprite_count() const
+{
+    return sprites.size();
+}
+
+void sprite_scene::set_sprites(const std::vector<sprite*>& sprites)
+{
+    this->sprites = sprites;
+}
+
+const std::vector<sprite*>& sprite_scene::get_sprites() const
+{
+    return sprites;
 }
 
 light_scene::light_scene(

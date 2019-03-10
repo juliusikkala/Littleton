@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -38,6 +38,7 @@ class omni_shadow_map;
 class perspective_shadow_map;
 class environment_map;
 class sg_group;
+class sprite;
 
 namespace method { class shadow_method; }
 
@@ -80,6 +81,24 @@ public:
 
 private:
     std::vector<object*> objects;
+};
+
+class LT_API sprite_scene
+{
+public:
+    explicit sprite_scene(std::vector<sprite*>&& sprites = {});
+    ~sprite_scene();
+
+    void add_sprite(sprite* spr);
+    void remove_sprite(sprite* spr);
+    void clear_sprites();
+    size_t sprite_count() const;
+
+    void set_sprites(const std::vector<sprite*>& sprites);
+    const std::vector<sprite*>& get_sprites() const;
+
+private:
+    std::vector<sprite*> sprites;
 };
 
 class LT_API light_scene
@@ -297,6 +316,11 @@ using render_scene = composite_scene<
     shadow_scene,
     environment_scene,
     sg_scene
+>;
+
+using scene_2d = composite_scene<
+    camera_scene,
+    sprite_scene
 >;
 
 } // namespace lt

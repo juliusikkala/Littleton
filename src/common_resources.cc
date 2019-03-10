@@ -283,6 +283,14 @@ const sampler& ensure_depth_sampler(sampler_pool& pool)
     );
 }
 
+const sampler& ensure_generic_sampler(
+    sampler_pool& pool, interpolation mag, interpolation min
+){
+    std::string name = "common_" + to_string(mag) + "_" + to_string(min);
+    if(pool.contains(name)) return *pool.get(name);
+    return *pool.add(name, new sampler(pool.get_context(), mag, min));
+}
+
 const primitive& ensure_quad_primitive(
     primitive_pool& prim_pool,
     gpu_buffer_pool& buf_pool

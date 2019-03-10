@@ -41,6 +41,27 @@ GLint interpolation_without_mipmap(GLint interpolation)
 namespace lt
 {
 
+std::string to_string(interpolation i)
+{
+    switch(i)
+    {
+    case interpolation::LINEAR:
+        return "LINEAR";
+    case interpolation::LINEAR_MIPMAP_LINEAR:
+        return "LINEAR_MIPMAP_LINEAR";
+    case interpolation::LINEAR_MIPMAP_NEAREST:
+        return "LINEAR_MIPMAP_NEAREST";
+    case interpolation::NEAREST:
+        return "NEAREST";
+    case interpolation::NEAREST_MIPMAP_LINEAR:
+        return "NEAREST_MIPMAP_LINEAR";
+    case interpolation::NEAREST_MIPMAP_NEAREST:
+        return "NEAREST_MIPMAP_NEAREST";
+    default:
+        return "Unknown";
+    }
+}
+
 sampler::sampler(
     context& ctx,
     interpolation mag,

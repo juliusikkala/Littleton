@@ -43,6 +43,11 @@ void animated::animation_update(duration delta)
     total_time += modified_delta;
 }
 
+void animated::reset_animation(duration value)
+{
+    total_time = value;
+}
+
 duration animated::get_animation_time() const
 {
     return total_time;

@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -36,6 +36,7 @@ enum class interpolation: GLint
     NEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR,
     NEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST,
 };
+std::string to_string(interpolation i);
 
 class LT_API sampler: public glresource
 {

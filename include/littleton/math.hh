@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -193,6 +193,18 @@ std::vector<vec3> packed_sphere_points(size_t count);
 vec3 swizzle_for_cube_face(
     vec3 p,//assuming z-positive
     int face
+);
+
+// Positive modulo.
+LT_API int pmod(int numer, int denom);
+LT_API float pmod(float numer, float denom);
+LT_API double pmod(double numer, double denom);
+
+// Distance of two angles on a circle, where circle circumference is 'loop'.
+LT_API float circular_distance(
+    float angle1,
+    float angle2,
+    float loop = 360
 );
 
 } // namespace lt

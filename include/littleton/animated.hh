@@ -35,6 +35,8 @@ public:
 
     void animation_update(duration delta);
 
+    void reset_animation(duration value = {});
+
     duration get_animation_time() const;
     double get_animation_time_sec() const;
 

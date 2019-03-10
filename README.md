@@ -93,6 +93,7 @@ documentation. If you still want to try it out, here's what you need to do:
 - Skyboxes
 - Shader binaries
 - Spherical gaussians
+- Easy pipeline builder
 
 ## Wishlist
 
@@ -120,7 +121,6 @@ documentation. If you still want to try it out, here's what you need to do:
 - Cascaded shadow mapping
 - Custom BRDFs
 - Skeletal animation
-- Easy pipeline builder
 
 ### UI
 

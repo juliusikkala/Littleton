@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -415,6 +415,29 @@ vec3 swizzle_for_cube_face(
     case 5:
         return lt::vec3(-p.x, p.y, -p.z);
     }
+}
+
+int pmod(int numer, int denom)
+{
+    return (numer % denom + denom) % denom;
+}
+
+float pmod(float numer, float denom)
+{
+    return fmod(fmod(numer, denom) + denom, denom);
+}
+
+double pmod(double numer, double denom)
+{
+    return fmod(fmod(numer, denom) + denom, denom);
+}
+
+float circular_distance(
+    float a, float b, float loop
+){
+    float half = loop * 0.5f;
+    float diff = fmod(a - b + half, loop) - half;
+    return diff + half < 0.0f ? diff + loop : diff;
 }
 
 } // namespace lt

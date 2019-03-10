@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -34,6 +34,11 @@ LT_API const sampler& ensure_framebuffer_sampler(sampler_pool& pool);
 
 // Adds sampler "common_depth"
 LT_API const sampler& ensure_depth_sampler(sampler_pool& pool);
+
+// Adds sampler "common_<mag>_<min>"
+LT_API const sampler& ensure_generic_sampler(
+    sampler_pool& pool, interpolation mag, interpolation min
+);
 
 // Adds primitive "common_quad", a square buffer with coordinates at
 // (1,1), (1,-1), (-1,1) and (-1,-1).
