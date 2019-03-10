@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -53,8 +53,8 @@ shadow_pcf::shadow_pcf(resource_pool& pool, Scene scene)
     kernel(common::ensure_circular_poisson_texture(pool, 256)),
     shadow_sampler(
         pool.get_context(),
-        GL_LINEAR,
-        GL_LINEAR,
+        interpolation::LINEAR,
+        interpolation::LINEAR,
         GL_CLAMP_TO_BORDER,
         0,
         glm::vec4(1),
@@ -62,14 +62,20 @@ shadow_pcf::shadow_pcf(resource_pool& pool, Scene scene)
     ),
     cubemap_shadow_sampler(
         pool.get_context(),
-        GL_NEAREST,
-        GL_NEAREST,
+        interpolation::NEAREST,
+        interpolation::NEAREST,
         GL_CLAMP_TO_EDGE,
         0,
         glm::vec4(1),
         GL_COMPARE_REF_TO_TEXTURE
     ),
-    noise_sampler(pool.get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
+    noise_sampler(
+        pool.get_context(),
+        interpolation::NEAREST,
+        interpolation::NEAREST,
+        GL_REPEAT,
+        0
+    )
 {
     cubemap_depth_shader->load();
 }

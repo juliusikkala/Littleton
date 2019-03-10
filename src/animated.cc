@@ -53,5 +53,4 @@ double animated::get_animation_time_sec() const
     return std::chrono::duration<double>(total_time).count();
 }
 
-
 } // namespace lt

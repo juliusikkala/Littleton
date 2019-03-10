@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -40,13 +40,18 @@ render_sdf::render_sdf(
     pool(pool),
     sdf_shader(pool.get_shader(shader::path{"cast_ray.vert", "sdf.frag"})),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
-        mipmap_sampler(
-            pool.get_context(),
-            GL_NEAREST,
-            GL_NEAREST_MIPMAP_NEAREST,
-            GL_CLAMP_TO_EDGE
+    mipmap_sampler(
+        pool.get_context(),
+        interpolation::NEAREST,
+        interpolation::NEAREST_MIPMAP_NEAREST,
+        GL_CLAMP_TO_EDGE
     ),
-    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
+    cubemap_sampler(
+        pool.get_context(),
+        interpolation::LINEAR,
+        interpolation::LINEAR,
+        GL_CLAMP_TO_EDGE
+    ),
     quad(common::ensure_quad_primitive(pool))
 {
 }

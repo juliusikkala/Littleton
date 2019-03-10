@@ -165,14 +165,14 @@ shadow_msm::shadow_msm(resource_pool& pool, Scene scene)
     quad(common::ensure_quad_primitive(pool)),
     moment_sampler(
        pool.get_context(),
-       GL_LINEAR,
-       GL_LINEAR,
+       interpolation::LINEAR,
+       interpolation::LINEAR,
        GL_CLAMP_TO_EDGE
     ),
     cubemap_moment_sampler(
         pool.get_context(),
-        GL_LINEAR,
-        GL_LINEAR,
+        interpolation::LINEAR,
+        interpolation::LINEAR,
         GL_CLAMP_TO_EDGE
     )
 {}

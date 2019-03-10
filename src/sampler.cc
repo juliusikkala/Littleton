@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -43,8 +43,8 @@ namespace lt
 
 sampler::sampler(
     context& ctx,
-    GLint interpolation_mag,
-    GLint interpolation_min,
+    interpolation mag,
+    interpolation min,
     GLint extension,
     unsigned anisotropy,
     glm::vec4 border_color,
@@ -53,7 +53,7 @@ sampler::sampler(
 {
     glGenSamplers(1, &sampler_object);
 
-    set_interpolation(interpolation_mag, interpolation_min);
+    set_interpolation(mag, min);
     set_extension(extension);
     set_anisotropy(anisotropy);
     set_border_color(border_color);
@@ -65,20 +65,18 @@ sampler::~sampler()
     glDeleteSamplers(1, &sampler_object);
 }
 
-void sampler::set_interpolation(
-    GLint interpolation_mag,
-    GLint interpolation_min
-){
+void sampler::set_interpolation(interpolation mag, interpolation min)
+{
     glSamplerParameteri(
         sampler_object,
         GL_TEXTURE_MAG_FILTER,
-        interpolation_without_mipmap(interpolation_mag)
+        interpolation_without_mipmap(static_cast<GLint>(mag))
     );
 
     glSamplerParameteri(
         sampler_object,
         GL_TEXTURE_MIN_FILTER,
-        interpolation_min
+        static_cast<GLint>(min)
     );
 }
 
@@ -104,7 +102,7 @@ void sampler::set_anisotropy(unsigned anisotropy)
     }
 }
 
-void sampler::set_border_color(glm::vec4 border_color)
+void sampler::set_border_color(vec4 border_color)
 {
     glSamplerParameterfv(
         sampler_object,

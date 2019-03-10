@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -42,7 +42,12 @@ skybox::skybox(
         shader::path{"cast_ray.vert", "skybox.frag", "cast_ray.geom"},
         {{"CUBEMAP", ""}}
     )),
-    skybox_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE),
+    skybox_sampler(
+        pool.get_context(),
+        interpolation::LINEAR,
+        interpolation::LINEAR,
+        GL_CLAMP_TO_EDGE
+    ),
     quad(common::ensure_quad_primitive(pool))
 {
 }

@@ -33,8 +33,8 @@ draw_texture::draw_texture(
     quad(common::ensure_quad_primitive(pool)),
     color_sampler(
         target.get_context(),
-        GL_LINEAR,
-        GL_LINEAR,
+        interpolation::LINEAR,
+        interpolation::LINEAR,
         GL_CLAMP_TO_EDGE
     ),
     transform(1.0f),

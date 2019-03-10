@@ -415,9 +415,35 @@ std::unordered_map<std::string, scene_graph> load_gltf(
         if(ignore_duplicates && pool.contains_sampler(s.name))
             continue;
 
+        interpolation mag = s.magFilter == TINYGLTF_TEXTURE_FILTER_LINEAR
+            ? interpolation::LINEAR : interpolation::NEAREST;
+        interpolation min;
+        switch(s.minFilter)
+        {
+        case TINYGLTF_TEXTURE_FILTER_LINEAR:
+            min = interpolation::LINEAR;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_NEAREST:
+            min = interpolation::NEAREST;
+            break;
+        default:
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
+            min = interpolation::LINEAR_MIPMAP_LINEAR;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
+            min = interpolation::LINEAR_MIPMAP_NEAREST;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
+            min = interpolation::NEAREST_MIPMAP_LINEAR;
+            break;
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
+            min = interpolation::NEAREST_MIPMAP_NEAREST;
+            break;
+        }
+
         pool.add_sampler(
             s.name,
-            new sampler(ctx, s.magFilter, s.minFilter, s.wrapS)
+            new sampler(ctx, mag, min, s.wrapS)
         );
     }
 

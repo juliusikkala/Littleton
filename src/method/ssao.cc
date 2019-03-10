@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -91,7 +91,13 @@ ssao::ssao(
     ),
     quad(common::ensure_quad_primitive(pool)),
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
-    noise_sampler(get_context(), GL_NEAREST, GL_NEAREST, GL_REPEAT, 0)
+    noise_sampler(
+        get_context(),
+        interpolation::NEAREST,
+        interpolation::NEAREST,
+        GL_REPEAT,
+        0
+    )
 {
     options_will_update(opt, true);
 }

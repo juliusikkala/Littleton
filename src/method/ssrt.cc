@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -47,11 +47,16 @@ ssrt::ssrt(
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     mipmap_sampler(
         pool.get_context(),
-        GL_NEAREST,
-        GL_NEAREST_MIPMAP_NEAREST,
+        interpolation::NEAREST,
+        interpolation::NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
     ),
-    cubemap_sampler(pool.get_context(), GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE)
+    cubemap_sampler(
+        pool.get_context(),
+        interpolation::LINEAR,
+        interpolation::LINEAR,
+        GL_CLAMP_TO_EDGE
+    )
 {
     options_will_update(opt, true);
 }

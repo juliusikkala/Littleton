@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -41,7 +41,7 @@ public:
 
     using sampler_tex = std::pair<const sampler*, const texture*>;
 
-    glm::vec4 color_factor;
+    vec4 color_factor;
     sampler_tex color_texture;
 
     float metallic_factor;
@@ -54,7 +54,7 @@ public:
 
     float ior;
 
-    glm::vec3 emission_factor;
+    vec3 emission_factor;
     sampler_tex emission_texture;
 };
 

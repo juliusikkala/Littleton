@@ -27,13 +27,23 @@
 namespace lt
 {
 
+enum class interpolation: GLint
+{
+    LINEAR = GL_LINEAR,
+    LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR,
+    LINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST,
+    NEAREST = GL_NEAREST,
+    NEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR,
+    NEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST,
+};
+
 class LT_API sampler: public glresource
 {
 public:
     sampler(
         context& ctx,
-        GLint interpolation_mag = GL_LINEAR,
-        GLint interpolation_min = GL_LINEAR_MIPMAP_LINEAR,
+        interpolation mag = interpolation::LINEAR,
+        interpolation min = interpolation::LINEAR_MIPMAP_LINEAR,
         GLint extension = GL_REPEAT,
         unsigned anisotropy = 16,
         glm::vec4 border_color = glm::vec4(0,0,0,0),
@@ -42,8 +52,8 @@ public:
     ~sampler();
 
     void set_interpolation(
-        GLint interpolation_mag,
-        GLint interpolation_min = GL_LINEAR_MIPMAP_LINEAR
+        interpolation mag,
+        interpolation min = interpolation::LINEAR_MIPMAP_LINEAR
     );
     void set_extension(GLint extension);
     void set_anisotropy(unsigned anisotropy);

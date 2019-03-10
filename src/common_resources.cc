@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -252,7 +252,7 @@ const sampler& ensure_linear_sampler(sampler_pool& pool)
     if(pool.contains(name)) return *pool.get(name);
     return *pool.add(name,
         new sampler(pool.get_context(),
-            GL_LINEAR, GL_LINEAR,
+            interpolation::LINEAR, interpolation::LINEAR,
             GL_CLAMP_TO_EDGE
         )
     );
@@ -264,7 +264,7 @@ const sampler& ensure_framebuffer_sampler(sampler_pool& pool)
     if(pool.contains(name)) return *pool.get(name);
     return *pool.add(name,
         new sampler(pool.get_context(),
-            GL_NEAREST, GL_NEAREST,
+            interpolation::NEAREST, interpolation::NEAREST,
             GL_CLAMP_TO_EDGE
         )
     );
@@ -276,7 +276,7 @@ const sampler& ensure_depth_sampler(sampler_pool& pool)
     if(pool.contains(name)) return *pool.get(name);
     return *pool.add(name,
         new sampler(pool.get_context(),
-            GL_NEAREST, GL_NEAREST,
+            interpolation::NEAREST, interpolation::NEAREST,
             GL_CLAMP_TO_BORDER,
             0, glm::vec4(1)
         )

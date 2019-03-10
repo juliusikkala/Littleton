@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -52,8 +52,8 @@ sao::sao(
     fb_sampler(common::ensure_framebuffer_sampler(pool)),
     mipmap_sampler(
         get_context(),
-        GL_NEAREST,
-        GL_NEAREST_MIPMAP_NEAREST,
+        interpolation::NEAREST,
+        interpolation::NEAREST_MIPMAP_NEAREST,
         GL_CLAMP_TO_EDGE
     )
 {
