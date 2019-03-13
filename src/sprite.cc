@@ -34,18 +34,17 @@ sprite_layout::sprite_layout(const std::vector<mode>& layout)
     }
 }
 
-vec4 sprite_layout::get_bounds(
+sprite_layout::tile sprite_layout::get_tile(
     unsigned index,
     duration animation_time,
-    float yaw_angle,
-    float pitch_angle,
+    vec3 view,
     bool looping
 ) const
 {
-    if(index >= layout.size()) return vec4(0);
+    if(index >= layout.size()) return tile{vec4(0), vec2(0)};
 
     const mode& m = layout[index];
-    if(m.animation_frames.size() == 0) return vec4(0);
+    if(m.animation_frames.size() == 0) return tile{vec4(0), vec2(0)};
 
     // Resolve animation frame, if relevant
     unsigned frame_index = 0;
@@ -65,68 +64,51 @@ vec4 sprite_layout::get_bounds(
     }
 
     const mode::frame& f = m.animation_frames[frame_index];
-    if(f.bounds.size() == 0) return vec4(0);
+    if(f.tiles.size() == 0) return tile{vec4(0), vec2(0)};
 
-    // Directional sprite handling (find nearest yaw and pitch steps).
-    // Non-directional sprites enter neither if below and return f.bounds[0].
-    unsigned closest_yaw_index = 0;
-    unsigned closest_pitch_index = 0;
+    // Directional sprite handling (find nearest provided direction).
+    // Non-directional sprites do not enter the if below and return f.tiles[0].
+    unsigned closest_index = 0;
 
-    if(m.yaw_steps.size() > 1)
+    if(m.directions.size() >= 1)
     {
-        float closest_yaw = circular_distance(yaw_angle, m.yaw_steps[0]);
-        for(unsigned i = 1; i < m.yaw_steps.size(); ++i)
+        float closest_distance = dot(view, m.directions[0]);
+        for(unsigned i = 1; i < m.directions.size(); ++i)
         {
-            float dist = circular_distance(yaw_angle, m.yaw_steps[i]);
-            if(dist < closest_yaw)
+            float dist = dot(view, m.directions[i]);
+            if(dist > closest_distance)
             {
-                closest_yaw = dist;
-                closest_yaw_index = i;
+                closest_distance = dist;
+                closest_index = i;
             }
         }
     }
 
-    if(m.pitch_steps.size() > 1)
-    {
-        float closest_pitch = circular_distance(pitch_angle, m.pitch_steps[0]);
-        for(unsigned i = 1; i < m.pitch_steps.size(); ++i)
-        {
-            float dist = circular_distance(pitch_angle, m.pitch_steps[i]);
-            if(dist < closest_pitch)
-            {
-                closest_pitch = dist;
-                closest_pitch_index = i;
-            }
-        }
-    }
-
-    return f.bounds[
-        m.yaw_steps.size() * closest_pitch_index + closest_yaw_index
-    ];
+    return f.tiles[closest_index];
 }
 
-sprite_layout sprite_layout::simple_v(unsigned modes)
+sprite_layout sprite_layout::simple_v(unsigned modes, vec2 origin)
 {
     float height = 1.0/modes;
     std::vector<mode> layout;
-    vec4 bounds(0, 0, 1.0, height);
+    vec4 rect(0, 0, 1.0, height);
     for(unsigned i = 0; i < modes; ++i)
     {
-        bounds.y = i/(float)modes;
-        layout.push_back({{}, {}, {{{}, {bounds}}}});
+        rect.y = i/(float)modes;
+        layout.push_back({{}, {{{}, {{rect, origin}}}}});
     }
     return sprite_layout(layout);
 }
 
-sprite_layout sprite_layout::simple_h(unsigned modes)
+sprite_layout sprite_layout::simple_h(unsigned modes, vec2 origin)
 {
     float width = 1.0/modes;
     std::vector<mode> layout;
-    vec4 bounds(0, 0, width, 1.0);
+    vec4 rect(0, 0, width, 1.0);
     for(unsigned i = 0; i < modes; ++i)
     {
-        bounds.x = i/(float)modes;
-        layout.push_back({{}, {}, {{{}, {bounds}}}});
+        rect.x = i/(float)modes;
+        layout.push_back({{}, {{{}, {{rect, origin}}}}});
     }
     return sprite_layout(layout);
 }
@@ -134,20 +116,21 @@ sprite_layout sprite_layout::simple_h(unsigned modes)
 sprite_layout sprite_layout::animated_v(
     unsigned frames,
     duration frame_time,
-    unsigned modes
+    unsigned modes,
+    vec2 origin
 ){
     float height = 1.0/modes;
     float width = 1.0/frames;
     std::vector<mode> layout;
-    vec4 bounds(0, 0, width, height);
+    vec4 rect(0, 0, width, height);
     for(unsigned i = 0; i < modes; ++i)
     {
-        bounds.y = i/(float)modes;
+        rect.y = i/(float)modes;
         mode m;
         for(unsigned j = 0; j < frames; ++j)
         {
-            bounds.x = j/(float)frames;
-            m.animation_frames.push_back({frame_time, {bounds}});
+            rect.x = j/(float)frames;
+            m.animation_frames.push_back({frame_time, {{rect, origin}}});
         }
         
         layout.push_back(m);
@@ -158,20 +141,21 @@ sprite_layout sprite_layout::animated_v(
 sprite_layout sprite_layout::animated_h(
     unsigned frames,
     duration frame_time,
-    unsigned modes
+    unsigned modes,
+    vec2 origin
 ){
     float height = 1.0/frames;
     float width = 1.0/modes;
     std::vector<mode> layout;
-    vec4 bounds(0, 0, width, height);
+    vec4 rect(0, 0, width, height);
     for(unsigned i = 0; i < modes; ++i)
     {
-        bounds.x = i/(float)modes;
+        rect.x = i/(float)modes;
         mode m;
         for(unsigned j = 0; j < frames; ++j)
         {
-            bounds.y = j/(float)frames;
-            m.animation_frames.push_back({frame_time, {bounds}});
+            rect.y = j/(float)frames;
+            m.animation_frames.push_back({frame_time, {{rect, origin}}});
         }
         
         layout.push_back(m);
@@ -180,7 +164,7 @@ sprite_layout sprite_layout::animated_h(
 }
 
 sprite_layout sprite_layout::directional(
-    unsigned yaw_steps, unsigned pitch_steps
+    unsigned yaw_steps, unsigned pitch_steps, vec2 origin
 ){
     if(pitch_steps <= 1) return directional(yaw_steps, {});
  
@@ -189,11 +173,11 @@ sprite_layout sprite_layout::directional(
     std::vector<float> pitch_steps_vec(pitch_steps);
     for(unsigned i = 0; i < pitch_steps; ++i)
         pitch_steps_vec[i] = start + i * pitch_step_size;
-    return directional(yaw_steps, pitch_steps_vec);
+    return directional(yaw_steps, pitch_steps_vec, origin);
 }
 
 sprite_layout sprite_layout::directional(
-    unsigned yaw_steps, const std::vector<float>& pitch_steps
+    unsigned yaw_steps, const std::vector<float>& pitch_steps, vec2 origin
 ){
     if(yaw_steps <= 1) return directional({}, pitch_steps);
 
@@ -201,28 +185,33 @@ sprite_layout sprite_layout::directional(
     std::vector<float> yaw_steps_vec(yaw_steps);
     for(unsigned i = 0; i < yaw_steps; ++i)
         yaw_steps_vec[i] = i * yaw_step_size;
-    return directional(yaw_steps_vec, pitch_steps);
+    return directional(yaw_steps_vec, pitch_steps, origin);
 }
 
 sprite_layout sprite_layout::directional(
     const std::vector<float>& yaw_steps,
-    const std::vector<float>& pitch_steps
+    const std::vector<float>& pitch_steps,
+    vec2 origin
 ){
     float height = 1.0/pitch_steps.size();
     float width = 1.0/yaw_steps.size();
 
-    vec4 bounds(0, 0, width, height);
-    std::vector<vec4> dir;
+    vec4 rect(0, 0, width, height);
+    std::vector<tile> tiles;
+    std::vector<vec3> directions;
     for(unsigned i = 0; i < pitch_steps.size(); ++i)
     {
-        bounds.y = i / (float)pitch_steps.size();
+        rect.y = i / (float)pitch_steps.size();
         for(unsigned j = 0; j < yaw_steps.size(); ++j)
         {
-            bounds.x = i / (float)yaw_steps.size();
-            dir.push_back(bounds);
+            rect.x = j / (float)yaw_steps.size();
+            tiles.push_back({rect, origin});
+            directions.push_back(
+                pitch_yaw_to_vec(pitch_steps[i], yaw_steps[j])
+            );
         }
     }
-    return sprite_layout({{yaw_steps, pitch_steps, {{{}, dir}}}});
+    return sprite_layout({{directions, {{{}, tiles}}}});
 }
 
 sprite::sprite(
@@ -347,15 +336,16 @@ bool sprite::get_animation_looping() const
     return animation_looping;
 }
 
-vec4 sprite::get_bounds(const camera& cam, float* angle) const
+sprite_layout::tile sprite::get_tile(const camera& cam, float* angle) const
 {
-    if(layout == nullptr) return vec4(0,0,1,1);
+    if(layout == nullptr)
+        return sprite_layout::tile{vec4(0,0,1,1), vec2(0.5, 0.5)};
     
-    // TODO: Calculate angles.
-    return layout->get_bounds(
+    // TODO: Calculate angle and view direction.
+    return layout->get_tile(
         mode,
         get_animation_time(),
-        0, 0,
+        vec3(0),
         animation_looping
     );
 }

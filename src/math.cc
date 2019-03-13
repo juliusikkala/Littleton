@@ -440,4 +440,12 @@ float circular_distance(
     return diff + half < 0.0f ? diff + loop : diff;
 }
 
+vec3 pitch_yaw_to_vec(float pitch, double yaw)
+{
+    pitch = glm::radians(pitch);
+    yaw = glm::radians(yaw);
+    float c = cos(pitch);
+    return vec3(c * cos(yaw), sin(pitch), c * sin(-yaw));
+}
+
 } // namespace lt

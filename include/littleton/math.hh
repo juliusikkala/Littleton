@@ -207,6 +207,8 @@ LT_API float circular_distance(
     float loop = 360
 );
 
+LT_API vec3 pitch_yaw_to_vec(float pitch, double yaw);
+
 } // namespace lt
 
 #include "math.tcc"

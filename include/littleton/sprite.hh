@@ -38,58 +38,75 @@ class sampler;
 class LT_API sprite_layout
 {
 public:
+    struct tile
+    {
+        vec4 rect;
+        vec2 origin;
+    };
+
     struct mode
     {
-        // Leave these two empty if not a fake-3D sprite sheet. Add the only
-        // rectangle in direction_frames alone. These are in degrees, [0, 360).
-        // Yaw should be normalized to [0, 360), pitch to [-90, 90).
-        // When looking up an angle, it is rounded to the nearest found step.
-        std::vector<float> yaw_steps, pitch_steps;
+        // Leave this vector empty if not a fake-3D sprite sheet. Add the only
+        // rectangle in tiles alone. This vector should contain the provided
+        // view vectors.
+        std::vector<vec3> directions;
         struct frame
         {
             // The duration this frame is active.
             duration frame_time;
-            // The bounds should be normalized to [0, 1] uv coordinates.
-            // Successive yaw steps are one after another, forming lines. After
-            // each yaw step, the next pitch step is started.
-            std::vector<vec4> bounds;
+            // The rectangles should be normalized to [0, 1] uv coordinates.
+            // Tiles should be ordered according to 'directions' if directional
+            // sprite.
+            std::vector<tile> tiles;
         };
         std::vector<frame> animation_frames;
     };
 
     explicit sprite_layout(const std::vector<mode>& layout);
 
-    vec4 get_bounds(
-        unsigned index = 0,
-        duration animation_time = duration(0),
-        float yaw_angle = 0.0f,
-        float pitch_angle = 0.0f,
-        bool looping = true
+    tile get_tile(
+        unsigned index,
+        duration animation_time,
+        vec3 view,
+        bool looping
     ) const;
 
     // *_v are vertical configurations, successive modes are one after another.
     // *_h are the same thing but horizontal.
-    static sprite_layout simple_v(unsigned modes = 1);
-    static sprite_layout simple_h(unsigned modes = 1);
+    static sprite_layout simple_v(
+        unsigned modes = 1,
+        vec2 origin = vec2(0.5, 0.5)
+    );
+    static sprite_layout simple_h(
+        unsigned modes = 1,
+        vec2 origin = vec2(0.5, 0.5)
+    );
     static sprite_layout animated_v(
         unsigned frames,
         duration frame_time,
-        unsigned modes = 1
+        unsigned modes = 1,
+        vec2 origin = vec2(0.5, 0.5)
     );
     static sprite_layout animated_h(
         unsigned frames,
         duration frame_time,
-        unsigned modes = 1
+        unsigned modes = 1,
+        vec2 origin = vec2(0.5, 0.5)
     );
     static sprite_layout directional(
-        unsigned yaw_steps, unsigned pitch_steps = 1
+        unsigned yaw_steps,
+        unsigned pitch_steps = 1,
+        vec2 origin = vec2(0.5, 0.5)
     );
     static sprite_layout directional(
-        unsigned yaw_steps, const std::vector<float>& pitch_steps
+        unsigned yaw_steps,
+        const std::vector<float>& pitch_steps,
+        vec2 origin = vec2(0.5, 0.5)
     );
     static sprite_layout directional(
         const std::vector<float>& yaw_steps,
-        const std::vector<float>& pitch_steps
+        const std::vector<float>& pitch_steps,
+        vec2 origin = vec2(0.5, 0.5)
     );
 
 private:
@@ -146,7 +163,10 @@ public:
     void set_animation_looping(bool looping);
     bool get_animation_looping() const;
 
-    vec4 get_bounds(const camera& cam, float* angle = nullptr) const;
+    sprite_layout::tile get_tile(
+        const camera& cam,
+        float* angle = nullptr
+    ) const;
 
 private:
     unsigned mode;
