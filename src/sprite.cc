@@ -336,8 +336,15 @@ bool sprite::get_animation_looping() const
     return animation_looping;
 }
 
-sprite_layout::tile sprite::get_tile(const camera& cam, float* angle) const
+sprite_layout::tile sprite::get_tile(const camera& cam, mat3& transform) const
 {
+    // Move camera position to sprite space, get vector. This is the view
+    // vector. Then determine angle between camera vertical and view vector
+    // vertical, that can be used to get the cosine and the sine between them
+    // (dot() and cross() trickery). With those, the rotation transform matrix
+    // is built. Scaling is directly fetched from x and y scales, and
+    // translation from global position - scale * tile offset
+
     if(layout == nullptr)
         return sprite_layout::tile{vec4(0,0,1,1), vec2(0.5, 0.5)};
     

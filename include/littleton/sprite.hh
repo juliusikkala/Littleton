@@ -163,10 +163,7 @@ public:
     void set_animation_looping(bool looping);
     bool get_animation_looping() const;
 
-    sprite_layout::tile get_tile(
-        const camera& cam,
-        float* angle = nullptr
-    ) const;
+    sprite_layout::tile get_tile(const camera& cam, mat3& transform) const;
 
 private:
     unsigned mode;

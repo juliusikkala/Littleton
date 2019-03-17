@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -34,33 +34,36 @@ public:
     void perspective(float fov, float aspect, float near);
     void perspective(float fov, float aspect, float near, float far);
     void cube_perspective(float near, float far);
-    glm::mat4 get_projection() const;
-    glm::vec3 get_clip_info() const;
-    glm::vec2 get_projection_info() const;
+    mat4 get_projection() const;
+    vec3 get_clip_info() const;
+    vec2 get_projection_info() const;
+
+    vec3 get_view_direction() const;
+    vec3 get_up_direction() const;
 
     // Assumes the camera was set using cube_perspective
-    glm::mat4 get_view_projection(unsigned face) const;
+    mat4 get_view_projection(unsigned face) const;
 
     // Assumes the camera was set using cube_perspective
-    glm::mat4 get_inverse_orientation_projection(unsigned face) const;
+    mat4 get_inverse_orientation_projection(unsigned face) const;
 
     float get_near() const;
     float get_far() const;
     float get_aspect() const;
 
     // pos must be in view space
-    bool sphere_is_visible(glm::vec3 pos, float r) const;
+    bool sphere_is_visible(vec3 pos, float r) const;
 
-    glm::vec2 pixels_per_unit(glm::uvec2 target_size) const;
+    vec2 pixels_per_unit(uvec2 target_size) const;
 
 private:
-    glm::mat4 projection;
-    glm::vec3 clip_info;
-    glm::vec2 projection_info;
+    mat4 projection;
+    vec3 clip_info;
+    vec2 projection_info;
 
     float near, far, aspect;
     float tan_fov;
-    glm::vec2 inverse_cos_fov;
+    vec2 inverse_cos_fov;
 };
 
 } // namespace lt
