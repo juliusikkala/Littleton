@@ -158,6 +158,8 @@ simple_pipeline_builder& simple_pipeline_builder::reset()
     ssrt_status.enabled = false;
     sg_status.enabled = false;
     visualize_status.enabled = false;
+    render_2d_status.enabled = false;
+    overlay_render_2d_status.enabled = false;
     return *this;
 }
 
@@ -218,7 +220,7 @@ simple_pipeline* simple_pipeline_builder::build()
         dbuf.get()
     );
 
-    simple_pipeline::stage_ptrs stages;
+    simple_pipeline::stage_ptrs stages, overlay_stages;
     std::vector<pipeline_method*> dynamic_stages;
     std::vector<pipeline_method*> static_stages;
 
@@ -227,6 +229,13 @@ simple_pipeline* simple_pipeline_builder::build()
         auto* v = (value); \
         type##_stages.push_back(v); \
         std::get<(int) simple_pipeline:: stage_name >(stages).reset(v); \
+    }
+
+#define add_overlay_stage(stage_name, value, type) \
+    { \
+        auto* v = (value); \
+        type##_stages.push_back(v); \
+        std::get<(int) simple_pipeline:: stage_name >(overlay_stages).reset(v);\
     }
 
     // We'll always have to clear the G-Buffer
@@ -256,6 +265,16 @@ simple_pipeline* simple_pipeline_builder::build()
             add_stage(
                 RENDER_SDF,
                 new method::render_sdf(b.in(), pool, {}, sdf_status.opt),
+                dynamic
+            );
+        }
+
+        if(render_2d_status.enabled && render_2d_status.opt.write_buffer_data)
+        {
+            render_2d_status.opt.fullbright = false;
+            add_stage(
+                RENDER_2D,
+                new method::render_2d(b.in(), pool, {}, render_2d_status.opt),
                 dynamic
             );
         }
@@ -402,6 +421,19 @@ simple_pipeline* simple_pipeline_builder::build()
         add_stage(LIGHTING_SDF_PASS, lp, dynamic);
     }
 
+    if(
+        render_2d_status.enabled &&
+        (!render_2d_status.opt.write_buffer_data || !deferred)
+    ){
+        render_2d_status.opt.fullbright = true;
+        render_2d_status.opt.write_buffer_data = false;
+        add_stage(
+            RENDER_2D,
+            new method::render_2d(b.in(), pool, {}, render_2d_status.opt),
+            dynamic
+        );
+    }
+
     // Start postprocessing
     b.sync_dbuf();
 
@@ -461,6 +493,19 @@ simple_pipeline* simple_pipeline_builder::build()
         );
     }
 
+    // Overlay stages
+    if(overlay_render_2d_status.enabled)
+    {
+        add_overlay_stage(
+            RENDER_2D,
+            new method::render_2d(
+                target, pool, {}, overlay_render_2d_status.opt
+            ),
+            dynamic
+        );
+    }
+
+#undef add_overlay_stage
 #undef add_stage
 
     return new simple_pipeline(
@@ -470,7 +515,8 @@ simple_pipeline* simple_pipeline_builder::build()
         dbuf.release(),
         std::move(dynamic_stages),
         std::move(static_stages),
-        std::move(stages)
+        std::move(stages),
+        std::move(overlay_stages)
     );
 }
 

@@ -22,7 +22,6 @@
 #include "helpers.hh"
 #include "resource_pool.hh"
 #include "common_resources.hh"
-#include "helpers.hh"
 #include "scene.hh"
 #include <stdexcept>
 

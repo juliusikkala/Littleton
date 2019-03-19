@@ -364,55 +364,19 @@ public:
     void update_impl(duration delta);
 
 private:
-    template<typename T, typename U, typename=void>
-    struct has_add_impl: std::false_type { };
-
-    template<typename T, typename U>
-    struct has_add_impl<
-        T, U,
-        decltype((void) std::declval<T>().add_impl((U*)nullptr), void())
-    > : std::true_type { };
-
     template<typename T, typename S, typename... Rest>
     void add_internal(T* thing, S* base, Rest*... rest);
     template<typename T>
     void add_internal(T* thing);
-
-    template<typename T, typename U, typename=void>
-    struct has_remove_impl: std::false_type { };
-
-    template<typename T, typename U>
-    struct has_remove_impl<
-        T, U,
-        decltype((void) std::declval<T>().remove_impl((U*)nullptr), void())
-    > : std::true_type { };
 
     template<typename T, typename S, typename... Rest>
     void remove_internal(T* thing, S* base, Rest*... rest);
     template<typename T>
     void remove_internal(T* thing);
 
-    template<typename T, typename=void>
-    struct has_clear_impl: std::false_type { };
-
-    template<typename T>
-    struct has_clear_impl<
-        T,
-        decltype((void) std::declval<T>().clear_impl(), void())
-    > : std::true_type { };
-
     template<typename S, typename... Rest>
     void clear_internal(S* base, Rest*... rest);
     void clear_internal();
-
-    template<typename T, typename=void>
-    struct has_update_impl: std::false_type { };
-
-    template<typename T>
-    struct has_update_impl<
-        T,
-        decltype((void) std::declval<T>().update_impl(duration()), void())
-    > : std::true_type { };
 
     template<typename S, typename... Rest>
     void update_internal(duration delta, S* base, Rest*... rest);

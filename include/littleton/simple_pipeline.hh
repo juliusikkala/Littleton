@@ -34,6 +34,7 @@
 #include "method/generate_sg.hh"
 #include "method/geometry_pass.hh"
 #include "method/lighting_pass.hh"
+#include "method/render_2d.hh"
 #include "method/sao.hh"
 #include "method/ssao.hh"
 #include "method/shadow_msm.hh"
@@ -72,14 +73,16 @@ protected:
         doublebuffer* dbuf,
         std::vector<pipeline_method*>&& dynamic_stages,
         std::vector<pipeline_method*>&& static_stages,
-        stage_ptrs&& all_stages
+        stage_ptrs&& all_stages,
+        stage_ptrs&& overlay_stages
     );
 
     // Double G-Buffering! The second buffer might not be in use, depends on
     // pipeline stages. Check whether it's nullptr to make sure.
     gbuffer* buf[2];
     doublebuffer* dbuf;
-    std::tuple<std::unique_ptr<Stages>...> all_stages;
+    std::tuple<std::unique_ptr<Stages>...> render_stages;
+    std::tuple<std::unique_ptr<Stages>...> overlay_stages;
     std::vector<pipeline_method*> static_stages;
 
 public:
@@ -96,17 +99,35 @@ public:
     template<typename S>
     void set_scene(S* scene);
 
+    template<typename Scene>
+    void set_overlay_scenes(Scene& scene);
+
+    template<typename S>
+    void set_overlay_scene(S* scene);
+
     template<unsigned i>
-    auto get_stage() -> decltype(std::get<i>(all_stages).get());
+    auto get_stage() -> decltype(std::get<i>(render_stages).get());
+
+    template<unsigned i>
+    auto get_overlay_stage() -> decltype(std::get<i>(overlay_stages).get());
 
     template<unsigned i>
     void set_options(
-        const typename decltype(*std::get<i>(all_stages))::options& opt
+        const typename decltype(*std::get<i>(render_stages))::options& opt
+    );
+
+    template<unsigned i>
+    void set_overlay_options(
+        const typename decltype(*std::get<i>(overlay_stages))::options& opt
     );
 
     template<unsigned i>
     auto get_options() const ->
-    const typename decltype(*std::get<i>(all_stages))::options&;
+    const typename decltype(*std::get<i>(render_stages))::options&;
+
+    template<unsigned i>
+    auto get_overlay_options() const ->
+    const typename decltype(*std::get<i>(overlay_stages))::options&;
 
     void update(duration delta);
 };
@@ -134,7 +155,8 @@ using simple_pipeline_base = basic_simple_pipeline<
     method::apply_sg,
     method::ssrt,
     method::blit_framebuffer,
-    method::generate_sg
+    method::generate_sg,
+    method::render_2d
 >;
 
 class LT_API simple_pipeline: public simple_pipeline_base
@@ -167,7 +189,8 @@ public:
         APPLY_SG_TRANSPARENT,
         SSRT,
         BLIT_FRAMEBUFFER,
-        GENERATE_SG
+        GENERATE_SG,
+        RENDER_2D
     };
 
     method::shadow_pcf* get_pcf() {return get_stage<SHADOW_PCF>();}
@@ -210,6 +233,12 @@ public:
     template<typename Method>
     simple_pipeline_builder& add();
 
+    template<typename Method>
+    simple_pipeline_builder& add_overlay(const typename Method::options& opt);
+
+    template<typename Method>
+    simple_pipeline_builder& add_overlay();
+
     simple_pipeline_builder& reset();
 
     simple_pipeline* build();
@@ -218,6 +247,12 @@ public:
     // build() without arguments.
     template<typename Scene>
     simple_pipeline* build(Scene& scene);
+
+    // Determines needed stages based on given scenes. The second scene is
+    // drawn as an overlay and only supports 2D elements, making it a good
+    // choice for GUI and HUD elements.
+    template<typename Scene, typename Scene2>
+    simple_pipeline* build(Scene& scene, Scene2& overlay);
 
 private:
     render_target& target;
@@ -235,6 +270,7 @@ private:
         typename Method::options opt = {};
     };
 
+    // Main render methods
     algorithm lighting_approach;
     method_status skybox_status;
     options_method_status<method::render_atmosphere> atmosphere_status;
@@ -246,6 +282,10 @@ private:
     options_method_status<method::ssrt> ssrt_status;
     options_method_status<method::apply_sg> sg_status;
     options_method_status<method::visualize_gbuffer> visualize_status;
+    options_method_status<method::render_2d> render_2d_status;
+
+    // Overlay methods
+    options_method_status<method::render_2d> overlay_render_2d_status;
 };
 
 } // namespace lt

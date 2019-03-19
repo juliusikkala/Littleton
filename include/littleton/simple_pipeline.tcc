@@ -31,9 +31,11 @@ basic_simple_pipeline<Stages...>::basic_simple_pipeline(
     doublebuffer* dbuf,
     std::vector<pipeline_method*>&& dynamic_stages,
     std::vector<pipeline_method*>&& static_stages,
-    stage_ptrs&& all_stages
+    stage_ptrs&& render_stages,
+    stage_ptrs&& overlay_stages
 ):  pipeline(dynamic_stages), buf{buf1, buf2}, dbuf(dbuf),
-    all_stages(std::move(all_stages)),
+    render_stages(std::move(render_stages)),
+    overlay_stages(std::move(overlay_stages)),
     static_stages(std::move(static_stages))
 {
 }
@@ -87,7 +89,7 @@ template<typename... Stages>
 template<typename Scene>
 void basic_simple_pipeline<Stages...>::set_scenes(Scene& scene)
 {
-    // Calls set_scenes for all methods in all_stages if it exists for the
+    // Calls set_scenes for all methods in render_stages if it exists for the
     // method.
     std::apply(
         [&](auto&... stages)
@@ -102,7 +104,7 @@ void basic_simple_pipeline<Stages...>::set_scenes(Scene& scene)
             };
             std::make_tuple(func(stages)...);
         },
-        all_stages
+        render_stages
     );
 }
 
@@ -132,36 +134,109 @@ void basic_simple_pipeline<Stages...>::set_scene(S* scene)
             };
             std::make_tuple(func(stages)...);
         },
-        all_stages
+        render_stages
+    );
+}
+
+template<typename... Stages>
+template<typename Scene>
+void basic_simple_pipeline<Stages...>::set_overlay_scenes(Scene& scene)
+{
+    // Calls set_scenes for all methods in render_stages if it exists for the
+    // method.
+    std::apply(
+        [&](auto&... stages)
+        {
+            auto func = [&](auto& stage)
+            {
+                if constexpr(has_set_scenes<decltype(*stage)>::value)
+                {
+                    if(stage) stage->set_scenes(&scene);
+                }
+                return 0;
+            };
+            std::make_tuple(func(stages)...);
+        },
+        overlay_stages
+    );
+}
+
+template<typename... Stages>
+template<typename S>
+void basic_simple_pipeline<Stages...>::set_overlay_scene(S* scene)
+{
+    std::apply(
+        [&](auto&... stages)
+        {
+            auto func = [&](auto& stage)
+            {
+                if constexpr(has_set_scene<decltype(*stage), S>::value)
+                {
+                    if(stage) stage->set_scene(scene);
+                }
+                return 0;
+            };
+            std::make_tuple(func(stages)...);
+        },
+        overlay_stages
     );
 }
 
 template<typename... Stages>
 template<unsigned i>
 auto basic_simple_pipeline<Stages...>::get_stage()
--> decltype(std::get<i>(all_stages).get())
+-> decltype(std::get<i>(render_stages).get())
 {
-    return std::get<i>(all_stages).get();
+    return std::get<i>(render_stages).get();
+}
+
+template<typename... Stages>
+template<unsigned i>
+auto basic_simple_pipeline<Stages...>::get_overlay_stage()
+-> decltype(std::get<i>(overlay_stages).get())
+{
+    return std::get<i>(overlay_stages).get();
 }
 
 template<typename... Stages>
 template<unsigned i>
 void basic_simple_pipeline<Stages...>::set_options(
-    const typename decltype(*std::get<i>(all_stages))::options& opt
+    const typename decltype(*std::get<i>(render_stages))::options& opt
 ){
-    auto stage = std::get<i>(all_stages);
+    auto stage = std::get<i>(render_stages);
+    if(stage) stage->set_options(opt);
+}
+
+template<typename... Stages>
+template<unsigned i>
+void basic_simple_pipeline<Stages...>::set_overlay_options(
+    const typename decltype(*std::get<i>(overlay_stages))::options& opt
+){
+    auto stage = std::get<i>(overlay_stages);
     if(stage) stage->set_options(opt);
 }
 
 template<typename... Stages>
 template<unsigned i>
 auto basic_simple_pipeline<Stages...>::get_options() const
--> const typename decltype(*std::get<i>(all_stages))::options&
+-> const typename decltype(*std::get<i>(render_stages))::options&
 {
-    auto stage = std::get<i>(all_stages);
+    auto stage = std::get<i>(render_stages);
     if(stage) return stage->get_options();
     throw std::runtime_error(
         "Stage " + std::to_string(i) + " not present in pipeline"
+    );
+}
+
+template<typename... Stages>
+template<unsigned i>
+auto basic_simple_pipeline<Stages...>::get_overlay_options() const
+-> const typename decltype(*std::get<i>(overlay_stages))::options&
+{
+    auto stage = std::get<i>(overlay_stages);
+    if(stage) return stage->get_options();
+    throw std::runtime_error(
+        "Overlay stage " + std::to_string(i) + " not present in pipeline"
     );
 }
 
@@ -183,7 +258,25 @@ void basic_simple_pipeline<Stages...>::update(duration delta)
             };
             std::make_tuple(func(stages)...);
         },
-        all_stages
+        render_stages
+    );
+
+    std::apply(
+        [&](auto&... stages)
+        {
+            auto func = [&](auto& stage)
+            {
+                if constexpr(
+                    std::is_base_of_v<
+                        animated,
+                        std::decay_t<decltype(*stage)>
+                    >
+                ) if(stage) stage->animation_update(delta);
+                return 0;
+            };
+            std::make_tuple(func(stages)...);
+        },
+        overlay_stages
     );
 }
 
@@ -206,6 +299,7 @@ simple_pipeline_builder::add(const typename Method::options& opt)
     LT_HANDLE_METHOD(ssrt, ssrt_status)
     LT_HANDLE_METHOD(apply_sg, sg_status)
     LT_HANDLE_METHOD(visualize_gbuffer, visualize_status)
+    LT_HANDLE_METHOD(render_2d, render_2d_status)
 #undef LT_HANDLE_METHOD
     return *this;
 }
@@ -215,8 +309,37 @@ simple_pipeline_builder& simple_pipeline_builder::add()
 {
     if constexpr(std::is_same_v<Method, method::skybox>)
         skybox_status.enabled = true;
+    else if constexpr(std::is_same_v<Method, method::render_2d>)
+    {
+        method::render_2d::options opt;
+        opt.read_depth_buffer = true;
+        opt.write_buffer_data = true;
+        opt.fullbright = false;
+        return add<Method>(opt);
+    }
     else return add<Method>({});
     return *this;
+}
+
+template<typename Method>
+simple_pipeline_builder&
+simple_pipeline_builder::add_overlay(const typename Method::options& opt)
+{
+#define LT_HANDLE_METHOD(name, status) \
+    if constexpr(std::is_same_v<Method, method:: name>) \
+    { \
+        status.enabled = true; \
+        status.opt = opt; \
+    }
+    LT_HANDLE_METHOD(render_2d, overlay_render_2d_status)
+#undef LT_HANDLE_METHOD
+    return *this;
+}
+
+template<typename Method>
+simple_pipeline_builder& simple_pipeline_builder::add_overlay()
+{
+    return add_overlay<Method>({});
 }
 
 template<typename Scene>
@@ -228,9 +351,19 @@ simple_pipeline* simple_pipeline_builder::build(Scene& scene)
         add<method::render_atmosphere>();
     if(std::is_convertible_v<Scene&, sdf_scene&>)
         add<method::render_sdf>();
+    if(std::is_convertible_v<Scene&, sprite_scene&>)
+        add<method::render_2d>();
     simple_pipeline* res = build();
     res->set_scenes(scene);
     return res;
+}
+
+template<typename Scene, typename Scene2>
+simple_pipeline* simple_pipeline_builder::build(Scene& scene, Scene2& overlay)
+{
+    if(std::is_convertible_v<Scene2&, sprite_scene&>)
+        add_overlay<method::render_2d>();
+    return build(scene);
 }
 
 }
