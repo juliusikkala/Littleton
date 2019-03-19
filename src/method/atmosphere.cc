@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -214,6 +214,15 @@ vec3 atmosphere_scene::get_attenuated_sun_color(
     glm::vec3 attenuation = glm::exp(-T);
 
     return attenuation * get_sun_color(origin);
+}
+
+void atmosphere_scene::add_impl(atmosphere* a) { add_atmosphere(a); }
+void atmosphere_scene::remove_impl(atmosphere* a) { remove_atmosphere(a); }
+void atmosphere_scene::clear_impl()
+{
+    clear_atmospheres();
+    directional_sun = nullptr;
+    point_sun = nullptr;
 }
 
 }

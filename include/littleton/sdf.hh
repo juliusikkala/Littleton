@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -113,6 +113,11 @@ public:
 
     // Used for cache invalidation
     uint64_t get_hash() const;
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(sdf_object* object);
+    void remove_impl(sdf_object* object);
+    void clear_impl();
 
 private:
     std::vector<sdf_object*> objects;

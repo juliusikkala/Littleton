@@ -223,12 +223,7 @@ sprite::sprite(
 ):  mode(0), animation_looping(true), default_mag(mag), default_min(min),
     layout(layout)
 {
-    if(pool.contains_texture(texture_path))
-        set_texture(pool.get_texture(texture_path));
-    else set_texture(pool.add_texture(
-        texture_path,
-        texture::create(pool.get_context(), texture_path)
-    ));
+    set_texture(pool, texture_path);
 }
 
 sprite::sprite(
@@ -287,6 +282,16 @@ void sprite::set_texture(const texture* tex, const sprite_layout* layout)
 {
     mat.color_texture.second = tex;
     this->layout = layout;
+}
+
+void sprite::set_texture(resource_pool& pool, const std::string& texture_path)
+{
+    if(pool.contains_texture(texture_path))
+        set_texture(pool.get_texture(texture_path));
+    else set_texture(pool.add_texture(
+        texture_path,
+        texture::create(pool.get_context(), texture_path)
+    ));
 }
 
 const material& sprite::get_material() const

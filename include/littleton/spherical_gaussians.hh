@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -89,6 +89,11 @@ public:
     void remove_sg_group(sg_group* group);
     const std::vector<sg_group*>& get_sg_groups() const;
     void clear_sg_groups();
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(sg_group* group);
+    void remove_impl(sg_group* group);
+    void clear_impl();
 
 private:
     std::vector<sg_group*> sg_groups;

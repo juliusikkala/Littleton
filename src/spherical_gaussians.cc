@@ -1,3 +1,21 @@
+/*
+    Copyright 2018-2019 Julius Ikkala
+
+    This file is part of Littleton.
+
+    Littleton is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Littleton is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "spherical_gaussians.hh"
 #include "helpers.hh"
 #include <boost/functional/hash.hpp>
@@ -115,6 +133,10 @@ void sg_scene::clear_sg_groups()
 {
     sg_groups.clear();
 }
+
+void sg_scene::add_impl(sg_group* group) { add_sg_group(group); }
+void sg_scene::remove_impl(sg_group* group) { remove_sg_group(group); }
+void sg_scene::clear_impl() { clear_sg_groups(); }
 
 } // namespace lt
 

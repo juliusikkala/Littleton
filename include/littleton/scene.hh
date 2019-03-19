@@ -20,6 +20,7 @@
 #define LT_SCENE_HH
 #include "api.hh"
 #include "math.hh"
+#include "timer.hh"
 #include "spherical_gaussians.hh"
 #include <vector>
 #include <map>
@@ -61,6 +62,9 @@ public:
     void set_cameras(const std::vector<camera*>& cameras);
     const std::vector<camera*>& get_cameras() const;
 
+    // Glue for composite_scene convenience functions, do not call directly.
+    void clear_impl();
+
 private:
     std::vector<camera*> cameras;
 };
@@ -79,6 +83,11 @@ public:
     void set_objects(const std::vector<object*>& objects);
     const std::vector<object*>& get_objects() const;
 
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(object* obj);
+    void remove_impl(object* obj);
+    void clear_impl();
+
 private:
     std::vector<object*> objects;
 };
@@ -94,8 +103,16 @@ public:
     void clear_sprites();
     size_t sprite_count() const;
 
+    void update_sprites(duration delta);
+
     void set_sprites(const std::vector<sprite*>& sprites);
     const std::vector<sprite*>& get_sprites() const;
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(sprite* spr);
+    void remove_impl(sprite* spr);
+    void update_impl(duration delta);
+    void clear_impl();
 
 private:
     std::vector<sprite*> sprites;
@@ -111,8 +128,8 @@ public:
     );
     ~light_scene();
 
-    void set_ambient(glm::vec3 ambient);
-    glm::vec3 get_ambient() const;
+    void set_ambient(vec3 ambient);
+    vec3 get_ambient() const;
 
     void add_light(point_light* pl);
     void remove_light(point_light* pl);
@@ -141,8 +158,17 @@ public:
     size_t light_count() const;
     std::vector<light*> get_lights() const;
 
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(point_light* pl);
+    void remove_impl(point_light* pl);
+    void add_impl(spotlight* sp);
+    void remove_impl(spotlight* sp);
+    void add_impl(directional_light* dl);
+    void remove_impl(directional_light* dl);
+    void clear_impl();
+
 private:
-    glm::vec3 ambient;
+    vec3 ambient;
     std::vector<point_light*> point_lights;
     std::vector<spotlight*> spotlights;
     std::vector<directional_light*> directional_lights;
@@ -187,6 +213,15 @@ public:
     const omni_map& get_omni_shadows() const;
     const perspective_map& get_perspective_shadows() const;
 
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(directional_shadow_map* shadow);
+    void remove_impl(directional_shadow_map* shadow);
+    void add_impl(omni_shadow_map* shadow);
+    void remove_impl(omni_shadow_map* shadow);
+    void add_impl(perspective_shadow_map* shadow);
+    void remove_impl(perspective_shadow_map* shadow);
+    void clear_impl();
+
 private:
     directional_map directional_shadows;
     omni_map omni_shadows;
@@ -200,6 +235,9 @@ public:
 
     void set_skybox(environment_map* skybox);
     environment_map* get_skybox() const;
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void clear_impl();
 
 private:
     environment_map* skybox;
@@ -307,7 +345,79 @@ private:
 };
 
 template<typename... Scenes>
-class composite_scene: public Scenes... {};
+class composite_scene: public Scenes...
+{
+public:
+    template<typename T>
+    void add(T* thing);
+    template<typename T>
+    void remove(T* thing);
+    void clear_all();
+    void update_all(duration delta);
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    template<typename T>
+    void add_impl(T* thing);
+    template<typename T>
+    void remove_impl(T* thing);
+    void clear_impl();
+    void update_impl(duration delta);
+
+private:
+    template<typename T, typename U, typename=void>
+    struct has_add_impl: std::false_type { };
+
+    template<typename T, typename U>
+    struct has_add_impl<
+        T, U,
+        decltype((void) std::declval<T>().add_impl((U*)nullptr), void())
+    > : std::true_type { };
+
+    template<typename T, typename S, typename... Rest>
+    void add_internal(T* thing, S* base, Rest*... rest);
+    template<typename T>
+    void add_internal(T* thing);
+
+    template<typename T, typename U, typename=void>
+    struct has_remove_impl: std::false_type { };
+
+    template<typename T, typename U>
+    struct has_remove_impl<
+        T, U,
+        decltype((void) std::declval<T>().remove_impl((U*)nullptr), void())
+    > : std::true_type { };
+
+    template<typename T, typename S, typename... Rest>
+    void remove_internal(T* thing, S* base, Rest*... rest);
+    template<typename T>
+    void remove_internal(T* thing);
+
+    template<typename T, typename=void>
+    struct has_clear_impl: std::false_type { };
+
+    template<typename T>
+    struct has_clear_impl<
+        T,
+        decltype((void) std::declval<T>().clear_impl(), void())
+    > : std::true_type { };
+
+    template<typename S, typename... Rest>
+    void clear_internal(S* base, Rest*... rest);
+    void clear_internal();
+
+    template<typename T, typename=void>
+    struct has_update_impl: std::false_type { };
+
+    template<typename T>
+    struct has_update_impl<
+        T,
+        decltype((void) std::declval<T>().update_impl(duration()), void())
+    > : std::true_type { };
+
+    template<typename S, typename... Rest>
+    void update_internal(duration delta, S* base, Rest*... rest);
+    void update_internal(duration delta);
+};
 
 using render_scene = composite_scene<
     camera_scene,
@@ -324,5 +434,7 @@ using scene_2d = composite_scene<
 >;
 
 } // namespace lt
+
+#include "scene.tcc"
 
 #endif

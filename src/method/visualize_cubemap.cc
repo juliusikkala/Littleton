@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -122,6 +122,12 @@ void cubemap_visualizer_scene::clear_cubemap_visualizers()
 {
     cubemap_visualizers.clear();
 }
+
+void cubemap_visualizer_scene::add_impl(cubemap_visualizer_node* visualizer)
+{ add_cubemap_visualizer(visualizer); }
+void cubemap_visualizer_scene::remove_impl(cubemap_visualizer_node* visualizer)
+{ remove_cubemap_visualizer(visualizer); }
+void cubemap_visualizer_scene::clear_impl() { clear_cubemap_visualizers(); }
 
 }
 

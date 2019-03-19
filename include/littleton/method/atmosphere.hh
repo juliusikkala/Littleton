@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -102,6 +102,11 @@ public:
         vec3 pos,
         unsigned view_samples = 32
     ) const;
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(atmosphere* a);
+    void remove_impl(atmosphere* a);
+    void clear_impl();
 
 private:
     std::vector<atmosphere*> atmospheres;

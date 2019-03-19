@@ -149,6 +149,7 @@ public:
     const texture* get_texture() const;
     void set_texture(const texture* tex);
     void set_texture(const texture* tex, const sprite_layout* layout);
+    void set_texture(resource_pool& pool, const std::string& texture_path);
 
     const material& get_material() const;
     void set_material(const material& mat);

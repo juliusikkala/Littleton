@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -139,5 +139,9 @@ uint64_t sdf_scene::get_hash() const
         boost::hash_combine(seed, obj->get_hash());
     return seed;
 }
+
+void sdf_scene::add_impl(sdf_object* object) { add_sdf_object(object); }
+void sdf_scene::remove_impl(sdf_object* object) { remove_sdf_object(object); }
+void sdf_scene::clear_impl() { clear_sdf_objects(); }
 
 }

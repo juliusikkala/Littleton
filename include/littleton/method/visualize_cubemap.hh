@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -79,6 +79,11 @@ public:
     get_cubemap_visualizers() const;
 
     void clear_cubemap_visualizers();
+
+    // Glue for composite_scene convenience functions, do not call directly.
+    void add_impl(cubemap_visualizer_node* visualizer);
+    void remove_impl(cubemap_visualizer_node* visualizer);
+    void clear_impl();
 
 private:
     std::vector<cubemap_visualizer_node*> cubemap_visualizers;

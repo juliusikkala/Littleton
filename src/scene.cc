@@ -17,6 +17,7 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "scene.hh"
+#include "sprite.hh"
 #include "helpers.hh"
 #include "light.hh"
 #include "shadow_map.hh"
@@ -59,6 +60,8 @@ const std::vector<camera*>& camera_scene::get_cameras() const
     return cameras;
 }
 
+void camera_scene::clear_impl() { clear_cameras(); }
+
 object_scene::object_scene(std::vector<object*>&& objects)
 : objects(std::move(objects)) {}
 
@@ -94,6 +97,10 @@ const std::vector<object*>& object_scene::get_objects() const
     return objects;
 }
 
+void object_scene::add_impl(object* obj) { add_object(obj); }
+void object_scene::remove_impl(object* obj) { remove_object(obj); }
+void object_scene::clear_impl() { clear_objects(); }
+
 sprite_scene::sprite_scene(std::vector<sprite*>&& sprites)
 : sprites(std::move(sprites)) {}
 
@@ -119,6 +126,11 @@ size_t sprite_scene::sprite_count() const
     return sprites.size();
 }
 
+void sprite_scene::update_sprites(duration delta)
+{
+    for(sprite* spr: sprites) spr->animation_update(delta);
+}
+
 void sprite_scene::set_sprites(const std::vector<sprite*>& sprites)
 {
     this->sprites = sprites;
@@ -128,6 +140,11 @@ const std::vector<sprite*>& sprite_scene::get_sprites() const
 {
     return sprites;
 }
+
+void sprite_scene::add_impl(sprite* spr) { add_sprite(spr); }
+void sprite_scene::remove_impl(sprite* spr) { remove_sprite(spr); }
+void sprite_scene::update_impl(duration delta) { update_sprites(delta); }
+void sprite_scene::clear_impl() { clear_sprites(); }
 
 light_scene::light_scene(
     std::vector<point_light*>&& point_lights,
@@ -139,12 +156,12 @@ light_scene::light_scene(
 
 light_scene::~light_scene() {}
 
-void light_scene::set_ambient(glm::vec3 ambient)
+void light_scene::set_ambient(vec3 ambient)
 {
     this->ambient = ambient;
 }
 
-glm::vec3 light_scene::get_ambient() const
+vec3 light_scene::get_ambient() const
 {
     return ambient;
 }
@@ -260,10 +277,19 @@ const std::vector<spotlight*>& light_scene::get_spotlights() const
     return spotlights;
 }
 
-const std::vector<directional_light*>& light_scene::get_directional_lights() const
+const std::vector<directional_light*>&
+light_scene::get_directional_lights() const
 {
     return directional_lights;
 }
+
+void light_scene::add_impl(point_light* pl) { add_light(pl); }
+void light_scene::remove_impl(point_light* pl) { remove_light(pl); }
+void light_scene::add_impl(spotlight* sp) { add_light(sp); }
+void light_scene::remove_impl(spotlight* sp) { remove_light(sp); }
+void light_scene::add_impl(directional_light* dl) { add_light(dl); }
+void light_scene::remove_impl(directional_light* dl) { remove_light(dl); }
+void light_scene::clear_impl() { clear_lights(); set_ambient(vec3(0)); }
 
 shadow_scene::shadow_scene() {}
 shadow_scene::~shadow_scene() {}
@@ -338,7 +364,8 @@ void shadow_scene::clear_shadows()
     perspective_shadows.clear();
 }
 
-const shadow_scene::directional_map& shadow_scene::get_directional_shadows() const
+const shadow_scene::directional_map&
+shadow_scene::get_directional_shadows() const
 {
     return directional_shadows;
 }
@@ -354,6 +381,19 @@ shadow_scene::get_perspective_shadows() const
     return perspective_shadows;
 }
 
+void shadow_scene::add_impl(directional_shadow_map* shadow)
+{ add_shadow(shadow); }
+void shadow_scene::remove_impl(directional_shadow_map* shadow)
+{ remove_shadow(shadow); }
+void shadow_scene::add_impl(omni_shadow_map* shadow) { add_shadow(shadow); }
+void shadow_scene::remove_impl(omni_shadow_map* shadow)
+{ remove_shadow(shadow); }
+void shadow_scene::add_impl(perspective_shadow_map* shadow)
+{ add_shadow(shadow); }
+void shadow_scene::remove_impl(perspective_shadow_map* shadow)
+{ remove_shadow(shadow); }
+void shadow_scene::clear_impl() { clear_shadows(); }
+
 environment_scene::environment_scene()
 : skybox(nullptr) {}
 
@@ -366,5 +406,7 @@ environment_map* environment_scene::get_skybox() const
 {
     return skybox;
 }
+
+void environment_scene::clear_impl() { set_skybox(nullptr); }
 
 } // namespace lt

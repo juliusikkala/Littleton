@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -19,6 +19,7 @@
 #ifndef LT_LITTLETON_HH
 #define LT_LITTLETON_HH
 
+#include "animated.hh"
 #include "camera.hh"
 #include "common_resources.hh"
 #include "context.hh"
@@ -45,16 +46,22 @@
 #include "sampler.hh"
 #include "scene.hh"
 #include "scene_graph.hh"
+#include "sdf.hh"
 #include "shader.hh"
 #include "shader_pool.hh"
 #include "shadow_map.hh"
+#include "simple_pipeline.hh"
+#include "spherical_gaussians.hh"
+#include "sprite.hh"
 #include "stencil_handler.hh"
 #include "texture.hh"
-#include "texture.hh"
+#include "timer.hh"
 #include "transformable.hh"
 #include "uniform.hh"
 #include "window.hh"
 
+#include "method/apply_sg.hh"
+#include "method/atmosphere.hh"
 #include "method/blit_framebuffer.hh"
 #include "method/bloom.hh"
 #include "method/clear.hh"
@@ -64,16 +71,20 @@
 #include "method/fullscreen_effect.hh"
 #include "method/gamma.hh"
 #include "method/geometry_pass.hh"
+#include "method/generate_depth_mipmap.hh"
+#include "method/generate_sg.hh"
 #include "method/kernel.hh"
+#include "method/lighting_pass.hh"
 #include "method/sao.hh"
+#include "method/sdf.hh"
 #include "method/shadow_method.hh"
 #include "method/shadow_msm.hh"
 #include "method/shadow_pcf.hh"
-#include "method/sky.hh"
 #include "method/skybox.hh"
 #include "method/ssao.hh"
 #include "method/ssrt.hh"
 #include "method/tonemap.hh"
+#include "method/visualize_cubemap.hh"
 #include "method/visualize_gbuffer.hh"
 
 #endif
