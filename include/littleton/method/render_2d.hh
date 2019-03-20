@@ -22,6 +22,9 @@
 #include "../pipeline.hh"
 #include "../stencil_handler.hh"
 #include "../scene.hh"
+#include "../sampler.hh"
+#include <unordered_map>
+#include <boost/functional/hash.hpp>
 
 namespace lt
 {
@@ -59,6 +62,12 @@ LT_OPTIONS(render_2d)
     // If write_buffer_data is enabled, this chooses whether materialless 2d
     // objects appear emissive or diffuse only.
     bool default_emissive = true;
+
+    // If enabled, uses sprite location and camera-specific view direction for
+    // orientation lookup. Otherwise, camera direction is used. If the camera
+    // is using orthographic projection, this does nothing, since both the
+    // camera direction and sprite-camera vector are the same.
+    bool perspective_orientation = true;
 };
 
 class LT_API render_2d:
@@ -87,6 +96,8 @@ public:
     void execute() override;
 
 private:
+    const sampler* fetch_sampler(interpolation mag, interpolation min);
+
     resource_pool& pool;
     const primitive& quad;
 
@@ -96,14 +107,20 @@ private:
     struct command
     {
         float depth;
-        material* mat;
-        texture* tex;
-        sampler* default_sampler;
+        const material* mat;
+        const texture* tex;
+        const sampler* default_sampler;
         vec4 uv_bounds;
-        mat3 transform;
+        mat4 mvp;
     };
     // Stored here to avoid constant memory reallocation.
     std::vector<command> command_buffer;
+
+    std::unordered_map<
+        std::pair<int, int>,
+        const sampler*,
+        boost::hash<std::pair<int, int>>
+    > sampler_cache;
 };
 
 } // namespace lt::method

@@ -38,7 +38,8 @@ sprite_layout::tile sprite_layout::get_tile(
     unsigned index,
     duration animation_time,
     vec3 view,
-    bool looping
+    bool looping,
+    bool* directional_cap
 ) const
 {
     if(index >= layout.size()) return tile{vec4(0), vec2(0)};
@@ -72,10 +73,10 @@ sprite_layout::tile sprite_layout::get_tile(
 
     if(m.directions.size() >= 1)
     {
-        float closest_distance = dot(view, m.directions[0]);
+        float closest_distance = dot(view, m.directions[0].view);
         for(unsigned i = 1; i < m.directions.size(); ++i)
         {
-            float dist = dot(view, m.directions[i]);
+            float dist = dot(view, m.directions[i].view);
             if(dist > closest_distance)
             {
                 closest_distance = dist;
@@ -84,31 +85,34 @@ sprite_layout::tile sprite_layout::get_tile(
         }
     }
 
+    if(directional_cap)
+        *directional_cap = m.directions[closest_index].cap;
+
     return f.tiles[closest_index];
 }
 
 sprite_layout sprite_layout::simple_v(unsigned modes, vec2 origin)
 {
-    float height = 1.0/modes;
     std::vector<mode> layout;
-    vec4 rect(0, 0, 1.0, height);
+    vec2 coord(0, 0);
+    vec2 size(1.0, 1.0/modes);
     for(unsigned i = 0; i < modes; ++i)
     {
-        rect.y = i/(float)modes;
-        layout.push_back({{}, {{{}, {{rect, origin}}}}});
+        coord.y = i/(float)modes;
+        layout.push_back({{}, {{{}, {{vec4(coord, coord+size), origin}}}}});
     }
     return sprite_layout(layout);
 }
 
 sprite_layout sprite_layout::simple_h(unsigned modes, vec2 origin)
 {
-    float width = 1.0/modes;
     std::vector<mode> layout;
-    vec4 rect(0, 0, width, 1.0);
+    vec2 coord(0, 0);
+    vec2 size(1.0/modes, 1.0);
     for(unsigned i = 0; i < modes; ++i)
     {
-        rect.x = i/(float)modes;
-        layout.push_back({{}, {{{}, {{rect, origin}}}}});
+        coord.x = i/(float)modes;
+        layout.push_back({{}, {{{}, {{vec4(coord, coord+size), origin}}}}});
     }
     return sprite_layout(layout);
 }
@@ -119,18 +123,19 @@ sprite_layout sprite_layout::animated_v(
     unsigned modes,
     vec2 origin
 ){
-    float height = 1.0/modes;
-    float width = 1.0/frames;
     std::vector<mode> layout;
-    vec4 rect(0, 0, width, height);
+    vec2 coord(0, 0);
+    vec2 size(1.0/frames, 1.0/modes);
     for(unsigned i = 0; i < modes; ++i)
     {
-        rect.y = i/(float)modes;
+        coord.y = i/(float)modes;
         mode m;
         for(unsigned j = 0; j < frames; ++j)
         {
-            rect.x = j/(float)frames;
-            m.animation_frames.push_back({frame_time, {{rect, origin}}});
+            coord.x = j/(float)frames;
+            m.animation_frames.push_back(
+                {frame_time, {{vec4(coord, coord+size), origin}}}
+            );
         }
         
         layout.push_back(m);
@@ -144,18 +149,19 @@ sprite_layout sprite_layout::animated_h(
     unsigned modes,
     vec2 origin
 ){
-    float height = 1.0/frames;
-    float width = 1.0/modes;
     std::vector<mode> layout;
-    vec4 rect(0, 0, width, height);
+    vec2 coord(0, 0);
+    vec2 size(1.0/modes, 1.0/frames);
     for(unsigned i = 0; i < modes; ++i)
     {
-        rect.x = i/(float)modes;
+        coord.x = i/(float)modes;
         mode m;
         for(unsigned j = 0; j < frames; ++j)
         {
-            rect.y = j/(float)frames;
-            m.animation_frames.push_back({frame_time, {{rect, origin}}});
+            coord.y = j/(float)frames;
+            m.animation_frames.push_back(
+                {frame_time, {{vec4(coord, coord+size), origin}}}
+            );
         }
         
         layout.push_back(m);
@@ -193,21 +199,19 @@ sprite_layout sprite_layout::directional(
     const std::vector<float>& pitch_steps,
     vec2 origin
 ){
-    float height = 1.0/pitch_steps.size();
-    float width = 1.0/yaw_steps.size();
-
-    vec4 rect(0, 0, width, height);
+    vec2 coord(0, 0);
+    vec2 size(1.0/yaw_steps.size(), 1.0/pitch_steps.size());
     std::vector<tile> tiles;
-    std::vector<vec3> directions;
+    std::vector<mode::direction_info> directions;
     for(unsigned i = 0; i < pitch_steps.size(); ++i)
     {
-        rect.y = i / (float)pitch_steps.size();
+        coord.y = i / (float)pitch_steps.size();
         for(unsigned j = 0; j < yaw_steps.size(); ++j)
         {
-            rect.x = j / (float)yaw_steps.size();
-            tiles.push_back({rect, origin});
+            coord.x = j / (float)yaw_steps.size();
+            tiles.push_back({vec4(coord, coord+size), origin});
             directions.push_back(
-                pitch_yaw_to_vec(pitch_steps[i], yaw_steps[j])
+                {pitch_yaw_to_vec(pitch_steps[i], yaw_steps[j]), false}
             );
         }
     }
@@ -331,6 +335,12 @@ void sprite::set_interpolation(interpolation mag, interpolation min)
     default_min = min;
 }
 
+void sprite::get_interpolation(interpolation& mag, interpolation& min) const
+{
+    mag = default_mag;
+    min = default_min;
+}
+
 void sprite::set_animation_looping(bool looping)
 {
     this->animation_looping = looping;
@@ -341,24 +351,20 @@ bool sprite::get_animation_looping() const
     return animation_looping;
 }
 
-sprite_layout::tile sprite::get_tile(const camera& cam, mat3& transform) const
+sprite_layout::tile sprite::get_tile(
+    vec3 view,
+    bool& directional_cap
+) const
 {
-    // Move camera position to sprite space, get vector. This is the view
-    // vector. Then determine angle between camera vertical and view vector
-    // vertical, that can be used to get the cosine and the sine between them
-    // (dot() and cross() trickery). With those, the rotation transform matrix
-    // is built. Scaling is directly fetched from x and y scales, and
-    // translation from global position - scale * tile offset
-
     if(layout == nullptr)
         return sprite_layout::tile{vec4(0,0,1,1), vec2(0.5, 0.5)};
-    
-    // TODO: Calculate angle and view direction.
+
     return layout->get_tile(
         mode,
         get_animation_time(),
-        vec3(0),
-        animation_looping
+        view,
+        animation_looping,
+        &directional_cap
     );
 }
 

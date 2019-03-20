@@ -40,16 +40,24 @@ class LT_API sprite_layout
 public:
     struct tile
     {
+        // Essentially a pair of UV coordinates, _not_ (coord, size).
         vec4 rect;
         vec2 origin;
     };
 
     struct mode
     {
+        struct direction_info
+        {
+            vec3 view;
+            // If this is a cap, rotation is done such that the y-axis is
+            // swapped with the z-axis.
+            bool cap;
+        };
         // Leave this vector empty if not a fake-3D sprite sheet. Add the only
         // rectangle in tiles alone. This vector should contain the provided
         // view vectors.
-        std::vector<vec3> directions;
+        std::vector<direction_info> directions;
         struct frame
         {
             // The duration this frame is active.
@@ -65,10 +73,11 @@ public:
     explicit sprite_layout(const std::vector<mode>& layout);
 
     tile get_tile(
-        unsigned index,
-        duration animation_time,
-        vec3 view,
-        bool looping
+        unsigned index = 0,
+        duration animation_time = duration(),
+        vec3 view = vec3(0,0,-1),
+        bool looping = true,
+        bool* directional_cap = nullptr
     ) const;
 
     // *_v are vertical configurations, successive modes are one after another.
@@ -160,11 +169,12 @@ public:
 
     void set_interpolation(interpolation both);
     void set_interpolation(interpolation mag, interpolation min);
+    void get_interpolation(interpolation& mag, interpolation& min) const;
 
     void set_animation_looping(bool looping);
     bool get_animation_looping() const;
 
-    sprite_layout::tile get_tile(const camera& cam, mat3& transform) const;
+    sprite_layout::tile get_tile(vec3 view, bool& directional_cap) const;
 
 private:
     unsigned mode;
