@@ -118,13 +118,17 @@ primitive* create_primitive(
     const GLfloat* vertices,
     size_t vertices_count,
     bool has_normals,
+    bool has_tangents,
     const GLuint* indices,
     size_t indices_size
 ){
     std::string indices_name = name + "_index_buf";
     std::string vertices_name = name + "_vertex_buf";
 
-    size_t vertex_size = sizeof(GLfloat) * (has_normals ? 8 : 5);
+    size_t vertex_size = 5;
+    if(has_normals) vertex_size += 3;
+    if(has_tangents) vertex_size += 4;
+    vertex_size *= sizeof(GLfloat);
 
     const gpu_buffer* indices_buf= nullptr;
     const gpu_buffer* vertices_buf = nullptr;
@@ -159,43 +163,48 @@ primitive* create_primitive(
     gpu_buffer_accessor index_accessor(
         *indices_buf, 1, GL_UNSIGNED_INT, false, 0, 0
     );
+
+    std::map<primitive::attribute, gpu_buffer_accessor> attributes;
+    unsigned offset = 0;
+
     gpu_buffer_accessor position_accessor(
         *vertices_buf, 3, GL_FLOAT, false, vertex_size, 0
     );
+    offset += 3;
+    attributes[primitive::POSITION] = position_accessor;
+
     if(has_normals)
     {
         gpu_buffer_accessor normal_accessor(
-            *vertices_buf, 3, GL_FLOAT, true, vertex_size, 3*sizeof(GLfloat)
+            *vertices_buf, 3, GL_FLOAT, true, vertex_size,
+            offset*sizeof(GLfloat)
         );
-        gpu_buffer_accessor texture_accessor(
-            *vertices_buf, 2, GL_FLOAT, false, vertex_size, 6*sizeof(GLfloat)
-        );
-
-        return new primitive(
-            buf_pool.get_context(),
-            indices_size,
-            GL_TRIANGLES,
-            index_accessor,
-            {{primitive::POSITION, position_accessor},
-             {primitive::NORMAL, normal_accessor},
-             {primitive::UV0, texture_accessor}}
-        );
+        offset += 3;
+        attributes[primitive::NORMAL] = normal_accessor;
     }
-    else
+
+    if(has_tangents)
     {
-        gpu_buffer_accessor texture_accessor(
-            *vertices_buf, 2, GL_FLOAT, false, vertex_size, 3*sizeof(GLfloat)
+        gpu_buffer_accessor tangent_accessor(
+            *vertices_buf, 4, GL_FLOAT, true, vertex_size,
+            offset*sizeof(GLfloat)
         );
-
-        return new primitive(
-            buf_pool.get_context(),
-            indices_size,
-            GL_TRIANGLES,
-            index_accessor,
-            {{primitive::POSITION, position_accessor},
-             {primitive::UV0, texture_accessor}}
-        );
+        offset += 4;
+        attributes[primitive::TANGENT] = tangent_accessor;
     }
+
+    gpu_buffer_accessor texture_accessor(
+        *vertices_buf, 2, GL_FLOAT, false, vertex_size, offset*sizeof(GLfloat)
+    );
+    attributes[primitive::UV0] = texture_accessor;
+
+    return new primitive(
+        buf_pool.get_context(),
+        indices_size,
+        GL_TRIANGLES,
+        index_accessor,
+        attributes
+    );
 }
 
 const GLfloat quad_vertices[] = {
@@ -203,6 +212,13 @@ const GLfloat quad_vertices[] = {
     1.0f, -1.0f, 0, 1.0f, 0.0f,
     -1.0f, 1.0f, 0, 0.0f, 1.0f,
     -1.0f, -1.0f, 0, 0.0f, 0.0f
+};
+
+const GLfloat quad_nt_vertices[] = {
+    1.0f, 1.0f, 0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+    -1.0f, 1.0f, 0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+    -1.0f, -1.0f, 0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f
 };
 
 const GLuint quad_indices[] = {0,2,1,1,2,3};
@@ -284,11 +300,20 @@ const sampler& ensure_depth_sampler(sampler_pool& pool)
 }
 
 const sampler& ensure_generic_sampler(
-    sampler_pool& pool, interpolation mag, interpolation min
+    sampler_pool& pool, interpolation mag, interpolation min, int lod_bias 
 ){
     std::string name = "common_" + to_string(mag) + "_" + to_string(min);
+    if(lod_bias)
+    {
+        name += "_";
+        name += lod_bias < 0 ? "n" : "p";
+        name += std::to_string(abs(lod_bias));
+    }
     if(pool.contains(name)) return *pool.get(name);
-    return *pool.add(name, new sampler(pool.get_context(), mag, min));
+
+    sampler* s = new sampler(pool.get_context(), mag, min);
+    if(lod_bias) s->set_lod_bias(lod_bias);
+    return *pool.add(name, s);
 }
 
 const primitive& ensure_quad_primitive(
@@ -304,7 +329,8 @@ const primitive& ensure_quad_primitive(
             buf_pool,
             name,
             quad_vertices,
-            sizeof(quad_vertices)/(sizeof(quad_vertices[0])*5),
+            4,
+            false,
             false,
             quad_indices,
             sizeof(quad_indices)/sizeof(quad_indices[0])
@@ -315,6 +341,33 @@ const primitive& ensure_quad_primitive(
 const primitive& ensure_quad_primitive(resource_pool& pool)
 {
     return ensure_quad_primitive(pool, pool);
+}
+
+const primitive& ensure_quad_nt_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool
+){
+    std::string name = "common_quad_nt";
+    if(prim_pool.contains(name)) return *prim_pool.get(name);
+
+    return *prim_pool.add(
+        name,
+        create_primitive(
+            buf_pool,
+            name,
+            quad_nt_vertices,
+            4,
+            true,
+            true,
+            quad_indices,
+            sizeof(quad_indices)/sizeof(quad_indices[0])
+        )
+    );
+}
+
+const primitive& ensure_quad_nt_primitive(resource_pool& pool)
+{
+    return ensure_quad_nt_primitive(pool, pool);
 }
 
 const primitive& ensure_cube_primitive(
@@ -332,6 +385,7 @@ const primitive& ensure_cube_primitive(
             cube_vertices,
             sizeof(cube_vertices)/(sizeof(cube_vertices[0])*5),
             true,
+            false,
             cube_indices,
             sizeof(cube_indices)/sizeof(cube_indices[0])
         )
@@ -427,6 +481,7 @@ const primitive& ensure_patched_sphere_primitive(
             (GLfloat*)vertices.data(),
             vertices.size(),
             true,
+            false,
             indices.data(),
             indices.size()
         )

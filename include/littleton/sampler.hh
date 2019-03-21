@@ -60,6 +60,7 @@ public:
     void set_anisotropy(unsigned anisotropy);
     void set_border_color(glm::vec4 border_color);
     void set_comparison_mode(GLint comparison_mode);
+    void set_lod_bias(GLint lod_bias);
 
     // Returns the index
     GLint bind(const texture& tex, unsigned index = 0) const;

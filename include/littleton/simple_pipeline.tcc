@@ -345,14 +345,22 @@ simple_pipeline_builder& simple_pipeline_builder::add_overlay()
 template<typename Scene>
 simple_pipeline* simple_pipeline_builder::build(Scene& scene)
 {
-    if(std::is_convertible_v<Scene&, environment_scene&>)
-        add<method::skybox>();
-    if(std::is_convertible_v<Scene&, atmosphere_scene&>)
-        add<method::render_atmosphere>();
-    if(std::is_convertible_v<Scene&, sdf_scene&>)
-        add<method::render_sdf>();
-    if(std::is_convertible_v<Scene&, sprite_scene&>)
-        add<method::render_2d>();
+    if(
+        std::is_convertible_v<Scene&, environment_scene&> &&
+        !skybox_status.enabled
+    ) add<method::skybox>();
+    if(
+        std::is_convertible_v<Scene&, atmosphere_scene&> &&
+        !atmosphere_status.enabled
+    ) add<method::render_atmosphere>();
+    if(
+        std::is_convertible_v<Scene&, sdf_scene&> &&
+        !sdf_status.enabled
+    ) add<method::render_sdf>();
+    if(
+        std::is_convertible_v<Scene&, sprite_scene&> &&
+        !render_2d_status.enabled
+    ) add<method::render_2d>();
     simple_pipeline* res = build();
     res->set_scenes(scene);
     return res;
@@ -361,8 +369,10 @@ simple_pipeline* simple_pipeline_builder::build(Scene& scene)
 template<typename Scene, typename Scene2>
 simple_pipeline* simple_pipeline_builder::build(Scene& scene, Scene2& overlay)
 {
-    if(std::is_convertible_v<Scene2&, sprite_scene&>)
-        add_overlay<method::render_2d>();
+    if(
+        std::is_convertible_v<Scene2&, sprite_scene&> &&
+        !overlay_render_2d_status.enabled
+    ) add_overlay<method::render_2d>();
     return build(scene);
 }
 

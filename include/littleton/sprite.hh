@@ -174,6 +174,9 @@ public:
     void set_animation_looping(bool looping);
     bool get_animation_looping() const;
 
+    void set_origin(vec2 origin);
+    vec2 get_origin() const;
+
     sprite_layout::tile get_tile(vec3 view, bool& directional_cap) const;
 
 private:
@@ -182,6 +185,7 @@ private:
     // These are used to select a sampler if they are null in 'mat'.
     interpolation default_mag, default_min;
     material mat;
+    vec2 origin;
     const sprite_layout* layout;
 };
 

@@ -23,6 +23,7 @@
 #include "../stencil_handler.hh"
 #include "../scene.hh"
 #include "../sampler.hh"
+#include "../material.hh"
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 
@@ -68,11 +69,14 @@ LT_OPTIONS(render_2d)
     // is using orthographic projection, this does nothing, since both the
     // camera direction and sprite-camera vector are the same.
     bool perspective_orientation = true;
+
+    // If not fullbright, whether to apply ambient lighting.
+    bool apply_ambient = true;
 };
 
 class LT_API render_2d:
     public target_method,
-    public scene_method<camera_scene, sprite_scene>,
+    public scene_method<camera_scene, sprite_scene, light_scene>,
     public options_method<render_2d>,
     public stencil_handler
 {
@@ -107,11 +111,11 @@ private:
     struct command
     {
         float depth;
-        const material* mat;
-        const texture* tex;
-        const sampler* default_sampler;
+        material mat;
         vec4 uv_bounds;
         mat4 mvp;
+        mat4 mv;
+        mat3 n_m;
     };
     // Stored here to avoid constant memory reallocation.
     std::vector<command> command_buffer;

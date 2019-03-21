@@ -35,9 +35,10 @@ LT_API const sampler& ensure_framebuffer_sampler(sampler_pool& pool);
 // Adds sampler "common_depth"
 LT_API const sampler& ensure_depth_sampler(sampler_pool& pool);
 
-// Adds sampler "common_<mag>_<min>"
+// Adds sampler "common_<mag>_<min>_<p|n><abs(lod_bias)>"
 LT_API const sampler& ensure_generic_sampler(
-    sampler_pool& pool, interpolation mag, interpolation min
+    sampler_pool& pool, interpolation mag, interpolation min,
+    int lod_bias = 0
 );
 
 // Adds primitive "common_quad", a square buffer with coordinates at
@@ -48,6 +49,15 @@ LT_API const primitive& ensure_quad_primitive(
 );
 
 LT_API const primitive& ensure_quad_primitive(resource_pool& pool);
+
+// Adds primitive "common_quad_nt", a quad similar to common_quad, but also has
+// normals and tangents.
+LT_API const primitive& ensure_quad_nt_primitive(
+    primitive_pool& prim_pool,
+    gpu_buffer_pool& buf_pool
+);
+
+LT_API const primitive& ensure_quad_nt_primitive(resource_pool& pool);
 
 // Adds primitive "common_cube", a unit cube buffer.
 LT_API const primitive& ensure_cube_primitive(

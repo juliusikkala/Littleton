@@ -271,7 +271,7 @@ simple_pipeline* simple_pipeline_builder::build()
 
         if(render_2d_status.enabled && render_2d_status.opt.write_buffer_data)
         {
-            render_2d_status.opt.fullbright = false;
+            render_2d_status.opt.apply_ambient = !defer_ambient;
             add_stage(
                 RENDER_2D,
                 new method::render_2d(b.in(), pool, {}, render_2d_status.opt),
@@ -426,6 +426,7 @@ simple_pipeline* simple_pipeline_builder::build()
         (!render_2d_status.opt.write_buffer_data || !deferred)
     ){
         render_2d_status.opt.fullbright = true;
+        render_2d_status.opt.apply_ambient = false;
         render_2d_status.opt.write_buffer_data = false;
         add_stage(
             RENDER_2D,
@@ -496,6 +497,9 @@ simple_pipeline* simple_pipeline_builder::build()
     // Overlay stages
     if(overlay_render_2d_status.enabled)
     {
+        overlay_render_2d_status.opt.fullbright = true;
+        overlay_render_2d_status.opt.write_buffer_data = false;
+        overlay_render_2d_status.opt.apply_ambient = false;
         add_overlay_stage(
             RENDER_2D,
             new method::render_2d(

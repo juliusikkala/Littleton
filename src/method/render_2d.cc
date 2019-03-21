@@ -18,6 +18,7 @@
 */
 #include "render_2d.hh"
 #include "multishader.hh"
+#include "gbuffer.hh"
 #include "camera.hh"
 #include "helpers.hh"
 #include "resource_pool.hh"
@@ -28,6 +29,17 @@
 #include "sampler.hh"
 #include <stdexcept>
 #include <algorithm>
+
+namespace
+{
+using namespace lt;
+
+inline void apply_default_sampler(material::sampler_tex& st, const sampler* s)
+{
+    if(st.second && !st.first) st.first = s;
+}
+
+}
 
 namespace lt::method
 {
@@ -41,7 +53,7 @@ render_2d::render_2d(
     scene_method(scene),
     options_method(opt),
     pool(pool),
-    quad(common::ensure_quad_primitive(pool)),
+    quad(common::ensure_quad_nt_primitive(pool)),
     draw_shader(pool.get_shader(
         shader::path{"generic.vert", "forward.frag"}
     )),
@@ -66,12 +78,13 @@ void render_2d::execute()
 
     camera_scene* cs = get_scene<camera_scene>();
     sprite_scene* ss = get_scene<sprite_scene>();
+    light_scene* ls = get_scene<light_scene>();
 
     if(!draw_shader || !cs) return;
 
     auto [
         read_depth_buffer, fullbright, write_buffer_data, default_emissive,
-        perspective_orientation
+        perspective_orientation, apply_ambient
     ] = opt;
 
     // TODO: Set perspective_orientation to false if ortho camera.
@@ -80,6 +93,8 @@ void render_2d::execute()
     if(!cam) return;
 
     mat4 inverse_view_mat = cam->get_global_transform();
+    mat4 view_mat = glm::inverse(inverse_view_mat);
+    mat4 projection = cam->get_projection();
     quat cam_orientation = get_matrix_orientation(inverse_view_mat);
     vec3 cam_location = get_matrix_translation(inverse_view_mat);
     vec3 view = vec3(cam_orientation * vec4(0,0,-1,0));
@@ -101,6 +116,23 @@ void render_2d::execute()
             // Skip if behind camera.
             if(cmd.depth > 0) continue;
 
+            cmd.mat = s->get_material();
+
+            // If missing texture, skip.
+            const texture *tex = cmd.mat.color_texture.second;
+            if(!tex) continue;
+
+            interpolation mag, min;
+            s->get_interpolation(mag, min);
+            const sampler* default_sampler = fetch_sampler(mag, min);
+            apply_default_sampler(cmd.mat.color_texture, default_sampler);
+            apply_default_sampler(
+                cmd.mat.metallic_roughness_texture,
+                default_sampler
+            );
+            apply_default_sampler(cmd.mat.normal_texture, default_sampler);
+            apply_default_sampler(cmd.mat.emission_texture, default_sampler);
+
             quat ori = get_matrix_orientation(model);
             vec3 v = perspective_orientation ? cam_location - pos : view;
             vec3 mv = vec3(inverse(ori) * vec4(v, 0));
@@ -108,21 +140,34 @@ void render_2d::execute()
             bool cap = false;
             sprite_layout::tile tile = s->get_tile(mv, cap);
             cmd.uv_bounds = tile.rect;
+            vec2 scaling = (
+                vec2(tile.rect.z, tile.rect.w) - vec2(tile.rect.x, tile.rect.y)
+            ) * vec2(tex->get_size()) * vec2(get_matrix_scaling(model));
 
             vec3 u = vec3(ori * (cap ? vec4(0,0,-1,0) : vec4(0,1,0,0)));
             vec2 cs = vec2(dot(u, up), dot(u, right));
             // Guard singularity when viewed from directly above.
             cs = dot(cs, cs) < 0.0001 ? vec2(1, 0) : normalize(cs);
+            
+            // TODO: Optimize this pile of matrix multiplications
+            mat4 origin_translation = glm::translate(
+                vec3(vec2(1.0f)-2.0f*tile.origin, 0)
+            );
+            mat4 scaling_matrix = glm::scale(vec3(scaling*0.5f, 1));
+            mat4 rotation{
+                cs.x, -cs.y, 0, 0,
+                cs.y, cs.x, 0, 0,
+                0,0,1,0,
+                0,0,0,1
+            };
+            mat4 final_translation = glm::translate(
+                vec3(view_mat * vec4(pos, 1))
+            );
 
-            cmd.mat = &s->get_material();
-            cmd.tex = nullptr;
-
-            interpolation mag, min;
-            s->get_interpolation(mag, min);
-            cmd.default_sampler = fetch_sampler(mag, min);
-
-            // TODO: Determine final transform based on 'cs' (cosine and sine
-            // for rotation), pos, scale and tile origin.
+            cmd.mv = final_translation * rotation *
+                scaling_matrix * origin_translation;
+            cmd.n_m = inverseTranspose(cmd.mv);
+            cmd.mvp = projection * cmd.mv;
 
             command_buffer.push_back(cmd);
         }
@@ -136,11 +181,60 @@ void render_2d::execute()
 
     // Render sprites
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
-    // TODO: Render command buffer.
+    stencil_draw();
+
+    if(!read_depth_buffer) glDepthFunc(GL_ALWAYS);
+    if(!write_buffer_data) glDepthMask(GL_FALSE);
+
+    shader::definition_map common({
+        {"OUTPUT_LIGHTING", ""},
+    });
+
+    if(gbuf && write_buffer_data)
+    {
+        glDisable(GL_BLEND);
+        common["MIN_ALPHA"] = "0.5f";
+        common["OUTPUT_GEOMETRY"];
+        common["APPLY_EMISSION"];
+        gbuf->set_draw(gbuffer::DRAW_ALL);
+        gbuf->update_definitions(common);
+    }
+    else
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    quad.update_definitions(common);
+
+    if(!fullbright && apply_ambient && ls) common["APPLY_AMBIENT"];
+    if(fullbright) common["FULLBRIGHT"];
+
+    vec3 ambient = ls ? ls->get_ambient() : vec3(0);
+
+    for(command& cmd: command_buffer)
+    {
+        shader::definition_map definitions(common);
+        cmd.mat.update_definitions(definitions);
+
+        shader* s = draw_shader->get(definitions);
+        s->bind();
+
+        s->set("mvp", cmd.mvp);
+        s->set("m", cmd.mv);
+        s->set("n_m", cmd.n_m);
+        s->set("ambient", ambient);
+
+        unsigned texture_index = 0;
+        cmd.mat.apply(s, texture_index);
+        quad.draw();
+    }
+
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_TRUE);
+
+    if(gbuf) gbuf->set_draw(gbuffer::DRAW_LIGHTING);
 }
 
 const sampler* render_2d::fetch_sampler(interpolation mag, interpolation min)

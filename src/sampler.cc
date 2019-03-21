@@ -141,6 +141,11 @@ void sampler::set_comparison_mode(GLint comparison_mode)
     );
 }
 
+void sampler::set_lod_bias(GLint lod_bias)
+{
+    glSamplerParameteri(sampler_object, GL_TEXTURE_LOD_BIAS, lod_bias);
+}
+
 GLint sampler::bind(const texture& tex, unsigned index) const
 {
     return bind(tex.get_texture(), index, tex.get_target());

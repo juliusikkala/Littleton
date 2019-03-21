@@ -66,7 +66,7 @@ out vec4 out_lighting;
 void main(void)
 {
     vec4 surface_color = get_material_color();
-    vec4 color = surface_color;
+    vec4 color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
 #ifdef MAX_ALPHA
     if(surface_color.a >= MAX_ALPHA) discard;
 #endif
@@ -81,7 +81,6 @@ void main(void)
     vec3 ts_normal = get_material_normal();
     normal = normalize(tbn * ts_normal);
 #endif
-    color = vec4(0.0f, 0.0f, 0.0f, surface_color.a);
     vec3 pos = f_in.position;
 #ifdef WORLD_SPACE
     vec3 view_dir = normalize(camera_pos[gl_Layer/6]-f_in.position);
@@ -246,6 +245,9 @@ void main(void)
 #endif
 #ifdef APPLY_EMISSION
     color.rgb += emission;
+#endif
+#ifdef FULLBRIGHT
+    color.rgb = surface_color.rgb;
 #endif
 
     out_lighting = color;

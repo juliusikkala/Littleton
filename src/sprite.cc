@@ -225,7 +225,7 @@ sprite::sprite(
     interpolation mag,
     interpolation min
 ):  mode(0), animation_looping(true), default_mag(mag), default_min(min),
-    layout(layout)
+    origin(0), layout(layout)
 {
     set_texture(pool, texture_path);
 }
@@ -236,7 +236,7 @@ sprite::sprite(
     interpolation mag,
     interpolation min
 ):  mode(0), animation_looping(true), default_mag(mag), default_min(min),
-    layout(layout)
+    origin(0), layout(layout)
 {
     set_texture(tex);
 }
@@ -247,13 +247,13 @@ sprite::sprite(
     interpolation mag,
     interpolation min
 ):  mode(0), animation_looping(true), default_mag(mag), default_min(min),
-    mat(mat), layout(layout)
+    mat(mat), origin(0), layout(layout)
 {}
 
 sprite::sprite(const sprite_sheet& sheet, unsigned mode)
 :   mode(mode), animation_looping(sheet.animation_looping),
     default_mag(sheet.default_mag), default_min(sheet.default_min),
-    mat(sheet.mat), layout(&sheet.layout)
+    mat(sheet.mat), origin(0), layout(&sheet.layout)
 {
 }
 
@@ -351,21 +351,33 @@ bool sprite::get_animation_looping() const
     return animation_looping;
 }
 
+void sprite::set_origin(vec2 origin)
+{
+    this->origin = origin;
+}
+
+vec2 sprite::get_origin() const
+{
+    return origin;
+}
+
 sprite_layout::tile sprite::get_tile(
     vec3 view,
     bool& directional_cap
 ) const
 {
     if(layout == nullptr)
-        return sprite_layout::tile{vec4(0,0,1,1), vec2(0.5, 0.5)};
+        return sprite_layout::tile{vec4(0,0,1,1), origin};
 
-    return layout->get_tile(
+    sprite_layout::tile tile = layout->get_tile(
         mode,
         get_animation_time(),
         view,
         animation_looping,
         &directional_cap
     );
+    tile.origin += origin;
+    return tile;
 }
 
 sprite_sheet::sprite_sheet(
