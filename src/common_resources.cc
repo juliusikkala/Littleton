@@ -311,7 +311,7 @@ const sampler& ensure_generic_sampler(
     }
     if(pool.contains(name)) return *pool.get(name);
 
-    sampler* s = new sampler(pool.get_context(), mag, min);
+    sampler* s = new sampler(pool.get_context(), mag, min, GL_CLAMP_TO_BORDER);
     if(lod_bias) s->set_lod_bias(lod_bias);
     return *pool.add(name, s);
 }
