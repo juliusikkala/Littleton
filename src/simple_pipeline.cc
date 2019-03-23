@@ -178,6 +178,14 @@ simple_pipeline* simple_pipeline_builder::build()
     bool postprocessed = tonemap_status.enabled || bloom_status.enabled;
     bool defer_ambient = false;
 
+    bool fullbright_2d =
+        render_2d_status.opt.fullbright ||
+        !render_2d_status.opt.write_buffer_data ||
+        !deferred;
+
+    bool blit_depth = render_2d_status.enabled && fullbright_2d &&
+        render_2d_status.opt.read_depth_buffer;
+
     std::unique_ptr<doublebuffer> dbuf;
 
     // Determine which buffers we need
@@ -269,7 +277,7 @@ simple_pipeline* simple_pipeline_builder::build()
             );
         }
 
-        if(render_2d_status.enabled && render_2d_status.opt.write_buffer_data)
+        if(render_2d_status.enabled && !fullbright_2d)
         {
             render_2d_status.opt.apply_ambient = !defer_ambient;
             add_stage(
@@ -421,20 +429,6 @@ simple_pipeline* simple_pipeline_builder::build()
         add_stage(LIGHTING_SDF_PASS, lp, dynamic);
     }
 
-    if(
-        render_2d_status.enabled &&
-        (!render_2d_status.opt.write_buffer_data || !deferred)
-    ){
-        render_2d_status.opt.fullbright = true;
-        render_2d_status.opt.apply_ambient = false;
-        render_2d_status.opt.write_buffer_data = false;
-        add_stage(
-            RENDER_2D,
-            new method::render_2d(b.in(), pool, {}, render_2d_status.opt),
-            dynamic
-        );
-    }
-
     // Start postprocessing
     b.sync_dbuf();
 
@@ -481,15 +475,29 @@ simple_pipeline* simple_pipeline_builder::build()
     }
     else
     {
-        add_stage(
-            BLIT_FRAMEBUFFER,
-            new method::blit_framebuffer(
-                target,
-                postprocessed ?
-                    (render_target&)dbuf->input(1) :
-                    (render_target&)b.in(),
+        method::blit_framebuffer* fb = new method::blit_framebuffer(
+            target,
+            postprocessed ?
+                (render_target&)dbuf->input(1) :
+                (render_target&)b.in(),
+            blit_depth ?
+                method::blit_framebuffer::COLOR_DEPTH:
                 method::blit_framebuffer::COLOR_ONLY
-            ),
+        );
+        if(blit_depth && postprocessed)
+            fb->set_depth_src((render_target&)b.in());
+        add_stage(BLIT_FRAMEBUFFER, fb, dynamic);
+    }
+
+    // Do fullbright sprites after tone mapping
+    if(render_2d_status.enabled && fullbright_2d)
+    {
+        render_2d_status.opt.fullbright = true;
+        render_2d_status.opt.apply_ambient = false;
+        render_2d_status.opt.write_buffer_data = false;
+        add_stage(
+            RENDER_2D,
+            new method::render_2d(target, pool, {}, render_2d_status.opt),
             dynamic
         );
     }
@@ -499,6 +507,7 @@ simple_pipeline* simple_pipeline_builder::build()
     {
         overlay_render_2d_status.opt.fullbright = true;
         overlay_render_2d_status.opt.write_buffer_data = false;
+        overlay_render_2d_status.opt.read_depth_buffer = false;
         overlay_render_2d_status.opt.apply_ambient = false;
         add_overlay_stage(
             RENDER_2D,

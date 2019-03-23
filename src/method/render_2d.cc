@@ -190,6 +190,7 @@ void render_2d::execute()
 
     shader::definition_map common({
         {"OUTPUT_LIGHTING", ""},
+        {"UV_TRANSFORM", ""},
     });
 
     if(gbuf && write_buffer_data)
@@ -208,6 +209,7 @@ void render_2d::execute()
     }
     quad.update_definitions(common);
 
+
     if(!fullbright && apply_ambient && ls) common["APPLY_AMBIENT"];
     if(fullbright) common["FULLBRIGHT"];
 
@@ -225,6 +227,11 @@ void render_2d::execute()
         s->set("m", cmd.mv);
         s->set("n_m", cmd.n_m);
         s->set("ambient", ambient);
+        s->set("uv_offset", vec2(cmd.uv_bounds));
+        s->set(
+            "uv_scale",
+            vec2(cmd.uv_bounds.z, cmd.uv_bounds.w)-vec2(cmd.uv_bounds)
+        );
 
         unsigned texture_index = 0;
         cmd.mat.apply(s, texture_index);

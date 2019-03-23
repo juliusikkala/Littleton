@@ -22,6 +22,12 @@
 namespace lt
 {
 
+sprite_layout::sprite_layout()
+:   sprite_layout(
+        std::vector<mode>{{{}, {{{}, {{vec4(0,0,1,1), vec2(0.5, 0.5)}}}}}}
+    )
+{}
+
 sprite_layout::sprite_layout(const std::vector<mode>& layout)
 : layout(layout)
 {
@@ -172,7 +178,8 @@ sprite_layout sprite_layout::animated_h(
 sprite_layout sprite_layout::directional(
     unsigned yaw_steps, unsigned pitch_steps, vec2 origin
 ){
-    if(pitch_steps <= 1) return directional(yaw_steps, {});
+    if(pitch_steps <= 1)
+        return directional(yaw_steps, std::vector<float>{0.0f}, origin);
  
     float pitch_step_size = 180.0 / pitch_steps;
     float start = -90.0 + pitch_step_size * 0.5;
@@ -185,7 +192,8 @@ sprite_layout sprite_layout::directional(
 sprite_layout sprite_layout::directional(
     unsigned yaw_steps, const std::vector<float>& pitch_steps, vec2 origin
 ){
-    if(yaw_steps <= 1) return directional({}, pitch_steps);
+    if(yaw_steps <= 1)
+        return directional(std::vector<float>{0.0f}, pitch_steps, origin);
 
     float yaw_step_size = 360.0 / yaw_steps;
     std::vector<float> yaw_steps_vec(yaw_steps);
@@ -296,6 +304,15 @@ void sprite::set_texture(resource_pool& pool, const std::string& texture_path)
         texture_path,
         texture::create(pool.get_context(), texture_path)
     ));
+}
+
+void sprite::set_texture(
+    resource_pool& pool,
+    const std::string& texture_path,
+    const sprite_layout* layout
+){
+    set_texture(pool, texture_path);
+    this->layout = layout;
 }
 
 const material& sprite::get_material() const

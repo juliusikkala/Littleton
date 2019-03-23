@@ -48,11 +48,13 @@ public:
 
     void set_blit_type(blit_type type);
     void set_src(render_target& src);
+    void set_depth_src(render_target& src);
 
     void execute() override;
 
 private:
     render_target* src;
+    render_target* depth_src;
     blit_type type;
 };
 

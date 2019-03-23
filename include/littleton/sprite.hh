@@ -70,6 +70,7 @@ public:
         std::vector<frame> animation_frames;
     };
 
+    sprite_layout();
     explicit sprite_layout(const std::vector<mode>& layout);
 
     tile get_tile(
@@ -159,6 +160,11 @@ public:
     void set_texture(const texture* tex);
     void set_texture(const texture* tex, const sprite_layout* layout);
     void set_texture(resource_pool& pool, const std::string& texture_path);
+    void set_texture(
+        resource_pool& pool,
+        const std::string& texture_path,
+        const sprite_layout* layout
+    );
 
     const material& get_material() const;
     void set_material(const material& mat);

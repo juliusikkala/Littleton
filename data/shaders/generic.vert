@@ -10,6 +10,11 @@ uniform mat4 m;
 uniform mat3 n_m;
 #endif
 
+#ifdef UV_TRANSFORM
+uniform vec2 uv_offset;
+uniform vec2 uv_scale;
+#endif
+
 #if defined(DIRECTIONAL_SHADOW_MAPPING) || defined(PERSPECTIVE_SHADOW_MAPPING)
 #include "shadow.glsl"
 uniform shadow_map shadow;
@@ -34,7 +39,11 @@ void main(void)
 #endif
 
 #ifdef VERTEX_UV0
+#ifdef UV_TRANSFORM
+    v_out.uv = v_uv*uv_scale+uv_offset;
+#else 
     v_out.uv = v_uv;
+#endif
 #endif
 }
 
