@@ -31,6 +31,7 @@ src = [
   'src/context.cc',
   'src/doublebuffer.cc',
   'src/environment_map.cc',
+  'src/font.cc',
   'src/framebuffer.cc',
   'src/framebuffer_pool.cc',
   'src/gbuffer.cc',
@@ -96,6 +97,7 @@ src = [
 cc = meson.get_compiler('cpp')
 m_dep = cc.find_library('m', required : false)
 sdl2_dep = dependency('sdl2')
+freetype2_dep = dependency('freetype2')
 glew_dep = dependency('glew')
 glm_dep = dependency('glm', version: '>=0.9.8')
 thread_dep = dependency('threads')
@@ -110,6 +112,7 @@ incdir = include_directories([
 deps = [
   m_dep,
   sdl2_dep,
+  freetype2_dep,
   glew_dep,
   glm_dep,
   thread_dep,

@@ -19,12 +19,14 @@
 #ifndef LT_LITTLETON_HH
 #define LT_LITTLETON_HH
 
+#include "about.hh"
 #include "animated.hh"
 #include "camera.hh"
 #include "common_resources.hh"
 #include "context.hh"
 #include "doublebuffer.hh"
 #include "environment_map.hh"
+#include "font.hh"
 #include "framebuffer.hh"
 #include "framebuffer_pool.hh"
 #include "gbuffer.hh"

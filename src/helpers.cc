@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 namespace lt
 {
@@ -430,6 +432,16 @@ bool gl_target_is_array(GLenum target)
     default:
         return false;
     }
+}
+
+const char* get_freetype_error(int err)
+{
+    #undef FTERRORS_H__
+    #define FT_ERROR_START_LIST  switch(err) {
+    #define FT_ERRORDEF(e, v, s) case e: return "FreeType: " s;
+    #define FT_ERROR_END_LIST    }
+    #include FT_ERRORS_H
+    return "FreeType: Unknown error";
 }
 
 } // namespace lt

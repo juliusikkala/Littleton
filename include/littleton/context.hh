@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -27,6 +27,7 @@
 namespace lt
 {
 
+// Holds all kinds of library dependencies & GL stuff
 class LT_API context
 {
 public:
@@ -51,6 +52,12 @@ public:
     glm::ivec3 get3(GLenum pname, GLuint index) const;
     glm::ivec4 get4(GLenum pname, GLuint index) const;
 
+    // Cast this to FT_Library manually. This is so unwieldy to avoid polluting
+    // the global namespace with freetype stuff.
+    //
+    // FT_Library* ft = static_cast<FT_Library*>(ctx.freetype());
+    void* freetype() const;
+
 protected:
     void get(
         GLenum pname,
@@ -59,9 +66,14 @@ protected:
         const GLuint* index = nullptr
     ) const;
 
-    void init();
+    void init_post();
 
 private:
+    static unsigned& instances();
+
+    void init();
+    void deinit();
+
     std::string vendor, renderer;
 
     mutable std::unordered_map<

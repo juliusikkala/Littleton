@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -34,11 +34,6 @@ window::window(const params& p)
     if(initialized)
     {
         throw std::runtime_error("There can be only one window.");
-    }
-
-    if(SDL_Init(SDL_INIT_EVERYTHING))
-    {
-        throw std::runtime_error(SDL_GetError());
     }
 
     SDL_GL_SetAttribute(
@@ -108,7 +103,7 @@ window::window(const params& p)
 
     SDL_GL_SetSwapInterval(p.vsync);
 
-    context::init();
+    context::init_post();
 
     //Enable generic options
     if(p.srgb) glEnable(GL_FRAMEBUFFER_SRGB);
@@ -120,7 +115,6 @@ window::~window()
 {
     SDL_GL_DeleteContext(ctx);
     SDL_DestroyWindow(win);
-    SDL_Quit();
     initialized = false;    
 }
 

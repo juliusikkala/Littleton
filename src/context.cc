@@ -1,5 +1,5 @@
 /*
-    Copyright 2018 Julius Ikkala
+    Copyright 2018-2019 Julius Ikkala
 
     This file is part of Littleton.
 
@@ -17,8 +17,12 @@
     along with Littleton.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "context.hh"
+#include "helpers.hh"
 #include <cstring>
 #include <unordered_map>
+#include <SDL.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 namespace
 {
@@ -242,6 +246,7 @@ namespace lt
 
 context::context()
 {
+    init();
 }
 
 context::~context()
@@ -250,6 +255,7 @@ context::~context()
     {
         delete [] (char*)pair.second;
     }
+    deinit();
 }
 
 const std::string& context::get_vendor_name() const { return vendor; }
@@ -316,6 +322,12 @@ glm::ivec4 context::get4(GLenum pname, GLuint index) const
     return value;
 }
 
+void* context::freetype() const
+{
+    static FT_Library ft = nullptr;
+    return static_cast<void*>(&ft);
+}
+
 void context::get(
     GLenum pname,
     size_t size,
@@ -373,10 +385,45 @@ void context::get(
     }
 }
 
-void context::init()
+void context::init_post()
 {
     vendor = std::string((const char*)glGetString(GL_VENDOR));
     renderer = std::string((const char*)glGetString(GL_RENDERER));
+}
+
+unsigned& context::instances()
+{
+    static unsigned inst = 0;
+    return inst;
+}
+
+void context::init()
+{
+    if(instances()++ == 0)
+    {
+        if(SDL_Init(SDL_INIT_EVERYTHING))
+        {
+            throw std::runtime_error(SDL_GetError());
+        }
+
+        FT_Library* ft = static_cast<FT_Library*>(freetype());
+        FT_Error err = FT_Init_FreeType(ft);
+        if(err)
+        {
+            throw std::runtime_error(get_freetype_error(err));
+        }
+    }
+}
+
+void context::deinit()
+{
+    if(--instances() == 0)
+    {
+        FT_Library* ft = static_cast<FT_Library*>(freetype());
+        FT_Done_FreeType(*ft);
+
+        SDL_Quit();
+    }
 }
 
 } // namespace lt

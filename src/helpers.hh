@@ -61,6 +61,8 @@ bool sorted_erase(
     const T& value
 );
 
+const char* get_freetype_error(int err);
+
 } // namespace lt
 
 #include "helpers.tcc"
