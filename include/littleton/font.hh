@@ -21,44 +21,76 @@
 #include "api.hh"
 #include "context.hh"
 #include "resource.hh"
+#include <unordered_map>
+#include <memory>
+#include <boost/functional/hash.hpp>
 
 namespace lt
 {
 
+// Mostly a container for font faces, which are the actually useful things.
 class LT_API font: public resource, public glresource
 {
 public:
-    class face
+    class face: public resource
     {
     friend class font;
     public:
         face(const face& other) = delete;
-        face(face&& other);
+        face(face&& other) = delete;
         ~face();
 
     protected:
-        face(void* ft_face);
-        // FT_Face& face = static_cast<FT_Face>(face);
-        void* ft_face;
+        face(font* parent, unsigned ptsize, unsigned index);
+
+        void load_impl() const override;
+        void unload_impl() const override;
+
+        void basic_load() const;
+        void basic_unload() const;
+
+        unsigned ptsize;
+        unsigned index;
+        font* parent;
+        // FT_Face& face = static_cast<FT_Face>(ft_face);
+        mutable void* ft_face;
     };
 
-    font(context& ctx, const std::string& path);
-    font(context& ctx, const uint8_t* data, size_t size);
+    enum render_mode
+    {
+        GRAYSCALE = 0,
+        SUBPIXEL,
+        ALIASED
+    };
+
+    font(context& ctx, const std::string& path, render_mode mode = GRAYSCALE);
+    font(
+        context& ctx,
+        const uint8_t* data, size_t size,
+        render_mode mode = GRAYSCALE
+    );
     font(const font& other) = delete;
     font(font&& other);
     ~font();
 
-    operator face&(); 
-    operator const face&(); 
-    face& operator[](unsigned i); 
-    const face& operator[](unsigned i) const;
+    const face& operator()(unsigned ptsize, unsigned index = 0) const;
     size_t face_count() const;
 
-    static font* create(context& ctx, const std::string& path);
-    static font* create(context& ctx, const uint8_t* data, size_t size);
+    static font* create(
+        context& ctx,
+        const std::string& path,
+        render_mode mode = GRAYSCALE
+    );
+    static font* create(
+        context& ctx,
+        const uint8_t* data,
+        size_t size,
+        render_mode mode = GRAYSCALE
+    );
 
 protected:
-    explicit font(context& ctx);
+    explicit font(context& ctx, render_mode mode);
+    using face_key = std::pair<unsigned, unsigned>;
 
     void basic_load(const std::string& path) const;
     void basic_load(const uint8_t* data, size_t size) const;
@@ -66,8 +98,16 @@ protected:
     void basic_load() const;
     void basic_unload(bool clear_data = true) const;
 
-    mutable std::vector<uint8_t> data;
-    mutable std::vector<face> faces;
+    render_mode mode;
+    mutable uint8_t* data;
+    mutable size_t data_size;
+    mutable unsigned count;
+    mutable void* meta_face;
+    mutable std::unordered_map<
+        face_key,
+        std::unique_ptr<face>,
+        boost::hash<face_key>
+    > faces;
 };
 
 } // namespace lt

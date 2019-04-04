@@ -24,42 +24,77 @@
 namespace lt
 {
 
-font::face::face(void* ft_face)
-: ft_face(ft_face)
+font::face::face(font* parent, unsigned ptsize, unsigned index)
+: ptsize(ptsize), index(index), parent(parent), ft_face(nullptr)
 {
-}
-
-font::face::face(face&& other): ft_face(other.ft_face)
-{
-    other.ft_face = nullptr;
 }
 
 font::face::~face()
 {
-    if(ft_face)
-        FT_Done_Face(static_cast<FT_Face>(ft_face));
+    basic_unload();
 }
 
-font::font(context& ctx, const std::string& path)
-: glresource(ctx)
+void font::face::load_impl() const { basic_load(); }
+void font::face::unload_impl() const { basic_unload(); }
+
+void font::face::basic_load() const
+{
+    parent->load();
+    if(ft_face) return;
+
+    FT_Face f;
+    FT_Library ft = *static_cast<FT_Library*>(parent->get_context().freetype());
+    FT_Error err = FT_New_Memory_Face(
+        ft, parent->data, parent->data_size, index, &f
+    );
+    if(err) throw std::runtime_error(get_freetype_error(err));
+
+    err = FT_Set_Pixel_Sizes(f, 0, ptsize);
+    if(err) throw std::runtime_error(get_freetype_error(err));
+
+    ft_face = f;
+}
+
+void font::face::basic_unload() const
+{
+    if(ft_face)
+    {
+        FT_Done_Face(static_cast<FT_Face>(ft_face));
+        ft_face = nullptr;
+    }
+}
+
+font::font(context& ctx, const std::string& path, render_mode mode)
+:   glresource(ctx), mode(mode), data(nullptr), data_size(0), count(0),
+    meta_face(nullptr)
 {
     basic_load(path);
 }
 
-font::font(context& ctx, const uint8_t* data, size_t size)
-: glresource(ctx)
+font::font(context& ctx, const uint8_t* data, size_t size, render_mode mode)
+:   glresource(ctx), mode(mode), data(nullptr), data_size(0), count(0),
+    meta_face(nullptr)
 {
     basic_load(data, size);
 }
 
 font::font(font&& other)
-: glresource(other.get_context())
+: glresource(other.get_context()), mode(other.mode)
 {
     other.load();
-    data = std::move(other.data);
+    data = other.data;
+    data_size = other.data_size;
+    count = other.count;
+    meta_face = other.meta_face;
     faces = std::move(other.faces);
 
-    other.data.clear();
+    for(const auto& pair: faces)
+        pair.second->parent = this;
+
+    other.data = nullptr;
+    other.data_size = 0;
+    other.count = 0;
+    other.meta_face = nullptr;
     other.faces.clear();
 }
 
@@ -68,41 +103,37 @@ font::~font()
     basic_unload();
 }
 
-font::operator face&()
+const font::face& font::operator()(unsigned ptsize, unsigned index) const
 {
     load();
-    return faces[0];
-}
-
-font::operator const face&()
-{
-    load();
-    return faces[0];
-}
-
-font::face& font::operator[](unsigned i)
-{
-    load();
-    return faces[i];
-}
-
-const font::face& font::operator[](unsigned i) const
-{
-    load();
-    return faces[i];
+    face_key key(ptsize, index);
+    auto it = faces.find(key);
+    if(it == faces.end())
+    {
+        if(index >= count)
+            throw std::runtime_error(
+                "This font has " + std::to_string(count) + " faces, but index "
+                + std::to_string(index) + " was requested."
+            );
+        return *faces.emplace(
+            key,
+            new face(const_cast<font*>(this), ptsize, index)
+        ).first->second;
+    }
+    return *it->second;
 }
 
 size_t font::face_count() const
 {
     load();
-    return faces.size();
+    return count;
 }
 
 class file_font: public font
 {
 public:
-    file_font(context& ctx, const std::string& path)
-    : font(ctx), path(path)
+    file_font(context& ctx, const std::string& path, render_mode mode)
+    : font(ctx, mode), path(path)
     {}
 
 protected:
@@ -120,19 +151,23 @@ private:
     std::string path;
 };
 
-font* font::create(context& ctx, const std::string& path)
+font* font::create(context& ctx, const std::string& path, render_mode mode)
 {
-    return new file_font(ctx, path);
+    return new file_font(ctx, path, mode);
 }
 
 class data_font: public font
 {
 public:
-    data_font(context& ctx, const uint8_t* data, size_t size)
-    : font(ctx)
+    data_font(
+        context& ctx,
+        const uint8_t* data, size_t size,
+        render_mode mode
+    ): font(ctx, mode)
     {
-        this->data.resize(size);
-        memcpy(this->data.data(), data, size);
+        this->data = new uint8_t[size];
+        this->data_size = size;
+        memcpy(this->data, data, size);
     }
 
 protected:
@@ -147,65 +182,74 @@ protected:
     }
 };
 
-font* font::create(context& ctx, const uint8_t* data, size_t size)
-{
-    return new data_font(ctx, data, size);
+font* font::create(
+    context& ctx,
+    const uint8_t* data, size_t size,
+    render_mode mode
+){
+    return new data_font(ctx, data, size, mode);
 }
 
-font::font(context& ctx)
-: glresource(ctx)
+font::font(context& ctx, render_mode mode)
+: glresource(ctx), mode(mode), data(nullptr), data_size(0), count(0)
 {
 }
 
 void font::basic_load(const std::string& path) const
 {
-    if(faces.size() != 0) return;
+    if(count) return;
 
-    uint8_t* data = nullptr;
-    size_t size = 0;
-    if(!read_binary_file(path, data, size))
+    if(!read_binary_file(path, data, data_size))
         throw std::runtime_error("Failed to load font data from file " + path);
 
-    basic_load(data, size);
-    delete [] data;
+    basic_load();
 }
 
 void font::basic_load(const uint8_t* data, size_t size) const
 {
-    if(faces.size() != 0) return;
+    if(count) return;
 
-    this->data.resize(size);
-    memcpy(this->data.data(), data, size);
+    this->data = new uint8_t[size];
+    this->data_size = size;
+    memcpy(this->data, data, size);
     basic_load();
 }
 
 void font::basic_load() const
 {
-    if(faces.size() != 0) return;
+    if(count) return;
 
-    FT_Face temp;
-
+    FT_Face meta = nullptr;
     FT_Library ft = *static_cast<FT_Library*>(get_context().freetype());
-    FT_Error err = FT_New_Memory_Face(ft, data.data(), data.size(), -1, &temp);
+    FT_Error err = FT_New_Memory_Face(ft, data, data_size, -1, &meta);
     if(err) throw std::runtime_error(get_freetype_error(err));
 
-    unsigned face_count = temp->num_faces;
-    FT_Done_Face(temp);
-
-    for(unsigned i = 0; i < face_count; ++i)
-    {
-        FT_Face f;
-        err = FT_New_Memory_Face(ft, data.data(), data.size(), i, &f);
-        if(err) throw std::runtime_error(get_freetype_error(err));
-        faces.push_back(face(static_cast<void*>(f)));
-    }
+    count = meta->num_faces;
+    meta_face = meta;
 }
 
 void font::basic_unload(bool clear_data) const
 {
-    faces.clear();
+    if(meta_face)
+    {
+        FT_Face meta = static_cast<FT_Face>(meta_face);
+        FT_Done_Face(meta);
+        meta_face = nullptr;
+    }
+
+    for(const auto& pair: faces)
+        pair.second->unload();
+
     if(clear_data)
-        data.clear();
+    {
+        if(data)
+        {
+            delete [] data;
+            data = nullptr;
+        }
+        data_size = 0;
+        count = 0;
+    }
 }
 
 } // namespace lt
